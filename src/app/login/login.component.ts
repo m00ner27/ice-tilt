@@ -1,12 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, Injectable } from '@angular/core';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 
 @Component({
   selector: 'app-login',
-  imports: [],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
+@Injectable({ providedIn: 'root' })
 export class LoginComponent {
   constructor(public oidcSecurityService: OidcSecurityService) {}
   signIn() {

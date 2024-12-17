@@ -1,18 +1,13 @@
-import { Component , Injectable} from '@angular/core';
+import { Component, Injectable } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http'; // Import HttpClientModule
 
 @Component({
   selector: 'app-navigation',
-  standalone: true,
-  imports: [RouterModule],
+  standalone: false,
   templateUrl: './navigation.component.html',
-  styleUrls: ['./navigation.component.css']
+  styleUrls: ['./navigation.component.css'],
 })
-@Injectable({providedIn: 'root'})
-export class NavigationComponent {
-  constructor(private http: HttpClient) {
-    console.log('HttpClient initialized!');
-  }
-}
-
+@Injectable({ providedIn: 'root' })
+export class NavigationComponent {}

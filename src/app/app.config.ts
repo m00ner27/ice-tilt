@@ -1,17 +1,18 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
+import { provideZoneChangeDetection } from '@angular/core';
 import { UserScope, buildAngularAuthConfig } from '@logto/js';
 import { provideAuth } from 'angular-auth-oidc-client';
-import { provideHttpClient, withFetch } from '@angular/common/http';
 import { routes } from './app.routes';
 
-
-
-export const appConfig: ApplicationConfig = {
+@NgModule({
+  imports: [
+    HttpClientModule,
+    RouterModule.forRoot(routes),
+  ],
   providers: [
-    provideHttpClient(withFetch()), // Use without withFetch()
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes),
     provideAuth({
       config: buildAngularAuthConfig({
         endpoint: 'https://c27w0x.logto.app/',
@@ -21,4 +22,5 @@ export const appConfig: ApplicationConfig = {
       }),
     }),
   ],
-};
+})
+export class AppModule {}
