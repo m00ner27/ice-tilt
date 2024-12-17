@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-schedule',
-  standalone: false,
+  standalone: true,
   templateUrl: './schedule.component.html',
   styleUrls: ['./schedule.component.css']
 })

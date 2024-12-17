@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-game-summary',
-  standalone: false,
+  standalone: true,
   // If you are using Bootstrap or other styles, make sure they're globally included.
   styleUrls: ['./game-summary.component.css'],
   templateUrl: './game-summary.component.html'
