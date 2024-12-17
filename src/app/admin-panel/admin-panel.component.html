@@ -1,0 +1,94 @@
+<div class="container-fluid">
+    <!-- Admin Panel Tabs -->
+    <section class="admin-links mt-4">
+        <div class="container">
+            <ul class="nav nav-tabs justify-content-center">
+                <li class="nav-item"><a class="nav-link active" routerLink="/admin-panel">Admin Home</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/admin-manage-seasons">Create Seasons & Divisions</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/admin-manage-seasons">Delete Seasons & Divisions</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/admin-create-club">Create Club</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/admin-add-club-to-season">Add Clubs to Season/Division</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Edit Clubs Info</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Roster Management</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Manage Users</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Schedule Games</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Link Games</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Unlink Games</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Remove Clubs From Season</a></li>
+                <li class="nav-item"><a class="nav-link" routerLink="/">Delete Club</a></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Admin Panel Table -->
+    <section class="admin-links mt-4">
+        <div class="container">
+            <div class="card shadow-sm">
+                <div class="card-header text-center bg-dark text-white">
+                    <h3>Admin Panel</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <thead class="bg-light">
+                            <tr>
+                                <th scope="col">Action</th>
+                                <th scope="col">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a routerLink="/admin-manage-seasons" class="text-decoration-none">Create/Manage Seasons & Divisions</a></td>
+                                <td>Create seasons and divisions for the league and edit the order.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/admin-manage-seasons" class="text-decoration-none">Delete Seasons & Divisions</a></td>
+                                <td>Delete seasons and divisions for the league.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/admin-create-club" class="text-decoration-none">Create Club</a></td>
+                                <td>Add a new club to the league database.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/" class="text-decoration-none">Add Clubs to Season/Division</a></td>
+                                <td>Assign clubs to participate in selected seasons and divisions.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/admin-add-club-to-season" class="text-decoration-none">Edit Club Info</a></td>
+                                <td>Modify club information such as name, logo, and Club ID.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/admin-manage-users" class="text-decoration-none">Roster Management</a></td>
+                                <td>	Manage the roster of players associated with each club including GMs.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/" class="text-decoration-none">Manage Users</a></td>
+                                <td>Handle user accounts, roles, and permissions within the platform.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/" class="text-decoration-none">Schedule Games</a></td>
+                                <td>Create and organize the game schedule for clubs and seasons.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/" class="text-decoration-none">Link Games</a></td>
+                                <td>Connect games with specific seasons or events.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/" class="text-decoration-none">Unlink Games</a></td>
+                                <td>Unlink or remove scheduled games from seasons or events.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/" class="text-decoration-none">Remove Clubs from Season</a></td>
+                                <td>Remove clubs from the current season or division assignments.</td>
+                            </tr>
+                            <tr>
+                                <td><a routerLink="/" class="text-decoration-none">Delete Club</a></td>
+                                <td>	Delete a club from the league’s records permanently.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+

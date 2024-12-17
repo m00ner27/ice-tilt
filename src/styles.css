@@ -1,1 +1,381 @@
 /* You can add global styles to this file, and also import other style files */
+body {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    background:
+  linear-gradient(to bottom, #092d4bec, #4a8dcba9),
+  url('/images/IMG_2896.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh; /* Use viewport height to ensure coverage */
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+  
+
+.navbar-brand {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+/*TOP OF PAGE LOGOS*/
+.team-logos {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.team-logo-link {
+    margin: 0;
+    padding: 0;
+}
+
+.logo-container {
+    width: 40px;   /* Slightly bigger width */
+    height: 20px;  /* Slightly bigger height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #5c5c5c;
+    margin: -1px; /* Overlap borders so rectangles touch */
+    overflow: hidden;
+}
+
+.logo-container img {
+    width: 130%;     /* Increase width to fill more of the container */
+    height: auto;   /* Maintain aspect ratio */
+    object-fit: cover;
+}
+/*TOP OF PAGE LOGOS ^ */
+
+.logo {
+    height: 40px; /* Adjust the height of the logo as needed */
+}
+
+.team-logo {
+    height: 30px;
+    vertical-align: middle;
+}
+
+.table td {
+    vertical-align: middle;
+    text-align: center; /* Center align all table cells */
+    
+ 
+}
+
+.table .text-center img.team-logo {
+    margin-left: 10px; /* Adjust spacing for the team logos */
+}
+
+/* Styles for Recent Transactions */
+.recent-transactions-section .team-logo {
+    height: 30px;
+    vertical-align: middle;
+}
+
+.recent-transactions-section .table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.recent-transactions-section .table .text-center img.team-logo {
+    margin-left: 10px;
+}
+
+/* Styles for Recent Games */
+.recent-games-section .team-logo {
+    height: 30px;
+    vertical-align: middle;
+}
+
+.recent-games-section .table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.recent-games-section .table .text-center img.team-logo {
+    margin-left: 10px;
+}
+
+/* News Section Styles */
+.news-section {
+    max-width: 1350px;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+.carousel-item {
+    text-align: center;
+    padding: 0; /* Remove padding to ensure the image fills the container */
+}
+
+.news-image {
+    height: 420px; /* Adjust height as needed */
+    width: 100%; /* Full width of the container */
+    object-fit: cover; /* Cover the container, cropping if necessary */
+    margin-bottom: 15px;
+}
+
+
+.carousel-item h5,
+.carousel-item p {
+    padding: 15px; /* Add padding to the text content for better spacing */
+    background-color: rgba(255, 255, 255, 0.8); /* Optional: Add a semi-transparent background to text */
+}
+
+/* Styles for Stats Leaders Section */
+.stats-leaders-section .profile-picture {
+    height: 60px;
+    width: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.stats-leaders-section .team-logo {
+    height: 40px;
+    width: 40px;
+    object-fit: cover;
+}
+
+.stats-leaders-section .small-team-logo {
+    height: 20px;
+    width: 20px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.stats-leaders-section .card-header {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.stats-leaders-section .list-group-item {
+    font-size: 14px;
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stats-leaders-section .stat-total {
+    margin-left: auto;
+    font-weight: bold;
+}
+
+/* style for club table*/
+.table thead th {
+    background-color: #343a40;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table tbody td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.small-team-logo {
+    height: 20px;
+    width: 20px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+
+
+/* edit profile */
+
+.profile-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-picture {
+    height: 120px;
+    width: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    border-radius: 0.375rem; /* Rounded corners for form inputs */
+}
+
+.btn-primary {
+    width: 100%;
+}
+
+.form-select {
+    border-radius: 0.375rem; /* Rounded corners for select elements */
+}
+
+.checkbox-group label {
+    margin-right: 15px;
+}
+
+ /* Custom styles for the profile view page */
+ .profile-picture {
+    height: 120px;
+    width: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.bio-section {
+    margin-top: 20px;
+}
+
+.stats-table th, .stats-table td {
+    text-align: center;
+}
+
+.profile-info {
+    margin-top: 20px;
+}
+
+.team-logo {
+    height: 30px;
+    width: auto;
+    margin-right: 10px; /* Add space between logo and team name */
+}
+
+/* General Table Styles */
+.table {
+    margin-bottom: 0;
+    font-size: 0.9rem; /* Adjusts the font size */
+}
+
+.standings-table thead th {
+    background-color: #343a40;
+    color: #fff;
+    font-weight: bold;
+}
+
+.standings-table tbody tr {
+    transition: background-color 0.3s;
+}
+
+.standings-table tbody tr:hover {
+    background-color: #f8f9fa; /* Light grey on hover */
+}
+
+.team-logo {
+    height: 30px;
+    vertical-align: middle;
+}
+
+.logo-column {
+    width: 50px; /* Adjust column width as needed */
+}
+
+.highlight td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#sortSeason {
+    border: 1px solid #343a40;
+    background-color: #f8f9fa;
+}
+
+
+/* pills for positions*/
+.badge {
+    padding: 0.5em 0.75em;
+    font-size: 0.85rem;
+    border-radius: 0.75rem; /* Make the badge rounded */
+    color: white; /* Text color for all badges */
+}
+
+.bg-red { background-color: #dc3545 !important; } /* Red for C (Center) */
+.bg-blue { background-color: #0d6efd !important; } /* Blue for RW (Right Wing) */
+.bg-green { background-color: #198754 !important; } /* Green for LW (Left Wing) */
+.bg-teal { background-color: #13f0e5 !important; } /* Teal for LD (Left Defense) */
+.bg-yellow { background-color: #fdd318 !important;  } /* Yellow for RD (Right Defense) */
+.bg-purple { background-color: #6f42c1 !important; } /* Purple for G (Goalie) */
+
+/* Prevent links from turning blue and remove underline */
+a.team-link, a.transaction-link {
+    color: inherit; /* Inherit the color from the parent element */
+    text-decoration: none; /* Remove underline */
+}
+
+/* Optionally, add a hover effect */
+a.team-link:hover, a.transaction-link:hover {
+    color: #000; /* Set hover color (black in this case) */
+    text-decoration: underline; /* Add underline on hover if you want */
+}
+
+/* Custom styles for player links */
+.player-link {
+    color: inherit; /* Inherit the text color from the parent element */
+    text-decoration: none; /* Remove underline */
+    font-weight: normal; /* Ensure the text is not bold, if desired */
+}
+
+/* Optional: Add a hover effect */
+.player-link:hover {
+    text-decoration: underline; /* Add underline on hover if desired */
+    color: #000; /* Change color on hover if desired */
+}
+
+
+/*team name and logo at top of club page*/
+.heading-with-image {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+}
+.heading-with-image img {
+    margin-right: 15px;
+    width: 50px; /* Adjust the size as needed */
+    height: auto;
+}
+.heading-with-image h2 {
+    margin: 0;
+}
+/*^^^team name and logo at top of club page^^^*/
+
+/* Custom styles for club links in the standings table */
+.team-link {
+    color: inherit; /* Inherit the color from the parent element */
+    text-decoration: none; /* Remove underline */
+}
+
+/* Optional: Add a hover effect */
+.team-link:hover {
+    color: #000; /* Change color on hover if desired */
+    text-decoration: underline; /* Optional: Add underline on hover */
+}
+
+/* Custom styles for score links */
+.score-link {
+    color: inherit; /* Inherit the color from the parent element */
+    text-decoration: none; /* Remove underline */
+}
+
+/* Optional: Add a hover effect */
+.score-link:hover {
+    color: #000; /* Change color on hover if desired */
+    text-decoration: underline; /* Add underline on hover if you want */
+}
+/* i feel like this can be made so only one thing of css is needed for all links*/
+
+.winning-team {
+    font-weight: bold;
+    color: #010b16; /* Change to preferred highlight color */
+}
+/* ^ to make winning team bold on club page*/
+
+
+

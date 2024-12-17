@@ -1,0 +1,368 @@
+/* Game Summary Banner Styling */
+.game-summary-banner {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a252f; /* Darker background */
+    border: 1px solid #34495e; /* Lighter border color */
+    border-radius: 8px;
+    padding: 10px 20px;
+    height: auto;
+    width: 80%;
+    max-width: 800px;
+    margin: 20px auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.team-left, .team-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.team-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+.team-info {
+    text-align: left;
+}
+
+.team-right .team-info {
+    text-align: right;
+}
+
+.team-name {
+    font-size: 20px !important; 
+    font-weight: 700;
+    margin: 0;
+    color: #ffffff!important; /* White text for team names */
+}
+
+.team-record {
+    font-size: 12px !important;
+    color: #a3a3a3 !important;
+    margin: 0;
+}
+
+/* Center Section Styling */
+.game-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.score-container {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 700;
+    gap: 40px;
+}
+
+.team-score {
+    font-size: 30px;
+    font-weight: bold;
+    color: #ffffff; /* White text for team scores */
+}
+
+.final-container {
+    text-align: center;
+    line-height: 1.5;
+}
+
+.final-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff; /* White text for "FINAL" */
+    background: #34495e; /* Lighter blue background */
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.game-date {
+    font-size: 12px;
+    color: #a3a3a3;
+    margin: 0;
+}
+
+.game-season {
+    font-size: 12px;
+    color: #b0bec5; /* Slightly lighter color for season */
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .game-summary-banner {
+        align-items: center;
+        padding: 15px;
+    }
+
+    .team-left, .team-right {
+        display: flex;
+        align-items: center;
+    }
+
+    .score-container {
+        gap: 5px; /* Adjust gap between elements */
+    }
+
+    .team-score {
+        font-size: 18px; /* Adjust font size for smaller screens */
+    }
+
+    .team-name, .team-record {
+        text-align: center; /* Center-align team info on small screens */
+    }
+}
+
+/* Player stats table */
+table {
+    width: 100%;
+    border-collapse: separate; /* Allows rounded corners */
+    border-spacing: 0; /* Resets spacing between cells */
+    border-radius: 10px; /* Rounded corners */
+    overflow: hidden; /* Ensures corners are actually rounded */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow for better appearance */
+    margin-bottom: 10px;
+  }
+
+  
+#player-stats-table {
+    background-color: #34495e; /* main background color */
+    color: #fff; /* text color for readability */
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#player-stats-table th, #player-stats-table td {
+    padding: 10px;
+    border: 1px solid #7e94aa; /* Border color */
+}
+
+#player-stats-table th {
+    background-color: #1a252f; /* header background color */
+    text-align: left;
+}
+
+#player-stats-table td {
+    background-color: #34495e; /* row background color */
+}
+
+#player-stats-table tr:nth-child(even) td {
+    background-color: #1a252f; /* alternating row color */
+}
+
+
+/* Game Stats Section Styling */
+.game-stats-container {
+    background-color: #1a252f; /* Dark background for stats container */
+    border: 1px solid #34495e; /* Lighter border */
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-width: 800px;
+    margin: 10px auto;
+}
+
+.game-stats-section {
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.team-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.team-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.stat-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff; /* White for stat titles */
+}
+
+.stats-container {
+    padding: 10px 0;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.team-stat {
+    width: 20%;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff; /* White text for stats */
+}
+
+.stat-name {
+    width: 60%;
+    text-align: center;
+    font-size: 16px;
+    font-weight: normal;
+    color: #b0bec5; /* Light gray color for stat names */
+}
+
+.stat-row:not(:last-child) {
+    border-bottom: 1px solid #34495e;
+    padding-bottom: 8px;
+}
+
+/* Last 10 Games Container */
+.last-10-games-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 20px auto;
+    width: 80%;
+    max-width: 1000px;
+}
+
+.team-last-10 {
+    background-color: #1a252f; /* Dark background for team sections */
+    border: 1px solid #34495e; /* Lighter border */
+    border-radius: 8px;
+    padding: 15px;
+    width: 45%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    min-width: 280px;
+    margin-bottom: 20px;
+}
+
+.team-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.team-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff; /* White for team names */
+}
+
+.team-record {
+    font-size: 16px;
+    color: #b0bec5; /* Light gray for team record */
+    font-weight: 500;
+}
+
+.game-pills {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.game-pill {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 70px;
+    height: 50px;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.green {
+    background-color: #28a745; /* Win (Green) */
+}
+
+.red {
+    background-color: #dc3545; /* Loss (Red) */
+}
+
+.pill-text {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.pill-result {
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .team-last-10 {
+        width: 100%; /* Stacks below on small screens */
+    }
+}
+
+
+/* Free Agents Section: Position Pills */
+.position-pill {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px; /* Round edges for the pill */
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    margin-right: 5px; /* Space between pills */
+}
+
+/* Position Colors */
+.position-pill.C {
+    background-color: red; /* Center - red */
+}
+
+.position-pill.RW {
+    background-color: blue; /* Right Wing - blue */
+}
+
+.position-pill.LW {
+    background-color: green; /* Left Wing - green */
+}
+
+.position-pill.LD {
+    background-color: rgb(3, 228, 228); /* Left Defense - teal */
+    color: black;
+}
+
+.position-pill.RD {
+    background-color: yellow; /* Right Defense - yellow */
+    color: black;
+}
+
+.position-pill.G {
+    background-color: rgb(145, 7, 199); /* Goalie - purple */
+}
+
+/* Ensure Position Pills Align Properly */
+td, th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+

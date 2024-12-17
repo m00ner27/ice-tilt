@@ -1,0 +1,138 @@
+/* Dark Theme for Both Table and Card Layout */
+.schedule-section .team-logo {
+    height: 30px;
+    vertical-align: middle;
+}
+
+.schedule-section .table {
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background-color: #1a252f !important; 
+    border: 1px solid #34495e !important;
+    color: #ecf0f1 !important;
+}
+
+.schedule-section .table th {
+    background-color: #34495e !important;
+    color: #ecf0f1 !important;
+    font-weight: bold;
+}
+
+.schedule-section .table td {
+    background-color: #1a252f !important; /* Ensures table cells are dark */
+}
+
+.schedule-section .table tr:hover td {
+    background-color: #3a4e65 !important;
+}
+
+.schedule-section a {
+    color: #f0f0f0;
+    text-decoration: none;
+}
+
+.schedule-section a:hover {
+    color: #ccc;
+}
+
+.schedule-section .table tbody tr td span,
+.schedule-section .table tbody tr td .fw-bold {
+    color: #ffffff !important;
+}
+
+h2 {
+    color: white;
+}
+
+
+/* Mobile Card Layout */
+.matchup-card {
+    background-color: #1a252f;
+    border: 1px solid #34495e;
+    border-radius: 8px;
+    color: #ecf0f1;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.matchup-card .dots-menu {
+    color: #ecf0f1;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.matchup-card .team-logo-sm {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+.matchup-card .smaller-text {
+    font-size: 0.9rem;
+    color: #f0f0f0;
+    margin-top: 5px;
+}
+
+.matchup-card a {
+    color: #f0f0f0;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.matchup-card a:hover {
+    color: #ccc;
+    text-decoration: underline;
+}
+
+.matchup-card .fw-bold {
+    font-weight: 700;
+}
+
+/* Dropdown Styling */
+.schedule-section select.form-select {
+    background-color: #1a252f; /* Same dark background as the table */
+    color: #ecf0f1; /* Light text color to match the table text */
+    border: 1px solid #34495e; /* Match the table border color */
+    border-radius: 4px; /* Rounded corners for consistency */
+    padding: 8px; /* Add padding for better appearance */
+    font-size: 0.9rem; /* Slightly smaller font size for a clean look */
+}
+
+.schedule-section select.form-select:focus {
+    border-color: #3a4e65; /* Slightly lighter border color on focus */
+    box-shadow: 0 0 5px rgba(58, 78, 101, 0.8); /* Subtle glow effect on focus */
+    outline: none; /* Remove the default outline */
+}
+
+.schedule-section select.form-select option {
+    background-color: #1a252f; /* Dark background for dropdown options */
+    color: #ecf0f1; /* Light text color */
+}
+
+/* Adjust hover for options in modern browsers (not supported in all browsers) */
+.schedule-section select.form-select option:hover {
+    background-color: #3a4e65; /* Slightly lighter hover color */
+}
+
+/* More specific selector to target dropdowns in the schedule section */
+.schedule-section select.form-select {
+    background-color: #1a252f !important; /* Dark background */
+    color: #ecf0f1 !important; /* Light text color */
+    border: 1px solid #34495e !important; /* Match the table border */
+    border-radius: 4px !important; /* Rounded corners */
+    padding: 8px !important; /* Add padding for consistency */
+    font-size: 0.9rem !important; /* Adjust font size */
+    appearance: none; /* Remove default browser dropdown styles */
+}
+
+.schedule-section select.form-select:focus {
+    border-color: #3a4e65 !important; /* Slightly lighter border on focus */
+    box-shadow: 0 0 5px rgba(58, 78, 101, 0.8) !important; /* Add subtle focus effect */
+    outline: none !important; /* Remove default outline */
+}
+
+.schedule-section select.form-select option {
+    background-color: #1a252f; /* Match dropdown background */
+    color: #ecf0f1; /* Light text color */
+}

@@ -1,0 +1,97 @@
+.player-stats {
+    color: white;
+    padding: 20px;
+  }
+  
+  .stats-card {
+    background-color: #1a252f;
+    border: 1px solid #34495e;
+    border-radius: 8px;
+  }
+  
+  .stats-card .card-header {
+    background-color: #34495e;
+    color: white;
+  }
+  
+  .stats-card .list-group-item {
+    background-color: #1a252f;
+    color: white;
+    border: none;
+  }
+  
+  .player-stats-table {
+    width: 100%;
+    background-color: #1a252f;
+    color: white;
+    border-collapse: collapse;
+    border: 1px solid #34495e !important; /* Slightly lighter border for contrast */
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .player-stats-table th {
+    background-color: #34495e;
+    color: rgb(255, 255, 255);
+    font-weight: bold;
+    text-align: center;
+    
+  }
+  
+  .player-stats-table td {
+    background-color: #1a252f;
+    text-align: center;
+    color: rgb(255, 255, 255);
+  }
+
+  .player-stats-table tbody tr:hover {
+    background-color: #3a4e65;
+  }
+  
+  .player-stats-table tfoot th {
+    background-color: #2c3e50;
+    font-weight: bold;
+  }
+
+  p {
+    color: white;
+  }
+  
+  .profile-picture {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+  
+  .team-logo, .small-team-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .form-select {
+    background-color: #1a252f;
+    color: white;
+    border: 1px solid #34495e;
+  }
+  
+  .form-select:focus {
+    box-shadow: none;
+    border-color: #5a80a7;
+  }
+  
+  .stat-total {
+    float: right;
+  }
+  
+  .small-team-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: inline-block;
+  }
+  

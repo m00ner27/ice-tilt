@@ -1,0 +1,78 @@
+/* General Dark Palette Styling */
+body {
+    background-color: #0d1117 !important;
+  }
+  
+h2 {
+    color: white;
+}
+
+  /* Free Agents Section */
+  .free-agents-section .table {
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #1a252f !important; /* Darker background for the table */
+    border: 1px solid #34495e !important; /* Slightly lighter border for contrast */
+    color: #ffffff !important; /* White text */
+  }
+  
+  .free-agents-section .table th {
+    background-color: #34495e !important; /* Darker header background */
+    color: #ffffff !important; /* White text for headers */
+    text-align: center;
+  }
+  
+  .free-agents-section .table td {
+    vertical-align: middle;
+    background-color: #1a252f !important; /* Ensures cells stay dark */
+    color: #ffffff !important; /* White text in table cells */
+  }
+  
+  .free-agents-section .table tr:hover {
+    background-color: #3a4e65 !important; /* Slightly lighter row background on hover */
+  }
+  
+  /* Small Team Logo */
+  .small-team-logo {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  /* Badge Styling for Positions */
+  .badge {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border-radius: 12px;
+    color: #ffffff;
+  }
+  
+  .bg-red {
+    background-color: #e74c3c !important;
+  }
+  
+  .bg-blue {
+    background-color: #3498db !important;
+  }
+  
+  .bg-green {
+    background-color: #2ecc71 !important;
+  }
+  
+  .bg-teal {
+    background-color: #00ffcc !important;
+    color: #000000;
+  }
+  
+  .bg-yellow {
+    background-color: #f1c40f !important;
+    color: #000000;
+  }
+  
+  .bg-purple {
+    background-color: #9b59b6 !important;
+  }
+  

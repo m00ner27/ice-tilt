@@ -1,0 +1,81 @@
+/* General Styling */
+.standings-section .table {
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #1a252f !important; /* Darker background for the table */
+    border: 1px solid #34495e !important; /* Slightly lighter border for contrast */
+    color: #ffffff !important; /* White text */
+}
+
+.standings-section .table th {
+    background-color: #34495e !important; /* Darker header background */
+    color: #ffffff !important; /* White text for headers */
+    text-align: center;
+}
+
+.standings-section .table td {
+    vertical-align: middle;
+    text-align: center;
+    background-color: #1a252f !important; /* Ensures cells stay dark */
+    color: #ffffff !important; /* White text in table cells */
+}
+
+.standings-section .table tr:hover {
+    background-color: #3a4e65 !important; /* Slightly lighter row background on hover */
+    color: #ffffff !important; /* Maintain white text on hover */
+}
+
+/* Add spacing between table and division logo */
+.table-responsive {
+    margin-bottom: 50px; /* Add gap below the table */
+}
+
+/* Club Column Styling */
+.club-cell {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    gap: 10px; /* Space between logo and name */
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+.club-cell .team-logo {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.club-cell .club-name {
+    display: inline; /* Default behavior */
+}
+
+/* Division Header */
+.division-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.division-logo {
+    max-height: 80px;
+    width: auto;
+}
+
+/* Sorting Dropdown */
+.standings-section .season-sort select {
+    background-color: #34495e !important; /* Match the table header background */
+    color: #ffffff !important; /* White text */
+    border: 1px solid #5d6d7e; /* Lighter border for dropdown */
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .club-cell .club-name {
+        display: none; /* Hide club name in mobile view */
+    }
+    .club-cell {
+        justify-content: center; /* Center align club logos in mobile view */
+    }
+}
