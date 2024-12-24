@@ -57,7 +57,7 @@
                 }
               ],
               "outputHashing": "all",
-              "baseHref": "/ice-tilt/"
+              "baseHref": "/"
             },
             "development": {
               "optimization": false,
