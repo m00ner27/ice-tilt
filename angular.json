@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/ice-tilt",
+            "outputPath": "dist",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -28,13 +28,13 @@
               },
               {
                 "glob": "favicon.ico",
-                "input": "public",
+                "input": "src/assets",
                 "output": "/"
               },
               {
                 "glob": "**/*",
-                "input": "public",
-                "output": "/"
+                "input": "src/assets",
+                "output": "assets"
               }
             ],
             "styles": [
@@ -93,7 +93,8 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "src/assets",
+                "output": "assets"
               }
             ],
             "styles": [

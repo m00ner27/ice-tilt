@@ -1,18 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
 body {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    background:
-  linear-gradient(to bottom, #092d4bec, #4a8dcba9),
-  url('/images/IMG_2896.jpg');
+    background: linear-gradient(to bottom, #092d4bec, #4a8dcba9), 
+    url("assets/images/IMG_2896.jpg");
+
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     background-attachment: fixed;
-    min-height: 100vh; /* Use viewport height to ensure coverage */
+    min-height: 100vh;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-  }
+}
+
   
 
 .navbar-brand {
