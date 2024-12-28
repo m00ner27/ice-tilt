@@ -1,7 +1,7 @@
 services:
   - type: web
     name: ice-tilt
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && ng build
     staticPublishPath: ./dist/ice-tilt/browser
     envVars:
       - key: NODE_VERSION
