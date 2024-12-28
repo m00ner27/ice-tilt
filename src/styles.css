@@ -1,7 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 body {
     background: linear-gradient(to bottom, #092d4bec, #4a8dcba9), 
-    url("assets/images/IMG_2896.jpg");
+    url("/assets/images/IMG_2896.jpg");
 
     background-size: cover;
     background-repeat: no-repeat;
