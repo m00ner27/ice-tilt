@@ -15,11 +15,11 @@ export const appConfig: ApplicationConfig = {
       domain: 'dev-51tl555qz78d354r', // Your Auth0 domain
       clientId: '6761e3e56eb890ad7767bb63', // Your Auth0 Client ID
       authorizationParams: {
-        redirect_uri: window.location.origin + '/callback',
-        audience: 'http://localhost:3000', // Replace with your API audience
+        redirect_uri: window.location.origin + '/callback', // Works for both local and production
+        audience: 'https://your-api.onrender.com', // Replace with your API audience
       },
       httpInterceptor: {
-        allowedList: ['http://localhost:3000/api/*'], // Protect API calls
+        allowedList: ['https://your-api.onrender.com/api/*'], // Protect production API calls
       },
     }),
   ],
