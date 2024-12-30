@@ -16,10 +16,13 @@ export const appConfig: ApplicationConfig = {
       clientId: '6761e3e56eb890ad7767bb63', // Your Auth0 Client ID
       authorizationParams: {
         redirect_uri: window.location.origin + '/callback', // Works for both local and production
-        audience: 'https://your-api.onrender.com', // Replace with your API audience
+        audience: 'https://ice-tilt-backend.onrender.com', // Replace with your API audience
       },
       httpInterceptor: {
-        allowedList: ['https://your-api.onrender.com/api/*'], // Protect production API calls
+        allowedList: [
+          'https://ice-tilt-backend.onrender.com/api/*', // Production API
+          'http://localhost:3000/api/*', // Local development API
+        ],
       },
     }),
   ],
