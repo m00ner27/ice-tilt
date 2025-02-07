@@ -5,6 +5,11 @@ import { routes } from './app/app.routes';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAuth0 } from '@auth0/auth0-angular';
 
+// Import the NgRx providers
+import { provideStore } from '@ngrx/store';
+import { counterReducer } from './app/store/counter.reducer';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideHttpClient(),
@@ -22,6 +27,12 @@ bootstrapApplication(AppComponent, {
       httpInterceptor: {
         allowedList: ['http://localhost:3000/api/*'], // Protect API calls
       },
+    }),
+    // Set up NgRx store with the "counter" state slice
+    provideStore({ counter: counterReducer }),
+    provideStoreDevtools({
+      maxAge: 25, // Retain last 25 states
+      logOnly: false, // Change to true in production mode
     }),
   ],
 });
