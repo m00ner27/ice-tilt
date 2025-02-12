@@ -1,19 +1,32 @@
 <section class="player-stats mt-4">
     <div class="container">
+      <!-- Loading Spinner -->
+      <div *ngIf="loading$ | async" class="loading-overlay">
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      <div *ngIf="error$ | async as error" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+
       <!-- Sorting Option -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-center">Player Stat Leaders</h2>
         <div class="form-group d-flex align-items-center">
           
-          <select class="form-select me-3" id="seasonSelect">
-            <option>All-Time</option>
-            <option>S18</option>
-            <option>S17</option>
+          <select class="form-select me-3" id="seasonSelect" (change)="onSeasonChange($event)">
+            <option value="current">Current Season</option>
+            <option value="S18">S18</option>
+            <option value="S17">S17</option>
           </select>
-          <select class="form-select" id="divisionSelect">
-            <option>All Divisions</option>
-            <option>Elite</option>
-            <option>Sweat</option>
+          <select class="form-select" id="divisionSelect" (change)="onDivisionChange($event)">
+            <option value="All Divisions">All Divisions</option>
+            <option value="Elite">Elite</option>
+            <option value="Sweat">Sweat</option>
           </select>
         </div>
       </div>
@@ -28,30 +41,21 @@
               Goals
             </div>
             <div class="card-body">
-              <div class="top-player text-center mb-3">
-                <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                <p><strong>Username1</strong></p>
-                <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                <p><strong>Goals: 45</strong></p>
-              </div>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                  <span class="stat-total">38</span>
-                </li>
-                <li class="list-group-item">
-                  <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                  <span class="stat-total">36</span>
-                </li>
-                <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
+              <ng-container *ngIf="goalLeaders$ | async as leaders; else loadingCard">
+                <div class="top-player text-center mb-3" *ngIf="leaders[0] as topScorer">
+                  <img [src]="topScorer.profilePic" alt="Top Player" class="profile-picture mb-2">
+                  <p><strong>{{ topScorer.playerName }}</strong></p>
+                  <p><img [src]="topScorer.teamLogo" alt="Team Logo" class="team-logo"></p>
+                  <p><strong>Goals: {{ topScorer.goals }}</strong></p>
+                </div>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
+                    <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
+                    {{ player.playerName }}
+                    <span class="stat-total">{{ player.goals }}</span>
                   </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-              </ul>
+                </ul>
+              </ng-container>
             </div>
           </div>
         </div>
@@ -61,30 +65,21 @@
                 Assists
               </div>
               <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Assists: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
+                <ng-container *ngIf="assistLeaders$ | async as leaders; else loadingCard">
+                  <div class="top-player text-center mb-3" *ngIf="leaders[0] as topScorer">
+                    <img [src]="topScorer.profilePic" alt="Top Player" class="profile-picture mb-2">
+                    <p><strong>{{ topScorer.playerName }}</strong></p>
+                    <p><img [src]="topScorer.teamLogo" alt="Team Logo" class="team-logo"></p>
+                    <p><strong>Assists: {{ topScorer.assists }}</strong></p>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
+                      <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
+                      {{ player.playerName }}
+                      <span class="stat-total">{{ player.assists }}</span>
                     </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
+                  </ul>
+                </ng-container>
               </div>
             </div>
           </div>
@@ -94,30 +89,21 @@
                 Points
               </div>
               <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Points: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
+                <ng-container *ngIf="pointLeaders$ | async as leaders; else loadingCard">
+                  <div class="top-player text-center mb-3" *ngIf="leaders[0] as topScorer">
+                    <img [src]="topScorer.profilePic" alt="Top Player" class="profile-picture mb-2">
+                    <p><strong>{{ topScorer.playerName }}</strong></p>
+                    <p><img [src]="topScorer.teamLogo" alt="Team Logo" class="team-logo"></p>
+                    <p><strong>Points: {{ topScorer.points }}</strong></p>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
+                      <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
+                      {{ player.playerName }}
+                      <span class="stat-total">{{ player.points }}</span>
                     </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
+                  </ul>
+                </ng-container>
               </div>
             </div>
           </div>
@@ -127,111 +113,115 @@
                 Hits
               </div>
               <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Hits: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
+                <ng-container *ngIf="hitLeaders$ | async as leaders; else loadingCard">
+                  <div class="top-player text-center mb-3" *ngIf="leaders[0] as topHitter">
+                    <img [src]="topHitter.profilePic" alt="Top Player" class="profile-picture mb-2">
+                    <p><strong>{{ topHitter.playerName }}</strong></p>
+                    <p><img [src]="topHitter.teamLogo" alt="Team Logo" class="team-logo"></p>
+                    <p><strong>Hits: {{ topHitter.hits }}</strong></p>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
+                      <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
+                      {{ player.playerName }}
+                      <span class="stat-total">{{ player.hits }}</span>
                     </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
+                  </ul>
+                </ng-container>
               </div>
             </div>
           </div>
       </div>
   
       <!-- Player Statistics Table -->
-      <!-- Player Statistics Table -->
-<div class="table-responsive mt-5">
-    <table class="table table-bordered player-stats-table">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Skater</th>
-          <th>Club</th> <!-- New column for Club -->
-          <th>GP</th>
-          <th>G</th>
-          <th>A</th>
-          <th>PTS</th>
-          <th>PPG</th>
-          <th>GWG</th>
-          <th>SHG</th>
-          <th>DFG</th>
-          <th>Hits</th>
-          <th>PIM</th>
-          <th>Draw</th>
-          <th>S</th>
-          <th>SA</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>1</td>
-          <td>
-            <img src="assets/images/fMSRJa_q.jpeg" alt="Player 1" class="small-team-logo">
-            <a href="profile-view.html" class="player-link">m00ner</a>
-          </td>
-          <td>
-            <img src="assets/images/square-boats.png" alt="Club Logo" class="small-team-logo">
-          </td> <!-- Club logo added here -->
-          <td>8</td>
-          <td>14</td>
-          <td>10</td>
-          <td>24</td>
-          <td>2</td>
-          <td>1</td>
-          <td>0</td>
-          <td>4</td>
-          <td>147</td>
-          <td>14</td>
-          <td>7</td>
-          <td>23</td>
-          <td>26</td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>
-            <img src="assets/images/ithl-fan.png" alt="Player 2" class="small-team-logo">
-            <a href="profile-view.html" class="player-link">slapshot_77</a>
-          </td>
-          <td>
-            <img src="assets/images/square-blueline.png" alt="Club Logo" class="small-team-logo">
-          </td> <!-- Club logo added here -->
-          <td>5</td>
-          <td>10</td>
-          <td>0</td>
-          <td>10</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>5</td>
-          <td>4</td>
-          <td>1</td>
-          <td>9</td>
-          <td>1</td>
-        </tr>
-        <!-- Add more rows as needed -->
-      </tbody>
-    </table>
-  </div>
+      <div class="table-responsive mt-5">
+        <ng-container *ngIf="playerStatsList$ | async as players; else loadingTable">
+          <table class="table table-bordered player-stats-table">
+            <thead>
+              <tr>
+                <th (click)="sortTable('rank')" class="sortable">
+                  Rank
+                  <i class="fas" [ngClass]="getSortIcon('rank')"></i>
+                </th>
+                <th (click)="sortTable('playerName')" class="sortable">
+                  Skater
+                  <i class="fas" [ngClass]="getSortIcon('playerName')"></i>
+                </th>
+                <th>Club</th>
+                <th (click)="sortTable('gamesPlayed')" class="sortable">
+                  GP
+                  <i class="fas" [ngClass]="getSortIcon('gamesPlayed')"></i>
+                </th>
+                <th (click)="sortTable('goals')" class="sortable">
+                  G
+                  <i class="fas" [ngClass]="getSortIcon('goals')"></i>
+                </th>
+                <th (click)="sortTable('assists')" class="sortable">
+                  A
+                  <i class="fas" [ngClass]="getSortIcon('assists')"></i>
+                </th>
+                <th (click)="sortTable('points')" class="sortable">
+                  PTS
+                  <i class="fas" [ngClass]="getSortIcon('points')"></i>
+                </th>
+                <th>PPG</th>
+                <th>GWG</th>
+                <th>SHG</th>
+                <th>DFG</th>
+                <th>Hits</th>
+                <th>PIM</th>
+                <th>Draw</th>
+                <th>S</th>
+                <th>SA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let player of players">
+                <td>{{ player.rank }}</td>
+                <td>
+                  <img [src]="player.profilePic" [alt]="player.playerName" class="small-team-logo">
+                  <a [routerLink]="['/profile', player.playerId]" class="player-link">{{ player.playerName }}</a>
+                </td>
+                <td>
+                  <img [src]="player.teamLogo" alt="Club Logo" class="small-team-logo">
+                </td>
+                <td>{{ player.gamesPlayed }}</td>
+                <td>{{ player.goals }}</td>
+                <td>{{ player.assists }}</td>
+                <td>{{ player.points }}</td>
+                <td>{{ player.powerPlayGoals }}</td>
+                <td>{{ player.gameWinningGoals }}</td>
+                <td>{{ player.shortHandedGoals }}</td>
+                <td>{{ player.deviationFromGoal }}</td>
+                <td>{{ player.hits }}</td>
+                <td>{{ player.penaltyMinutes }}</td>
+                <td>{{ player.drawPercentage }}%</td>
+                <td>{{ player.shotsTaken }}</td>
+                <td>{{ player.shotsAgainst }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </div>
   
     </div>
   </section>
+  
+<!-- Loading Card Template -->
+<ng-template #loadingCard>
+  <div class="card-loading text-center py-4">
+    <div class="spinner-border spinner-border-sm text-light" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Loading Table Template -->
+<ng-template #loadingTable>
+  <div class="table-loading text-center py-5">
+    <div class="spinner-border text-light" role="status">
+      <span class="visually-hidden">Loading stats...</span>
+    </div>
+  </div>
+</ng-template>
   
