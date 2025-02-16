@@ -14,6 +14,69 @@
             <img src="assets/images/DIVELITE.png" alt="Elite Division Logo" class="division-logo">
         </div>
 
+        <!-- Loading State -->
+        <div *ngIf="loading$ | async" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error$ | async as error" class="alert alert-danger">
+            {{ error }}
+        </div>
+
+        <!-- Standings Table -->
+        <ng-container *ngIf="standings$ | async as standings">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover standings-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>POS</th>
+                            <th class="text-start">CLUB</th>
+                            <th>GP</th>
+                            <th>W</th>
+                            <th>L</th>
+                            <th>OTL</th>
+                            <th>PTS</th>
+                            <th>GF</th>
+                            <th>GA</th>
+                            <th>DIFF</th>
+                            <th>L10</th>
+                            <th>STRK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let team of standings.teams; let i = index">
+                            <td>{{ i + 1 }}</td>
+                            <td class="club-cell">
+                                <img [src]="team.teamLogo" [alt]="team.name" class="team-logo me-2">
+                                {{ team.name }}
+                            </td>
+                            <td>{{ team.gamesPlayed }}</td>
+                            <td>{{ team.wins }}</td>
+                            <td>{{ team.losses }}</td>
+                            <td>{{ team.overtimeLosses }}</td>
+                            <td class="points">{{ team.points }}</td>
+                            <td>{{ team.goalsFor }}</td>
+                            <td>{{ team.goalsAgainst }}</td>
+                            <td [class.positive]="team.goalDifferential > 0" 
+                                [class.negative]="team.goalDifferential < 0">
+                                {{ team.goalDifferential }}
+                            </td>
+                            <td>{{ team.lastTenGames }}</td>
+                            <td>{{ team.streak }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </ng-container>
+
+        <!-- Division Header Section -->
+        <div class="division-header text-center mb-4">
+            <img src="assets/images/DIVSWEAT.png" alt="Sweat Division Logo" class="division-logo">
+        </div>
+
         <!-- Standings Table -->
         <div class="table-responsive">
             <table class="table table-bordered table-hover standings-table">
@@ -37,8 +100,8 @@
                     <tr>
                         <td>1</td>
                         <td class="club-cell">
-                            <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo me-2">
-                            Boats
+                            <img src="assets/images/square-mutts.png" alt="Mutts Logo" class="team-logo me-2">
+                            Mutts
                         </td>
                         <td>12</td>
                         <td>12</td>
@@ -54,8 +117,8 @@
                     <tr>
                         <td>2</td>
                         <td class="club-cell">
-                            <img src="assets/images/square-yorkcitykings.png" alt="York City Kings Logo" class="team-logo me-2">
-                            York City Kings
+                            <img src="assets/images/square-blueline.png" alt="York City Kings Logo" class="team-logo me-2">
+                            Blue Line Snipers
                         </td>
                         <td>12</td>
                         <td>12</td>
@@ -71,69 +134,5 @@
                 </tbody>
             </table>
         </div>
-
-<!-- Division Header Section -->
-<div class="division-header text-center mb-4">
-    <img src="assets/images/DIVSWEAT.png" alt="Sweat Division Logo" class="division-logo">
-</div>
-
-<!-- Standings Table -->
-<div class="table-responsive">
-    <table class="table table-bordered table-hover standings-table">
-        <thead class="table-dark">
-            <tr>
-                <th>POS</th>
-                <th class="text-start">CLUB</th>
-                <th>GP</th>
-                <th>W</th>
-                <th>L</th>
-                <th>OTL</th>
-                <th>PTS</th>
-                <th>GF</th>
-                <th>GA</th>
-                <th>DIFF</th>
-                <th>L10</th>
-                <th>STRK</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1</td>
-                <td class="club-cell">
-                    <img src="assets/images/square-mutts.png" alt="Mutts Logo" class="team-logo me-2">
-                    Mutts
-                </td>
-                <td>12</td>
-                <td>12</td>
-                <td>0</td>
-                <td>0</td>
-                <td>24</td>
-                <td>100</td>
-                <td>1</td>
-                <td>99</td>
-                <td>10-0-0</td>
-                <td>W10</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td class="club-cell">
-                    <img src="assets/images/square-blueline.png" alt="York City Kings Logo" class="team-logo me-2">
-                    Blue Line Snipers
-                </td>
-                <td>12</td>
-                <td>12</td>
-                <td>0</td>
-                <td>0</td>
-                <td>24</td>
-                <td>100</td>
-                <td>1</td>
-                <td>99</td>
-                <td>10-0-0</td>
-                <td>W10</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-        
     </div>
 </section>

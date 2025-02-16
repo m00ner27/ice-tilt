@@ -11,10 +11,8 @@ export class StatsService {
 
   constructor(private http: HttpClient) {}
 
-  getSeasonStats(seasonId: string): Observable<{ playerStats: PlayerStats[]; goalieStats: GoalieStats[] }> {
-    return this.http.get<{ playerStats: PlayerStats[]; goalieStats: GoalieStats[] }>(
-      `${this.apiUrl}/season/${seasonId}`
-    );
+  getSeasonStats(seasonId: string): Observable<{ playerStats: PlayerStats[] }> {
+    return this.http.get<{ playerStats: PlayerStats[] }>(`${this.apiUrl}/season/${seasonId}`);
   }
 
   updatePlayerStats(

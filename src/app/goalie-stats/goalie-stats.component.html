@@ -1,225 +1,61 @@
-<section class="player-stats mt-4">
+<section class="goalie-stats mt-4">
     <div class="container">
-      <!-- Sorting Option -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-center">Goalie Stat Leaders</h2>
-        <div class="form-group d-flex align-items-center">
-          
-          <select class="form-select me-3" id="seasonSelect">
-            <option>All-Time</option>
-            <option>S18</option>
-            <option>S17</option>
-          </select>
-          <select class="form-select" id="divisionSelect">
-            <option>All Divisions</option>
-            <option>Elite</option>
-            <option>Sweat</option>
-          </select>
+        <!-- Loading State -->
+        <div *ngIf="loading$ | async" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
         </div>
-      </div>
-  
-      <!-- Stats Leaders Section -->
-      
-      <div class="row">
-        <!-- Stat Card Template -->
-        <div class="col-md-3">
-          <div class="card stats-card">
-            <div class="card-header text-center">
-              GAA
-            </div>
-            <div class="card-body">
-              <div class="top-player text-center mb-3">
-                <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                <p><strong>Username1</strong></p>
-                <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                <p><strong>GAA: 45</strong></p>
-              </div>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                  <span class="stat-total">38</span>
-                </li>
-                <li class="list-group-item">
-                  <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                  <span class="stat-total">36</span>
-                </li>
-                <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-              </ul>
-            </div>
-          </div>
+
+        <!-- Error State -->
+        <div *ngIf="error$ | async as error" class="alert alert-danger">
+            {{ error }}
         </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                SV%
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>SV%: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
+
+        <!-- Stats Table -->
+        <ng-container *ngIf="goalieStats$ | async as goalies">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover goalie-stats-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Goalie</th>
+                            <th>Team</th>
+                            <th>GP</th>
+                            <th>W</th>
+                            <th>L</th>
+                            <th>OTL</th>
+                            <th>GAA</th>
+                            <th>SV%</th>
+                            <th>SO</th>
+                            <th>GA</th>
+                            <th>SA</th>
+                            <th>TOI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let goalie of goalies">
+                            <td class="goalie-cell">
+                                <img [src]="goalie.profilePic" [alt]="goalie.playerName" class="goalie-pic me-2">
+                                {{ goalie.playerName }}
+                            </td>
+                            <td>
+                                <img [src]="goalie.teamLogo" [alt]="goalie.teamId" class="team-logo me-2">
+                            </td>
+                            <td>{{ goalie.gamesPlayed }}</td>
+                            <td>{{ goalie.wins }}</td>
+                            <td>{{ goalie.losses }}</td>
+                            <td>{{ goalie.overtimeLosses }}</td>
+                            <td>{{ goalie.goalsAgainstAverage.toFixed(2) }}</td>
+                            <td>{{ (goalie.savePercentage * 100).toFixed(1) }}%</td>
+                            <td>{{ goalie.shutouts }}</td>
+                            <td>{{ goalie.goalsAgainst }}</td>
+                            <td>{{ goalie.shotsAgainst }}</td>
+                            <td>{{ goalie.timeOnIce }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Shutouts
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>SO: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Wins
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Wins: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-      </div>
-  
-      <!-- Player Statistics Table -->
-      <!-- Player Statistics Table -->
-<div class="table-responsive mt-5">
-    <table class="table table-bordered player-stats-table">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Goalie</th>
-          <th>Club</th> <!-- New column for Club -->
-          <th>GP</th>
-          <th>W</th>
-          <th>L</th>
-          <th>OTL</th>
-          <th>SV %</th>
-          <th>GAA</th>
-          <th>SA</th>
-          <th>SV</th>
-          <th>SO</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>1</td>
-          <td>
-            <img src="assets/images/fMSRJa_q.jpeg" alt="Player 1" class="small-team-logo">
-            <a href="profile-view.html" class="player-link">m00ner</a>
-          </td>
-          <td>
-            <img src="assets/images/square-boats.png" alt="Club Logo" class="small-team-logo">
-          </td> <!-- Club logo added here -->
-          <td>8</td>
-          <td>14</td>
-          <td>10</td>
-          <td>24</td>
-          <td>2</td>
-          <td>1</td>
-          <td>0</td>
-          <td>4</td>
-          <td>147</td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>
-            <img src="assets/images/ithl-fan.png" alt="Player 2" class="small-team-logo">
-            <a href="profile-view.html" class="player-link">slapshot_77</a>
-          </td>
-          <td>
-            <img src="assets/images/square-blueline.png" alt="Club Logo" class="small-team-logo">
-          </td> <!-- Club logo added here -->
-          <td>5</td>
-          <td>10</td>
-          <td>0</td>
-          <td>10</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>5</td>
-        </tr>
-        <!-- Add more rows as needed -->
-      </tbody>
-    </table>
-  </div>
-  
+        </ng-container>
     </div>
-  </section>
+</section>
   

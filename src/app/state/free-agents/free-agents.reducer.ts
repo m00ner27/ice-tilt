@@ -1,6 +1,12 @@
 import { createReducer, on } from '@ngrx/store';
-import { FreeAgentsState } from './free-agents.model';
+import { FreeAgent } from './free-agents.model';
 import * as FreeAgentsActions from './free-agents.actions';
+
+export interface FreeAgentsState {
+  freeAgents: FreeAgent[];
+  loading: boolean;
+  error: string | null;
+}
 
 export const initialState: FreeAgentsState = {
   freeAgents: [],

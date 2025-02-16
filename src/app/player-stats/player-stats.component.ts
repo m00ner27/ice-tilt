@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { PlayerStats } from '../state/stats/stats.model';
+import { PlayerStats, StatsState } from '../state/stats/stats.model';
 import * as StatsActions from '../state/stats/stats.actions';
 import * as StatsSelectors from '../state/stats/stats.selectors';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Division } from '../state/stats/stats.model';
 import { RouterModule } from '@angular/router';
@@ -24,6 +24,7 @@ interface SortConfig {
   styleUrl: './player-stats.component.css'
 })
 export class PlayerStatsComponent implements OnInit {
+  playerStats$: Observable<PlayerStats[]>;
   goalLeaders$: Observable<PlayerStats[]>;
   assistLeaders$: Observable<PlayerStats[]>;
   pointLeaders$: Observable<PlayerStats[]>;
@@ -39,7 +40,10 @@ export class PlayerStatsComponent implements OnInit {
     direction: 'desc'
   };
 
-  constructor(private store: Store) {
+  constructor(private store: Store<{ stats: StatsState }>) {
+    this.playerStats$ = this.store.select(StatsSelectors.selectAllPlayerStats).pipe(
+      tap(players => console.log('Player Stats:', players))
+    );
     this.loading$ = this.store.select(StatsSelectors.selectStatsLoading);
     this.error$ = this.store.select(StatsSelectors.selectStatsError);
     
@@ -59,14 +63,15 @@ export class PlayerStatsComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Load initial stats
-    this.loadSeasonStats(this.selectedSeason);
+    // When component loads, dispatch action to load stats
+    this.store.dispatch(StatsActions.loadStats({ seasonId: this.selectedSeason }));
   }
 
   onSeasonChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     this.selectedSeason = select.value;
-    this.loadSeasonStats(this.selectedSeason);
+    this.store.dispatch(StatsActions.loadStats({ seasonId: this.selectedSeason }));
+    this.updateStats();
   }
 
   onDivisionChange(event: Event) {
@@ -105,12 +110,6 @@ export class PlayerStatsComponent implements OnInit {
         this.selectedDivision
       )
     ).pipe(catchError(handleError));
-  }
-
-  private loadSeasonStats(seasonId: string) {
-    this.store.dispatch(StatsActions.loadStats({ seasonId }));
-    this.selectedSeason = seasonId;
-    this.updateStats();
   }
 
   // Optional: Add method to dismiss error

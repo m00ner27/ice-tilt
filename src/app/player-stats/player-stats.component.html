@@ -1,227 +1,44 @@
 <section class="player-stats mt-4">
     <div class="container">
-      <!-- Loading Spinner -->
-      <div *ngIf="loading$ | async" class="loading-overlay">
-        <div class="spinner-border text-light" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
+      <!-- Loading State -->
+      <div *ngIf="loading$ | async" class="loading-spinner">
+        Loading...
       </div>
 
-      <!-- Error Alert -->
-      <div *ngIf="error$ | async as error" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <!-- Error State -->
+      <div *ngIf="error$ | async as error" class="alert alert-danger">
         {{ error }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
 
-      <!-- Sorting Option -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-center">Player Stat Leaders</h2>
-        <div class="form-group d-flex align-items-center">
-          
-          <select class="form-select me-3" id="seasonSelect" (change)="onSeasonChange($event)">
-            <option value="current">Current Season</option>
-            <option value="S18">S18</option>
-            <option value="S17">S17</option>
-          </select>
-          <select class="form-select" id="divisionSelect" (change)="onDivisionChange($event)">
-            <option value="All Divisions">All Divisions</option>
-            <option value="Elite">Elite</option>
-            <option value="Sweat">Sweat</option>
-          </select>
-        </div>
-      </div>
-  
-      <!-- Stats Leaders Section -->
-      
-      <div class="row">
-        <!-- Stat Card Template -->
-        <div class="col-md-3">
-          <div class="card stats-card">
-            <div class="card-header text-center">
-              Goals
-            </div>
-            <div class="card-body">
-              <ng-container *ngIf="goalLeaders$ | async as leaders; else loadingCard">
-                <div class="top-player text-center mb-3" *ngIf="leaders[0] as topScorer">
-                  <img [src]="topScorer.profilePic" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>{{ topScorer.playerName }}</strong></p>
-                  <p><img [src]="topScorer.teamLogo" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Goals: {{ topScorer.goals }}</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
-                    <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
-                    {{ player.playerName }}
-                    <span class="stat-total">{{ player.goals }}</span>
-                  </li>
-                </ul>
-              </ng-container>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Assists
-              </div>
-              <div class="card-body">
-                <ng-container *ngIf="assistLeaders$ | async as leaders; else loadingCard">
-                  <div class="top-player text-center mb-3" *ngIf="leaders[0] as topScorer">
-                    <img [src]="topScorer.profilePic" alt="Top Player" class="profile-picture mb-2">
-                    <p><strong>{{ topScorer.playerName }}</strong></p>
-                    <p><img [src]="topScorer.teamLogo" alt="Team Logo" class="team-logo"></p>
-                    <p><strong>Assists: {{ topScorer.assists }}</strong></p>
-                  </div>
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
-                      <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
-                      {{ player.playerName }}
-                      <span class="stat-total">{{ player.assists }}</span>
-                    </li>
-                  </ul>
-                </ng-container>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Points
-              </div>
-              <div class="card-body">
-                <ng-container *ngIf="pointLeaders$ | async as leaders; else loadingCard">
-                  <div class="top-player text-center mb-3" *ngIf="leaders[0] as topScorer">
-                    <img [src]="topScorer.profilePic" alt="Top Player" class="profile-picture mb-2">
-                    <p><strong>{{ topScorer.playerName }}</strong></p>
-                    <p><img [src]="topScorer.teamLogo" alt="Team Logo" class="team-logo"></p>
-                    <p><strong>Points: {{ topScorer.points }}</strong></p>
-                  </div>
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
-                      <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
-                      {{ player.playerName }}
-                      <span class="stat-total">{{ player.points }}</span>
-                    </li>
-                  </ul>
-                </ng-container>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Hits
-              </div>
-              <div class="card-body">
-                <ng-container *ngIf="hitLeaders$ | async as leaders; else loadingCard">
-                  <div class="top-player text-center mb-3" *ngIf="leaders[0] as topHitter">
-                    <img [src]="topHitter.profilePic" alt="Top Player" class="profile-picture mb-2">
-                    <p><strong>{{ topHitter.playerName }}</strong></p>
-                    <p><img [src]="topHitter.teamLogo" alt="Team Logo" class="team-logo"></p>
-                    <p><strong>Hits: {{ topHitter.hits }}</strong></p>
-                  </div>
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item" *ngFor="let player of leaders.slice(1, 5)">
-                      <img [src]="player.teamLogo" alt="Team Logo" class="small-team-logo">
-                      {{ player.playerName }}
-                      <span class="stat-total">{{ player.hits }}</span>
-                    </li>
-                  </ul>
-                </ng-container>
-              </div>
-            </div>
-          </div>
-      </div>
-  
-      <!-- Player Statistics Table -->
-      <div class="table-responsive mt-5">
-        <ng-container *ngIf="playerStatsList$ | async as players; else loadingTable">
-          <table class="table table-bordered player-stats-table">
-            <thead>
-              <tr>
-                <th (click)="sortTable('rank')" class="sortable">
-                  Rank
-                  <i class="fas" [ngClass]="getSortIcon('rank')"></i>
-                </th>
-                <th (click)="sortTable('playerName')" class="sortable">
-                  Skater
-                  <i class="fas" [ngClass]="getSortIcon('playerName')"></i>
-                </th>
-                <th>Club</th>
-                <th (click)="sortTable('gamesPlayed')" class="sortable">
-                  GP
-                  <i class="fas" [ngClass]="getSortIcon('gamesPlayed')"></i>
-                </th>
-                <th (click)="sortTable('goals')" class="sortable">
-                  G
-                  <i class="fas" [ngClass]="getSortIcon('goals')"></i>
-                </th>
-                <th (click)="sortTable('assists')" class="sortable">
-                  A
-                  <i class="fas" [ngClass]="getSortIcon('assists')"></i>
-                </th>
-                <th (click)="sortTable('points')" class="sortable">
-                  PTS
-                  <i class="fas" [ngClass]="getSortIcon('points')"></i>
-                </th>
-                <th>PPG</th>
-                <th>GWG</th>
-                <th>SHG</th>
-                <th>DFG</th>
-                <th>Hits</th>
-                <th>PIM</th>
-                <th>Draw</th>
-                <th>S</th>
-                <th>SA</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let player of players">
-                <td>{{ player.rank }}</td>
-                <td>
-                  <img [src]="player.profilePic" [alt]="player.playerName" class="small-team-logo">
-                  <a [routerLink]="['/profile', player.playerId]" class="player-link">{{ player.playerName }}</a>
-                </td>
-                <td>
-                  <img [src]="player.teamLogo" alt="Club Logo" class="small-team-logo">
-                </td>
-                <td>{{ player.gamesPlayed }}</td>
-                <td>{{ player.goals }}</td>
-                <td>{{ player.assists }}</td>
-                <td>{{ player.points }}</td>
-                <td>{{ player.powerPlayGoals }}</td>
-                <td>{{ player.gameWinningGoals }}</td>
-                <td>{{ player.shortHandedGoals }}</td>
-                <td>{{ player.deviationFromGoal }}</td>
-                <td>{{ player.hits }}</td>
-                <td>{{ player.penaltyMinutes }}</td>
-                <td>{{ player.drawPercentage }}%</td>
-                <td>{{ player.shotsTaken }}</td>
-                <td>{{ player.shotsAgainst }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </ng-container>
-      </div>
-  
+      <!-- Season Selector -->
+      <select (change)="onSeasonChange($event)" class="form-select mb-3">
+        <option value="current">Current Season</option>
+        <option value="previous">Previous Season</option>
+      </select>
+
+      <!-- Stats Table -->
+      <ng-container *ngIf="playerStats$ | async as players">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Games</th>
+              <th>Goals</th>
+              <th>Assists</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let player of players">
+              <td>{{ player.playerName }}</td>
+              <td>{{ player.gamesPlayed }}</td>
+              <td>{{ player.goals }}</td>
+              <td>{{ player.assists }}</td>
+              <td>{{ player.points }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </ng-container>
     </div>
   </section>
-  
-<!-- Loading Card Template -->
-<ng-template #loadingCard>
-  <div class="card-loading text-center py-4">
-    <div class="spinner-border spinner-border-sm text-light" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-  </div>
-</ng-template>
-
-<!-- Loading Table Template -->
-<ng-template #loadingTable>
-  <div class="table-loading text-center py-5">
-    <div class="spinner-border text-light" role="status">
-      <span class="visually-hidden">Loading stats...</span>
-    </div>
-  </div>
-</ng-template>
   

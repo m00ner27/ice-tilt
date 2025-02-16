@@ -1,17 +1,22 @@
 export interface TeamRecord {
     teamId: string;
-    teamName: string;
+    name: string;
+    teamLogo: string;
+    gamesPlayed: number;
     wins: number;
     losses: number;
     overtimeLosses: number;
     points: number;
-    gamesPlayed: number;
     goalsFor: number;
     goalsAgainst: number;
-  }
-  
-  export interface SeasonStandings {
+    goalDifferential: number;
+    lastTenGames: string;
+    streak: string;
+    division: string;
+}
+
+export interface SeasonStandings {
     seasonId: string;
     seasonName: string;
     teams: TeamRecord[];
-  }
+}

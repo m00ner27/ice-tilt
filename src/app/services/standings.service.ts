@@ -7,9 +7,11 @@ import { SeasonStandings } from '../state/standings/standings.model';
   providedIn: 'root'
 })
 export class StandingsService {
+  private apiUrl = '/api/standings';
+
   constructor(private http: HttpClient) {}
 
   getStandings(seasonId: string): Observable<SeasonStandings> {
-    return this.http.get<SeasonStandings>(`/api/standings/${seasonId}`);
+    return this.http.get<SeasonStandings>(`${this.apiUrl}/season/${seasonId}`);
   }
 } 

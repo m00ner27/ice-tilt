@@ -1,0 +1,76 @@
+<div class="player-profile-container">
+  <ng-container *ngIf="playerStats$ | async as player; else loading">
+    <!-- Header Section -->
+    <div class="profile-header">
+      <div class="player-info">
+        <img [src]="player.profilePic" [alt]="player.playerName" class="profile-picture">
+        <div class="player-details">
+          <h1>{{ player.playerName }}</h1>
+          <div class="team-info">
+            <img [src]="player.teamLogo" [alt]="player.teamId" class="team-logo">
+            <span class="division-badge">{{ player.division }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Stats Cards -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-value">{{ player.points }}</div>
+        <div class="stat-label">Points</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ player.goals }}</div>
+        <div class="stat-label">Goals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ player.assists }}</div>
+        <div class="stat-label">Assists</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ player.gamesPlayed }}</div>
+        <div class="stat-label">Games</div>
+      </div>
+    </div>
+
+    <!-- Detailed Stats -->
+    <div class="detailed-stats">
+      <h2>Season Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Power Play Goals</div>
+          <div class="stat-value">{{ player.powerPlayGoals }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Game Winners</div>
+          <div class="stat-value">{{ player.gameWinningGoals }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Short Handed</div>
+          <div class="stat-value">{{ player.shortHandedGoals }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Hits</div>
+          <div class="stat-value">{{ player.hits }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">PIM</div>
+          <div class="stat-value">{{ player.penaltyMinutes }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Draw %</div>
+          <div class="stat-value">{{ player.drawPercentage }}%</div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<ng-template #loading>
+  <div class="loading-spinner">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+</ng-template> 

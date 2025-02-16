@@ -27,6 +27,10 @@ export interface PlayerStats {
 
 export interface GoalieStats {
   playerId: string;
+  playerName: string;
+  profilePic: string;
+  teamId: string;
+  teamLogo: string;
   seasonId: string;
   gamesPlayed: number;
   wins: number;
@@ -36,7 +40,13 @@ export interface GoalieStats {
   goalsAgainstAverage: number;
   savePercentage: number;
   shutouts: number;
-  timeOnIce: number; // in minutes
+  timeOnIce: number;
+  shotsAgainst: number;
+}
+
+export interface StatsResponse {
+  playerStats: PlayerStats[];
+  goalieStats: GoalieStats[];
 }
 
 export interface StatsState {
