@@ -48,11 +48,11 @@ bootstrapApplication(AppComponent, {
       clientId: 'WgWpaLK0yww0VSuHQuvcKBAUWPCJcO4e',
       authorizationParams: {
         redirect_uri: window.location.origin,
-        audience: 'http://localhost:3000',
+        audience: 'http://localhost:3001',
         scope: 'openid profile email',
       },
       httpInterceptor: {
-        allowedList: ['http://localhost:3000/api/*'],
+        allowedList: ['http://localhost:3001/api/*'],
       },
     }),
 

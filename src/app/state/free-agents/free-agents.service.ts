@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { FreeAgent } from './free-agents.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FreeAgentsService {
-  private apiUrl = '/api/free-agents';
+  private apiUrl = `${environment.apiUrl}/free-agents`;
 
   constructor(private http: HttpClient) {}
 

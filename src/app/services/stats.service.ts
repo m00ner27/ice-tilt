@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlayerStats, GoalieStats, StatsResponse } from '../state/stats/stats.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StatsService {
-  private apiUrl = '/api/stats';
+  private apiUrl = `${environment.apiUrl}/stats`;
 
   constructor(private http: HttpClient) {}
 

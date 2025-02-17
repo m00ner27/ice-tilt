@@ -1,30 +1,26 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { provideAuth0 } from '@auth0/auth0-angular';
-import { StandingsService } from './services/standings.service';
+import { ErrorInterceptor } from './interceptors/error.interceptor';
+import { environment } from './environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideHttpClient(),
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideHttpClient(withInterceptors([ErrorInterceptor])),
     provideRouter(routes),
     provideAuth0({
-      domain: 'dev-51tl555qz78d354r',
-      clientId: '6761e3e56eb890ad7767bb63',
+      domain: environment.auth0.domain,
+      clientId: environment.auth0.clientId,
       authorizationParams: {
-        redirect_uri: window.location.origin + '/callback',
-        audience: 'https://ice-tilt-backend.onrender.com',
+        redirect_uri: window.location.origin,
+        audience: environment.auth0.audience,
       },
       httpInterceptor: {
-        allowedList: [
-          'https://ice-tilt-backend.onrender.com/api/*',
-          'http://localhost:3000/api/*',
-        ],
+        allowedList: [`${environment.apiUrl}/*`],
       },
     }),
-    StandingsService,
   ],
 };
 

@@ -1,5 +1,23 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
+# Dependencies
+node_modules/
+dist/
+
+# Environment variables
+.env
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build files
+build/
+
 # Compiled output
 /dist
 /tmp
@@ -7,12 +25,10 @@
 /bazel-out
 
 # Node
-/node_modules
 npm-debug.log
 yarn-error.log
 
 # IDEs and editors
-.idea/
 .project
 .classpath
 .c9/
