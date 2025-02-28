@@ -9,6 +9,7 @@ import { ManagerViewComponent } from './manager-view/manager-view.component';
 import { ClubComponent } from './club/club.component';
 import { EditProfileComponent } from './edit-profile/edit-profile.component';
 import { LoginComponent } from './login/login.component';
+import { TestComponent } from './test-component/test-component';
 
 // Admin Panel Components
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
@@ -20,6 +21,7 @@ import { AdminDeleteClubComponent } from './admin-delete-club/admin-delete-club.
 import { AdminDeleteSeasonDivComponent } from './admin-delete-season-div/admin-delete-season-div.component';
 import { AdminManageUsersComponent } from './admin-manage-users/admin-manage-users.component';
 import { AdminManageUsers2Component } from './admin-manage-users-2/admin-manage-users-2.component';
+import { RealDataComponent } from './real-data/real-data.component';
 
 
 export const routes: Routes = [
@@ -34,7 +36,7 @@ export const routes: Routes = [
   { path: 'club', component: ClubComponent },
   { path: 'edit-profile', component: EditProfileComponent },
   { path: 'login', component: LoginComponent },
-
+  { path: 'test', component: TestComponent },
   // Admin Panel Route with Children
   { 
     path: 'admin-panel', 
@@ -50,6 +52,10 @@ export const routes: Routes = [
       { path: 'admin-manage-users-2', component: AdminManageUsers2Component },
       { path: 'admin-panel', component: AdminPanelComponent }
     ]
+  },
+  { 
+    path: 'real-data', 
+    component: RealDataComponent 
   }
 ];
 
