@@ -1,0 +1,35 @@
+{
+  "clubs": [
+    {
+      "clubName": "Boats",
+      "image": "assets/images/square-boats.png",
+      "manager": "m00ner",
+      "colour": "#f57606"
+    },
+    {
+      "clubName": "Roosters",
+      "image": "assets/images/square-iserlohnroosters.png",
+      "manager": "chickenguy",
+      "colour": "#1c398b"
+    },
+    {
+      "clubName": "Mutts",
+      "image": "assets/images/square-mutts.png",
+      "manager": "Mutt",
+      "colour": "#ff6c00"
+    },
+    {
+      "clubName": "Lights Out",
+      "image": "assets/images/square-lightsout.png",
+      "manager": "DJ",
+      "colour": "#2ea1c2"
+    },
+    {
+      "clubName": "Ragin Cajuns",
+      "image": "assets/images/square-ragincajuns.png",
+      "manager": "Breezy",
+      "colour": "#143bbc"
+    }
+    
+  ]
+}

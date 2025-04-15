@@ -10,6 +10,7 @@ import { ClubComponent } from './club/club.component';
 import { EditProfileComponent } from './edit-profile/edit-profile.component';
 import { LoginComponent } from './login/login.component';
 import { TestComponent } from './test-component/test-component';
+import { ClubListComponent } from './club-list/club-list.component';
 
 // Admin Panel Components
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
@@ -34,6 +35,7 @@ export const routes: Routes = [
   { path: 'goalie-stats', component: GoalieStatsComponent },
   { path: 'manager-view', component: ManagerViewComponent },
   { path: 'club', component: ClubComponent },
+  { path: 'clubs', component: ClubListComponent },
   { path: 'edit-profile', component: EditProfileComponent },
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },

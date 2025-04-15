@@ -1,0 +1,35 @@
+<div class="club-list-container">
+  <h2>Clubs</h2>
+  
+  <!-- Search bar -->
+  <div class="search-container">
+    <input 
+      type="text" 
+      class="search-input" 
+      placeholder="Search clubs or managers..."
+      [(ngModel)]="searchText"
+      (input)="filterClubs()"
+    >
+  </div>
+
+  <!-- Club cards -->
+  <div class="clubs">
+    <div *ngFor="let club of filteredClubs" class="club-card" [style.border-color]="club.colour">
+      <div class="club-content">
+        <img 
+          [src]="club.image" 
+          [alt]="club.clubName" 
+          class="club-image"
+          (error)="club.image = 'assets/images/default-team.png'"
+        >
+        <h3>{{club.clubName}}</h3>
+        <p class="manager-name">Manager: {{club.manager}}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- No results message -->
+  <div *ngIf="filteredClubs.length === 0" class="no-results">
+    No clubs found
+  </div>
+</div>
