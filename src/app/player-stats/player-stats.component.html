@@ -1,237 +1,63 @@
-<section class="player-stats mt-4">
-    <div class="container">
-      <!-- Sorting Option -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-center">Player Stat Leaders</h2>
-        <div class="form-group d-flex align-items-center">
-          
-          <select class="form-select me-3" id="seasonSelect">
-            <option>All-Time</option>
-            <option>S18</option>
-            <option>S17</option>
-          </select>
-          <select class="form-select" id="divisionSelect">
-            <option>All Divisions</option>
-            <option>Elite</option>
-            <option>Sweat</option>
-          </select>
-        </div>
-      </div>
+<div class="player-stats-container">
+  <h1 class="player-stats-title">Player Statistics</h1>
   
-      <!-- Stats Leaders Section -->
-      
-      <div class="row">
-        <!-- Stat Card Template -->
-        <div class="col-md-3">
-          <div class="card stats-card">
-            <div class="card-header text-center">
-              Goals
-            </div>
-            <div class="card-body">
-              <div class="top-player text-center mb-3">
-                <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                <p><strong>Username1</strong></p>
-                <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                <p><strong>Goals: 45</strong></p>
-              </div>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                  <span class="stat-total">38</span>
-                </li>
-                <li class="list-group-item">
-                  <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                  <span class="stat-total">36</span>
-                </li>
-                <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Assists
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Assists: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Points
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Points: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Hits
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Hits: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-      </div>
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading player statistics...</p>
+  </div>
   
-      <!-- Player Statistics Table -->
-      <!-- Player Statistics Table -->
-<div class="table-responsive mt-5">
-    <table class="table table-bordered player-stats-table">
+  <!-- Player stats table -->
+  <div *ngIf="!isLoading" class="player-stats-table-container">
+    <table class="player-stats-table">
       <thead>
         <tr>
-          <th>Rank</th>
-          <th>Skater</th>
-          <th>Club</th> <!-- New column for Club -->
-          <th>GP</th>
-          <th>G</th>
-          <th>A</th>
-          <th>PTS</th>
-          <th>PPG</th>
-          <th>GWG</th>
-          <th>SHG</th>
-          <th>DFG</th>
-          <th>Hits</th>
-          <th>PIM</th>
-          <th>Draw</th>
-          <th>S</th>
-          <th>SA</th>
+          <th (click)="onSortColumn('name')" [ngClass]="getColumnSortClass('name')">Player</th>
+          <th (click)="onSortColumn('team')" [ngClass]="getColumnSortClass('team')">Team</th>
+          <th (click)="onSortColumn('position')" [ngClass]="getColumnSortClass('position')">Pos</th>
+          <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
+          <th (click)="onSortColumn('goals')" [ngClass]="getColumnSortClass('goals')">G</th>
+          <th (click)="onSortColumn('assists')" [ngClass]="getColumnSortClass('assists')">A</th>
+          <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
+          <th (click)="onSortColumn('plusMinus')" [ngClass]="getColumnSortClass('plusMinus')">+/-</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>1</td>
-          <td>
-            <img src="assets/images/fMSRJa_q.jpeg" alt="Player 1" class="small-team-logo">
-            <a href="profile-view.html" class="player-link">m00ner</a>
+        <tr *ngFor="let player of playerStats">
+          <td class="player-name">
+            <span class="player-number">#{{ player.number }}</span>
+            {{ player.name }}
           </td>
-          <td>
-            <img src="assets/images/square-boats.png" alt="Club Logo" class="small-team-logo">
-          </td> <!-- Club logo added here -->
-          <td>8</td>
-          <td>14</td>
-          <td>10</td>
-          <td>24</td>
-          <td>2</td>
-          <td>1</td>
-          <td>0</td>
-          <td>4</td>
-          <td>147</td>
-          <td>14</td>
-          <td>7</td>
-          <td>23</td>
-          <td>26</td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>
-            <img src="assets/images/ithl-fan.png" alt="Player 2" class="small-team-logo">
-            <a href="profile-view.html" class="player-link">slapshot_77</a>
+          <td>{{ player.team }}</td>
+          <td>{{ player.position }}</td>
+          <td>{{ player.gamesPlayed }}</td>
+          <td>{{ player.goals }}</td>
+          <td>{{ player.assists }}</td>
+          <td class="points-column">{{ player.points }}</td>
+          <td [ngClass]="{'positive': player.plusMinus > 0, 'negative': player.plusMinus < 0}">
+            {{ player.plusMinus > 0 ? '+' + player.plusMinus : player.plusMinus }}
           </td>
-          <td>
-            <img src="assets/images/square-blueline.png" alt="Club Logo" class="small-team-logo">
-          </td> <!-- Club logo added here -->
-          <td>5</td>
-          <td>10</td>
-          <td>0</td>
-          <td>10</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>5</td>
-          <td>4</td>
-          <td>1</td>
-          <td>9</td>
-          <td>1</td>
         </tr>
-        <!-- Add more rows as needed -->
       </tbody>
     </table>
   </div>
   
-    </div>
-  </section>
+  <!-- No players data message -->
+  <div *ngIf="!isLoading && playerStats.length === 0" class="no-data-container">
+    <p>No player statistics available.</p>
+  </div>
   
+  <!-- Legend -->
+  <div class="player-stats-legend">
+    <div class="legend-item">
+      <span>GP: Games Played</span>
+      <span>G: Goals</span>
+      <span>A: Assists</span>
+      <span>PTS: Points (G+A)</span>
+      <span>+/-: Plus/Minus Rating</span>
+    </div>
+    <div class="legend-note">
+      <p>* Click on column headers to sort</p>
+      <p>* Statistics are for skaters only. Goalie statistics are available on the Goalie Stats page.</p>
+    </div>
+  </div>
+</div>

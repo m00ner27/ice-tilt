@@ -1,97 +1,156 @@
-.player-stats {
-    color: white;
-    padding: 20px;
+.player-stats-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.player-stats-title {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.player-stats-table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.player-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background-color: white;
+}
+
+.player-stats-table th {
+  background-color: #2c3e50;
+  color: white;
+  padding: 12px 15px;
+  text-align: center;
+  font-weight: 600;
+  border-bottom: 2px solid #1a2a3a;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.player-stats-table th:hover {
+  background-color: #34495e;
+}
+
+.player-stats-table td {
+  padding: 10px 15px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.player-name {
+  text-align: left;
+  font-weight: 500;
+  min-width: 180px;
+}
+
+.player-number {
+  display: inline-block;
+  margin-right: 8px;
+  font-weight: 600;
+  color: #555;
+}
+
+.points-column {
+  font-weight: 600;
+}
+
+.positive {
+  color: #28a745;
+}
+
+.negative {
+  color: #dc3545;
+}
+
+.sorted-asc::after {
+  content: " ↑";
+  color: #3498db;
+}
+
+.sorted-desc::after {
+  content: " ↓";
+  color: #3498db;
+}
+
+.no-data-container {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.player-stats-legend {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.legend-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.legend-item span {
+  color: #555;
+}
+
+.legend-note {
+  color: #777;
+  font-style: italic;
+}
+
+.legend-note p {
+  margin: 5px 0;
+}
+
+/* Add zebra striping for better readability */
+.player-stats-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.player-stats-table tbody tr:hover {
+  background-color: #f1f8ff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .player-stats-container {
+    padding: 15px;
   }
   
-  .stats-card {
-    background-color: #1a252f;
-    border: 1px solid #34495e;
-    border-radius: 8px;
-  }
-  
-  .stats-card .card-header {
-    background-color: #34495e;
-    color: white;
-  }
-  
-  .stats-card .list-group-item {
-    background-color: #1a252f;
-    color: white;
-    border: none;
-  }
-  
-  .player-stats-table {
-    width: 100%;
-    background-color: #1a252f;
-    color: white;
-    border-collapse: collapse;
-    border: 1px solid #34495e !important; /* Slightly lighter border for contrast */
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
-  .player-stats-table th {
-    background-color: #34495e;
-    color: rgb(255, 255, 255);
-    font-weight: bold;
-    text-align: center;
-    
-  }
-  
+  .player-stats-table th,
   .player-stats-table td {
-    background-color: #1a252f;
-    text-align: center;
-    color: rgb(255, 255, 255);
-  }
-
-  .player-stats-table tbody tr:hover {
-    background-color: #3a4e65;
+    padding: 8px 10px;
+    font-size: 13px;
   }
   
-  .player-stats-table tfoot th {
-    background-color: #2c3e50;
-    font-weight: bold;
-  }
-
-  p {
-    color: white;
+  .player-name {
+    min-width: 150px;
   }
   
-  .profile-picture {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 10px;
+  .legend-item {
+    flex-direction: column;
+    gap: 5px;
   }
-  
-  .team-logo, .small-team-logo {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  
-  .form-select {
-    background-color: #1a252f;
-    color: white;
-    border: 1px solid #34495e;
-  }
-  
-  .form-select:focus {
-    box-shadow: none;
-    border-color: #5a80a7;
-  }
-  
-  .stat-total {
-    float: right;
-  }
-  
-  .small-team-logo {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: inline-block;
-  }
-  
+}
