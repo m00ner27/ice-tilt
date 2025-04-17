@@ -11,7 +11,11 @@
       No matches played yet.
     </div>
     
-    <div *ngFor="let match of matches" class="match-card" [ngClass]="{'win': didTeamWin(match), 'loss': !didTeamWin(match)}">
+    <div *ngFor="let match of matches" 
+         class="match-card" 
+         [ngClass]="{'win': didTeamWin(match), 'loss': !didTeamWin(match)}"
+         (click)="navigateToMatchDetail(match)"
+         [attr.aria-label]="'View details for match against ' + getOpponent(match)">
       <div class="match-date">{{ formatDate(match.date) }}</div>
       <div class="match-details">
         <div class="opponent">
@@ -20,6 +24,7 @@
         <div class="score">{{ getScoreDisplay(match) }}</div>
         <div class="location-badge">{{ getLocationLabel(match) }}</div>
       </div>
+      <div class="view-details">View details</div>
     </div>
   </div>
 </div> 

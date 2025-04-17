@@ -11,6 +11,7 @@ import { LoginComponent } from './login/login.component';
 import { TestComponent } from './test-component/test-component';
 import { ClubListComponent } from './club-list/club-list.component';
 import { ClubDetailComponent } from './club-detail/club-detail.component';
+import { MatchDetailComponent } from './match-detail/match-detail.component';
 
 // Admin Panel Components
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
@@ -35,6 +36,7 @@ export const routes: Routes = [
   { path: 'manager-view', component: ManagerViewComponent },
   { path: 'clubs', component: ClubListComponent },
   { path: 'clubs/:id', component: ClubDetailComponent },
+  { path: 'match/:id', component: MatchDetailComponent },
   { path: 'edit-profile', component: EditProfileComponent },
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },

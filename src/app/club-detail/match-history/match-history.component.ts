@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Match } from '../../services/match.service';
 
 @Component({
@@ -17,7 +18,7 @@ export class MatchHistoryComponent implements OnInit {
   wins: number = 0;
   losses: number = 0;
   
-  constructor() { }
+  constructor(private router: Router) { }
   
   ngOnInit(): void {
     this.calculateRecord();
@@ -37,6 +38,16 @@ export class MatchHistoryComponent implements OnInit {
       } else {
         this.losses++;
       }
+    });
+  }
+  
+  // Navigate to match detail page
+  navigateToMatchDetail(match: Match): void {
+    this.router.navigate(['/match', match.id], { 
+      state: { 
+        match: match,
+        teamName: this.teamName
+      } 
     });
   }
   
