@@ -6,6 +6,7 @@ interface PlayerStats {
   playerId: number;
   name: string;
   team: string;
+  teamLogo?: string;
   number: number;
   position: string;
   gamesPlayed: number;
@@ -70,6 +71,7 @@ export class PlayerStatsComponent implements OnInit {
             playerId: playerStat.playerId,
             name: playerStat.name,
             team: playerStat.team,
+            teamLogo: this.getTeamLogo(playerStat.team),
             number: playerStat.number,
             position: playerStat.position,
             gamesPlayed: 0,
@@ -160,5 +162,55 @@ export class PlayerStatsComponent implements OnInit {
     }
     
     return this.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc';
+  }
+  
+  // Helper method to get team logo path
+  getTeamLogo(teamName: string): string {
+    // Based on actual team names from the mock data:
+    // - "Boats"
+    // - "Ragin Cajuns"
+    // - "Mutts"
+    // - "Roosters" (should be Iserlohn Roosters)
+    // - "Lights Out"
+    
+    // Map actual team names to logo files
+    const teamLogoMap: { [key: string]: string } = {
+      'Roosters': 'square-iserlohnroosters.png',
+      'Iserlohn Roosters': 'square-iserlohnroosters.png',
+      'Boats': 'square-boats.png',
+      'Blueline': 'square-blueline.png',
+      'Glorified Crew': 'square-glorifiedcrew.png',
+      'Lights Out': 'square-lightsout.png',
+      'Mutts': 'square-mutts.png',
+      'Ragin Cajuns': 'square-ragincajuns.png',
+      'York City Kings': 'square-yorkcitykings.png'
+    };
+    
+    // Try exact match first (case sensitive)
+    if (teamLogoMap[teamName]) {
+      return `assets/images/${teamLogoMap[teamName]}`;
+    }
+    
+    // Try case-insensitive match
+    const lowerCaseTeamName = teamName.toLowerCase();
+    for (const [key, value] of Object.entries(teamLogoMap)) {
+      if (key.toLowerCase() === lowerCaseTeamName) {
+        return `assets/images/${value}`;
+      }
+    }
+    
+    // Try partial match (for teams that might have shortened names in the data)
+    for (const [key, value] of Object.entries(teamLogoMap)) {
+      if (lowerCaseTeamName.includes(key.toLowerCase()) || 
+          key.toLowerCase().includes(lowerCaseTeamName)) {
+        return `assets/images/${value}`;
+      }
+    }
+    
+    // Log team name that couldn't be matched for debugging
+    console.log(`No logo match found for team: ${teamName}`);
+    
+    // Return default image as fallback
+    return 'assets/images/1ithlwords.png';
   }
 }

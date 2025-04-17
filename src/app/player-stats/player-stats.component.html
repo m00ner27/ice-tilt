@@ -27,7 +27,12 @@
             <span class="player-number">#{{ player.number }}</span>
             {{ player.name }}
           </td>
-          <td>{{ player.team }}</td>
+          <td class="team-cell">
+            <div class="team-info">
+              <img class="team-logo" [src]="player.teamLogo" [alt]="player.team + ' logo'" />
+              <span>{{ player.team }}</span>
+            </div>
+          </td>
           <td>{{ player.position }}</td>
           <td>{{ player.gamesPlayed }}</td>
           <td>{{ player.goals }}</td>

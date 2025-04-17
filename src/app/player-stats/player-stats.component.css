@@ -66,6 +66,24 @@
   color: #555;
 }
 
+.team-cell {
+  text-align: left;
+  min-width: 120px;
+}
+
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-logo {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
 .points-column {
   font-weight: 600;
 }
@@ -147,6 +165,19 @@
   
   .player-name {
     min-width: 150px;
+  }
+
+  .team-cell {
+    min-width: 100px;
+  }
+  
+  .team-logo {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .team-info {
+    gap: 4px;
   }
   
   .legend-item {
