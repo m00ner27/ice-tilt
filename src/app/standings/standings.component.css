@@ -2,55 +2,63 @@
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  color: white;
 }
 
 .standings-title {
-  color: #333;
+  text-align: center;
   margin-bottom: 20px;
-  font-size: 24px;
-  font-weight: 600;
+  color: white;
 }
 
+/* Loading State */
 .loading-container {
   text-align: center;
-  padding: 20px;
-  color: #666;
+  padding: 30px;
+  color: white;
 }
 
+/* Table Styles */
 .standings-table-container {
+  width: 100%;
   overflow-x: auto;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
 }
 
 .standings-table {
   width: 100%;
+  background-color: #1a252f;
+  color: white;
   border-collapse: collapse;
-  font-size: 14px;
-  background-color: white;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
 }
 
 .standings-table th {
-  background-color: #2c3e50;
+  background-color: #34495e;
   color: white;
   padding: 12px 15px;
+  font-weight: bold;
   text-align: center;
-  font-weight: 600;
-  border-bottom: 2px solid #1a2a3a;
   cursor: pointer;
+  position: relative;
   transition: background-color 0.2s;
   white-space: nowrap;
 }
 
 .standings-table th:hover {
-  background-color: #34495e;
+  background-color: #2c3e50;
 }
 
 .standings-table td {
   padding: 10px 15px;
   text-align: center;
-  border-bottom: 1px solid #eee;
+  border-top: 1px solid #34495e;
+}
+
+.standings-table tbody tr:hover {
+  background-color: #2c3e50;
 }
 
 .team-name-cell {
@@ -68,7 +76,8 @@
   width: 30px;
   height: 30px;
   object-fit: contain;
-  border-radius: 3px;
+  border-radius: 50%;
+  margin-right: 10px;
 }
 
 .team-name {
@@ -80,37 +89,43 @@
 }
 
 .positive {
-  color: #28a745;
+  color: #4caf50;
 }
 
 .negative {
-  color: #dc3545;
+  color: #f44336;
 }
 
+/* Styling for sortable columns */
 .sorted-asc::after {
-  content: " ↑";
-  color: #3498db;
+  content: '▲';
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.8em;
 }
 
 .sorted-desc::after {
-  content: " ↓";
-  color: #3498db;
+  content: '▼';
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.8em;
 }
 
+/* No data message */
 .no-data-container {
   text-align: center;
-  padding: 20px;
-  color: #666;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+  padding: 30px;
+  color: white;
 }
 
+/* Legend styles */
 .standings-legend {
-  margin-top: 20px;
+  margin-top: 30px;
   padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  font-size: 13px;
+  background-color: #1a252f;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  color: white;
 }
 
 .legend-item {
@@ -121,12 +136,13 @@
 }
 
 .legend-item span {
-  color: #555;
+  display: inline-block;
 }
 
 .legend-note {
-  color: #777;
-  font-style: italic;
+  margin-top: 10px;
+  font-size: 0.9em;
+  opacity: 0.8;
 }
 
 .legend-note p {
@@ -135,14 +151,10 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .standings-container {
-    padding: 15px;
-  }
-  
   .standings-table th,
   .standings-table td {
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: 0.9em;
   }
   
   .team-logo {
