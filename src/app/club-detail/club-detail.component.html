@@ -1,0 +1,83 @@
+<div class="club-detail-container" *ngIf="club">
+  <button class="back-button" routerLink="/clubs">← Back to Clubs</button>
+  
+  <div class="club-header" [style.border-color]="club.colour">
+    <img [src]="club.image" [alt]="club.clubName" class="club-logo">
+    <h1>{{club.clubName}}</h1>
+    <p class="manager">Manager: {{club.manager}}</p>
+  </div>
+</div>
+
+<div class="loading" *ngIf="!club">
+  Loading club details...
+</div>
+
+<div class="club-detail-container" *ngIf="club">
+  <!-- Roster Section -->
+  <div class="roster-section">
+    <h3>Team Roster</h3>
+    
+    <!-- Skaters Table -->
+    <h4>Skaters</h4>
+    <table class="roster-table skaters-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Position</th>
+          <th>GP</th>
+          <th>G</th>
+          <th>A</th>
+          <th>PTS</th>
+          <th>+/-</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let skater of skaterStats">
+          <td>{{ skater.number }}</td>
+          <td>{{ skater.name }}</td>
+          <td>{{ skater.position }}</td>
+          <td>{{ skater.gamesPlayed }}</td>
+          <td>{{ skater.goals }}</td>
+          <td>{{ skater.assists }}</td>
+          <td>{{ skater.points }}</td>
+          <td>{{ skater.plusMinus > 0 ? '+' + skater.plusMinus : skater.plusMinus }}</td>
+        </tr>
+        <tr *ngIf="skaterStats.length === 0">
+          <td colspan="8" class="no-data">No skater statistics available</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <!-- Goalies Table -->
+    <h4>Goalies</h4>
+    <table class="roster-table goalies-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>GP</th>
+          <th>SV%</th>
+          <th>GAA</th>
+          <th>SO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let goalie of goalieStats">
+          <td>{{ goalie.number }}</td>
+          <td>{{ goalie.name }}</td>
+          <td>{{ goalie.gamesPlayed }}</td>
+          <td>{{ goalie.savePercentage | number:'1.3-3' }}</td>
+          <td>{{ goalie.goalsAgainstAverage | number:'1.2-2' }}</td>
+          <td>{{ goalie.shutouts }}</td>
+        </tr>
+        <tr *ngIf="goalieStats.length === 0">
+          <td colspan="6" class="no-data">No goalie statistics available</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Match History Component -->
+  <app-match-history [matches]="matches" [teamName]="club.clubName"></app-match-history>
+</div>

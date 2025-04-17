@@ -1,0 +1,110 @@
+.match-history-container {
+  margin-top: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.match-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.match-history-header h3 {
+  color: #333;
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.record-badge {
+  background-color: #f8f9fa;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.wins {
+  color: #28a745;
+}
+
+.losses {
+  color: #dc3545;
+}
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.match-card {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 5px solid;
+  background-color: #f8f9fa;
+  transition: transform 0.2s ease;
+}
+
+.match-card:hover {
+  transform: translateY(-2px);
+}
+
+.match-card.win {
+  border-left-color: #28a745;
+}
+
+.match-card.loss {
+  border-left-color: #dc3545;
+}
+
+.match-date {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+
+.match-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.opponent {
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.vs {
+  color: #666;
+  font-weight: normal;
+  font-size: 0.9em;
+  margin-right: 5px;
+}
+
+.score {
+  font-weight: 700;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.location-badge {
+  background-color: #e9ecef;
+  color: #495057;
+  font-size: 0.8em;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.no-matches {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+} 

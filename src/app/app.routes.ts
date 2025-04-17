@@ -6,11 +6,11 @@ import { FreeAgentsComponent } from './free-agents/free-agents.component';
 import { PlayerStatsComponent } from './player-stats/player-stats.component';
 import { GoalieStatsComponent } from './goalie-stats/goalie-stats.component';
 import { ManagerViewComponent } from './manager-view/manager-view.component';
-import { ClubComponent } from './club/club.component';
 import { EditProfileComponent } from './edit-profile/edit-profile.component';
 import { LoginComponent } from './login/login.component';
 import { TestComponent } from './test-component/test-component';
 import { ClubListComponent } from './club-list/club-list.component';
+import { ClubDetailComponent } from './club-detail/club-detail.component';
 
 // Admin Panel Components
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
@@ -24,7 +24,6 @@ import { AdminManageUsersComponent } from './admin-manage-users/admin-manage-use
 import { AdminManageUsers2Component } from './admin-manage-users-2/admin-manage-users-2.component';
 import { RealDataComponent } from './real-data/real-data.component';
 
-
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },
@@ -34,8 +33,8 @@ export const routes: Routes = [
   { path: 'player-stats', component: PlayerStatsComponent },
   { path: 'goalie-stats', component: GoalieStatsComponent },
   { path: 'manager-view', component: ManagerViewComponent },
-  { path: 'club', component: ClubComponent },
   { path: 'clubs', component: ClubListComponent },
+  { path: 'clubs/:id', component: ClubDetailComponent },
   { path: 'edit-profile', component: EditProfileComponent },
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },

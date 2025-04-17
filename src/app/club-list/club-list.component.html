@@ -14,7 +14,11 @@
 
   <!-- Club cards -->
   <div class="clubs">
-    <div *ngFor="let club of filteredClubs" class="club-card" [style.border-color]="club.colour">
+    <div *ngFor="let club of filteredClubs" 
+         class="club-card" 
+         [style.border-color]="club.colour"
+         [routerLink]="['/clubs', club.clubName]"
+         style="cursor: pointer;">
       <div class="club-content">
         <img 
           [src]="club.image" 
