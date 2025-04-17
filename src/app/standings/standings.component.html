@@ -1,139 +1,70 @@
-<section class="standings-section mt-4">
-    <div class="container">
-        <!-- Sorting Tab for Seasons -->
-        <div class="season-sort mb-3 text-end">
-            <select id="season-select" class="form-select d-inline-block w-auto">
-                <option value="S19">NA Season 19</option>
-                <option value="S20">NA Season 18</option>
-                <option value="S20">EU Season 7</option>
-            </select>
-        </div>
-
-        <!-- Division Header Section -->
-        <div class="division-header text-center mb-4">
-            <img src="assets/images/DIVELITE.png" alt="Elite Division Logo" class="division-logo">
-        </div>
-
-        <!-- Standings Table -->
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover standings-table">
-                <thead class="table-dark">
-                    <tr>
-                        <th>POS</th>
-                        <th class="text-start">CLUB</th>
-                        <th>GP</th>
-                        <th>W</th>
-                        <th>L</th>
-                        <th>OTL</th>
-                        <th>PTS</th>
-                        <th>GF</th>
-                        <th>GA</th>
-                        <th>DIFF</th>
-                        <th>L10</th>
-                        <th>STRK</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td class="club-cell">
-                            <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo me-2">
-                            Boats
-                        </td>
-                        <td>12</td>
-                        <td>12</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>24</td>
-                        <td>100</td>
-                        <td>1</td>
-                        <td>99</td>
-                        <td>10-0-0</td>
-                        <td>W10</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td class="club-cell">
-                            <img src="assets/images/square-yorkcitykings.png" alt="York City Kings Logo" class="team-logo me-2">
-                            York City Kings
-                        </td>
-                        <td>12</td>
-                        <td>12</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>24</td>
-                        <td>100</td>
-                        <td>1</td>
-                        <td>99</td>
-                        <td>10-0-0</td>
-                        <td>W10</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-<!-- Division Header Section -->
-<div class="division-header text-center mb-4">
-    <img src="assets/images/DIVSWEAT.png" alt="Sweat Division Logo" class="division-logo">
-</div>
-
-<!-- Standings Table -->
-<div class="table-responsive">
-    <table class="table table-bordered table-hover standings-table">
-        <thead class="table-dark">
-            <tr>
-                <th>POS</th>
-                <th class="text-start">CLUB</th>
-                <th>GP</th>
-                <th>W</th>
-                <th>L</th>
-                <th>OTL</th>
-                <th>PTS</th>
-                <th>GF</th>
-                <th>GA</th>
-                <th>DIFF</th>
-                <th>L10</th>
-                <th>STRK</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1</td>
-                <td class="club-cell">
-                    <img src="assets/images/square-mutts.png" alt="Mutts Logo" class="team-logo me-2">
-                    Mutts
-                </td>
-                <td>12</td>
-                <td>12</td>
-                <td>0</td>
-                <td>0</td>
-                <td>24</td>
-                <td>100</td>
-                <td>1</td>
-                <td>99</td>
-                <td>10-0-0</td>
-                <td>W10</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td class="club-cell">
-                    <img src="assets/images/square-blueline.png" alt="York City Kings Logo" class="team-logo me-2">
-                    Blue Line Snipers
-                </td>
-                <td>12</td>
-                <td>12</td>
-                <td>0</td>
-                <td>0</td>
-                <td>24</td>
-                <td>100</td>
-                <td>1</td>
-                <td>99</td>
-                <td>10-0-0</td>
-                <td>W10</td>
-            </tr>
-        </tbody>
+<div class="standings-container">
+  <h1 class="standings-title">League Standings</h1>
+  
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading standings...</p>
+  </div>
+  
+  <!-- Standings table -->
+  <div *ngIf="!isLoading" class="standings-table-container">
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')">Team</th>
+          <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
+          <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')">W</th>
+          <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')">L</th>
+          <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
+          <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')">GF</th>
+          <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')">GA</th>
+          <th (click)="onSortColumn('goalDifferential')" [ngClass]="getColumnSortClass('goalDifferential')">DIFF</th>
+          <th (click)="onSortColumn('winPercentage')" [ngClass]="getColumnSortClass('winPercentage')">WIN%</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let team of standings">
+          <td class="team-name-cell">
+            <div class="team-info">
+              <img class="team-logo" [src]="team.logo" [alt]="team.teamName + ' logo'" />
+              <span class="team-name">{{ team.teamName }}</span>
+            </div>
+          </td>
+          <td>{{ team.gamesPlayed }}</td>
+          <td>{{ team.wins }}</td>
+          <td>{{ team.losses }}</td>
+          <td class="points-column">{{ team.points }}</td>
+          <td>{{ team.goalsFor }}</td>
+          <td>{{ team.goalsAgainst }}</td>
+          <td [ngClass]="{'positive': team.goalDifferential > 0, 'negative': team.goalDifferential < 0}">
+            {{ team.goalDifferential > 0 ? '+' + team.goalDifferential : team.goalDifferential }}
+          </td>
+          <td>{{ team.winPercentage | percent:'1.0-3' }}</td>
+        </tr>
+      </tbody>
     </table>
-</div>
-        
+  </div>
+  
+  <!-- No standings data message -->
+  <div *ngIf="!isLoading && standings.length === 0" class="no-data-container">
+    <p>No standings data available.</p>
+  </div>
+  
+  <!-- Legend -->
+  <div class="standings-legend">
+    <div class="legend-item">
+      <span>GP: Games Played</span>
+      <span>W: Wins</span>
+      <span>L: Losses</span>
+      <span>PTS: Points</span>
+      <span>GF: Goals For</span>
+      <span>GA: Goals Against</span>
+      <span>DIFF: Goal Differential</span>
+      <span>WIN%: Win Percentage</span>
     </div>
-</section>
+    <div class="legend-note">
+      <p>* Click on column headers to sort</p>
+      <p>* 2 points are awarded for a win, 0 for a loss</p>
+    </div>
+  </div>
+</div> 

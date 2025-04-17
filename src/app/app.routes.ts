@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { ScheduleComponent } from './schedule/schedule.component';
-import { StandingsComponent } from './standings/standings.component';
 import { FreeAgentsComponent } from './free-agents/free-agents.component';
 import { PlayerStatsComponent } from './player-stats/player-stats.component';
 import { GoalieStatsComponent } from './goalie-stats/goalie-stats.component';
@@ -12,6 +11,7 @@ import { TestComponent } from './test-component/test-component';
 import { ClubListComponent } from './club-list/club-list.component';
 import { ClubDetailComponent } from './club-detail/club-detail.component';
 import { MatchDetailComponent } from './match-detail/match-detail.component';
+import { StandingsComponent } from './standings/standings.component';
 
 // Admin Panel Components
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
@@ -29,7 +29,6 @@ export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },
   { path: 'schedule', component: ScheduleComponent },
-  { path: 'standings', component: StandingsComponent },
   { path: 'free-agents', component: FreeAgentsComponent },
   { path: 'player-stats', component: PlayerStatsComponent },
   { path: 'goalie-stats', component: GoalieStatsComponent },
@@ -37,6 +36,7 @@ export const routes: Routes = [
   { path: 'clubs', component: ClubListComponent },
   { path: 'clubs/:id', component: ClubDetailComponent },
   { path: 'match/:id', component: MatchDetailComponent },
+  { path: 'standings', component: StandingsComponent },
   { path: 'edit-profile', component: EditProfileComponent },
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },
