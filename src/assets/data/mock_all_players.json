@@ -1,0 +1,259 @@
+{
+  "players": [
+    {
+      "id": "fa1",
+      "name": "John Smith",
+      "number": "91",
+      "position": "Forward",
+      "status": "Free Agent",
+      "handedness": "Right",
+      "country": "Canada",
+      "psnId": "JSmith91",
+      "xboxGamertag": null
+    },
+    {
+      "id": "fa2",
+      "name": "Mike Johnson",
+      "number": "44",
+      "position": "Defense",
+      "status": "Free Agent",
+      "handedness": "Left",
+      "country": "USA",
+      "psnId": null,
+      "xboxGamertag": "MikeD44"
+    },
+    {
+      "id": "fa3",
+      "name": "Steve Wilson",
+      "number": "30",
+      "position": "Goalie",
+      "status": "Free Agent",
+      "handedness": "Left",
+      "country": "Sweden",
+      "psnId": "WilsonGoalie30",
+      "xboxGamertag": null
+    },
+    {
+      "id": "fa4",
+      "name": "Alex Thompson",
+      "number": "88",
+      "position": "Forward",
+      "status": "Free Agent",
+      "handedness": "Right",
+      "country": "USA",
+      "psnId": null,
+      "xboxGamertag": "ThompsonSnipes"
+    },
+    {
+      "id": "fa5",
+      "name": "Erik Andersson",
+      "number": "77",
+      "position": "Defense",
+      "status": "Free Agent",
+      "handedness": "Left",
+      "country": "Sweden",
+      "psnId": "ErikTheWall",
+      "xboxGamertag": null
+    },
+    {
+      "id": "101",
+      "name": "John Smith",
+      "number": "91",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "Canada",
+      "currentClubName": "Boats"
+    },
+    {
+      "id": "102",
+      "name": "Mike Wilson",
+      "number": "13",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "Canada",
+      "currentClubName": "Boats"
+    },
+    {
+      "id": "103",
+      "name": "Steve Davis",
+      "number": "30",
+      "position": "Goalie",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "Canada",
+      "currentClubName": "Boats"
+    },
+    {
+      "id": "104",
+      "name": "Dave Brown",
+      "number": "44",
+      "position": "Defense",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "Canada",
+      "currentClubName": "Boats"
+    },
+    {
+      "id": "201",
+      "name": "Tom Wilson",
+      "number": "88",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "Canada",
+      "currentClubName": "Roosters"
+    },
+    {
+      "id": "202",
+      "name": "James Lee",
+      "number": "19",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "USA",
+      "currentClubName": "Roosters"
+    },
+    {
+      "id": "203",
+      "name": "Rob Johnson",
+      "number": "5",
+      "position": "Defense",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "Canada",
+      "currentClubName": "Roosters"
+    },
+    {
+      "id": "204",
+      "name": "Mark Thompson",
+      "number": "1",
+      "position": "Goalie",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "USA",
+      "currentClubName": "Roosters"
+    },
+    {
+      "id": "301",
+      "name": "Alex Carter",
+      "number": "71",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "Canada",
+      "currentClubName": "Mutts"
+    },
+    {
+      "id": "302",
+      "name": "Chris Martin",
+      "number": "23",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "USA",
+      "currentClubName": "Mutts"
+    },
+    {
+      "id": "303",
+      "name": "Paul White",
+      "number": "3",
+      "position": "Defense",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "Canada",
+      "currentClubName": "Mutts"
+    },
+    {
+      "id": "304",
+      "name": "Kevin Black",
+      "number": "35",
+      "position": "Goalie",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "USA",
+      "currentClubName": "Mutts"
+    },
+    {
+      "id": "401",
+      "name": "Ryan Miller",
+      "number": "97",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "USA",
+      "currentClubName": "Lights Out"
+    },
+    {
+      "id": "402",
+      "name": "Eric Jones",
+      "number": "15",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "Canada",
+      "currentClubName": "Lights Out"
+    },
+    {
+      "id": "403",
+      "name": "Scott Taylor",
+      "number": "4",
+      "position": "Defense",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "USA",
+      "currentClubName": "Lights Out"
+    },
+    {
+      "id": "404",
+      "name": "Dan Anderson",
+      "number": "31",
+      "position": "Goalie",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "Canada",
+      "currentClubName": "Lights Out"
+    },
+    {
+      "id": "501",
+      "name": "Luke Adams",
+      "number": "89",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "Canada",
+      "currentClubName": "Ragin Cajuns"
+    },
+    {
+      "id": "502",
+      "name": "Matt Baker",
+      "number": "17",
+      "position": "Forward",
+      "status": "Signed",
+      "handedness": "Right",
+      "country": "USA",
+      "currentClubName": "Ragin Cajuns"
+    },
+    {
+      "id": "503",
+      "name": "Nick Cooper",
+      "number": "2",
+      "position": "Defense",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "Canada",
+      "currentClubName": "Ragin Cajuns"
+    },
+    {
+      "id": "504",
+      "name": "Josh Edwards",
+      "number": "33",
+      "position": "Goalie",
+      "status": "Signed",
+      "handedness": "Left",
+      "country": "USA",
+      "currentClubName": "Ragin Cajuns"
+    }
+  ]
+} 

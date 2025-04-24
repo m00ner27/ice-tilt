@@ -1,0 +1,43 @@
+{
+  "playerStats": [
+    {
+      "playerId": "fa1",
+      "gamesPlayed": 25,
+      "goals": 15,
+      "assists": 20,
+      "points": 35,
+      "plusMinus": 12
+    },
+    {
+      "playerId": "fa2",
+      "gamesPlayed": 30,
+      "goals": 5,
+      "assists": 15,
+      "points": 20,
+      "plusMinus": 8
+    },
+    {
+      "playerId": "fa3",
+      "gamesPlayed": 20,
+      "savePercentage": 0.925,
+      "goalsAgainstAverage": 2.15,
+      "shutouts": 3
+    },
+    {
+      "playerId": "fa4",
+      "gamesPlayed": 18,
+      "goals": 12,
+      "assists": 10,
+      "points": 22,
+      "plusMinus": 5
+    },
+    {
+      "playerId": "fa5",
+      "gamesPlayed": 28,
+      "goals": 3,
+      "assists": 18,
+      "points": 21,
+      "plusMinus": 15
+    }
+  ]
+} 

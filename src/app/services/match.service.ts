@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map } from 'rxjs';
 
 export interface PlayerMatchStats {
   playerId: number;
@@ -24,6 +24,8 @@ export interface Match {
   awayTeam: string;
   homeScore: number;
   awayScore: number;
+  isOvertime?: boolean;
+  isShootout?: boolean;
   playerStats: PlayerMatchStats[];
 }
 
@@ -35,21 +37,19 @@ export class MatchService {
   constructor(private http: HttpClient) { }
   
   getMatches(): Observable<Match[]> {
-    return this.http.get<Match[]>('assets/data/mock_matches.json');
+    return this.http.get<Match[]>('assets/data/mock_matches.json').pipe(
+      catchError(error => {
+        console.error('Error loading matches:', error);
+        return [];
+      })
+    );
   }
   
   getMatchesByTeam(teamName: string): Observable<Match[]> {
-    return new Observable(observer => {
-      this.getMatches().subscribe(
-        matches => {
-          const teamMatches = matches.filter(match => 
-            match.homeTeam === teamName || match.awayTeam === teamName
-          );
-          observer.next(teamMatches);
-          observer.complete();
-        },
-        error => observer.error(error)
-      );
-    });
+    return this.getMatches().pipe(
+      map(matches => matches.filter(match => 
+        match.homeTeam === teamName || match.awayTeam === teamName
+      ))
+    );
   }
 } 

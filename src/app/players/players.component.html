@@ -1,0 +1,97 @@
+<section class="players-section mt-4">
+  <div class="container">
+    <h2 class="text-center mb-4">Players Directory</h2>
+    
+    <!-- Error message -->
+    <div *ngIf="error" class="alert alert-danger">
+      {{ error }}
+    </div>
+
+    <div class="players-container">
+      <!-- Filters -->
+      <div class="filters">
+        <div class="search-box">
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange($event)"
+            placeholder="Search by name or gamertag..."
+            class="search-input"
+          >
+        </div>
+
+        <div class="filter-buttons">
+          <!-- Status Filters -->
+          <div class="status-filters">
+            <button 
+              [class.active]="statusFilter === 'All'"
+              (click)="onStatusFilterChange('All')"
+            >All</button>
+            <button 
+              [class.active]="statusFilter === 'Free Agent'"
+              (click)="onStatusFilterChange('Free Agent')"
+            >Free Agents</button>
+            <button 
+              [class.active]="statusFilter === 'Signed'"
+              (click)="onStatusFilterChange('Signed')"
+            >Signed</button>
+            <button 
+              [class.active]="statusFilter === 'Pending'"
+              (click)="onStatusFilterChange('Pending')"
+            >Pending</button>
+          </div>
+
+          <!-- Position Filters -->
+          <div class="position-filters">
+            <button 
+              [class.active]="positionFilter === 'All'"
+              (click)="onPositionFilterChange('All')"
+            >All Positions</button>
+            <button 
+              [class.active]="positionFilter === 'Forward'"
+              (click)="onPositionFilterChange('Forward')"
+            >Forwards</button>
+            <button 
+              [class.active]="positionFilter === 'Defense'"
+              (click)="onPositionFilterChange('Defense')"
+            >Defense</button>
+            <button 
+              [class.active]="positionFilter === 'Goalie'"
+              (click)="onPositionFilterChange('Goalie')"
+            >Goalies</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Players List -->
+      <div class="players-list">
+        <div class="player-card" *ngFor="let player of filteredPlayers">
+          <div class="player-info">
+            <h3>{{player.name}} #{{player.number}}</h3>
+            <p class="position">{{player.position}}</p>
+            <p class="status" [ngClass]="player.status.toLowerCase().replace(' ', '-')">{{player.status}}</p>
+            <p class="details">
+              <span *ngIf="player.country">{{player.country}} • </span>
+              <span>{{player.handedness}} Shot</span>
+            </p>
+            <p class="gaming-ids">
+              <span *ngIf="player.psnId">PSN: {{player.psnId}}</span>
+              <span *ngIf="player.xboxGamertag">Xbox: {{player.xboxGamertag}}</span>
+            </p>
+            <p *ngIf="player.currentClubName" class="club">
+              Current Club: {{player.currentClubName}}
+            </p>
+          </div>
+          <div class="action-buttons">
+            <a [routerLink]="['/players', player.id]" class="view-profile">View Profile</a>
+          </div>
+        </div>
+
+        <!-- No results message -->
+        <div class="no-results" *ngIf="filteredPlayers.length === 0">
+          No players found matching your criteria
+        </div>
+      </div>
+    </div>
+  </div>
+</section> 

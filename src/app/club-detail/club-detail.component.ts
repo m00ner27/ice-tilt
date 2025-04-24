@@ -5,28 +5,16 @@ import { HttpClient } from '@angular/common/http';
 import { MatchService, Match, PlayerMatchStats } from '../services/match.service';
 import { forkJoin } from 'rxjs';
 import { MatchHistoryComponent } from './match-history/match-history.component';
+import { Club, ClubStats } from '../models/club.interface';
+import { Player } from '../models/player.interface';
+import { PlayerStats } from '../models/player-stats.interface';
 
-// Interface for player data
-interface Player {
-  name: string;
-  number: string;
-  position: string;
-}
-
-// Updated club interface to include roster
-interface Club {
-  clubName: string;
-  image: string;
-  manager: string;
-  colour: string;
-  roster: Player[];
-}
-
+// Keep only the ClubData interface for API response
 interface ClubData {
   clubs: Club[];
 }
 
-// Interfaces for player statistics
+// Keep these stats interfaces as they're specific to this component
 interface SkaterStats {
   playerId: number;
   name: string;
@@ -49,6 +37,60 @@ interface GoalieStats {
   shutouts: number;
 }
 
+// Update the stats interface to include more detailed statistics
+interface CalculatedClubStats {
+  wins: number;
+  losses: number;
+  otLosses: number;
+  points: number;
+  gamesPlayed: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  winPercentage: number;
+  goalDifferential: number;
+  streakCount: number;
+  streakType: 'W' | 'L' | 'OTL' | '-';
+  lastTen: Array<'W' | 'L' | 'OTL'>;
+}
+
+// Example mock player data structure
+interface PlayerProfile {
+    id: string;
+    name: string;
+    position: 'Forward' | 'Defense' | 'Goalie';
+    number: string;
+    psnId?: string;
+    xboxGamertag?: string;
+    country: string;
+    handedness: 'Left' | 'Right';
+    currentClubId?: string;
+    currentClubName?: string;
+    status: 'Signed' | 'Free Agent' | 'Pending';
+    stats: PlayerStats;
+    requestHistory: SigningRequest[];
+}
+
+interface SigningRequest {
+    id: string;
+    fromClubId: string;
+    fromClubName: string;
+    toPlayerId: string;
+    status: 'Pending' | 'Accepted' | 'Rejected';
+    timestamp: Date;
+    message?: string;
+}
+
+// Example mock notification structure
+interface Notification {
+    id: string;
+    type: 'SigningRequest' | 'RequestAccepted' | 'RequestRejected';
+    fromId: string;
+    toId: string;
+    message: string;
+    timestamp: Date;
+    read: boolean;
+}
+
 @Component({
   selector: 'app-club-detail',
   standalone: true,
@@ -62,6 +104,22 @@ export class ClubDetailComponent implements OnInit {
   skaterStats: SkaterStats[] = [];
   goalieStats: GoalieStats[] = [];
   
+  // Add default stats
+  private defaultStats: CalculatedClubStats = {
+    wins: 0,
+    losses: 0,
+    otLosses: 0,
+    points: 0,
+    gamesPlayed: 0,
+    goalsFor: 0,
+    goalsAgainst: 0,
+    winPercentage: 0,
+    goalDifferential: 0,
+    streakCount: 0,
+    streakType: '-',
+    lastTen: []
+  };
+
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
@@ -76,28 +134,141 @@ export class ClubDetailComponent implements OnInit {
     });
   }
 
+  private calculateTeamStats(teamName: string, matches: Match[]): CalculatedClubStats {
+    const stats: CalculatedClubStats = {
+      wins: 0,
+      losses: 0,
+      otLosses: 0,
+      points: 0,
+      gamesPlayed: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      winPercentage: 0,
+      goalDifferential: 0,
+      streakCount: 0,
+      streakType: '-',
+      lastTen: []
+    };
+
+    // Sort matches by date to calculate streaks and last 10 games
+    const sortedMatches = [...matches].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    let currentStreak = '';
+
+    sortedMatches.forEach(match => {
+      stats.gamesPlayed++;
+      let gameResult: 'W' | 'L' | 'OTL';
+      
+      if (match.homeTeam === teamName) {
+        // Team was home
+        stats.goalsFor += match.homeScore;
+        stats.goalsAgainst += match.awayScore;
+
+        if (match.homeScore > match.awayScore) {
+          // Win
+          stats.wins++;
+          gameResult = 'W';
+        } else {
+          // Check if it was an OT/SO loss
+          if (match.isOvertime || match.isShootout) {
+            stats.otLosses++;
+            gameResult = 'OTL';
+          } else {
+            stats.losses++;
+            gameResult = 'L';
+          }
+        }
+      } else {
+        // Team was away
+        stats.goalsFor += match.awayScore;
+        stats.goalsAgainst += match.homeScore;
+
+        if (match.awayScore > match.homeScore) {
+          // Win
+          stats.wins++;
+          gameResult = 'W';
+        } else {
+          // Check if it was an OT/SO loss
+          if (match.isOvertime || match.isShootout) {
+            stats.otLosses++;
+            gameResult = 'OTL';
+          } else {
+            stats.losses++;
+            gameResult = 'L';
+          }
+        }
+      }
+
+      // Calculate streak
+      if (stats.gamesPlayed === 1) {
+        stats.streakType = gameResult;
+        stats.streakCount = 1;
+      } else if (gameResult === stats.streakType) {
+        stats.streakCount++;
+      } else if (stats.gamesPlayed === 1) {
+        stats.streakType = gameResult;
+        stats.streakCount = 1;
+      }
+
+      // Track last 10 games
+      if (stats.lastTen.length < 10) {
+        stats.lastTen.push(gameResult);
+      }
+    });
+
+    // Calculate points (2 for wins, 1 for OT losses)
+    stats.points = (stats.wins * 2) + stats.otLosses;
+
+    // Calculate win percentage (points earned out of total possible points)
+    const possiblePoints = stats.gamesPlayed * 2;
+    stats.winPercentage = possiblePoints > 0 ? (stats.points / possiblePoints) * 100 : 0;
+
+    // Calculate goal differential
+    stats.goalDifferential = stats.goalsFor - stats.goalsAgainst;
+
+    return stats;
+  }
+
   loadClubData(clubName: string) {
-    // Load the club data and match data in parallel
-    forkJoin({
-      clubData: this.http.get<ClubData>('assets/mock_club_data.json'),
-      matchData: this.matchService.getMatchesByTeam(clubName)
-    }).subscribe({
-      next: (result) => {
-        // Set club data
-        this.club = result.clubData.clubs.find(club => club.clubName === clubName);
+    // First load just the club data
+    this.http.get<ClubData>('assets/mock_club_data.json').subscribe({
+      next: (data) => {
+        this.club = data.clubs.find(club => club.clubName === clubName);
         if (!this.club) {
           console.error('Club not found:', clubName);
           return;
         }
-        
-        // Set matches data
-        this.matches = result.matchData;
-        
-        // Calculate player statistics
-        this.calculatePlayerStats(clubName);
+        // Initialize stats with defaults
+        this.club.stats = { ...this.defaultStats };
       },
       error: (error) => {
-        console.error('Error loading data:', error);
+        console.error('Error loading club data:', error);
+      }
+    });
+
+    // Load match data and calculate stats
+    this.matchService.getMatchesByTeam(clubName).subscribe({
+      next: (matchData) => {
+        this.matches = matchData;
+        
+        // Calculate actual stats from matches
+        if (this.club) {
+          const calculatedStats = this.calculateTeamStats(clubName, matchData);
+          this.club.stats = calculatedStats;
+          
+          // Calculate player statistics
+          this.calculatePlayerStats(clubName);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading match data:', error);
+        this.matches = [];
+        // Ensure we still have default stats even if match loading fails
+        if (this.club) {
+          this.club.stats = { ...this.defaultStats };
+        }
       }
     });
   }

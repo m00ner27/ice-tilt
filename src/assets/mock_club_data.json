@@ -5,6 +5,14 @@
       "image": "assets/images/square-boats.png",
       "manager": "m00ner",
       "colour": "#f57606",
+      "division": "Division 1",
+      "stats": {
+        "wins": 15,
+        "losses": 8,
+        "otLosses": 2,
+        "points": 32,
+        "gamesPlayed": 25
+      },
       "roster": [
         {
           "name": "John Smith",
@@ -33,6 +41,14 @@
       "image": "assets/images/square-iserlohnroosters.png",
       "manager": "chickenguy",
       "colour": "#1c398b",
+      "division": "Division 1",
+      "stats": {
+        "wins": 12,
+        "losses": 10,
+        "otLosses": 3,
+        "points": 27,
+        "gamesPlayed": 25
+      },
       "roster": [
         {
           "name": "Tom Wilson",

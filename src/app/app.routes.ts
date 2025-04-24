@@ -12,6 +12,8 @@ import { ClubListComponent } from './club-list/club-list.component';
 import { ClubDetailComponent } from './club-detail/club-detail.component';
 import { MatchDetailComponent } from './match-detail/match-detail.component';
 import { StandingsComponent } from './standings/standings.component';
+import { PlayersComponent } from './players/players.component';
+import { PlayerProfileComponent } from './player-profile/player-profile.component';
 
 // Admin Panel Components
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
@@ -30,6 +32,8 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'schedule', component: ScheduleComponent },
   { path: 'free-agents', component: FreeAgentsComponent },
+  { path: 'players', component: PlayersComponent },
+  { path: 'players/:id', component: PlayerProfileComponent },
   { path: 'player-stats', component: PlayerStatsComponent },
   { path: 'goalie-stats', component: GoalieStatsComponent },
   { path: 'manager-view', component: ManagerViewComponent },
