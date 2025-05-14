@@ -42,4 +42,13 @@ export class ApiService {
   addGameData(data: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/api/game-data`, data);
   }
+
+  // Player Profile Methods (New)
+  getPlayerProfiles(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/player-profiles`);
+  }
+
+  addPlayerProfile(profileData: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/api/player-profiles`, profileData);
+  }
 }
