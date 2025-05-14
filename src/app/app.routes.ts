@@ -26,6 +26,7 @@ import { AdminDeleteSeasonDivComponent } from './admin-delete-season-div/admin-d
 import { AdminManageUsersComponent } from './admin-manage-users/admin-manage-users.component';
 import { AdminManageUsers2Component } from './admin-manage-users-2/admin-manage-users-2.component';
 import { RealDataComponent } from './real-data/real-data.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -41,7 +42,7 @@ export const routes: Routes = [
   { path: 'clubs/:id', component: ClubDetailComponent },
   { path: 'match/:id', component: MatchDetailComponent },
   { path: 'standings', component: StandingsComponent },
-  { path: 'edit-profile', component: EditProfileComponent },
+  { path: 'edit-profile', component: EditProfileComponent, canActivate: [authGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },
   // Admin Panel Route with Children

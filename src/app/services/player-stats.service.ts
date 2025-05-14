@@ -28,9 +28,25 @@ export class PlayerStatsService {
       assists: 0,
       points: 0,
       plusMinus: 0,
+      pim: 0,
+      ppg: 0,
+      shg: 0,
+      gwg: 0,
+      shots: 0,
+      shotPct: 0,
+      hits: 0,
+      takeaways: 0,
+      giveaways: 0,
+      faceoffPct: 0,
+      blocked: 0,
       savePercentage: 0,
+      goalsAgainst: 0,
+      gaa: 0,
       goalsAgainstAverage: 0,
-      shutouts: 0
+      shutouts: 0,
+      wins: 0,
+      losses: 0,
+      otl: 0
     };
 
     // Filter matches where the player participated

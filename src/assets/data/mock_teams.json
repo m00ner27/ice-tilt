@@ -1,0 +1,81 @@
+{
+  "teams": [
+    {
+      "id": "team1",
+      "name": "Boats",
+      "location": "NA",
+      "region": "East",
+      "division": "Division 1",
+      "managerId": "user2",
+      "roster": [
+        {
+          "playerId": "player1",
+          "position": "Forward",
+          "number": 10,
+          "status": "Active"
+        },
+        {
+          "playerId": "player2",
+          "position": "Defense",
+          "number": 5,
+          "status": "Active"
+        }
+      ],
+      "stats": {
+        "wins": 8,
+        "losses": 2,
+        "otl": 1,
+        "points": 17,
+        "goalsFor": 45,
+        "goalsAgainst": 30
+      }
+    },
+    {
+      "id": "team2",
+      "name": "Roosters",
+      "location": "EU",
+      "region": "West",
+      "division": "Division 1",
+      "managerId": "user4",
+      "roster": [
+        {
+          "playerId": "player4",
+          "position": "Forward",
+          "number": 9,
+          "status": "Active"
+        },
+        {
+          "playerId": "player5",
+          "position": "Goalie",
+          "number": 1,
+          "status": "Active"
+        }
+      ],
+      "stats": {
+        "wins": 6,
+        "losses": 4,
+        "otl": 1,
+        "points": 13,
+        "goalsFor": 38,
+        "goalsAgainst": 35
+      }
+    },
+    {
+      "id": "team3",
+      "name": "Ragin Cajuns",
+      "location": "USA",
+      "region": "South",
+      "division": "Division 1",
+      "managerId": "user6",
+      "roster": [],
+      "stats": {
+        "wins": 0,
+        "losses": 0,
+        "otl": 0,
+        "points": 0,
+        "goalsFor": 0,
+        "goalsAgainst": 0
+      }
+    }
+  ]
+} 

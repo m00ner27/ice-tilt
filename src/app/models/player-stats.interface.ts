@@ -25,4 +25,7 @@ export interface PlayerStats {
   wins?: number;
   losses?: number;
   otl?: number;  // Overtime Losses
+
+  goalsAgainstAverage?: number;
+  playerId?: number | string;
 } 
