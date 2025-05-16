@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatchService, Match, PlayerMatchStats } from '../services/match.service';
+import { MatchService, Match, PlayerMatchStats } from '../store/services/match.service';
 
 interface GoalieStats {
   playerId: number;

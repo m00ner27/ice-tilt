@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { MatchService, Match, PlayerMatchStats } from '../services/match.service';
+import { MatchService, Match, PlayerMatchStats } from '../store/services/match.service';
 import { forkJoin } from 'rxjs';
 import { MatchHistoryComponent } from './match-history/match-history.component';
 import { Club, ClubStats } from '../models/club.interface';

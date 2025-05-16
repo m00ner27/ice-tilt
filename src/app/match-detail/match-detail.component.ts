@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
-import { Match, PlayerMatchStats, MatchService } from '../services/match.service';
+import { Match, PlayerMatchStats, MatchService } from '../store/services/match.service';
 
 interface PlayerStatDisplay {
   name: string;

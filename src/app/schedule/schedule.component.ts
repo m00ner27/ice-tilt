@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ScheduleService, Match } from '../services/schedule.service';
+import { ScheduleService, Match } from '../store/services/schedule.service';
 
 @Component({
   selector: 'app-schedule',

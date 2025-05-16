@@ -1,7 +1,0 @@
-<div *ngIf="auth.user$ | async as user" class="user-profile">
-  <h2>Welcome, {{ user.name }}!</h2>
-  <img [src]="user.picture" alt="Profile Picture" class="profile-picture" />
-  <p><strong>Nickname:</strong> {{ user.nickname }}</p>
-  <p><strong>Email:</strong> {{ user.email }}</p>
-  <p><strong>Updated At:</strong> {{ user.updated_at }}</p>
-</div>

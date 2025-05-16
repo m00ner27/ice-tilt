@@ -6,10 +6,8 @@ import { NavigationComponent } from './navigation/navigation.component';
   selector: 'app-root',
   standalone: true,
   imports: [RouterModule, RouterOutlet, NavigationComponent], // Add RouterModule here
-  template: `
-    <app-navigation></app-navigation>
-    <router-outlet></router-outlet>
-  `
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
   title = 'ice-tilt';

@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http'; // Import HttpClientModule
 import { AuthButtonComponent } from './auth-button/auth-button.component'; // Correct path
-import { UserProfileComponent } from '../user-profile/user-profile.component';
+import { UserProfileComponent } from './user-profile/user-profile.component';
 
 @Component({
   selector: 'app-navigation',

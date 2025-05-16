@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Player } from '../models/player.interface';
 import { PlayerStats } from '../models/player-stats.interface';
-import { PlayerStatsService } from '../services/player-stats.service';
+import { PlayerStatsService } from '../store/services/player-stats.service';
 
 @Component({
   selector: 'app-player-profile',

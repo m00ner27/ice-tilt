@@ -14,16 +14,19 @@
                 <li class="nav-item"><a class="nav-link" routerLink="/free-agents">Free Agents</a></li>
                 <li class="nav-item"><a class="nav-link" routerLink="/player-stats">Player Stats</a></li>
                 <li class="nav-item"><a class="nav-link" routerLink="/goalie-stats">Goalie Stats</a></li>
-                <li class="nav-item"><a class="nav-link" routerLink="/manager-view">Manager View</a></li>
                 <li class="nav-item"><a class="nav-link" routerLink="/clubs">Clubs</a></li>
-                <li class="nav-item"><a class="nav-link" routerLink="/edit-profile">Edit Profile</a></li>
             </ul>
-             
+
             <!-- Right Aligned Links -->
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><app-auth-button></app-auth-button></li>
-        <li class="nav-item"><app-user-profile></app-user-profile></li>
-      </ul>
+            <ul class="navbar-nav ms-auto">
+              <li class="nav-item d-flex align-items-center">
+                <app-auth-button></app-auth-button>
+              </li>
+              <li class="nav-item">
+                <app-user-profile></app-user-profile>
+              </li>
+            </ul>
+
         </div>
     </div>
 </nav>

@@ -6,13 +6,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-auth-button',
   standalone: true,
   imports: [CommonModule], // Allows the use of *ngIf and async pipe
-  template: `
-    <!-- Show "Log in" button if the user is not authenticated -->
-    <button *ngIf="!(auth.isAuthenticated$ | async)" (click)="login()">Log in</button>
-
-    <!-- Show "Log out" button if the user is authenticated -->
-    <button *ngIf="auth.isAuthenticated$ | async" (click)="logout()">Log out</button>
-  `,
+  templateUrl: './auth-button.component.html',
+  styleUrls: ['./auth-button.component.css'],
 })
 export class AuthButtonComponent {
   constructor(public auth: AuthService) {}

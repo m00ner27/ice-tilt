@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatchService, Match } from '../services/match.service';
+import { MatchService, Match } from '../store/services/match.service';
 
 interface TeamStanding {
   teamName: string;

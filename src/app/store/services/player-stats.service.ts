@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { MatchService, Match, PlayerMatchStats } from './match.service';
-import { PlayerStats } from '../models/player-stats.interface';
+import { PlayerStats } from '../../models/player-stats.interface';
 
 @Injectable({
   providedIn: 'root'
