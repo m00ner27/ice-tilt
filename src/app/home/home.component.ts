@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { ScheduleBarComponent } from '../schedule-bar/schedule-bar.component';
 
 interface AggregatedPlayer {
   playerId: number;
@@ -22,7 +23,7 @@ interface AggregatedPlayer {
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, RouterModule, ScheduleBarComponent]
 })
 export class HomeComponent implements OnInit {
   topGoals: AggregatedPlayer[] = [];

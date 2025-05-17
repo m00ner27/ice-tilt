@@ -49,13 +49,13 @@ export class MatchDetailComponent implements OnInit {
   }
   
   ngOnInit(): void {
-    // If we don't have the match from router state, load it using the ID from the URL
-    if (!this.match) {
-      const id = Number(this.route.snapshot.paramMap.get('id'));
-      this.loadMatch(id);
-    } else {
-      this.processMatchData();
-    }
+    // Subscribe to route param changes so we reload the match when navigating between games
+    this.route.paramMap.subscribe(params => {
+      const id = Number(params.get('id'));
+      if (!isNaN(id)) {
+        this.loadMatch(id);
+      }
+    });
   }
   
   loadMatch(id: number): void {
@@ -156,5 +156,18 @@ export class MatchDetailComponent implements OnInit {
   
   goBack(): void {
     this.location.back();
+  }
+
+  getTeamLogo(team: string): string {
+    if (!team) return 'assets/images/square-default.png';
+    const teamMap: { [key: string]: string } = {
+      'roosters': 'square-iserlohnroosters.png',
+      // Add more mappings as needed
+    };
+    const key = team.replace(/\s+/g, '').toLowerCase();
+    if (teamMap[key]) {
+      return 'assets/images/' + teamMap[key];
+    }
+    return 'assets/images/square-' + key + '.png';
   }
 } 

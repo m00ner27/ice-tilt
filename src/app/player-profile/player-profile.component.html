@@ -111,7 +111,8 @@
     <!-- Action Buttons -->
     <div class="action-buttons">
       <button routerLink="/players" class="back-button">Back to Players</button>
-      <a *ngIf="player" [routerLink]="['/edit-profile', player.id]" class="btn btn-secondary">Edit Profile</a>
+      <!-- Removed Edit Profile button -->
+      <!-- <a *ngIf="player" [routerLink]="['/edit-profile', player.id]" class="btn btn-secondary">Edit Profile</a> -->
       <!-- Add more action buttons here based on user role (e.g., GM actions) -->
     </div>
   </div>
