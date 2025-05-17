@@ -98,7 +98,16 @@
     display: inline-block;
   }
 
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
 
+@media (max-width: 991.98px) {
+  .stat-value {
+    font-size: 1.1rem;
+  }
+}
 
 /* Styles for Recent Transactions */
 .recent-transactions-section {
@@ -321,4 +330,13 @@ h2 {
 .schedule-section select.form-select option {
     background-color: #1a252f; /* Match dropdown background */
     color: #ecf0f1; /* Light text color */
+}
+
+.player-link {
+  color: #fff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.player-link:hover {
+  color: #3498db;
 }

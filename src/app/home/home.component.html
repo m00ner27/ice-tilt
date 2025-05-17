@@ -54,154 +54,74 @@
 
 <!-- Stats Leaders Section -->
 <section class="stats-leaders-section mt-4">
-    <div class="container">
-      <div class="d-flex justify-content-between align-items-center mb-4"> </div>
-      <!-- Make the cards fit the container width -->
-      <div class="row">
-        <div class="season-sort mb-3">
-            <select id="season-select" class="form-control d-inline-block w-auto">
-              <option value="S18">All Divisions</option>
-              <option value="S19">NA S19 CORE</option>
-              <option value="S20">NA S19 Rammer</option>
-              <option value="S20">EU S7</option>
-            </select>
-          </div>
-        <!-- Stat Card Template -->
-        <div class="col-12 col-md-6 col-lg-3 mb-3">
-          <div class="card stats-card">
-            <div class="card-header text-center">
-              Goals
-            </div>
-            <div class="card-body">
-              <div class="top-player text-center mb-3">
-                <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                <p><strong>Username1</strong></p>
-                <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                <p><strong>Goals: 45</strong></p>
-              </div>
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                  <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                  <span class="stat-total">38</span>
-                </li>
-                <li class="list-group-item">
-                  <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                  <span class="stat-total">36</span>
-                </li>
-                <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-              </ul>
-            </div>
+  <div class="container">
+    <div class="row">
+      <!-- Goals Top 5 -->
+      <div class="col-12 col-md-6 mb-3">
+        <div class="card stats-card">
+          <div class="card-header text-center">Goals</div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topGoals; let i = index">
+                <span class="fw-bold me-2">#{{ i + 1 }}</span>
+                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
+                <span class="ms-auto stat-value">{{ p.goals }}</span>
+              </li>
+            </ul>
           </div>
         </div>
-        <!-- Repeat Stat Cards -->
-        <div class="col-12 col-md-6 col-lg-3 mb-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Assist
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Assists: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
+      </div>
+      <!-- Assists Top 5 -->
+      <div class="col-12 col-md-6 mb-3">
+        <div class="card stats-card">
+          <div class="card-header text-center">Assists</div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topAssists; let i = index">
+                <span class="fw-bold me-2">#{{ i + 1 }}</span>
+                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
+                <span class="ms-auto stat-value">{{ p.assists }}</span>
+              </li>
+            </ul>
           </div>
-          <div class="col-12 col-md-6 col-lg-3 mb-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Points
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Points: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
+        </div>
+      </div>
+      <!-- Points Top 5 -->
+      <div class="col-12 col-md-6 mb-3">
+        <div class="card stats-card">
+          <div class="card-header text-center">Points</div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topPoints; let i = index">
+                <span class="fw-bold me-2">#{{ i + 1 }}</span>
+                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
+                <span class="ms-auto stat-value">{{ p.points }}</span>
+              </li>
+            </ul>
           </div>
-          <div class="col-12 col-md-6 col-lg-3 mb-3">
-            <div class="card stats-card">
-              <div class="card-header text-center">
-                Save %
-              </div>
-              <div class="card-body">
-                <div class="top-player text-center mb-3">
-                  <img src="assets/images/fMSRJa_q.jpeg" alt="Top Player" class="profile-picture mb-2">
-                  <p><strong>Username1</strong></p>
-                  <p><img src="assets/images/square-boats.png" alt="Team Logo" class="team-logo"></p>
-                  <p><strong>Save %: 45</strong></p>
-                </div>
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                    <img src="assets/images/square-blueline.png" alt="Team Logo" class="small-team-logo"> Player2 
-                    <span class="stat-total">38</span>
-                  </li>
-                  <li class="list-group-item">
-                    <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                    <span class="stat-total">36</span>
-                  </li>
-                  <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                    <li class="list-group-item">
-                      <img src="assets/images/square-boats.png" alt="Team Logo" class="small-team-logo"> Player3 
-                      <span class="stat-total">36</span>
-                    </li>
-                </ul>
-              </div>
-            </div>
+        </div>
+      </div>
+      <!-- Save % Top 5 (Goalies) -->
+      <div class="col-12 col-md-6 mb-3">
+        <div class="card stats-card">
+          <div class="card-header text-center">Save %</div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topSavePct; let i = index">
+                <span class="fw-bold me-2">#{{ i + 1 }}</span>
+                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
+                <span class="ms-auto stat-value">{{ p.savePercentage }}</span>
+              </li>
+            </ul>
           </div>
+        </div>
       </div>
     </div>
+  </div>
 </section>
 
 <!-- Recent Transactions Section -->
@@ -408,8 +328,6 @@
 
     <div class="home-container">
       <h2>Home with NgRx</h2>
-      <p>Counter Value: {{ counter$ | async }}</p>
-      <button (click)="increment()">Increment</button>
     </div>
   
   </div>
