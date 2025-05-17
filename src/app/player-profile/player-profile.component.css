@@ -50,17 +50,35 @@
   padding-bottom: 1rem;
 }
 
+.profile-header-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #fff;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
 .player-basic-info {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
-}
-
-h1 {
-  margin: 0;
-  font-size: 2rem;
-  color: #ffffff;
 }
 
 .player-number {
@@ -72,6 +90,7 @@ h1 {
   border-radius: 20px;
   font-weight: 500;
   font-size: 0.9rem;
+  margin-left: 0.75rem;
 }
 
 .player-status.free.agent {
@@ -183,6 +202,34 @@ h1 {
   margin-top: 0.5rem;
 }
 
+.current-team-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.current-team-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.team-logo-profile {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  margin-bottom: 0;
+}
+
+.current-team-name {
+  color: #3498db;
+  font-weight: 500;
+  font-size: 1.1em;
+}
+
 /* Action Buttons */
 .action-buttons {
   display: flex;
@@ -228,4 +275,10 @@ h1 {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 } 

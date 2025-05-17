@@ -15,10 +15,20 @@
   <div *ngIf="!loading && !error && player" class="profile-content">
     <!-- Header Section -->
     <div class="profile-header">
-      <div class="player-basic-info">
-        <h1>{{ player.name }} <span class="player-number">#{{ player.number }}</span></h1>
-        <div class="player-status" [ngClass]="player.status.toLowerCase()">
-          {{ player.status }}
+      <div class="profile-header-row">
+        <div class="header-top-row">
+          <div class="header-left">
+            <h1>{{ player.name }} <span class="player-number">#{{ player.number }}</span></h1>
+          </div>
+          <div class="header-right">
+            <div class="player-status" [ngClass]="player.status.toLowerCase()">
+              {{ player.status }}
+            </div>
+          </div>
+        </div>
+        <div *ngIf="player.currentClubName" class="current-team-inline">
+          <img [src]="getTeamLogo(player.currentClubName)" alt="{{ player.currentClubName }} Logo" class="team-logo-profile">
+          <span class="current-team-name">{{ player.currentClubName }}</span>
         </div>
       </div>
       <div class="player-details">
@@ -97,14 +107,6 @@
             <div class="stat-label">Shutouts</div>
           </div>
         </ng-container>
-      </div>
-    </div>
-
-    <!-- Team History Section (if applicable) -->
-    <div class="team-history-section" *ngIf="player.currentClubName">
-      <h2>Current Team</h2>
-      <div class="current-team">
-        {{ player.currentClubName }}
       </div>
     </div>
 
