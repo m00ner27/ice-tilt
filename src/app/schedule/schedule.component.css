@@ -104,14 +104,23 @@
 }
 
 /* Team Cell Styling */
+.team-logo-cell {
+  width: 38px;
+  min-width: 38px;
+  text-align: center;
+  vertical-align: middle;
+}
+
 .team-cell {
-  min-width: 180px;
+  min-width: 120px;
+  text-align: center;
 }
 
 .team-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
 }
 
 .team-logo {
@@ -121,15 +130,23 @@
   border-radius: 0;
 }
 
-.team-name {
+.team-link.team-name {
   font-weight: 500;
   white-space: nowrap;
+  text-decoration: none;
+  color: #fff;
+}
+
+.team-link.team-name:hover {
+  text-decoration: underline;
+  color: #3498db;
 }
 
 /* Score Cell */
 .score-cell {
   font-weight: bold;
   font-size: 1.1em;
+  min-width: 90px;
 }
 
 /* Date Cell */
@@ -168,6 +185,13 @@
   color: #f44336;
   font-weight: bold;
   font-size: 0.9em;
+}
+
+.win-indicator, .loss-indicator {
+  font-weight: bold;
+  font-size: 1em;
+  margin-right: 2px;
+  margin-left: 2px;
 }
 
 /* Action Cell */
@@ -277,4 +301,33 @@
   .team-info {
     gap: 5px;
   }
+}
+
+.wl-cell {
+  width: 32px;
+  min-width: 32px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1.1em;
+  padding: 0 4px;
+}
+
+.win-indicator {
+  color: #4caf50;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.loss-indicator {
+  color: #f44336;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-left {
+  text-align: left !important;
 }

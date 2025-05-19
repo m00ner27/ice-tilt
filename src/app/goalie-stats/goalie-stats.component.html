@@ -26,12 +26,12 @@
         <tr *ngFor="let goalie of goalieStats">
           <td class="goalie-name">
             <span class="goalie-number">#{{ goalie.number }}</span>
-            {{ goalie.name }}
+            <a [routerLink]="['/players', goalie.playerId]" class="player-link">{{ goalie.name }}</a>
           </td>
           <td class="team-cell">
             <div class="team-info">
               <img class="team-logo" [src]="goalie.teamLogo" [alt]="goalie.team + ' logo'" />
-              <span>{{ goalie.team }}</span>
+              <a [routerLink]="['/clubs', goalie.team]" class="team-link">{{ goalie.team }}</a>
             </div>
           </td>
           <td>{{ goalie.gamesPlayed }}</td>

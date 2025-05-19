@@ -25,12 +25,12 @@
         <tr *ngFor="let player of playerStats">
           <td class="player-name">
             <span class="player-number">#{{ player.number }}</span>
-            {{ player.name }}
+            <a [routerLink]="['/players', player.playerId]" class="player-link">{{ player.name }}</a>
           </td>
           <td class="team-cell">
             <div class="team-info">
               <img class="team-logo" [src]="player.teamLogo" [alt]="player.team + ' logo'" />
-              <span>{{ player.team }}</span>
+              <a [routerLink]="['/clubs', player.team]" class="team-link">{{ player.team }}</a>
             </div>
           </td>
           <td>{{ player.position }}</td>
