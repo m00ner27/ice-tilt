@@ -71,7 +71,7 @@ export class PlayerStatsService {
     // Update games played
     stats.gamesPlayed = playerMatches.length;
 
-    if (firstMatchStats.position === 'Goalie') {
+    if (['Goalie', 'G'].includes(firstMatchStats.position)) {
       // Calculate goalie stats
       let totalSaves = 0;
       let totalShotsAgainst = 0;

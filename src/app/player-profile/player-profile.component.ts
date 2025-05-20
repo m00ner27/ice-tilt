@@ -68,4 +68,17 @@ export class PlayerProfileComponent implements OnInit {
       }
     });
   }
+
+  getTeamLogo(team: string): string {
+    if (!team) return 'assets/images/square-default.png';
+    const teamMap: { [key: string]: string } = {
+      'roosters': 'square-iserlohnroosters.png',
+      // Add more mappings as needed
+    };
+    const key = team.replace(/\s+/g, '').toLowerCase();
+    if (teamMap[key]) {
+      return 'assets/images/' + teamMap[key];
+    }
+    return 'assets/images/square-' + key + '.png';
+  }
 } 

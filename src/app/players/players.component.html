@@ -80,6 +80,7 @@
             </p>
             <p *ngIf="player.currentClubName" class="club">
               Current Club: {{player.currentClubName}}
+              <img [src]="getTeamLogo(player.currentClubName)" alt="{{player.currentClubName}} Logo" class="team-logo-sm team-logo-right">
             </p>
           </div>
           <div class="action-buttons">

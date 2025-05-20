@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatchService, Match } from '../store/services/match.service';
+import { RouterModule } from '@angular/router';
 
 interface TeamStanding {
   teamName: string;
@@ -18,7 +19,7 @@ interface TeamStanding {
 @Component({
   selector: 'app-standings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './standings.component.html',
   styleUrls: ['./standings.component.css']
 })

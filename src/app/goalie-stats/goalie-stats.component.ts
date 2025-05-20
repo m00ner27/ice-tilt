@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatchService, Match, PlayerMatchStats } from '../store/services/match.service';
+import { RouterModule } from '@angular/router';
 
 interface GoalieStats {
   playerId: number;
@@ -20,7 +21,7 @@ interface GoalieStats {
 @Component({
   selector: 'app-goalie-stats',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './goalie-stats.component.html',
   styleUrl: './goalie-stats.component.css'
 })

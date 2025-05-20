@@ -27,7 +27,9 @@
           <td class="team-name-cell">
             <div class="team-info">
               <img class="team-logo" [src]="team.logo" [alt]="team.teamName + ' logo'" />
-              <span class="team-name">{{ team.teamName }}</span>
+              <span class="team-name">
+                <a [routerLink]="['/clubs', team.teamName]" class="team-link">{{ team.teamName }}</a>
+              </span>
             </div>
           </td>
           <td>{{ team.gamesPlayed }}</td>
