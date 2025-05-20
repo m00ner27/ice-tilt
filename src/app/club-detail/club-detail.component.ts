@@ -5,9 +5,9 @@ import { HttpClient } from '@angular/common/http';
 import { MatchService, Match, PlayerMatchStats } from '../store/services/match.service';
 import { forkJoin } from 'rxjs';
 import { MatchHistoryComponent } from './match-history/match-history.component';
-import { Club, ClubStats } from '../models/club.interface';
-import { Player } from '../models/player.interface';
-import { PlayerStats } from '../models/player-stats.interface';
+import { Club, ClubStats } from '../store/models/models/club.interface';
+import { Player } from '../store/models/models/player.interface';
+import { PlayerStats } from '../store/models/models/player-stats.interface';
 
 // Keep only the ClubData interface for API response
 interface ClubData {

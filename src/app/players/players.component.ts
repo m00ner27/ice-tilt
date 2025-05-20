@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { Player } from '../models/player.interface';
+import { Player } from '../store/models/models/player.interface';
 
 @Component({
   selector: 'app-players',

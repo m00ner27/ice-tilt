@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Player } from '../models/player.interface';
-import { PlayerStats } from '../models/player-stats.interface';
+import { Player } from '../store/models/models/player.interface';
+import { PlayerStats } from '../store/models/models/player-stats.interface';
 import { PlayerStatsService } from '../store/services/player-stats.service';
 
 @Component({

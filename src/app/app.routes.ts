@@ -28,6 +28,7 @@ import { AdminManageUsers2Component } from './admin-manage-users-2/admin-manage-
 import { RealDataComponent } from './real-data/real-data.component';
 import { authGuard } from './core/guards/auth.guard';
 
+
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },

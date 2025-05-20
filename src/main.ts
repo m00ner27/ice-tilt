@@ -9,6 +9,7 @@ import { provideAuth0 } from '@auth0/auth0-angular';
 import { provideStore } from '@ngrx/store';
 import { counterReducer } from './app/store/counter.reducer';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
+import { environment } from './environments/environment';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -21,11 +22,11 @@ bootstrapApplication(AppComponent, {
       clientId: 'WgWpaLK0yww0VSuHQuvcKBAUWPCJcO4e', // Auth0 Client ID
       authorizationParams: {
         redirect_uri: window.location.origin, // Use your application's base URL
-        audience: 'http://localhost:3000', // Optional: API audience if needed
+        audience: environment.apiAudience, // Uses environment variable
         scope: 'openid profile email', // Add the required scopes
       },
       httpInterceptor: {
-        allowedList: ['http://localhost:3000/api/*'], // Protect API calls
+        allowedList: environment.apiAllowedList, // Uses environment variable
       },
     }),
     // Set up NgRx store with the "counter" state slice
