@@ -1,0 +1,121 @@
+<!-- Club's Seasons Section -->
+<section class="clubs-seasons mt-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center bg-dark text-white">
+                        <h3>Example Club's Seasons</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Already Checked Seasons (Read-Only List) -->
+                        <div class="mb-3">
+                            <p><strong>Already Included Seasons:</strong></p>
+                            <ul>
+                                <li>Season 1, Core</li>
+                                <li>Season 2, Rammer</li>
+                                <!-- Add more already-checked seasons as needed -->
+                            </ul>
+                        </div>
+
+                        <!-- Seasons Checkboxes (Editable) -->
+                        <form>
+                            <p><strong>Select Seasons to Add:</strong></p>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="season3">
+                                <label class="form-check-label" for="season3">Season 3</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="season4">
+                                <label class="form-check-label" for="season4">Season 4</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="season5">
+                                <label class="form-check-label" for="season5">Season 5</label>
+                            </div>
+                            <!-- Add more editable seasons checkboxes as needed -->
+
+                            <!-- Centered Submit Button -->
+                            <div class="text-center mt-3">
+                                <button type="submit" class="btn btn-success">Submit Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dropdown for Club's Seasons with Divisions -->
+<section class="club-seasons-dropdown mt-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center bg-dark text-white">
+                        <h3>Select Season and Division</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Dropdown to select a season -->
+                        <form>
+                            <div class="mb-3">
+                                <label for="seasonSelect" class="form-label">Select a Season:</label>
+                                <select id="seasonSelect" class="form-select" onchange="showDivisions()">
+                                    <option value="">-- Choose a Season --</option>
+                                    <option value="season1">Season 1</option>
+                                    <option value="season2">Season 2</option>
+                                    <option value="season3">Season 3</option>
+                                    <!-- Add more seasons as needed -->
+                                </select>
+                            </div>
+
+                            <!-- Division Checkboxes (Initially Hidden) -->
+                            <div id="divisionOptions" class="mt-3" style="display: none;">
+                                <p>Select Division:</p>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="core">
+                                    <label class="form-check-label" for="core">Core</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="rammer">
+                                    <label class="form-check-label" for="rammer">Rammer</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="sweat">
+                                    <label class="form-check-label" for="sweat">Sweat</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="elite">
+                                    <label class="form-check-label" for="elite">Elite</label>
+                                </div>
+                            </div>
+
+                            <!-- Centered Submit Button -->
+                            <div class="text-center mt-3">
+                                <button type="submit" class="btn btn-success">Submit Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript to Show/Hide Division Checkboxes -->
+<script>
+function showDivisions() {
+    var seasonSelect = document.getElementById("seasonSelect");
+    var divisionOptions = document.getElementById("divisionOptions");
+
+    // Show division options only if a season is selected
+    if (seasonSelect.value) {
+        divisionOptions.style.display = "block";
+    } else {
+        divisionOptions.style.display = "none";
+    }
+}
+</script>
+
+<h2>This should give you the option to select division when you select a season</h2>

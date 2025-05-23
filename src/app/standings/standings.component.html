@@ -1,0 +1,72 @@
+<div class="standings-container">
+  <h1 class="standings-title">League Standings</h1>
+  
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading standings...</p>
+  </div>
+  
+  <!-- Standings table -->
+  <div *ngIf="!isLoading" class="standings-table-container">
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')">Team</th>
+          <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
+          <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')">W</th>
+          <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')">L</th>
+          <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
+          <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')">GF</th>
+          <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')">GA</th>
+          <th (click)="onSortColumn('goalDifferential')" [ngClass]="getColumnSortClass('goalDifferential')">DIFF</th>
+          <th (click)="onSortColumn('winPercentage')" [ngClass]="getColumnSortClass('winPercentage')">WIN%</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let team of standings">
+          <td class="team-name-cell">
+            <div class="team-info">
+              <img class="team-logo" [src]="team.logo" [alt]="team.teamName + ' logo'" />
+              <span class="team-name">
+                <a [routerLink]="['/clubs', team.teamName]" class="team-link">{{ team.teamName }}</a>
+              </span>
+            </div>
+          </td>
+          <td>{{ team.gamesPlayed }}</td>
+          <td>{{ team.wins }}</td>
+          <td>{{ team.losses }}</td>
+          <td class="points-column">{{ team.points }}</td>
+          <td>{{ team.goalsFor }}</td>
+          <td>{{ team.goalsAgainst }}</td>
+          <td [ngClass]="{'positive': team.goalDifferential > 0, 'negative': team.goalDifferential < 0}">
+            {{ team.goalDifferential > 0 ? '+' + team.goalDifferential : team.goalDifferential }}
+          </td>
+          <td>{{ team.winPercentage | percent:'1.0-3' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- No standings data message -->
+  <div *ngIf="!isLoading && standings.length === 0" class="no-data-container">
+    <p>No standings data available.</p>
+  </div>
+  
+  <!-- Legend -->
+  <div class="standings-legend">
+    <div class="legend-item">
+      <span>GP: Games Played</span>
+      <span>W: Wins</span>
+      <span>L: Losses</span>
+      <span>PTS: Points</span>
+      <span>GF: Goals For</span>
+      <span>GA: Goals Against</span>
+      <span>DIFF: Goal Differential</span>
+      <span>WIN%: Win Percentage</span>
+    </div>
+    <div class="legend-note">
+      <p>* Click on column headers to sort</p>
+      <p>* 2 points are awarded for a win, 0 for a loss</p>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,53 @@
+<!-- Add New Team Section -->
+    <section class="admin-panel mt-5">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <div class="card shadow-sm">
+              <div class="card-header text-center bg-dark text-white">
+                <h3>Add New Team</h3>
+              </div>
+              <div class="card-body">
+                <form id="team-form" enctype="multipart/form-data">
+                  <div class="mb-3">
+                    <label for="teamName" class="form-label">Team Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="teamName"
+                      placeholder="Enter team name"
+                      required
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="teamID" class="form-label">Team ID</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="teamID"
+                      placeholder="Enter team ID"
+                      required
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="teamLogo" class="form-label">Team Logo</label>
+                    <input
+                      type="file"
+                      class="form-control"
+                      id="teamLogo"
+                      accept="image/*"
+                      required
+                    />
+                  </div>
+                  <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Add Team</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+  

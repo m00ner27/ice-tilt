@@ -1,0 +1,99 @@
+.club-list-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: white;
+}
+
+h2 {
+  color: white;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 2em;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.clubs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 10px;
+}
+
+.club-card {
+  background-color: #1a252f;
+  border-radius: 8px;
+  border: 1px solid #34495e;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.club-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.club-content {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.club-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 0;
+  margin-bottom: 15px;
+  object-fit: contain;
+  padding: 5px;
+  background-color: transparent;
+}
+
+h3 {
+  margin: 10px 0;
+  color: white;
+  font-size: 1.2em;
+}
+
+.manager-name {
+  color: #ccc;
+  font-size: 0.9em;
+  margin: 5px 0;
+}
+
+.search-container {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 15px;
+  border: 1px solid #34495e;
+  border-radius: 20px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s ease;
+  background-color: #1a252f;
+  color: white;
+}
+
+.search-input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+.no-results {
+  text-align: center;
+  color: white;
+  padding: 20px;
+  font-size: 1.1em;
+}

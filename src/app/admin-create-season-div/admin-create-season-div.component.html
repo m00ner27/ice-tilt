@@ -1,0 +1,184 @@
+<!-- Admin Panel Links (Clickable Tabs) -->
+<section class="admin-links mt-4">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-10">
+          <ul class="nav nav-tabs justify-content-center">
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin-panel">Admin Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" routerLink="/admin-create-season-div">Create Seasons & Divisions</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin-create-club">Create Club</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin-add-club-to-season">Add Clubs to Season/Division</a>
+            </li>
+            <!-- Add more tabs as necessary -->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Create Season Section -->
+  <section class="admin-panel mt-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-header text-center bg-dark text-white">
+              <h3>Create Season</h3>
+            </div>
+            <div class="card-body">
+              <form>
+                <div class="mb-3">
+                  <label for="seasonLabel" class="form-label">Season Label</label>
+                  <input type="text" class="form-control" id="seasonLabel" placeholder="Enter label" required>
+                </div>
+                <div class="mb-3">
+                  <label for="seasonOrder" class="form-label">Season Order</label>
+                  <input type="number" class="form-control" id="seasonOrder" placeholder="Enter order" required>
+                </div>
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">Create Season</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Existing Seasons Section -->
+  <section class="existing-seasons mt-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-header text-center bg-dark text-white">
+              <h3>Existing Seasons</h3>
+            </div>
+            <div class="card-body">
+              <form>
+                <table class="table table-bordered">
+                  <thead class="bg-light">
+                    <tr>
+                      <th scope="col">Season</th>
+                      <th scope="col">Order</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Season 1</td>
+                      <td><input type="text" class="form-control" value="1"></td>
+                    </tr>
+                    <!-- Add more rows dynamically -->
+                  </tbody>
+                </table>
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">Submit Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Add Division Section -->
+  <section class="add-division mt-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-header text-center bg-dark text-white">
+              <h3>Add Division to Season</h3>
+            </div>
+            <div class="card-body">
+              <form>
+                <div class="mb-3">
+                  <label for="selectSeason" class="form-label">Season</label>
+                  <select class="form-select" id="selectSeason" required>
+                    <option value="" disabled selected>Select a season</option>
+                    <!-- Add dynamic options -->
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="divisionName" class="form-label">Division</label>
+                  <input type="text" class="form-control" id="divisionName" placeholder="Enter division name" required>
+                </div>
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">Add Division</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Existing Divisions Section -->
+<section class="existing-divisions mt-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-header text-center bg-dark text-white">
+              <h3>Existing Divisions</h3>
+            </div>
+            <div class="card-body">
+              <form id="remove-division-form">
+                <!-- Sorting Dropdown -->
+                <div class="mb-3">
+                  <label for="sortDivisions" class="form-label">Filter by Season</label>
+                  <select class="form-select" id="sortDivisions" required>
+                    <option value="" disabled selected>Select a season</option>
+                    <option value="season1">Season 1</option>
+                    <option value="season2">Season 2</option>
+                    <option value="season3">Season 3</option>
+                    <!-- Add more seasons dynamically -->
+                  </select>
+                </div>
+  
+                <!-- Divisions Table -->
+                <table class="table table-bordered">
+                  <thead class="bg-light">
+                    <tr>
+                      <th scope="col">Order</th>
+                      <th scope="col">Division Name</th>
+                    </tr>
+                  </thead>
+                  <tbody id="divisions-table-body">
+                    <tr>
+                      <td><input type="number" class="form-control" value="1"></td>
+                      <td>Core</td>
+                    </tr>
+                    <tr>
+                      <td><input type="number" class="form-control" value="2"></td>
+                      <td>Rammer</td>
+                    </tr>
+                    <tr>
+                      <td><input type="number" class="form-control" value="3"></td>
+                      <td>Sweat</td>
+                    </tr>
+                    <!-- Add more rows dynamically as needed -->
+                  </tbody>
+                </table>
+  
+                <!-- Submit Changes Button -->
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">Submit Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>

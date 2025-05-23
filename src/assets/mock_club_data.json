@@ -1,0 +1,160 @@
+{
+  "clubs": [
+    {
+      "clubName": "Boats",
+      "image": "assets/images/square-boats.png",
+      "manager": "m00ner",
+      "colour": "#f57606",
+      "division": "Division 1",
+      "stats": {
+        "wins": 15,
+        "losses": 8,
+        "otLosses": 2,
+        "points": 32,
+        "gamesPlayed": 25
+      },
+      "roster": [
+        {
+          "name": "John Smith",
+          "number": "91",
+          "position": "Forward"
+        },
+        {
+          "name": "Mike Wilson",
+          "number": "13",
+          "position": "Forward"
+        },
+        {
+          "name": "Dave Brown",
+          "number": "44",
+          "position": "Defense"
+        },
+        {
+          "name": "Steve Davis",
+          "number": "30",
+          "position": "Goalie"
+        }
+      ]
+    },
+    {
+      "clubName": "Roosters",
+      "image": "assets/images/square-iserlohnroosters.png",
+      "manager": "chickenguy",
+      "colour": "#1c398b",
+      "division": "Division 1",
+      "stats": {
+        "wins": 12,
+        "losses": 10,
+        "otLosses": 3,
+        "points": 27,
+        "gamesPlayed": 25
+      },
+      "roster": [
+        {
+          "name": "Tom Wilson",
+          "number": "88",
+          "position": "Forward"
+        },
+        {
+          "name": "James Lee",
+          "number": "19",
+          "position": "Forward"
+        },
+        {
+          "name": "Rob Johnson",
+          "number": "5",
+          "position": "Defense"
+        },
+        {
+          "name": "Mark Thompson",
+          "number": "1",
+          "position": "Goalie"
+        }
+      ]
+    },
+    {
+      "clubName": "Mutts",
+      "image": "assets/images/square-mutts.png",
+      "manager": "Mutt",
+      "colour": "#ff6c00",
+      "roster": [
+        {
+          "name": "Alex Carter",
+          "number": "71",
+          "position": "Forward"
+        },
+        {
+          "name": "Chris Martin",
+          "number": "23",
+          "position": "Forward"
+        },
+        {
+          "name": "Paul White",
+          "number": "3",
+          "position": "Defense"
+        },
+        {
+          "name": "Kevin Black",
+          "number": "35",
+          "position": "Goalie"
+        }
+      ]
+    },
+    {
+      "clubName": "Lights Out",
+      "image": "assets/images/square-lightsout.png",
+      "manager": "DJ",
+      "colour": "#2ea1c2",
+      "roster": [
+        {
+          "name": "Ryan Miller",
+          "number": "97",
+          "position": "Forward"
+        },
+        {
+          "name": "Eric Jones",
+          "number": "15",
+          "position": "Forward"
+        },
+        {
+          "name": "Scott Taylor",
+          "number": "4",
+          "position": "Defense"
+        },
+        {
+          "name": "Dan Anderson",
+          "number": "31",
+          "position": "Goalie"
+        }
+      ]
+    },
+    {
+      "clubName": "Ragin Cajuns",
+      "image": "assets/images/square-ragincajuns.png",
+      "manager": "Breezy",
+      "colour": "#143bbc",
+      "roster": [
+        {
+          "name": "Luke Adams",
+          "number": "89",
+          "position": "Forward"
+        },
+        {
+          "name": "Matt Baker",
+          "number": "17",
+          "position": "Forward"
+        },
+        {
+          "name": "Nick Cooper",
+          "number": "2",
+          "position": "Defense"
+        },
+        {
+          "name": "Josh Edwards",
+          "number": "33",
+          "position": "Goalie"
+        }
+      ]
+    }
+  ]
+}

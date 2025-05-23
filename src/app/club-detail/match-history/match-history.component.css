@@ -1,0 +1,135 @@
+.match-history-container {
+  margin-top: 30px;
+  background-color: #1a252f;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #34495e;
+}
+
+.match-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.match-history-header h3 {
+  color: white;
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.record-badge {
+  background-color: #2c3e50;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1.1em;
+  color: white;
+}
+
+.wins {
+  color: #4caf50;
+}
+
+.losses {
+  color: #f44336;
+}
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.match-card {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 5px solid;
+  background-color: #2c3e50;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.match-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background-color: #34495e;
+}
+
+.match-card:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.match-card.win {
+  border-left-color: #4caf50;
+}
+
+.match-card.loss {
+  border-left-color: #f44336;
+}
+
+.match-date {
+  color: #ccc;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+
+.match-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.opponent {
+  font-weight: 600;
+  font-size: 1.1em;
+  color: white;
+}
+
+.vs {
+  color: #ccc;
+  font-weight: normal;
+  font-size: 0.9em;
+  margin-right: 5px;
+}
+
+.score {
+  font-weight: 700;
+  font-size: 1.2em;
+  color: white;
+}
+
+.location-badge {
+  background-color: #34495e;
+  color: #ccc;
+  font-size: 0.8em;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.no-matches {
+  text-align: center;
+  color: #ccc;
+  font-style: italic;
+  padding: 20px;
+}
+
+.view-details {
+  font-size: 0.8em;
+  color: #9aa1a7;
+  text-align: right;
+  margin-top: 8px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.match-card:hover .view-details {
+  color: #3498db;
+  text-decoration: underline;
+} 

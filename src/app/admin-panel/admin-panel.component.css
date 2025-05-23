@@ -1,0 +1,28 @@
+.navbar-brand .logo {
+    height: 40px;
+}
+
+.nav-tabs .nav-link {
+    color: #f8f9fa;
+    border: none;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #343a40;
+    color: #ffffff;
+    border-radius: 5px;
+}
+
+.table-bordered th, .table-bordered td {
+    vertical-align: middle;
+}
+
+.card-header {
+    background-color: #1a252f;
+    color: white;
+}
+
+.card-body {
+    background-color: #1a252f;
+    color: #ffffff;
+}
