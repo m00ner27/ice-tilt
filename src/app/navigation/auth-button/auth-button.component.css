@@ -1,0 +1,19 @@
+.login-btn {
+  background: #273447;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 32px;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+  outline: none;
+}
+
+.login-btn:hover,
+.login-btn:focus {
+  background: #34495e;
+  color: #1abc9c;
+}

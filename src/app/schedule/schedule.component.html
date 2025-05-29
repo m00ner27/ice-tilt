@@ -1,0 +1,97 @@
+<div class="schedule-container">
+  <h1 class="schedule-title">Game Schedule</h1>
+  
+  <!-- Filter options -->
+  <div class="filter-container">
+    <div class="filter-group">
+      <label for="teamFilter">Filter by Team:</label>
+      <select 
+        id="teamFilter" 
+        [(ngModel)]="filterTeam" 
+        (change)="onFilterChange()" 
+        class="filter-select"
+      >
+        <option value="">All Teams</option>
+        <option *ngFor="let team of teamOptions" [value]="team">{{ team }}</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading schedule...</p>
+  </div>
+  
+  <!-- Schedule table -->
+  <div *ngIf="!isLoading && filteredMatches.length > 0" class="schedule-table-container">
+    <table class="schedule-table">
+      <thead>
+        <tr>
+          <th (click)="onSortChange('date')" [class.sort-asc]="sortCriteria === 'date' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'date' && sortDirection === 'desc'">
+            Date
+          </th>
+          <th (click)="onSortChange('homeTeam')" [class.sort-asc]="sortCriteria === 'homeTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'homeTeam' && sortDirection === 'desc'">
+            Home Team
+          </th>
+          <th></th>
+          <th></th>
+          <th>Score</th>
+          <th></th>
+          <th></th>
+          <th (click)="onSortChange('awayTeam')" [class.sort-asc]="sortCriteria === 'awayTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'awayTeam' && sortDirection === 'desc'">
+            Away Team
+          </th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let match of filteredMatches">
+          <td class="date-cell">{{ formatDate(match.date) }}</td>
+          <td class="team-cell text-right">
+            <a [routerLink]="['/clubs', match.homeTeam]" class="team-link team-name">{{ match.homeTeam }}</a>
+          </td>
+          <td class="team-logo-cell">
+            <img [src]="getTeamLogo(match.homeTeam)" [alt]="match.homeTeam + ' logo'" class="team-logo">
+          </td>
+          <td class="wl-cell">
+            <span *ngIf="getResultClass(match, match.homeTeam) === 'win-indicator'" class="win-indicator">W</span>
+            <span *ngIf="getResultClass(match, match.homeTeam) === 'loss-indicator'" class="loss-indicator">L</span>
+          </td>
+          <td class="score-cell">
+            <span class="score">{{ match.homeScore }} - {{ match.awayScore }}</span>
+          </td>
+          <td class="wl-cell">
+            <span *ngIf="getResultClass(match, match.awayTeam) === 'win-indicator'" class="win-indicator">W</span>
+            <span *ngIf="getResultClass(match, match.awayTeam) === 'loss-indicator'" class="loss-indicator">L</span>
+          </td>
+          <td class="team-logo-cell">
+            <img [src]="getTeamLogo(match.awayTeam)" [alt]="match.awayTeam + ' logo'" class="team-logo">
+          </td>
+          <td class="team-cell text-left">
+            <a [routerLink]="['/clubs', match.awayTeam]" class="team-link team-name">{{ match.awayTeam }}</a>
+          </td>
+          <td class="action-cell">
+            <a [routerLink]="['/match', match.id]" class="view-button">View Details</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- No matches message -->
+  <div *ngIf="!isLoading && filteredMatches.length === 0" class="no-results">
+    <p>No matches found for the selected filters.</p>
+  </div>
+  
+  <!-- Legend -->
+  <div class="schedule-legend">
+    <div class="legend-item">
+      <span class="win-indicator">W</span> - Win
+      <span class="loss-indicator">L</span> - Loss
+    </div>
+    <div class="legend-note">
+      <p>* Click on column headers to sort</p>
+      <p>* Click "View Details" to see match statistics</p>
+    </div>
+  </div>
+</div>
