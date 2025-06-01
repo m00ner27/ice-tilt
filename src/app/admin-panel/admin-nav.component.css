@@ -1,0 +1,24 @@
+.admin-nav {
+  display: flex;
+  gap: 24px;
+  background: #23293a;
+  padding: 16px 24px;
+  border-radius: 8px;
+  margin-bottom: 32px;
+  justify-content: center;
+}
+
+.admin-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.1rem;
+  padding: 6px 18px;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.admin-nav a.active, .admin-nav a:hover {
+  background: #1976d2;
+  color: #fff;
+} 

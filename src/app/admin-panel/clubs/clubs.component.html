@@ -1,0 +1,46 @@
+<app-admin-nav></app-admin-nav>
+
+<div class="clubs-container">
+  <h2>Admin: Clubs Management</h2>
+
+  <!-- Add/Edit Club Form -->
+  <div class="form-section">
+    <h3>{{ editingClub ? 'Edit Club' : 'Add Club' }}</h3>
+    <form [formGroup]="clubForm" (ngSubmit)="editingClub ? updateClub() : addClub()">
+      <input formControlName="name" type="text" placeholder="Club Name" required />
+      <input type="file" accept="image/*" (change)="onLogoFileChange($event)" />
+      <input formControlName="logo" type="text" placeholder="Logo URL" style="display:none" />
+      <div *ngIf="logoPreview" style="margin-bottom:8px;">
+        <img [src]="logoPreview" alt="Logo Preview" class="club-logo" style="max-width: 64px; max-height: 64px; border: 1px solid #394867; border-radius: 6px; background: #23293a;" />
+        <span *ngIf="uploadingLogo" style="color:#90caf9; margin-left:8px;">Uploading...</span>
+      </div>
+      <input formControlName="manager" type="text" placeholder="Manager" required />
+      <input formControlName="color" type="color" required />
+      <select formControlName="season" required>
+        <option value="" disabled selected>Select Season</option>
+        <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+      </select>
+      <select formControlName="division" required>
+        <option value="" disabled selected>Select Division</option>
+        <option *ngFor="let division of divisions" [value]="division._id">{{ division.name }}</option>
+      </select>
+      <button type="submit" [disabled]="!clubForm.valid">{{ editingClub ? 'Update' : 'Add' }}</button>
+      <button type="button" (click)="clubForm.reset(); editingClub = null; isAddingClub = false;">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Clubs List -->
+  <div class="list-section">
+    <h3>Clubs</h3>
+    <ul class="club-list">
+      <li *ngFor="let club of clubs">
+        <span>
+          <img [src]="club.logoUrl" alt="Logo" class="club-logo" />
+          {{ club.name }} ({{ club.manager }})
+        </span>
+        <button (click)="editClub(club)">Edit</button>
+        <button (click)="deleteClub(club)">Delete</button>
+      </li>
+    </ul>
+  </div>
+</div> 

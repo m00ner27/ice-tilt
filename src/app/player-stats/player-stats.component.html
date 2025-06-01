@@ -1,0 +1,68 @@
+<div class="player-stats-container">
+  <h1 class="player-stats-title">Player Statistics</h1>
+  
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading player statistics...</p>
+  </div>
+  
+  <!-- Player stats table -->
+  <div *ngIf="!isLoading" class="player-stats-table-container">
+    <table class="player-stats-table">
+      <thead>
+        <tr>
+          <th (click)="onSortColumn('name')" [ngClass]="getColumnSortClass('name')">Player</th>
+          <th (click)="onSortColumn('team')" [ngClass]="getColumnSortClass('team')">Team</th>
+          <th (click)="onSortColumn('position')" [ngClass]="getColumnSortClass('position')">Pos</th>
+          <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
+          <th (click)="onSortColumn('goals')" [ngClass]="getColumnSortClass('goals')">G</th>
+          <th (click)="onSortColumn('assists')" [ngClass]="getColumnSortClass('assists')">A</th>
+          <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
+          <th (click)="onSortColumn('plusMinus')" [ngClass]="getColumnSortClass('plusMinus')">+/-</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let player of playerStats">
+          <td class="player-name">
+            <span class="player-number">#{{ player.number }}</span>
+            <a [routerLink]="['/players', player.playerId]" class="player-link">{{ player.name }}</a>
+          </td>
+          <td class="team-cell">
+            <div class="team-info">
+              <img class="team-logo" [src]="player.teamLogo" [alt]="player.team + ' logo'" />
+              <a [routerLink]="['/clubs', player.team]" class="team-link">{{ player.team }}</a>
+            </div>
+          </td>
+          <td>{{ player.position }}</td>
+          <td>{{ player.gamesPlayed }}</td>
+          <td>{{ player.goals }}</td>
+          <td>{{ player.assists }}</td>
+          <td class="points-column">{{ player.points }}</td>
+          <td [ngClass]="{'positive': player.plusMinus > 0, 'negative': player.plusMinus < 0}">
+            {{ player.plusMinus > 0 ? '+' + player.plusMinus : player.plusMinus }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- No players data message -->
+  <div *ngIf="!isLoading && playerStats.length === 0" class="no-data-container">
+    <p>No player statistics available.</p>
+  </div>
+  
+  <!-- Legend -->
+  <div class="player-stats-legend">
+    <div class="legend-item">
+      <span>GP: Games Played</span>
+      <span>G: Goals</span>
+      <span>A: Assists</span>
+      <span>PTS: Points (G+A)</span>
+      <span>+/-: Plus/Minus Rating</span>
+    </div>
+    <div class="legend-note">
+      <p>* Click on column headers to sort</p>
+      <p>* Statistics are for skaters only. Goalie statistics are available on the Goalie Stats page.</p>
+    </div>
+  </div>
+</div>

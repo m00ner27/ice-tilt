@@ -1,0 +1,64 @@
+<app-admin-nav></app-admin-nav>
+
+<div class="seasons-container">
+  <h2>Admin: Seasons & Divisions Management</h2>
+
+  <!-- Add/Edit Season Form -->
+  <div class="form-section">
+    <h3>{{ editingSeason ? 'Edit Season' : 'Add Season' }}</h3>
+    <form [formGroup]="seasonForm" (ngSubmit)="editingSeason ? updateSeason() : addSeason()">
+      <input formControlName="name" type="text" placeholder="Season Name" required />
+      <input formControlName="startDate" type="date" required />
+      <input formControlName="endDate" type="date" required />
+      <button type="submit" [disabled]="!seasonForm.valid">{{ editingSeason ? 'Update' : 'Add' }}</button>
+      <button type="button" (click)="seasonForm.reset(); editingSeason = null; isAddingSeason = false;">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Seasons List -->
+  <div class="list-section">
+    <h3>Seasons</h3>
+    <ul class="season-list">
+      <li *ngFor="let season of seasons" [class.selected]="selectedSeason?._id === season._id">
+        <span (click)="selectSeason(season)">{{ season.name }} ({{ season.startDate | date:'yyyy-MM-dd' }} - {{ season.endDate | date:'yyyy-MM-dd' }})</span>
+        <button (click)="editSeason(season)">Edit</button>
+        <button (click)="deleteSeason(season)">Delete</button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Add/Edit Division Form -->
+  <div class="form-section" *ngIf="selectedSeason">
+    <h3>{{ editingDivision ? 'Edit Division' : 'Add Division' }} for {{ selectedSeason.name }}</h3>
+    <form [formGroup]="divisionForm" (ngSubmit)="editingDivision ? updateDivision() : addDivision()">
+      <input formControlName="name" type="text" placeholder="Division Name" required />
+      <button type="submit" [disabled]="!divisionForm.valid">{{ editingDivision ? 'Update' : 'Add' }}</button>
+      <button type="button" (click)="divisionForm.reset(); editingDivision = null; isAddingDivision = false;">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Divisions List -->
+  <div class="list-section" *ngIf="selectedSeason">
+    <h3>Divisions in {{ selectedSeason.name }}</h3>
+    <ul class="division-list">
+      <li *ngFor="let division of getDivisionsForSelectedSeason()">
+        <span>{{ division.name }}</span>
+        <button (click)="editDivision(division)">Edit</button>
+        <button (click)="deleteDivision(division)">Delete</button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Clubs in Season -->
+  <div class="list-section" *ngIf="selectedSeason && clubsInSeason.length">
+    <h3>Clubs in {{ selectedSeason.name }}</h3>
+    <ul class="club-list">
+      <li *ngFor="let club of clubsInSeason">
+        <span>
+          <img [src]="club.logoUrl" alt="Logo" class="club-logo" style="width:32px; height:32px; object-fit:contain; margin-right:10px; vertical-align:middle;" />
+          {{ club.name }} ({{ club.manager }})
+        </span>
+      </li>
+    </ul>
+  </div>
+</div> 

@@ -1,0 +1,189 @@
+.player-stats-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: white;
+}
+
+.player-stats-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: white;
+}
+
+/* Loading State */
+.loading-container {
+  text-align: center;
+  padding: 30px;
+  color: white;
+}
+
+/* Table Styles */
+.player-stats-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.player-stats-table {
+  width: 100%;
+  background-color: #1a252f;
+  color: white;
+  border-collapse: collapse;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.player-stats-table th {
+  background-color: #34495e;
+  color: white;
+  padding: 12px 15px;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.player-stats-table th:hover {
+  background-color: #2c3e50;
+}
+
+.player-stats-table td {
+  padding: 10px 15px;
+  text-align: center;
+  border-top: 1px solid #34495e;
+}
+
+.player-stats-table tbody tr:hover {
+  background-color: #2c3e50;
+}
+
+.player-name {
+  text-align: left;
+  font-weight: 500;
+  min-width: 180px;
+}
+
+.player-number {
+  display: inline-block;
+  margin-right: 8px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.team-cell {
+  text-align: left;
+  min-width: 120px;
+}
+
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-logo {
+  width: 25px;
+  height: 25px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.points-column {
+  font-weight: 600;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #f44336;
+}
+
+/* Styling for sortable columns */
+.sorted-asc::after {
+  content: '▲';
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.8em;
+}
+
+.sorted-desc::after {
+  content: '▼';
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.8em;
+}
+
+/* No data message */
+.no-data-container {
+  text-align: center;
+  padding: 30px;
+  color: white;
+}
+
+/* Legend styles */
+.player-stats-legend {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: #1a252f;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  color: white;
+}
+
+.legend-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.legend-item span {
+  display: inline-block;
+}
+
+.legend-note {
+  margin-top: 10px;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.legend-note p {
+  margin: 5px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .player-stats-table th,
+  .player-stats-table td {
+    padding: 8px 10px;
+    font-size: 0.9em;
+  }
+  
+  .player-name {
+    min-width: 150px;
+  }
+
+  .team-cell {
+    min-width: 100px;
+  }
+  
+  .team-logo {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .team-info {
+    gap: 4px;
+  }
+  
+  .legend-item {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
