@@ -20,6 +20,12 @@ import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
 import { SeasonsComponent } from './admin-panel/seasons/seasons.component';
 import { ClubsComponent } from './admin-panel/clubs/clubs.component';
+import { AddGamesComponent } from './admin-panel/add-games.component';
+import { AdminScheduleComponent } from './admin-panel/admin-schedule.component';
+import { EashlStatsComponent } from './components/eashl-stats/eashl-stats.component';
+import { UsersComponent } from './admin-panel/users.component';
+import { ManualStatsComponent } from './admin-panel/manual-stats/manual-stats.component';
+import { CreateUserComponent } from './admin-panel/create-user/create-user.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -39,10 +45,20 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },
   { path: 'real-data', component: RealDataComponent },
+  { path: 'eashl-stats', component: EashlStatsComponent, canActivate: [authGuard] },
   { path: 'admin', component: AdminPanelComponent, children: [
-    { path: '', component: AdminDashboardComponent },
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    { path: 'dashboard', component: AdminDashboardComponent },
     { path: 'seasons', component: SeasonsComponent },
     { path: 'clubs', component: ClubsComponent },
+    { path: 'add-games', component: AddGamesComponent },
+    { path: 'schedule', component: AdminScheduleComponent },
+    { path: 'users', component: UsersComponent },
+    { path: 'create-user', component: CreateUserComponent },
   ]},
+  {
+    path: 'admin/manual-stats/:gameId',
+    component: ManualStatsComponent
+  }
 ];
 

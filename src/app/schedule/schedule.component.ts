@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ScheduleService, Match } from '../store/services/schedule.service';
+import { ApiService } from '../store/services/api.service';
 
 @Component({
   selector: 'app-schedule',
@@ -12,9 +12,10 @@ import { ScheduleService, Match } from '../store/services/schedule.service';
   styleUrls: ['./schedule.component.css']
 })
 export class ScheduleComponent implements OnInit {
-  matches: Match[] = [];
-  filteredMatches: Match[] = [];
+  matches: any[] = [];
+  filteredMatches: any[] = [];
   isLoading: boolean = true;
+  clubs: any[] = [];
   
   // Filtering/sorting options
   filterTeam: string = '';
@@ -24,25 +25,42 @@ export class ScheduleComponent implements OnInit {
   // Track unique teams for filter dropdown
   teamOptions: string[] = [];
 
-  constructor(private scheduleService: ScheduleService) { }
+  constructor(private api: ApiService) { }
 
   ngOnInit(): void {
-    this.loadMatches();
+    this.loadClubsAndMatches();
   }
 
-  loadMatches(): void {
+  loadClubsAndMatches(): void {
     this.isLoading = true;
-    this.scheduleService.getMatches().subscribe({
-      next: (data) => {
-        this.matches = data;
-        this.extractTeamOptions();
-        this.applyFiltersAndSort();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading matches:', error);
-        this.isLoading = false;
-      }
+    this.api.getClubs().subscribe(clubs => {
+      this.clubs = clubs;
+      this.api.getGames().subscribe({
+        next: (games) => {
+          // Map backend games to schedule format
+          this.matches = games.map(game => {
+            const homeClub = this.clubs.find(c => c._id === game.homeClubId);
+            const awayClub = this.clubs.find(c => c._id === game.awayClubId);
+            return {
+              id: game._id,
+              date: game.date,
+              homeTeam: homeClub ? homeClub.name : 'Unknown',
+              awayTeam: awayClub ? awayClub.name : 'Unknown',
+              homeLogo: homeClub ? homeClub.logoUrl : '',
+              awayLogo: awayClub ? awayClub.logoUrl : '',
+              homeScore: game.score?.home ?? '',
+              awayScore: game.score?.away ?? ''
+            };
+          });
+          this.extractTeamOptions();
+          this.applyFiltersAndSort();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading games:', error);
+          this.isLoading = false;
+        }
+      });
     });
   }
 
@@ -99,14 +117,20 @@ export class ScheduleComponent implements OnInit {
   }
 
   getTeamLogo(teamName: string): string {
-    return this.scheduleService.getTeamLogo(teamName);
+    const club = this.clubs.find(c => c.name === teamName);
+    return club && club.logoUrl ? club.logoUrl : 'assets/images/1ithlwords.png';
   }
 
   formatDate(dateString: string): string {
-    return this.scheduleService.formatDate(dateString);
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   }
 
-  getMatchResult(match: Match, team: string): string {
+  getMatchResult(match: any, team: string): string {
     const isHome = match.homeTeam === team;
     const teamScore = isHome ? match.homeScore : match.awayScore;
     const opponentScore = isHome ? match.awayScore : match.homeScore;
@@ -116,7 +140,7 @@ export class ScheduleComponent implements OnInit {
     return 'T'; // Tie (though our data doesn't have ties currently)
   }
 
-  getResultClass(match: Match, team: string): string {
+  getResultClass(match: any, team: string): string {
     const result = this.getMatchResult(match, team);
     if (result === 'W') return 'win';
     if (result === 'L') return 'loss';

@@ -43,4 +43,17 @@
       </li>
     </ul>
   </div>
+
+  <!-- Free Agents List -->
+  <div class="list-section">
+    <h3>Free Agents</h3>
+    <ul class="free-agent-list">
+      <li *ngFor="let agent of freeAgents">
+        <span>
+          {{ agent.discordId || agent.name }} ({{ agent.position || 'N/A' }})
+        </span>
+        <button (click)="addPlayer(selectedClub, agent)" [disabled]="!selectedClub">Add to Club</button>
+      </li>
+    </ul>
+  </div>
 </div> 

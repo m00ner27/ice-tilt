@@ -66,6 +66,10 @@ export class ApiService {
     return this.http.delete<any>(`${this.apiUrl}/api/seasons/${id}`);
   }
 
+  updateSeason(season: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/seasons/${season._id}`, season);
+  }
+
   // Division data methods
   getDivisions(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/divisions`);
@@ -81,6 +85,10 @@ export class ApiService {
 
   deleteDivision(id: string): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/api/divisions/${id}`);
+  }
+
+  updateDivision(division: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/divisions/${division._id}`, division);
   }
 
   // Club data methods
@@ -109,5 +117,47 @@ export class ApiService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<any>(`${this.apiUrl}/api/upload`, formData);
+  }
+
+  addGame(game: any) {
+    return this.http.post(`${this.apiUrl}/api/games`, game);
+  }
+
+  getGames(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/games`);
+  }
+
+  bulkUpdateGames(updates: any[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/games/bulk-update`, updates);
+  }
+
+  getGame(gameId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/games/${gameId}`);
+  }
+
+  getTeamPlayers(teamId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/teams/${teamId}/players`);
+  }
+
+  saveGameStats(stats: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/games/stats`, stats);
+  }
+
+  // Club roster methods
+  getClubRoster(clubId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster`);
+  }
+
+  addPlayerToClub(clubId: string, userId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/api/clubs/${clubId}/roster`, { userId });
+  }
+
+  removePlayerFromClub(clubId: string, userId: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/api/clubs/${clubId}/roster/${userId}`);
+  }
+
+  // Get free agents (users not in any club)
+  getFreeAgents(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents`);
   }
 }

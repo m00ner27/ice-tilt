@@ -7,7 +7,9 @@ import { Store } from '@ngrx/store';
 import { loginWithDiscordProfile } from './store/players.actions';
 import { selectCurrentProfile } from './store/players.selectors';
 import { PlayerProfile } from './store/models/models/player-profile.model';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, filter } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -28,29 +30,66 @@ export class AppComponent implements OnInit {
 
   constructor(
     private auth: AuthService,
-    private store: Store
+    private store: Store,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
     this.currentProfile$ = this.store.select(selectCurrentProfile);
-    this.auth.isLoading$.subscribe((loading) => {
-      this.isLoading = loading;
+    
+    // Use combineLatest to handle multiple observables
+    combineLatest([
+      this.auth.isLoading$,
+      this.auth.isAuthenticated$,
+      this.auth.user$
+    ]).pipe(
+      filter(([loading, isAuth, user]) => !loading && isAuth && !!user)
+    ).subscribe({
+      next: ([_, __, user]) => {
+        if (!user) return; // Type guard to ensure user is not null
+        
+        this.isLoading = false;
+        this.isLoggedIn = true;
+        this.userProfile = user;
+        console.log('User restored:', user);
 
-      if (!loading) {
-        this.auth.isAuthenticated$.subscribe((isAuth) => {
-          this.isLoggedIn = isAuth;
+        // Validate required Auth0 user fields
+        if (!user.sub || !user.email || !user.name) {
+          console.error('Missing required Auth0 user data:', user);
+          return;
+        }
 
-          if (isAuth) {
-            this.auth.user$.subscribe((user) => {
-              this.userProfile = user;
-              console.log('User restored:', user);
-
-              if (user) {
-                this.store.dispatch(loginWithDiscordProfile({ discordProfile: user }));
-              }
-            });
+        // Sync user with MongoDB
+        this.http.post(`${environment.apiUrl}/api/users/auth0-sync`, {
+          auth0Id: user.sub,
+          email: user.email,
+          name: user.name,
+          discordId: user.sub,
+          role: 'player',
+          platform: 'PS5',
+          gamertag: user.nickname || user.name,
+          playerProfile: {
+            position: 'C',
+            secondaryPositions: [],
+            handedness: 'Left',
+            location: 'north',
+            region: 'north',
+            status: 'Free Agent'
+          }
+        }).subscribe({
+          next: (dbUser) => {
+            console.log('User synced with database:', dbUser);
+            this.store.dispatch(loginWithDiscordProfile({ discordProfile: user }));
+          },
+          error: (error) => {
+            console.error('Failed to sync user:', error);
+            // You might want to show an error message to the user here
           }
         });
+      },
+      error: (error) => {
+        console.error('Auth error:', error);
+        this.isLoading = false;
       }
     });
   }
