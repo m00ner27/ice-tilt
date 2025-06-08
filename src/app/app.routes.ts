@@ -20,6 +20,8 @@ import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
 import { SeasonsComponent } from './admin-panel/seasons/seasons.component';
 import { ClubsComponent } from './admin-panel/clubs/clubs.component';
+import { AddGamesComponent } from './admin-panel/add-games.component';
+import { AdminScheduleComponent } from './admin-panel/admin-schedule.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -40,9 +42,12 @@ export const routes: Routes = [
   { path: 'test', component: TestComponent },
   { path: 'real-data', component: RealDataComponent },
   { path: 'admin', component: AdminPanelComponent, children: [
-    { path: '', component: AdminDashboardComponent },
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    { path: 'dashboard', component: AdminDashboardComponent },
     { path: 'seasons', component: SeasonsComponent },
     { path: 'clubs', component: ClubsComponent },
+    { path: 'add-games', component: AddGamesComponent },
+    { path: 'schedule', component: AdminScheduleComponent },
   ]},
 ];
 
