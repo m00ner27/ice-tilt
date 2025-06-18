@@ -60,31 +60,23 @@ export class AppComponent implements OnInit {
         }
 
         // Sync user with MongoDB
-        this.http.post(`${environment.apiUrl}/api/users/auth0-sync`, {
-          auth0Id: user.sub,
-          email: user.email,
-          name: user.name,
-          discordId: user.sub,
-          role: 'player',
-          platform: 'PS5',
-          gamertag: user.nickname || user.name,
-          playerProfile: {
-            position: 'C',
-            secondaryPositions: [],
-            handedness: 'Left',
-            location: 'north',
-            region: 'north',
-            status: 'Free Agent'
-          }
-        }).subscribe({
-          next: (dbUser) => {
-            console.log('User synced with database:', dbUser);
-            this.store.dispatch(loginWithDiscordProfile({ discordProfile: user }));
-          },
-          error: (error) => {
-            console.error('Failed to sync user:', error);
-            // You might want to show an error message to the user here
-          }
+        this.auth.getAccessTokenSilently({
+          authorizationParams: { audience: 'http://localhost:3000' }
+        }).subscribe(token => {
+          this.http.post(
+            `${environment.apiUrl}/api/users/auth0-sync`,
+            {}, // empty body
+            { headers: { Authorization: `Bearer ${token}` } }
+          ).subscribe({
+            next: (dbUser) => {
+              console.log('User synced with database:', dbUser);
+              this.store.dispatch(loginWithDiscordProfile({ discordProfile: user }));
+            },
+            error: (error) => {
+              console.error('Failed to sync user:', error);
+              // You might want to show an error message to the user here
+            }
+          });
         });
       },
       error: (error) => {
