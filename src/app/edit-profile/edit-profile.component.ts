@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '@auth0/auth0-angular';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { ApiService } from '../store/services/api.service'; // Import ApiService
+import { environment } from '../../environments/environment';
+
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
@@ -14,92 +15,120 @@ import { ApiService } from '../store/services/api.service'; // Import ApiService
 })
 export class EditProfileComponent implements OnInit {
   availablePositions = ['C', 'RW', 'LW', 'RD', 'LD', 'G'];
+  availableLocations = ['NA', 'EU', 'Other'];
+  availableRegions = ['North', 'South', 'East', 'West', 'Central'];
 
-  // For the "Add New Profile" Form
-  newProfile: any = this.initializeNewProfile();
+  user: any = null;
+  form: any = {
+    discordId: '',
+    platform: 'PS5',
+    gamertag: '',
+    primaryPosition: 'C',
+    secondaryPositions: [] as string[],
+    handedness: 'Left',
+    location: 'NA',
+    region: 'North',
+  };
+  loading = false;
+  error = '';
+  success = '';
 
-  // For listing existing profiles
-  playerProfiles: any[] = [];
-  profilesListLoading: boolean = false;
-  profilesListError: string = '';
-
-  // Form submission status
-  profileFormLoading: boolean = false;
-  profileFormError: string = '';
-  profileFormSuccess: string = '';
-
-  constructor(private apiService: ApiService) { }
+  constructor(private http: HttpClient, private auth: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.loadPlayerProfiles();
+    this.loadUser();
   }
 
-  initializeNewProfile(): any {
-    return {
-      name: '',
-      location: '',
-      handedness: '',
-      number: null,
-      primaryPosition: '',
-      secondaryPositions: [] as string[],
-      bio: '',
-      stats: {
-        goals: 0,
-        assists: 0,
-        gamesPlayed: 0
-        // yellowCards: 0, // Add if in your model
-        // redCards: 0    // Add if in your model
-      }
-    };
-  }
-
-  loadPlayerProfiles() {
-    this.profilesListLoading = true;
-    this.profilesListError = '';
-    this.apiService.getPlayerProfiles().subscribe({
-      next: (data) => {
-        this.playerProfiles = data;
-        this.profilesListLoading = false;
+  loadUser() {
+    this.loading = true;
+    this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).subscribe({
+      next: (token) => {
+        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+        this.http.get(`${environment.apiUrl}/api/users/me`, { headers }).subscribe({
+          next: (user: any) => {
+            this.user = user;
+            this.form.discordId = user.auth0Id || '';
+            this.form.platform = user.platform || 'PS5';
+            const discordName = user.nickname || user.name || '';
+            if (user.gamertag && user.gamertag !== discordName && user.gamertag !== user.auth0Id) {
+              this.form.gamertag = user.gamertag;
+            } else {
+              this.form.gamertag = '';
+            }
+            this.form.primaryPosition = user.playerProfile?.position || 'C';
+            this.form.secondaryPositions = user.playerProfile?.secondaryPositions || [];
+            this.form.handedness = user.playerProfile?.handedness || 'Left';
+            this.form.location = user.playerProfile?.location || 'NA';
+            this.form.region = user.playerProfile?.region || 'North';
+            this.loading = false;
+          },
+          error: (err) => {
+            this.error = 'Failed to load user profile.';
+            this.loading = false;
+          }
+        });
       },
       error: (err) => {
-        this.profilesListError = `Failed to load profiles: ${err.message || 'Server error'}`;
-        this.profilesListLoading = false;
-        console.error('Error loading player profiles:', err);
+        this.error = 'Failed to get access token.';
+        this.loading = false;
       }
     });
   }
 
-  toggleNewProfileSecondaryPosition(position: string) {
-    const index = this.newProfile.secondaryPositions.indexOf(position);
-    if (index === -1) {
-      this.newProfile.secondaryPositions.push(position);
+  toggleSecondaryPosition(position: string) {
+    const idx = this.form.secondaryPositions.indexOf(position);
+    if (idx === -1) {
+      this.form.secondaryPositions.push(position);
     } else {
-      this.newProfile.secondaryPositions.splice(index, 1);
+      this.form.secondaryPositions.splice(idx, 1);
     }
   }
 
-  submitNewProfile() {
-    if (!this.newProfile.name) {
-      this.profileFormError = 'Discord Name is required.';
+  submit() {
+    this.loading = true;
+    this.error = '';
+    this.success = '';
+    if (!this.form.gamertag) {
+      this.error = 'Gamertag is required.';
+      this.loading = false;
       return;
     }
-    this.profileFormLoading = true;
-    this.profileFormError = '';
-    this.profileFormSuccess = '';
-
-    this.apiService.addPlayerProfile(this.newProfile).subscribe({
-      next: (response) => {
-        this.profileFormLoading = false;
-        this.profileFormSuccess = 'Profile added successfully!';
-        this.playerProfiles.push(response); // Add to the list
-        this.newProfile = this.initializeNewProfile(); // Reset form
-        setTimeout(() => this.profileFormSuccess = '', 3000); // Clear success message
+    this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).subscribe({
+      next: (token) => {
+        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+        const update = {
+          email: this.user.email,
+          name: this.user.name,
+          auth0Id: this.user.auth0Id,
+          platform: this.form.platform,
+          gamertag: this.form.gamertag || '',
+          playerProfile: {
+            position: this.form.primaryPosition,
+            secondaryPositions: this.form.secondaryPositions,
+            handedness: this.form.handedness,
+            location: this.form.location,
+            region: this.form.region,
+            status: this.user.playerProfile?.status || 'Free Agent',
+          }
+        };
+        this.http.put(`${environment.apiUrl}/api/users/${this.user._id}`, update, { headers }).subscribe({
+          next: (updated: any) => {
+            this.success = 'Profile updated!';
+            this.loading = false;
+          },
+          error: (err) => {
+            this.error = 'Failed to update profile.';
+            this.loading = false;
+          }
+        });
       },
       error: (err) => {
-        this.profileFormLoading = false;
-        this.profileFormError = `Failed to add profile: ${err.error?.message || err.message || 'Server error'}`;
-        console.error('Error adding player profile:', err);
-        setTimeout(() => this.profileFormError = '', 5000); // Clear error message
+        this.error = 'Failed to get access token.';
+        this.loading = false;
       }
     });
   }

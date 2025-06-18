@@ -1,41 +1,71 @@
-<!--<section class="profile-section mt-4" *ngIf="player">
-  <div class="container">
-    <h2 class="text-center mb-4">Edit Profile</h2>
-    <form (ngSubmit)="saveProfile()">
-      <div class="form-group mb-3">
-        <label for="name" class="form-label">Name</label>
-        <input id="name" class="form-control" [(ngModel)]="player.name" name="name" required>
-      </div>
-      <div class="form-group mb-3">
-        <label for="number" class="form-label">Number</label>
-        <input id="number" class="form-control" [(ngModel)]="player.number" name="number" required>
-      </div>
-      <div class="form-group mb-3">
-        <label for="position" class="form-label">Position</label>
-        <input id="position" class="form-control" [(ngModel)]="player.position" name="position" required>
-      </div>
-      <div class="form-group mb-3">
-        <label for="handedness" class="form-label">Handedness</label>
-        <select id="handedness" class="form-select" [(ngModel)]="player.handedness" name="handedness">
-          <option value="Right">Right</option>
-          <option value="Left">Left</option>
-          <option value="Both">Both</option>
-        </select>
-      </div>
-      <div class="form-group mb-3">
-        <label for="country" class="form-label">Country</label>
-        <input id="country" class="form-control" [(ngModel)]="player.country" name="country">
-      </div>
-      <div class="form-group mb-3">
-        <label for="psnId" class="form-label">PSN ID</label>
-        <input id="psnId" class="form-control" [(ngModel)]="player.psnId" name="psnId">
-      </div>
-      <div class="form-group mb-3">
-        <label for="xboxGamertag" class="form-label">Xbox Gamertag</label>
-        <input id="xboxGamertag" class="form-control" [(ngModel)]="player.xboxGamertag" name="xboxGamertag">
-      </div>
-      <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
-    </form>
+<div class="edit-profile-container">
+  <h2 class="title">Edit Profile</h2>
+
+  <div *ngIf="user" class="discord-username">
+    Discord: {{ user.nickname || user.name || form.discordId }}
   </div>
-</section>-->
+
+  <form (ngSubmit)="submit()" *ngIf="!loading; else loadingTpl">
+    <div class="form-group">
+      <label for="discordId">Discord ID</label>
+      <input id="discordId" type="text" class="form-control" [value]="form.discordId" readonly />
+    </div>
+
+    <div class="form-group">
+      <label>Platform</label>
+      <label><input type="radio" name="platform" value="PS5" [(ngModel)]="form.platform" /> PS5</label>
+      <label><input type="radio" name="platform" value="Xbox" [(ngModel)]="form.platform" /> Xbox</label>
+    </div>
+
+    <div class="form-group">
+      <label for="gamertag">Gamertag</label>
+      <input id="gamertag" type="text" class="form-control" [(ngModel)]="form.gamertag" name="gamertag" required />
+    </div>
+
+    <div class="form-group">
+      <label for="primaryPosition">Primary Position</label>
+      <select id="primaryPosition" class="form-control" [(ngModel)]="form.primaryPosition" name="primaryPosition">
+        <option *ngFor="let pos of availablePositions" [value]="pos">{{ pos }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Secondary Positions</label>
+      <div class="checkbox-group">
+        <label *ngFor="let pos of availablePositions">
+          <input type="checkbox" [checked]="form.secondaryPositions.includes(pos)" (change)="toggleSecondaryPosition(pos)" /> {{ pos }}
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Handedness</label>
+      <label><input type="radio" name="handedness" value="Left" [(ngModel)]="form.handedness" /> Left</label>
+      <label><input type="radio" name="handedness" value="Right" [(ngModel)]="form.handedness" /> Right</label>
+    </div>
+
+    <div class="form-group">
+      <label for="location">Location</label>
+      <select id="location" class="form-control" [(ngModel)]="form.location" name="location">
+        <option *ngFor="let loc of availableLocations" [value]="loc">{{ loc }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="region">Region</label>
+      <select id="region" class="form-control" [(ngModel)]="form.region" name="region">
+        <option *ngFor="let reg of availableRegions" [value]="reg">{{ reg }}</option>
+      </select>
+    </div>
+
+    <button type="submit" class="submit-btn" [disabled]="loading">Update Profile</button>
+
+    <div *ngIf="error" class="error-message">{{ error }}</div>
+    <div *ngIf="success" class="success-message">{{ success }}</div>
+  </form>
+
+  <ng-template #loadingTpl>
+    <div class="loading-message">Loading profile...</div>
+  </ng-template>
+</div>
   
