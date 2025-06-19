@@ -24,7 +24,6 @@
     "@ngrx/effects": "^19.2.0",
     "@ngrx/store": "^19.2.0",
     "@ngrx/store-devtools": "^19.2.0",
-    "angular-auth-oidc-client": "^19.0.0",
     "bootstrap": "^5.3.6",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.1",
