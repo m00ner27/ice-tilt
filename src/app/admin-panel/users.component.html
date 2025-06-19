@@ -1,0 +1,10 @@
+<div class="users-panel">
+  <h2 class="section-title">Users Management</h2>
+  <div *ngIf="loading" class="loading">Loading users...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="!loading && !error">
+    <div class="user-card" *ngFor="let user of users">
+      <div class="user-discord">{{ user.discordId }}</div>
+    </div>
+  </div>
+</div> 
