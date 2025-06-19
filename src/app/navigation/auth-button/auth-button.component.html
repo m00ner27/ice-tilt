@@ -1,7 +1,0 @@
-<div style="font-size:12px; color:#888;">
-  isLoading: {{ auth.isLoading$ | async }}<br>
-  isAuthenticated: {{ auth.isAuthenticated$ | async }}
-</div>
-<ng-container *ngIf="!(auth.isLoading$ | async)">
-  <button *ngIf="!(auth.isAuthenticated$ | async)" (click)="login()" class="login-btn">Log in</button>
-</ng-container>
