@@ -128,6 +128,18 @@ button.active {
   gap: 2px;
 }
 
+.gaming-ids span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.platform-logo-sm {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .club {
   color: #3498db;
   margin: 5px 0;
@@ -189,4 +201,8 @@ button.active {
 
 .team-logo-right {
   margin-left: 8px;
+}
+
+.players-section h2 {
+  color: #ffffff;
 } 

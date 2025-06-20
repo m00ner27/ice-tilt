@@ -13,8 +13,14 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
   styleUrls: ['./navigation.component.css'],
 })
 export class NavigationComponent {
+  isMenuCollapsed = true;
+
   constructor(private http: HttpClient) {
     console.log('HttpClient initialized!');
+  }
+
+  toggleMenu() {
+    this.isMenuCollapsed = !this.isMenuCollapsed;
   }
 }
 

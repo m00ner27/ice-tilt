@@ -1,83 +1,44 @@
-<section class="inbox-section mt-4">
-    <div class="container">
-      <h2 class="text-center mb-4">Inbox</h2>
-      <table class="table inbox-table table-bordered table-hover">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Club</th>
-            <th>Message</th>
-            <th>Accept</th>
-            <th>Decline</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>08/27/2024</td>
-            <td class="text-center">
-              <a routerLink="/club/boats" class="team-link">
-                <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo"> Boats
-              </a>
-            </td>
-            <td>
-              <a routerLink="/profile-view/1" class="transaction-link">
-                The Boats have sent you a signing request for NA S18.
-              </a>
-            </td>
-            <td class="text-center">
-              <input type="checkbox" class="accept-checkbox">
-            </td>
-            <td class="text-center">
-              <input type="checkbox" class="decline-checkbox">
-            </td>
-          </tr>
-          <tr>
-            <td>08/27/2024</td>
-            <td class="text-center">
-              <a routerLink="/club/boats" class="team-link">
-                <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo"> Boats
-              </a>
-            </td>
-            <td>
-              <a routerLink="/profile-view/2" class="transaction-link">
-                Your club has been eliminated from NA S19 Core Playoffs.
-              </a>
-            </td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr>
-            <td>08/27/2024</td>
-            <td class="text-center">
-              <a routerLink="/club/boats" class="team-link">
-                <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo"> Boats
-              </a>
-            </td>
-            <td>
-              <a routerLink="/profile-view/3" class="transaction-link">
-                Your game summary is available.
-              </a>
-            </td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr>
-            <td>08/27/2024</td>
-            <td class="text-center">
-              <a routerLink="/club/boats" class="team-link">
-                <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo"> Boats
-              </a>
-            </td>
-            <td>
-              <a routerLink="/profile-view/4" class="transaction-link">
-                You have been released from the Boats.
-              </a>
-            </td>
-            <td></td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
+<div class="inbox-container">
+  <h1>My Inbox</h1>
+  <p>View and respond to contract offers from clubs.</p>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading your offers...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Offers List -->
+  <div *ngIf="!isLoading && !error" class="offers-list">
+    <div *ngIf="offers.length > 0; else noOffers">
+      <div *ngFor="let offer of offers" class="offer-item">
+        <div class="offer-details">
+          <img 
+            [src]="offer.clubId.logoUrl || 'assets/images/square-default.png'" 
+            [alt]="offer.clubId.name" 
+            class="club-logo"
+          />
+          <span class="offer-text">
+            You have received a contract offer from <strong>{{ offer.clubId.name }}</strong>.
+          </span>
+        </div>
+        <div class="offer-actions">
+          <button (click)="respondToOffer(offer._id, 'accepted')" class="btn btn-accept">
+            Accept
+          </button>
+          <button (click)="respondToOffer(offer._id, 'rejected')" class="btn btn-reject">
+            Reject
+          </button>
+        </div>
+      </div>
     </div>
-  </section>
+    <ng-template #noOffers>
+      <p>You have no pending offers.</p>
+    </ng-template>
+  </div>
+</div>
   

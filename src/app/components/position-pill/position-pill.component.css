@@ -1,0 +1,16 @@
+.position-pill {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: white;
+  text-align: center;
+  display: inline-block;
+}
+
+.position-c { background-color: #e74c3c; } /* Red */
+.position-lw { background-color: #2ecc71; } /* Green */
+.position-rw { background-color: #3498db; } /* Blue */
+.position-ld { background-color: #06eec0; } /* Turquoise */
+.position-rd { background-color: #f1c40f; color: #333; } /* Yellow */
+.position-g { background-color: #9b59b6; } /* Purple */ 

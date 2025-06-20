@@ -1,55 +1,85 @@
 <div class="standings-container">
   <h1 class="standings-title">League Standings</h1>
   
+  <!-- Season Filter -->
+  <div class="season-filter">
+    <label for="seasonSelect">Season:</label>
+    <select 
+      id="seasonSelect" 
+      [(ngModel)]="selectedSeasonId" 
+      (change)="onSeasonChange()"
+      class="season-select"
+    >
+      <option *ngFor="let season of seasons" [value]="season._id">
+        {{ season.name }}
+      </option>
+    </select>
+  </div>
+
   <!-- Loading state -->
   <div *ngIf="isLoading" class="loading-container">
     <p>Loading standings...</p>
   </div>
-  
-  <!-- Standings table -->
-  <div *ngIf="!isLoading" class="standings-table-container">
-    <table class="standings-table">
-      <thead>
-        <tr>
-          <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')">Team</th>
-          <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
-          <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')">W</th>
-          <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')">L</th>
-          <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
-          <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')">GF</th>
-          <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')">GA</th>
-          <th (click)="onSortColumn('goalDifferential')" [ngClass]="getColumnSortClass('goalDifferential')">DIFF</th>
-          <th (click)="onSortColumn('winPercentage')" [ngClass]="getColumnSortClass('winPercentage')">WIN%</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let team of standings">
-          <td class="team-name-cell">
-            <div class="team-info">
-              <img class="team-logo" [src]="team.logo" [alt]="team.teamName + ' logo'" />
-              <span class="team-name">
-                <a [routerLink]="['/clubs', team.teamName]" class="team-link">{{ team.teamName }}</a>
-              </span>
-            </div>
-          </td>
-          <td>{{ team.gamesPlayed }}</td>
-          <td>{{ team.wins }}</td>
-          <td>{{ team.losses }}</td>
-          <td class="points-column">{{ team.points }}</td>
-          <td>{{ team.goalsFor }}</td>
-          <td>{{ team.goalsAgainst }}</td>
-          <td [ngClass]="{'positive': team.goalDifferential > 0, 'negative': team.goalDifferential < 0}">
-            {{ team.goalDifferential > 0 ? '+' + team.goalDifferential : team.goalDifferential }}
-          </td>
-          <td>{{ team.winPercentage | percent:'1.0-3' }}</td>
-        </tr>
-      </tbody>
-    </table>
+
+  <!-- Error state -->
+  <div *ngIf="error" class="error-container">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Standings by Division -->
+  <div *ngIf="!isLoading && !error && divisionStandings.length > 0" class="standings-content">
+    <div *ngFor="let divisionStanding of divisionStandings" class="division-section">
+      <h2 class="division-title">{{ divisionStanding.division.name }}</h2>
+      
+      <div class="standings-table-container">
+        <table class="standings-table">
+          <thead>
+            <tr>
+              <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')">Team</th>
+              <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
+              <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')">W</th>
+              <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')">L</th>
+              <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
+              <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')">GF</th>
+              <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')">GA</th>
+              <th (click)="onSortColumn('goalDifferential')" [ngClass]="getColumnSortClass('goalDifferential')">DIFF</th>
+              <th (click)="onSortColumn('winPercentage')" [ngClass]="getColumnSortClass('winPercentage')">WIN%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let team of divisionStanding.standings">
+              <td class="team-name-cell">
+                <div class="team-info">
+                  <img 
+                    class="team-logo" 
+                    [src]="team.logo || 'assets/images/square-default.png'" 
+                    [alt]="team.teamName + ' logo'" 
+                  />
+                  <span class="team-name">
+                    <a [routerLink]="['/clubs', team.teamId]" class="team-link">{{ team.teamName }}</a>
+                  </span>
+                </div>
+              </td>
+              <td>{{ team.gamesPlayed }}</td>
+              <td>{{ team.wins }}</td>
+              <td>{{ team.losses }}</td>
+              <td class="points-column">{{ team.points }}</td>
+              <td>{{ team.goalsFor }}</td>
+              <td>{{ team.goalsAgainst }}</td>
+              <td [ngClass]="{'positive': team.goalDifferential > 0, 'negative': team.goalDifferential < 0}">
+                {{ team.goalDifferential > 0 ? '+' + team.goalDifferential : team.goalDifferential }}
+              </td>
+              <td>{{ team.winPercentage | percent:'1.0-3' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   
   <!-- No standings data message -->
-  <div *ngIf="!isLoading && standings.length === 0" class="no-data-container">
-    <p>No standings data available.</p>
+  <div *ngIf="!isLoading && !error && divisionStandings.length === 0" class="no-data-container">
+    <p>No standings data available for {{ getSelectedSeasonName() }}.</p>
   </div>
   
   <!-- Legend -->

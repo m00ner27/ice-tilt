@@ -15,7 +15,8 @@
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: 120%;
+  left: auto;
   right: 0;
   background: white;
   border-radius: 8px;

@@ -4,3 +4,26 @@
     align-items: center;
 }
 
+@media (max-width: 991.98px) {
+  /* Reorder the menu and align the items to the right */
+  .navbar-collapse.show {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end; /* This aligns the child containers to the right */
+  }
+
+  /* Force the nav links container to only be as wide as its content */
+  .navbar-collapse .navbar-nav {
+    width: auto !important; 
+    text-align: right; /* Align the text within the links */
+  }
+  
+  /* Force the auth/profile container to only be as wide as its content */
+  .navbar-collapse .ms-auto.d-flex {
+    width: auto !important;
+    flex-direction: column !important;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+}
+

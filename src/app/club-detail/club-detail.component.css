@@ -372,3 +372,16 @@ h1 {
     font-size: 1.75rem;
   }
 }
+
+.roster-table td .platform-logo-sm {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/* Match History Component */
+app-match-history {
+  display: block;
+  margin-top: 2rem;
+}

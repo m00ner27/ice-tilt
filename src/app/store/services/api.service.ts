@@ -131,6 +131,10 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/api/games`);
   }
 
+  getGamesBySeason(seasonId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/games/season/${seasonId}`);
+  }
+
   bulkUpdateGames(updates: any[]): Observable<any> {
     return this.http.post(`${this.apiUrl}/api/games/bulk-update`, updates);
   }
@@ -163,6 +167,19 @@ export class ApiService {
   // Get free agents (users not in any club)
   getFreeAgents(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents`);
+  }
+
+  // Offer methods
+  sendContractOffer(offerData: { clubId: string; userId: string; sentBy: string; }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/api/offers`, offerData);
+  }
+
+  getInboxOffers(userId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/offers/inbox/${userId}`);
+  }
+
+  respondToOffer(offerId: string, status: 'accepted' | 'rejected'): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/api/offers/${offerId}/respond`, { status });
   }
 
   getUsers(): Observable<any[]> {

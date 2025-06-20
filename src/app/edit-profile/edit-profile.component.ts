@@ -15,8 +15,30 @@ import { environment } from '../../environments/environment';
 })
 export class EditProfileComponent implements OnInit {
   availablePositions = ['C', 'RW', 'LW', 'RD', 'LD', 'G'];
-  availableLocations = ['NA', 'EU', 'Other'];
-  availableRegions = ['North', 'South', 'East', 'West', 'Central'];
+  availableRegions = ['North America', 'Europe'];
+  
+  northAmericanCountries = [
+    { name: 'USA', emoji: '🇺🇸' },
+    { name: 'Canada', emoji: '🇨🇦' }
+  ];
+
+  europeanCountries = [
+    { name: 'Albania', emoji: '🇦🇱' }, { name: 'Andorra', emoji: '🇦🇩' }, { name: 'Austria', emoji: '🇦🇹' }, 
+    { name: 'Belarus', emoji: '🇧🇾' }, { name: 'Belgium', emoji: '🇧🇪' }, { name: 'Bosnia and Herzegovina', emoji: '🇧🇦' },
+    { name: 'Bulgaria', emoji: '🇧🇬' }, { name: 'Croatia', emoji: '🇭🇷' }, { name: 'Czechia', emoji: '🇨🇿' },
+    { name: 'Denmark', emoji: '🇩🇰' }, { name: 'Estonia', emoji: '🇪🇪' }, { name: 'Finland', emoji: '🇫🇮' },
+    { name: 'France', emoji: '🇫🇷' }, { name: 'Germany', emoji: '🇩🇪' }, { name: 'Greece', emoji: '🇬🇷' },
+    { name: 'Hungary', emoji: '🇭🇺' }, { name: 'Iceland', emoji: '🇮🇸' }, { name: 'Ireland', 'emoji': '🇮🇪' },
+    { name: 'Italy', emoji: '🇮🇹' }, { name: 'Latvia', emoji: '🇱🇻' }, { name: 'Liechtenstein', emoji: '🇱🇮' },
+    { name: 'Lithuania', emoji: '🇱🇹' }, { name: 'Luxembourg', emoji: '🇱🇺' }, { name: 'Malta', emoji: '🇲🇹' },
+    { name: 'Moldova', emoji: '🇲🇩' }, { name: 'Monaco', emoji: '🇲🇨' }, { name: 'Montenegro', emoji: '🇲🇪' },
+    { name: 'Netherlands', emoji: '🇳🇱' }, { name: 'North Macedonia', emoji: '🇲🇰' }, { name: 'Norway', emoji: '🇳🇴' },
+    { name: 'Poland', emoji: '🇵🇱' }, { name: 'Portugal', emoji: '🇵🇹' }, { name: 'Romania', emoji: '🇷🇴' },
+    { name: 'Russia', emoji: '🇷🇺' }, { name: 'Serbia', emoji: '🇷🇸' }, { name: 'Slovakia', emoji: '🇸🇰' },
+    { name: 'Slovenia', emoji: '🇸🇮' }, { name: 'Spain', emoji: '🇪🇸' }, { name: 'Sweden', emoji: '🇸🇪' },
+    { name: 'Switzerland', emoji: '🇨🇭' }, { name: 'Ukraine', emoji: '🇺🇦' }, { name: 'United Kingdom', emoji: '🇬🇧' }
+  ];
+  filteredCountries: { name: string, emoji: string }[] = [];
 
   user: any = null;
   form: any = {
@@ -26,8 +48,8 @@ export class EditProfileComponent implements OnInit {
     primaryPosition: 'C',
     secondaryPositions: [] as string[],
     handedness: 'Left',
-    location: 'NA',
-    region: 'North',
+    country: 'USA',
+    region: 'North America',
   };
   loading = false;
   error = '';
@@ -60,8 +82,9 @@ export class EditProfileComponent implements OnInit {
             this.form.primaryPosition = user.playerProfile?.position || 'C';
             this.form.secondaryPositions = user.playerProfile?.secondaryPositions || [];
             this.form.handedness = user.playerProfile?.handedness || 'Left';
-            this.form.location = user.playerProfile?.location || 'NA';
-            this.form.region = user.playerProfile?.region || 'North';
+            this.form.country = user.playerProfile?.country || 'USA';
+            this.form.region = user.playerProfile?.region || 'North America';
+            this.onRegionChange();
             this.loading = false;
           },
           error: (err) => {
@@ -75,6 +98,19 @@ export class EditProfileComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  onRegionChange() {
+    if (this.form.region === 'North America') {
+      this.filteredCountries = this.northAmericanCountries;
+    } else if (this.form.region === 'Europe') {
+      this.filteredCountries = this.europeanCountries;
+    } else {
+      this.filteredCountries = [];
+    }
+    if (!this.filteredCountries.find(c => c.name === this.form.country)) {
+      this.form.country = this.filteredCountries[0]?.name;
+    }
   }
 
   toggleSecondaryPosition(position: string) {
@@ -110,7 +146,7 @@ export class EditProfileComponent implements OnInit {
             position: this.form.primaryPosition,
             secondaryPositions: this.form.secondaryPositions,
             handedness: this.form.handedness,
-            location: this.form.location,
+            country: this.form.country,
             region: this.form.region,
             status: this.user.playerProfile?.status || 'Free Agent',
           }

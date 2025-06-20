@@ -2,8 +2,7 @@ import { PlayerStats } from './player-stats.interface';
 
 export interface Player {
     id: string;
-    name: string;
-    position: 'Forward' | 'Defense' | 'Goalie';
+    position: 'C' | 'LW' | 'RW' | 'LD' | 'RD' | 'G';
     number: string;
     psnId?: string;
     xboxGamertag?: string;
@@ -11,11 +10,13 @@ export interface Player {
     handedness?: 'Left' | 'Right';
     currentClubId?: string;
     currentClubName?: string;
-    status: 'Signed' | 'Free Agent' | 'Pending';
+    status: 'Free Agent' | 'Signed' | 'Pending';
     lastActive?: string;
     stats: PlayerStats;
     secondaryPositions?: string[];
     discordUsername?: string;
     discordId?: string;
     gamertag?: string;
+    clubLogo?: string;
+    platform?: 'PS5' | 'Xbox';
 } 

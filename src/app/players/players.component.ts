@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Player } from '../store/models/models/player.interface';
 import { ApiService } from '../store/services/api.service';
+import { Club } from '../store/models/models/club.interface';
+import { PositionPillComponent } from '../components/position-pill/position-pill.component';
 
 @Component({
   selector: 'app-players',
@@ -12,7 +14,8 @@ import { ApiService } from '../store/services/api.service';
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    PositionPillComponent
   ],
   templateUrl: './players.component.html',
   styleUrls: ['./players.component.css']
@@ -20,38 +23,91 @@ import { ApiService } from '../store/services/api.service';
 export class PlayersComponent implements OnInit {
   players: Player[] = [];
   filteredPlayers: Player[] = [];
+  clubs: Club[] = [];
+  clubLogoMap: { [key: string]: string } = {};
+  countryEmojiMap: { [key: string]: string } = {};
   statusFilter: 'All' | 'Free Agent' | 'Signed' | 'Pending' = 'All';
   positionFilter: 'All' | 'Forward' | 'Defense' | 'Goalie' = 'All';
   searchTerm: string = '';
   error: string | null = null;
+  positionGroupMap: { [key: string]: string } = {
+    'C': 'Forward', 'LW': 'Forward', 'RW': 'Forward',
+    'LD': 'Defense', 'RD': 'Defense',
+    'G': 'Goalie'
+  };
 
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
-    this.loadPlayers();
+    this.buildCountryEmojiMap();
+    this.loadClubsAndPlayers();
+  }
+
+  buildCountryEmojiMap() {
+    const countries = [
+      { name: 'USA', emoji: '🇺🇸' }, { name: 'Canada', emoji: '🇨🇦' },
+      { name: 'Albania', emoji: '🇦🇱' }, { name: 'Andorra', emoji: '🇦🇩' }, { name: 'Austria', emoji: '🇦🇹' }, 
+      { name: 'Belarus', emoji: '🇧🇾' }, { name: 'Belgium', emoji: '🇧🇪' }, { name: 'Bosnia and Herzegovina', emoji: '🇧🇦' },
+      { name: 'Bulgaria', emoji: '🇧🇬' }, { name: 'Croatia', emoji: '🇭🇷' }, { name: 'Czechia', emoji: '🇨🇿' },
+      { name: 'Denmark', emoji: '🇩🇰' }, { name: 'Estonia', emoji: '🇪🇪' }, { name: 'Finland', emoji: '🇫🇮' },
+      { name: 'France', emoji: '🇫🇷' }, { name: 'Germany', emoji: '🇩🇪' }, { name: 'Greece', emoji: '🇬🇷' },
+      { name: 'Hungary', emoji: '🇭🇺' }, { name: 'Iceland', emoji: '🇮🇸' }, { name: 'Ireland', 'emoji': '🇮🇪' },
+      { name: 'Italy', emoji: '🇮🇹' }, { name: 'Latvia', emoji: '🇱🇻' }, { name: 'Liechtenstein', emoji: '🇱🇮' },
+      { name: 'Lithuania', emoji: '🇱🇹' }, { name: 'Luxembourg', emoji: '🇱🇺' }, { name: 'Malta', emoji: '🇲🇹' },
+      { name: 'Moldova', emoji: '🇲🇩' }, { name: 'Monaco', emoji: '🇲🇨' }, { name: 'Montenegro', emoji: '🇲🇪' },
+      { name: 'Netherlands', emoji: '🇳🇱' }, { name: 'North Macedonia', emoji: '🇲🇰' }, { name: 'Norway', emoji: '🇳🇴' },
+      { name: 'Poland', emoji: '🇵🇱' }, { name: 'Portugal', emoji: '🇵🇹' }, { name: 'Romania', emoji: '🇷🇴' },
+      { name: 'Russia', emoji: '🇷🇺' }, { name: 'Serbia', emoji: '🇷🇸' }, { name: 'Slovakia', emoji: '🇸🇰' },
+      { name: 'Slovenia', emoji: '🇸🇮' }, { name: 'Spain', emoji: '🇪🇸' }, { name: 'Sweden', emoji: '🇸🇪' },
+      { name: 'Switzerland', emoji: '🇨🇭' }, { name: 'Ukraine', emoji: '🇺🇦' }, { name: 'United Kingdom', emoji: '🇬🇧' }
+    ];
+    countries.forEach(c => this.countryEmojiMap[c.name] = c.emoji);
+  }
+
+  loadClubsAndPlayers() {
+    this.apiService.getClubs().subscribe({
+      next: (clubs) => {
+        this.clubs = clubs;
+        clubs.forEach(club => {
+          if (club.name && club.logoUrl) {
+            this.clubLogoMap[club.name.toLowerCase()] = club.logoUrl;
+          }
+        });
+        this.loadPlayers(); // Load players after clubs are loaded
+      },
+      error: (error) => {
+        console.error('Error loading clubs:', error);
+        // still load players even if clubs fail
+        this.loadPlayers();
+      }
+    });
   }
 
   loadPlayers() {
-    console.log('Loading players from backend...');
-    this.apiService.getFreeAgents().subscribe({
+    this.apiService.getUsers().subscribe({
       next: (users) => {
         // Map backend user structure to Player interface
         this.players = users.map((user: any) => {
           const profile = user.playerProfile || {};
+          const clubName = profile.currentClubName || user.currentClubName || '';
+          const logo = this.clubLogoMap[clubName.toLowerCase()] || undefined;
+          
           return {
             id: user._id || user.id,
-            name: profile.name || user.name || '',
-            position: profile.position || 'Forward',
+            discordUsername: user.discordUsername || '',
+            position: profile.position || 'C',
             number: profile.number || '',
-            psnId: profile.psnId || user.psnId || '',
-            xboxGamertag: profile.xboxGamertag || user.xboxGamertag || '',
-            country: profile.location || '',
+            psnId: user.platform === 'PS5' ? user.gamertag : '',
+            xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',
+            gamertag: user.gamertag || '',
+            country: profile.country || '',
             handedness: profile.handedness || 'Left',
-            currentClubId: profile.currentClubId || '',
-            currentClubName: profile.currentClubName || '',
+            currentClubId: profile.currentClubId || user.currentClubId || '',
+            currentClubName: clubName,
             status: profile.status || 'Free Agent',
             lastActive: user.lastActive || '',
             stats: user.stats || {},
+            clubLogo: logo
           };
         });
         this.applyFilters();
@@ -64,17 +120,18 @@ export class PlayersComponent implements OnInit {
   }
 
   applyFilters() {
-    console.log('Applying filters:', { status: this.statusFilter, position: this.positionFilter, search: this.searchTerm });
     this.filteredPlayers = this.players.filter(player => {
       const matchesStatus = this.statusFilter === 'All' || player.status === this.statusFilter;
-      const matchesPosition = this.positionFilter === 'All' || player.position === this.positionFilter;
-      const matchesSearch = player.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+      
+      const positionGroup = this.positionGroupMap[player.position] || 'Unknown';
+      const matchesPosition = this.positionFilter === 'All' || positionGroup === this.positionFilter;
+
+      const matchesSearch = (player.discordUsername?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.psnId?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.xboxGamertag?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false);
       
       return matchesStatus && matchesPosition && matchesSearch;
     });
-    console.log('Filtered players:', this.filteredPlayers);
   }
 
   onStatusFilterChange(status: 'All' | 'Free Agent' | 'Signed' | 'Pending') {

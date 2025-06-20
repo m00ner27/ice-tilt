@@ -148,6 +148,12 @@
   align-items: center;
 }
 
+.platform-logo {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .platform {
   color: #8795a5;
 }
@@ -281,4 +287,12 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.player-club-name {
+  color: #aaa; /* Lighter color to distinguish from the name */
+  font-size: 1.2rem;
+  margin-top: -10px; /* Pull it up closer to the name */
+  margin-left: 65px; /* Align with the player name, accounting for logo width */
+  font-weight: 500;
 } 

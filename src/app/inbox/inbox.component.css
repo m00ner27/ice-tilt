@@ -60,3 +60,81 @@
     height: 20px;
   }
   
+  .inbox-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #1a252f;
+    border-radius: 8px;
+    color: white;
+  }
+  
+  h1 {
+    color: white;
+  }
+  
+  .offers-list {
+    margin-top: 2rem;
+  }
+  
+  .offer-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #34495e;
+  }
+  
+  .offer-item:last-child {
+    border-bottom: none;
+  }
+  
+  .offer-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .club-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 50%;
+  }
+  
+  .offer-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: white;
+  }
+  
+  .btn-accept {
+    background-color: #2ecc71;
+  }
+  
+  .btn-accept:hover {
+    background-color: #27ae60;
+  }
+  
+  .btn-reject {
+    background-color: #e74c3c;
+  }
+  
+  .btn-reject:hover {
+    background-color: #c0392b;
+  }
+  
+  .loading, .error {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+  }
+  

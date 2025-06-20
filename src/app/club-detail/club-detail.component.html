@@ -104,7 +104,15 @@
       <tbody>
         <tr *ngFor="let player of signedPlayers">
           <td>{{ player.discordUsername || player.discordId }}</td>
-          <td>{{ player.gamertag }}</td>
+          <td>
+            <span *ngIf="player.platform === 'PS5'">
+              <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo-sm">
+            </span>
+            <span *ngIf="player.platform === 'Xbox'">
+              <img src="assets/images/xbox-logo.svg" alt="Xbox" class="platform-logo-sm">
+            </span>
+            {{ player.gamertag }}
+          </td>
         </tr>
         <tr *ngIf="signedPlayers.length === 0">
           <td colspan="2" class="no-data">No signed players</td>

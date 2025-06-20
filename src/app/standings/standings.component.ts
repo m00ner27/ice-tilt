@@ -1,9 +1,50 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatchService, Match } from '../store/services/match.service';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { ApiService } from '../store/services/api.service';
+
+interface Season {
+  _id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface Division {
+  _id: string;
+  name: string;
+  seasonId: string;
+}
+
+interface Game {
+  _id: string;
+  seasonId: string;
+  divisionId: string;
+  homeClubId: string;
+  awayClubId: string;
+  date: string;
+  score?: {
+    home: number;
+    away: number;
+  };
+  homeClub?: Club;
+  awayClub?: Club;
+}
+
+interface Club {
+  _id: string;
+  name: string;
+  logoUrl?: string;
+  manager: string;
+  seasons: {
+    seasonId: string;
+    divisionIds: string[];
+  }[];
+}
 
 interface TeamStanding {
+  teamId: string;
   teamName: string;
   gamesPlayed: number;
   wins: number;
@@ -13,55 +54,128 @@ interface TeamStanding {
   goalsAgainst: number;
   goalDifferential: number;
   winPercentage: number;
-  logo?: string; // Add logo property
+  logo?: string;
+}
+
+interface DivisionStandings {
+  division: Division;
+  standings: TeamStanding[];
 }
 
 @Component({
   selector: 'app-standings',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './standings.component.html',
   styleUrls: ['./standings.component.css']
 })
 export class StandingsComponent implements OnInit {
-  standings: TeamStanding[] = [];
+  seasons: Season[] = [];
+  selectedSeasonId: string = '';
+  divisions: Division[] = [];
+  clubs: Club[] = [];
+  games: Game[] = [];
+  divisionStandings: DivisionStandings[] = [];
   isLoading: boolean = true;
-  sortColumn: string = 'points'; // Default sort by points
-  sortDirection: 'asc' | 'desc' = 'desc'; // Default sort direction
-  
-  constructor(private matchService: MatchService) { }
-  
+  error: string | null = null;
+  sortColumn: string = 'points';
+  sortDirection: 'asc' | 'desc' = 'desc';
+
+  constructor(private apiService: ApiService) {}
+
   ngOnInit(): void {
-    this.loadStandings();
+    this.loadSeasons();
   }
-  
-  loadStandings(): void {
+
+  loadSeasons(): void {
     this.isLoading = true;
-    this.matchService.getMatches().subscribe({
-      next: (matches) => {
-        this.calculateStandings(matches);
-        this.isLoading = false;
+    this.apiService.getSeasons().subscribe({
+      next: (seasons) => {
+        this.seasons = seasons;
+        if (seasons.length > 0) {
+          this.selectedSeasonId = seasons[0]._id;
+          this.loadSeasonData();
+        } else {
+          this.isLoading = false;
+          this.error = 'No seasons found';
+        }
       },
       error: (error) => {
-        console.error('Error loading matches:', error);
+        console.error('Error loading seasons:', error);
         this.isLoading = false;
+        this.error = 'Error loading seasons';
       }
     });
   }
-  
-  calculateStandings(matches: Match[]): void {
-    // Get unique team names
-    const teamNames = new Set<string>();
-    matches.forEach(match => {
-      teamNames.add(match.homeTeam);
-      teamNames.add(match.awayTeam);
+
+  onSeasonChange(): void {
+    this.loadSeasonData();
+  }
+
+  loadSeasonData(): void {
+    this.isLoading = true;
+    this.error = null;
+
+    // Load divisions, clubs, and games for the selected season
+    Promise.all([
+      this.apiService.getDivisionsBySeason(this.selectedSeasonId).toPromise(),
+      this.apiService.getClubsBySeason(this.selectedSeasonId).toPromise(),
+      this.apiService.getGamesBySeason(this.selectedSeasonId).toPromise()
+    ]).then(([divisions, clubs, games]) => {
+      this.divisions = divisions || [];
+      this.clubs = clubs || [];
+      this.games = games || [];
+      
+      this.calculateStandings();
+      this.isLoading = false;
+    }).catch((error) => {
+      console.error('Error loading season data:', error);
+      this.isLoading = false;
+      this.error = 'Error loading season data';
     });
-    
-    // Initialize standings for each team
+  }
+
+  calculateStandings(): void {
+    this.divisionStandings = [];
+
+    // Group games by division
+    const gamesByDivision = new Map<string, Game[]>();
+    this.games.forEach(game => {
+      if (!gamesByDivision.has(game.divisionId)) {
+        gamesByDivision.set(game.divisionId, []);
+      }
+      gamesByDivision.get(game.divisionId)!.push(game);
+    });
+
+    // Calculate standings for each division
+    this.divisions.forEach(division => {
+      const divisionGames = gamesByDivision.get(division._id) || [];
+      const standings = this.calculateDivisionStandings(divisionGames, division);
+      
+      if (standings.length > 0) {
+        this.divisionStandings.push({
+          division,
+          standings
+        });
+      }
+    });
+  }
+
+  calculateDivisionStandings(games: Game[], division: Division): TeamStanding[] {
     const standingsMap = new Map<string, TeamStanding>();
-    teamNames.forEach(teamName => {
-      standingsMap.set(teamName, {
-        teamName,
+
+    // Filter clubs that belong to the current division for the selected season
+    const clubsInDivision = this.clubs.filter(club =>
+      club.seasons.some(s =>
+        s.seasonId === this.selectedSeasonId && s.divisionIds.includes(division._id)
+      )
+    );
+
+    // Initialize standings for the clubs in this division
+    clubsInDivision.forEach(club => {
+      standingsMap.set(club._id, {
+        teamId: club._id,
+        teamName: club.name,
         gamesPlayed: 0,
         wins: 0,
         losses: 0,
@@ -70,57 +184,66 @@ export class StandingsComponent implements OnInit {
         goalsAgainst: 0,
         goalDifferential: 0,
         winPercentage: 0,
-        logo: this.getTeamLogo(teamName) // Add logo
+        logo: club.logoUrl
       });
     });
-    
-    // Calculate stats based on matches
-    matches.forEach(match => {
-      // Home team stats
-      const homeTeam = standingsMap.get(match.homeTeam)!;
-      homeTeam.gamesPlayed++;
-      homeTeam.goalsFor += match.homeScore;
-      homeTeam.goalsAgainst += match.awayScore;
-      
-      // Away team stats
-      const awayTeam = standingsMap.get(match.awayTeam)!;
-      awayTeam.gamesPlayed++;
-      awayTeam.goalsFor += match.awayScore;
-      awayTeam.goalsAgainst += match.homeScore;
-      
-      // Win/loss stats
-      if (match.homeScore > match.awayScore) {
-        // Home team wins
-        homeTeam.wins++;
-        homeTeam.points += 2; // 2 points for a win
-        awayTeam.losses++;
-      } else {
-        // Away team wins
-        awayTeam.wins++;
-        awayTeam.points += 2; // 2 points for a win
-        homeTeam.losses++;
+
+    // If no clubs are in the division, no need to process games
+    if (clubsInDivision.length === 0) {
+      return [];
+    }
+
+    // Calculate stats from games
+    games.forEach(game => {
+      if (!game.score) return; // Skip games without scores
+
+      const homeTeam = standingsMap.get(game.homeClubId);
+      const awayTeam = standingsMap.get(game.awayClubId);
+
+      if (homeTeam && awayTeam) {
+        // Update games played
+        homeTeam.gamesPlayed++;
+        awayTeam.gamesPlayed++;
+
+        // Update goals
+        homeTeam.goalsFor += game.score.home;
+        homeTeam.goalsAgainst += game.score.away;
+        awayTeam.goalsFor += game.score.away;
+        awayTeam.goalsAgainst += game.score.home;
+
+        // Update wins/losses and points
+        if (game.score.home > game.score.away) {
+          homeTeam.wins++;
+          homeTeam.points += 2;
+          awayTeam.losses++;
+        } else {
+          awayTeam.wins++;
+          awayTeam.points += 2;
+          homeTeam.losses++;
+        }
       }
     });
-    
-    // Calculate derived stats for each team
+
+    // Calculate derived stats
     standingsMap.forEach(team => {
       team.goalDifferential = team.goalsFor - team.goalsAgainst;
-      team.winPercentage = team.gamesPlayed > 0 ? 
-        team.wins / team.gamesPlayed : 0;
+      team.winPercentage = team.gamesPlayed > 0 ? team.wins / team.gamesPlayed : 0;
     });
-    
-    // Convert map to array and sort by points
-    this.standings = Array.from(standingsMap.values());
-    this.sortStandings(this.sortColumn, this.sortDirection);
+
+    // Convert to array and sort
+    const standings = Array.from(standingsMap.values());
+    this.sortStandings(standings, this.sortColumn, this.sortDirection);
+
+    return standings;
   }
-  
-  sortStandings(column: string, direction: 'asc' | 'desc'): void {
+
+  sortStandings(standings: TeamStanding[], column: string, direction: 'asc' | 'desc'): void {
     this.sortColumn = column;
     this.sortDirection = direction;
-    
-    this.standings.sort((a, b) => {
+
+    standings.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (column) {
         case 'teamName':
           comparison = a.teamName.localeCompare(b.teamName);
@@ -152,74 +275,29 @@ export class StandingsComponent implements OnInit {
         default:
           comparison = a.points - b.points;
       }
-      
-      // Apply sorting direction
+
       return direction === 'asc' ? comparison : -comparison;
     });
   }
-  
-  // Handle column header click for sorting
+
   onSortColumn(column: string): void {
-    // If clicking the same column, toggle direction
     const direction = this.sortColumn === column && this.sortDirection === 'desc' ? 'asc' : 'desc';
-    this.sortStandings(column, direction);
+    
+    // Apply sorting to all divisions
+    this.divisionStandings.forEach(divisionStanding => {
+      this.sortStandings(divisionStanding.standings, column, direction);
+    });
   }
-  
+
   getColumnSortClass(column: string): string {
     if (this.sortColumn !== column) {
       return 'sortable';
     }
-    
     return this.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc';
   }
-  
-  // Helper method to get team logo path
-  getTeamLogo(teamName: string): string {
-    // Based on actual team names from the mock data:
-    // - "Boats"
-    // - "Ragin Cajuns"
-    // - "Mutts"
-    // - "Roosters" (should be Iserlohn Roosters)
-    // - "Lights Out"
-    
-    // Map actual team names to logo files
-    const teamLogoMap: { [key: string]: string } = {
-      'Roosters': 'square-iserlohnroosters.png',
-      'Iserlohn Roosters': 'square-iserlohnroosters.png',
-      'Boats': 'square-boats.png',
-      'Blueline': 'square-blueline.png',
-      'Glorified Crew': 'square-glorifiedcrew.png',
-      'Lights Out': 'square-lightsout.png',
-      'Mutts': 'square-mutts.png',
-      'Ragin Cajuns': 'square-ragincajuns.png',
-      'York City Kings': 'square-yorkcitykings.png'
-    };
-    
-    // Try exact match first (case sensitive)
-    if (teamLogoMap[teamName]) {
-      return `assets/images/${teamLogoMap[teamName]}`;
-    }
-    
-    // Try case-insensitive match
-    const lowerCaseTeamName = teamName.toLowerCase();
-    for (const [key, value] of Object.entries(teamLogoMap)) {
-      if (key.toLowerCase() === lowerCaseTeamName) {
-        return `assets/images/${value}`;
-      }
-    }
-    
-    // Try partial match (for teams that might have shortened names in the data)
-    for (const [key, value] of Object.entries(teamLogoMap)) {
-      if (lowerCaseTeamName.includes(key.toLowerCase()) || 
-          key.toLowerCase().includes(lowerCaseTeamName)) {
-        return `assets/images/${value}`;
-      }
-    }
-    
-    // Log team name that couldn't be matched for debugging
-    console.log(`No logo match found for team: ${teamName}`);
-    
-    // Return default image as fallback
-    return 'assets/images/1ithlwords.png';
+
+  getSelectedSeasonName(): string {
+    const season = this.seasons.find(s => s._id === this.selectedSeasonId);
+    return season ? season.name : '';
   }
 } 

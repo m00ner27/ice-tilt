@@ -7,7 +7,15 @@
       {{ error }}
     </div>
 
-    <div class="free-agents-container">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p>Loading free agents...</p>
+    </div>
+
+    <div *ngIf="!isLoading" class="free-agents-container">
       <!-- Filters -->
       <div class="filters">
         <div class="search-box">
@@ -15,7 +23,7 @@
             type="text" 
             [(ngModel)]="searchTerm"
             (input)="onSearchChange($event)"
-            placeholder="Search by name or gamertag..."
+            placeholder="Search by username or gamertag..."
             class="search-input"
           >
         </div>
@@ -44,15 +52,24 @@
       <div class="agents-list">
         <div class="agent-card" *ngFor="let player of filteredAgents">
           <div class="player-info">
-            <h3>{{player.name}} #{{player.number}}</h3>
+            <h3>{{player.discordUsername}}<span *ngIf="player.number"> #{{player.number}}</span></h3>
             <p class="position">{{player.position}}</p>
             <p class="details">
               <span *ngIf="player.country">{{player.country}} • </span>
               <span>{{player.handedness}} Shot</span>
             </p>
             <p class="gaming-ids">
-              <span *ngIf="player.psnId">PSN: {{player.psnId}}</span>
-              <span *ngIf="player.xboxGamertag">Xbox: {{player.xboxGamertag}}</span>
+              <span *ngIf="player.psnId">
+                <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo-sm">
+                PSN: {{player.psnId}}
+              </span>
+              <span *ngIf="player.xboxGamertag">
+                <img src="assets/images/xbox-logo.svg" alt="Xbox" class="platform-logo-sm">
+                Xbox: {{player.xboxGamertag}}
+              </span>
+              <span *ngIf="player.gamertag && !player.psnId && !player.xboxGamertag">
+                Gamertag: {{player.gamertag}}
+              </span>
             </p>
           </div>
           <div class="action-buttons">
@@ -61,7 +78,7 @@
         </div>
 
         <!-- No results message -->
-        <div class="no-results" *ngIf="filteredAgents.length === 0">
+        <div class="no-results" *ngIf="!isLoading && filteredAgents.length === 0">
           No free agents found matching your criteria
         </div>
       </div>

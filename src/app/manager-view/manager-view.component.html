@@ -87,3 +87,39 @@
     </div>
   </section>
   
+<div class="manager-container">
+  <h1>Manager Dashboard</h1>
+  <p>Send contract offers to available free agents.</p>
+
+  <!-- Notification -->
+  <div *ngIf="notification" class="notification" [ngClass]="notification.type">
+    {{ notification.message }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading free agents...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Free Agents List -->
+  <div *ngIf="!isLoading && !error" class="free-agents-list">
+    <h2>Free Agents</h2>
+    <div *ngIf="freeAgents.length > 0; else noAgents">
+      <div *ngFor="let agent of freeAgents" class="agent-item">
+        <span class="agent-name">{{ agent.discordUsername }}</span>
+        <button (click)="sendOffer(agent._id)" class="btn-send-offer">
+          Send Offer
+        </button>
+      </div>
+    </div>
+    <ng-template #noAgents>
+      <p>No free agents available at this time.</p>
+    </ng-template>
+  </div>
+</div>
+  

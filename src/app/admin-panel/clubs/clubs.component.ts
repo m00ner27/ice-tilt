@@ -21,7 +21,6 @@ interface Division {
 
 interface User {
   _id: string;
-  name: string;
   discordId?: string;
   discordUsername?: string;
   playerProfile?: {
@@ -79,7 +78,7 @@ interface User {
             <h4>Current Roster</h4>
             <div class="roster-list">
               <div class="roster-item" *ngFor="let player of filteredRoster">
-                <span class="player-name">{{ player.name }}</span>
+                <span class="player-name">{{ player.discordUsername }}</span>
                 <span class="player-position">{{ player.playerProfile?.position }}</span>
                 <button class="icon-button delete" (click)="removePlayer(selectedClub, player)">
                   <i class="fas fa-times"></i>
@@ -92,7 +91,7 @@ interface User {
             <h4>Free Agents</h4>
             <div class="free-agents-list">
               <div class="free-agent-item" *ngFor="let agent of freeAgents">
-                <span class="discord-id">{{ agent.discordUsername || agent.discordId || agent.name }}</span>
+                <span class="discord-id">{{ agent.discordUsername || agent.discordId }}</span>
                 <span class="player-position">{{ agent.playerProfile?.position }}</span>
                 <button class="icon-button" (click)="addPlayer(selectedClub, agent)">
                   <i class="fas fa-plus"></i>
@@ -503,7 +502,7 @@ export class ClubsComponent implements OnInit {
   }
 
   get filteredRoster(): User[] {
-    return (this.selectedClub?.roster || []).filter(p => !!p && p.name);
+    return (this.selectedClub?.roster || []).filter(p => !!p && p.discordUsername);
   }
 
   ngOnInit(): void {
@@ -512,7 +511,7 @@ export class ClubsComponent implements OnInit {
 
   loadData(): void {
     this.api.getSeasons().subscribe(seasons => this.seasons = seasons);
-    this.api.getDivisions().subscribe(divisions => this.divisions = divisions);
+    this.api.getDivisions().subscribe(data => this.divisions = data);
     this.api.getClubs().subscribe(clubs => this.clubs = clubs);
     this.api.getFreeAgents().subscribe(agents => this.freeAgents = agents);
     this.clubForm.get('season')?.valueChanges.subscribe(() => {
@@ -522,79 +521,53 @@ export class ClubsComponent implements OnInit {
 
   viewClubDetails(club: Club): void {
     this.selectedClub = club;
-    this.api.getClubRoster(club._id!).subscribe(roster => {
-      if (this.selectedClub) {
-        this.selectedClub.roster = roster;
-        this.updateFreeAgentsList();
-      }
-    });
+    if (club._id) {
+      this.api.getClubRoster(club._id).subscribe(roster => {
+        this.selectedClub!.roster = roster;
+      });
+    }
   }
 
   addPlayer(club: Club, player: User): void {
-    console.log('Adding player:', player._id, 'to club:', club._id);
-    this.api.addPlayerToClub(club._id!, player._id).subscribe({
-      next: (response) => {
-        console.log('Player added successfully:', response);
-        // Refresh the roster from the server
-        this.api.getClubRoster(club._id!).subscribe(roster => {
-          if (this.selectedClub && this.selectedClub._id === club._id) {
-            this.selectedClub.roster = roster;
-          }
-        });
-        // Remove from free agents
+    console.log(`Adding player: ${player._id} to club: ${club._id}`);
+    if (!club._id || !player._id) return;
+
+    this.api.addPlayerToClub(club._id, player._id).subscribe({
+      next: (updatedClub: any) => {
+        console.log('Player added successfully:', updatedClub);
         this.updateFreeAgentsList();
+        
+        // Refresh the roster for the selected club
+        if (this.selectedClub && this.selectedClub._id === club._id) {
+          this.viewClubDetails(this.selectedClub);
+        }
       },
-      error: (error) => {
-        console.error('Error adding player to club:', error);
-        alert('Failed to add player to club. Please try again.');
+      error: (err: any) => {
+        console.error('Failed to add player:', err);
       }
     });
   }
 
   removePlayer(club: Club, player: User): void {
-    if (!club._id) return;
+    if (!club._id || !player._id) return;
 
-    if (confirm(`Are you sure you want to remove ${player.name} from the roster?`)) {
-      console.log('Removing player:', player, 'from club:', club._id);
-
-      this.api.removePlayerFromClub(club._id, player._id).subscribe(
-        (updatedClub) => {
-          console.log('Successfully removed player, updated club:', updatedClub);
-          
-          // Update the clubs list with the new club data
-          const clubIndex = this.clubs.findIndex(c => c._id === club._id);
-          if (clubIndex !== -1) {
-            this.clubs[clubIndex] = updatedClub;
-          }
-          
-          // If this is the currently selected club, refresh its roster
-          if (this.selectedClub && this.selectedClub._id === club._id) {
-            this.api.getClubRoster(club._id!).subscribe(roster => {
-              console.log('Fetched updated roster:', roster);
-              this.selectedClub!.roster = roster;
-              // Update the free agents list
-              this.updateFreeAgentsList();
-            });
-          }
-        },
-        error => {
-          console.error('Error removing player from club:', error);
+    this.api.removePlayerFromClub(club._id, player._id).subscribe({
+      next: () => {
+        this.updateFreeAgentsList();
+        // Refresh the roster for the selected club
+        if (this.selectedClub && this.selectedClub._id === club._id) {
+          this.viewClubDetails(this.selectedClub);
         }
-      );
-    }
+      },
+      error: (err: any) => console.error('Failed to remove player', err)
+    });
   }
 
   private updateFreeAgentsList(): void {
-    console.log('Updating free agents list...');
-    this.api.getFreeAgents().subscribe(
-      agents => {
-        console.log('Fetched free agents:', agents);
-        this.freeAgents = agents;
-      },
-      error => {
-        console.error('Error fetching free agents:', error);
-      }
-    );
+    this.api.getFreeAgents().subscribe(data => {
+      console.log('Fetched free agents:', data);
+      this.freeAgents = data;
+    });
   }
 
   onLogoFileChange(event: any): void {

@@ -191,11 +191,30 @@ export class ClubDetailComponent implements OnInit {
         this.apiService.getClubRoster(clubId).subscribe({
           next: (roster) => {
             if (this.club) {
-              this.club.roster = roster; // Assign the fetched roster here
-              console.log('Assigned roster to this.club.roster:', this.club.roster);
+              this.club.roster = roster.map((user: any) => {
+                const profile = user.playerProfile || {};
+                return {
+                  id: user._id,
+                  discordUsername: user.discordUsername,
+                  position: profile.position || 'C',
+                  status: profile.status || 'Free Agent',
+                  number: profile.number || '',
+                  psnId: user.platform === 'PS5' ? user.gamertag : '',
+                  xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',
+                  gamertag: user.gamertag || '',
+                  platform: user.platform,
+                  stats: user.stats || {},
+                  handedness: profile.handedness || 'Left',
+                  country: profile.country || '',
+                  currentClubId: user.currentClubId || '',
+                  currentClubName: user.currentClubName || '',
+                  secondaryPositions: profile.secondaryPositions || []
+                };
+              });
+              console.log('Assigned mapped roster to this.club.roster:', this.club.roster);
             }
             // Initialize stats for all roster players
-            this.initializeRosterStats(roster);
+            this.initializeRosterStats(this.club?.roster || []);
             
             // Then load match data and update stats for players with games
             this.matchService.getMatchesByTeam(backendClub.name).subscribe({
@@ -235,24 +254,25 @@ export class ClubDetailComponent implements OnInit {
     });
   }
 
-  private initializeRosterStats(roster: any[]) {
+  private initializeRosterStats(roster: Player[]) {
     // Initialize skater stats
     this.skaterStats = roster
-      .filter(player => player.playerProfile?.position !== 'Goalie')
+      .filter(player => player.position !== 'G')
       .map(player => ({
         ...DEFAULT_SKATER_STATS,
-        playerId: parseInt(player._id) || 0,
-        name: player.name,
-        position: player.playerProfile?.position || 'Forward'
+        playerId: parseInt(player.id) || 0,
+        name: player.discordUsername || '',
+        position: player.position || 'Forward'
       }));
 
     // Initialize goalie stats
     this.goalieStats = roster
-      .filter(player => player.playerProfile?.position === 'Goalie')
+      .filter(player => player.position === 'G')
       .map(player => ({
         ...DEFAULT_GOALIE_STATS,
-        playerId: parseInt(player._id) || 0,
-        name: player.name
+        playerId: parseInt(player.id) || 0,
+        name: player.discordUsername || '',
+        position: 'G'
       }));
   }
 
@@ -464,12 +484,10 @@ export class ClubDetailComponent implements OnInit {
     goalie.goalsAgainstAverage = totalGAA / goalie.gamesPlayed;
   }
 
-  get signedPlayers() {
-    if (!this.club || !this.club.roster) return [];
-    // Filter for players with status 'Signed'
-    return this.club.roster.filter((player: any) =>
-      player.playerProfile?.status === 'Signed' ||
-      (player.currentClubId && this.backendClub && player.currentClubId === this.backendClub._id)
-    );
+  get signedPlayers(): Player[] {
+    if (!this.club || !this.club.roster) {
+      return [];
+    }
+    return this.club.roster.filter(player => player.status === 'Signed');
   }
 }

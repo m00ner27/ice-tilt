@@ -178,6 +178,18 @@ h2 {
   gap: 2px;
 }
 
+.gaming-ids span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.platform-logo-sm {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .action-buttons {
   margin-top: 10px;
 }

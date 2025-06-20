@@ -1,23 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Player } from '../store/models/models/player.interface';
-
-interface PlayerStats {
-  playerId: number;
-  name: string;
-  team: string;
-  teamLogo?: string;
-  number: number;
-  position: string;
-  gamesPlayed: number;
-  goals: number;
-  assists: number;
-  points: number;
-  plusMinus: number;
-}
+import { ApiService } from '../store/services/api.service';
 
 @Component({
   selector: 'app-free-agents',
@@ -36,51 +22,58 @@ export class FreeAgentsComponent implements OnInit {
   positionFilter: string = 'All';
   searchTerm: string = '';
   error: string | null = null;
+  isLoading: boolean = true;
 
-  constructor(private http: HttpClient) {}
+  constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.loadFreeAgents();
   }
 
   loadFreeAgents() {
-    console.log('Loading free agents...');
-    this.http.get<{freeAgents: Player[]}>('/assets/data/mock_free_agents.json')
-      .subscribe({
-        next: (data) => {
-          console.log('Received data:', data);
-          if (data && Array.isArray(data.freeAgents)) {
-            this.freeAgents = data.freeAgents;
-            this.filteredAgents = this.freeAgents;
-            console.log('Free agents loaded:', this.freeAgents);
-            this.applyFilters();
-          } else {
-            console.error('Invalid data format:', data);
-            this.error = 'Invalid data format received';
-          }
-        },
-        error: (error: HttpErrorResponse) => {
-          console.error('Error loading free agents:', error);
-          if (error.status === 404) {
-            this.error = 'Could not find the mock data file. Path: /assets/data/mock_free_agents.json';
-          } else {
-            this.error = `Error loading free agents data: ${error.message}`;
-          }
-        }
-      });
+    this.isLoading = true;
+    this.apiService.getFreeAgents().subscribe({
+      next: (agents) => {
+        // This assumes getFreeAgents returns a structure that needs to be mapped to Player
+        this.freeAgents = agents.map((agent: any) => {
+          const profile = agent.playerProfile || {};
+          return {
+            id: agent._id,
+            discordUsername: agent.discordUsername,
+            position: profile.position || 'C',
+            status: profile.status || 'Free Agent',
+            number: profile.number || '',
+            psnId: agent.platform === 'PS5' ? agent.gamertag : '',
+            xboxGamertag: agent.platform === 'Xbox' ? agent.gamertag : '',
+            gamertag: agent.gamertag || '',
+            stats: agent.stats || {},
+            handedness: profile.handedness || 'Left',
+            country: profile.country || '',
+            currentClubId: agent.currentClubId || '',
+            currentClubName: agent.currentClubName || '',
+            secondaryPositions: profile.secondaryPositions || [],
+          };
+        });
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading free agents:', err);
+        this.error = 'Failed to load free agents.';
+        this.isLoading = false;
+      }
+    });
   }
 
   applyFilters() {
-    console.log('Applying filters:', { position: this.positionFilter, search: this.searchTerm });
     this.filteredAgents = this.freeAgents.filter(player => {
       const matchesPosition = this.positionFilter === 'All' || player.position === this.positionFilter;
-      const matchesSearch = player.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+      const matchesSearch = (player.discordUsername?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.psnId?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.xboxGamertag?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false);
       
       return matchesPosition && matchesSearch;
     });
-    console.log('Filtered agents:', this.filteredAgents);
   }
 
   onPositionFilterChange(position: string) {

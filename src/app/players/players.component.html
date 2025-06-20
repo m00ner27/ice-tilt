@@ -67,20 +67,30 @@
       <div class="players-list">
         <div class="player-card" *ngFor="let player of filteredPlayers">
           <div class="player-info">
-            <h3>{{player.name}}<span *ngIf="player.number"> {{player.number}}</span></h3>
-            <p class="position">{{player.position}}</p>
+            <h3>
+              <img *ngIf="player.clubLogo" [src]="player.clubLogo" [alt]="player.currentClubName" class="team-logo-sm" style="margin-right: 10px;">
+              {{player.discordUsername}}<span *ngIf="player.number"> {{player.number}}</span>
+            </h3>
+            <div class="position">
+              <app-position-pill [position]="player.position"></app-position-pill>
+            </div>
             <p class="status" [ngClass]="player.status.toLowerCase().replace(' ', '-')">{{player.status}}</p>
             <p class="details">
-              <span *ngIf="player.country">{{player.country}} • </span>
+              <span *ngIf="player.country">{{ countryEmojiMap[player.country] }} {{player.country}} • </span>
               <span>{{player.handedness}} Shot</span>
             </p>
             <p class="gaming-ids">
-              <span *ngIf="player.psnId">PSN: {{player.psnId}}</span>
-              <span *ngIf="player.xboxGamertag">Xbox: {{player.xboxGamertag}}</span>
-            </p>
-            <p *ngIf="player.currentClubName" class="club">
-              Current Club: {{player.currentClubName}}
-              <img [src]="getTeamLogo(player.currentClubName)" alt="{{player.currentClubName}} Logo" class="team-logo-sm team-logo-right">
+              <span *ngIf="player.psnId">
+                <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo-sm">
+                PSN: {{player.psnId}}
+              </span>
+              <span *ngIf="player.xboxGamertag">
+                <img src="assets/images/xbox-logo.svg" alt="Xbox" class="platform-logo-sm">
+                Xbox: {{player.xboxGamertag}}
+              </span>
+              <span *ngIf="player.gamertag && !player.psnId && !player.xboxGamertag">
+                Gamertag: {{player.gamertag}}
+              </span>
             </p>
           </div>
           <div class="action-buttons">
