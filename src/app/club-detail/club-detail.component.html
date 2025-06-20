@@ -1,4 +1,12 @@
-<div class="club-detail-container" *ngIf="club">
+<div class="loading" *ngIf="loading">
+  Loading club details...
+</div>
+
+<div class="error" *ngIf="error">
+  {{ error }}
+</div>
+
+<div class="club-detail-container" *ngIf="club && !loading && !error">
   <button class="back-button" routerLink="/clubs">← Back to Clubs</button>
   
   <div class="club-header" [style.border-color]="club?.colour" *ngIf="club && club.stats">
@@ -84,11 +92,7 @@
   </div>
 </div>
 
-<div class="loading" *ngIf="!club">
-  Loading club details...
-</div>
-
-<div class="club-detail-container" *ngIf="club">
+<div class="club-detail-container" *ngIf="club && !loading && !error">
   <!-- Roster Section -->
   <div class="roster-section">
     <h3>Team Roster</h3>

@@ -12,28 +12,38 @@
     >
   </div>
 
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    Loading clubs...
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
   <!-- Club cards -->
-  <div class="clubs">
+  <div *ngIf="!loading && !error" class="clubs">
     <div *ngFor="let club of filteredClubs" 
          class="club-card" 
-         [style.border-color]="club.colour"
-         [routerLink]="['/clubs', club.clubName]"
+         [style.border-color]="club.primaryColour || '#666'"
+         [routerLink]="['/clubs', club._id]"
          style="cursor: pointer;">
       <div class="club-content">
         <img 
-          [src]="club.image" 
-          [alt]="club.clubName" 
+          [src]="club.logoUrl || 'assets/images/default-team.png'" 
+          [alt]="club.name" 
           class="club-image"
-          (error)="club.image = 'assets/images/default-team.png'"
+          (error)="club.logoUrl = 'assets/images/default-team.png'"
         >
-        <h3>{{club.clubName}}</h3>
+        <h3>{{club.name}}</h3>
         <p class="manager-name">Manager: {{club.manager}}</p>
       </div>
     </div>
   </div>
 
   <!-- No results message -->
-  <div *ngIf="filteredClubs.length === 0" class="no-results">
+  <div *ngIf="!loading && !error && filteredClubs.length === 0" class="no-results">
     No clubs found
   </div>
 </div>

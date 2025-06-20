@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Player } from '../store/models/models/player.interface';
 import { PlayerStats } from '../store/models/models/player-stats.interface';
 import { PlayerStatsService } from '../store/services/player-stats.service';
+import { ApiService } from '../store/services/api.service';
 
 @Component({
   selector: 'app-player-profile',
@@ -21,7 +22,7 @@ export class PlayerProfileComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private http: HttpClient,
+    private apiService: ApiService,
     private playerStatsService: PlayerStatsService
   ) {}
 
@@ -33,25 +34,40 @@ export class PlayerProfileComponent implements OnInit {
   }
 
   private loadPlayerData(playerId: string) {
-    // First load the player data
-    this.http.get<{players: Player[]}>('/assets/data/mock_all_players.json')
-      .subscribe({
-        next: (data) => {
-          const player = data.players.find(p => p.id === playerId);
-          if (player) {
-            this.player = player;
-            this.loadPlayerStats(playerId);
-          } else {
-            this.error = 'Player not found';
-            this.loading = false;
-          }
-        },
-        error: (error) => {
-          console.error('Error loading player:', error);
-          this.error = 'Error loading player data';
+    // Fetch player from backend
+    this.apiService.getUsers().subscribe({
+      next: (users) => {
+        const user = users.find((u: any) => (u._id || u.id) === playerId);
+        if (user) {
+          const profile = user.playerProfile || {};
+          this.player = {
+            id: user._id || user.id,
+            name: profile.name || user.name || '',
+            position: profile.position || 'Forward',
+            number: profile.number || '',
+            psnId: profile.psnId || user.psnId || '',
+            xboxGamertag: profile.xboxGamertag || user.xboxGamertag || '',
+            country: profile.location || '',
+            handedness: profile.handedness || 'Left',
+            currentClubId: profile.currentClubId || '',
+            currentClubName: profile.currentClubName || '',
+            status: profile.status || 'Free Agent',
+            lastActive: user.lastActive || '',
+            stats: user.stats || {},
+            secondaryPositions: profile.secondaryPositions || [],
+          };
+          this.loadPlayerStats(playerId);
+        } else {
+          this.error = 'Player not found';
           this.loading = false;
         }
-      });
+      },
+      error: (error) => {
+        console.error('Error loading player:', error);
+        this.error = 'Error loading player data';
+        this.loading = false;
+      }
+    });
   }
 
   private loadPlayerStats(playerId: string) {

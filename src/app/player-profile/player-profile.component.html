@@ -18,7 +18,7 @@
       <div class="profile-header-row">
         <div class="header-top-row">
           <div class="header-left">
-            <h1>{{ player.name }} <span class="player-number">#{{ player.number }}</span></h1>
+            <h1>{{ player.name }}<span class="player-number" *ngIf="player.number"> {{ player.number }}</span></h1>
           </div>
           <div class="header-right">
             <div class="player-status" [ngClass]="player.status.toLowerCase()">
@@ -34,7 +34,16 @@
       <div class="player-details">
         <div class="detail-item">
           <span class="label">Position:</span>
-          <span class="value">{{ player.position }}</span>
+          <span class="value">
+            {{ player.position }}
+            <ng-container *ngIf="player.secondaryPositions && player.secondaryPositions.length">
+              <span class="secondary-positions">(
+                <ng-container *ngFor="let pos of player.secondaryPositions; let last = last">
+                  {{ pos }}<span *ngIf="!last">, </span>
+                </ng-container>
+              )</span>
+            </ng-container>
+          </span>
         </div>
         <div class="detail-item">
           <span class="label">Handedness:</span>

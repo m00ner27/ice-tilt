@@ -24,6 +24,7 @@ export interface User {
   email?: string;
   role?: string;
   discordId?: string;
+  discordUsername?: string;
   playerProfile?: PlayerProfile;
   platform?: string;
   gamertag?: string;

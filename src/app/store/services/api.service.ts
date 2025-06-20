@@ -96,6 +96,10 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/api/clubs`);
   }
 
+  getClubById(clubId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/clubs/${clubId}`);
+  }
+
   addClub(clubData: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/api/clubs`, clubData);
   }
@@ -159,5 +163,9 @@ export class ApiService {
   // Get free agents (users not in any club)
   getFreeAgents(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents`);
+  }
+
+  getUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/users`);
   }
 }

@@ -22,9 +22,12 @@ interface Division {
 interface User {
   _id: string;
   name: string;
-  position?: string;
-  status?: string;
   discordId?: string;
+  discordUsername?: string;
+  playerProfile?: {
+    position?: string;
+    status?: string;
+  };
 }
 
 @Component({
@@ -76,8 +79,8 @@ interface User {
             <h4>Current Roster</h4>
             <div class="roster-list">
               <div class="roster-item" *ngFor="let player of filteredRoster">
-                <span>{{ player.name }}</span>
-                <span class="player-position">{{ player.position }}</span>
+                <span class="player-name">{{ player.name }}</span>
+                <span class="player-position">{{ player.playerProfile?.position }}</span>
                 <button class="icon-button delete" (click)="removePlayer(selectedClub, player)">
                   <i class="fas fa-times"></i>
                 </button>
@@ -89,8 +92,8 @@ interface User {
             <h4>Free Agents</h4>
             <div class="free-agents-list">
               <div class="free-agent-item" *ngFor="let agent of freeAgents">
-                <span class="discord-id">{{ agent.discordId || agent.name }}</span>
-                <span class="player-position">{{ agent.position }}</span>
+                <span class="discord-id">{{ agent.discordUsername || agent.discordId || agent.name }}</span>
+                <span class="player-position">{{ agent.playerProfile?.position }}</span>
                 <button class="icon-button" (click)="addPlayer(selectedClub, agent)">
                   <i class="fas fa-plus"></i>
                 </button>
@@ -447,6 +450,11 @@ interface User {
       border-radius: 4px;
     }
 
+    .player-name {
+      color: #fff;
+      font-weight: 500;
+    }
+
     .discord-id {
       color: #fff;
     }
@@ -495,7 +503,7 @@ export class ClubsComponent implements OnInit {
   }
 
   get filteredRoster(): User[] {
-    return (this.selectedClub?.roster || []).filter(p => !!p);
+    return (this.selectedClub?.roster || []).filter(p => !!p && p.name);
   }
 
   ngOnInit(): void {
@@ -515,26 +523,78 @@ export class ClubsComponent implements OnInit {
   viewClubDetails(club: Club): void {
     this.selectedClub = club;
     this.api.getClubRoster(club._id!).subscribe(roster => {
-      this.selectedClub!.roster = roster;
+      if (this.selectedClub) {
+        this.selectedClub.roster = roster;
+        this.updateFreeAgentsList();
+      }
     });
   }
 
   addPlayer(club: Club, player: User): void {
-    this.api.addPlayerToClub(club._id!, player._id).subscribe(() => {
-      if (this.selectedClub) {
-        this.selectedClub.roster = [...(this.selectedClub.roster || []).filter(p => !!p), player];
+    console.log('Adding player:', player._id, 'to club:', club._id);
+    this.api.addPlayerToClub(club._id!, player._id).subscribe({
+      next: (response) => {
+        console.log('Player added successfully:', response);
+        // Refresh the roster from the server
+        this.api.getClubRoster(club._id!).subscribe(roster => {
+          if (this.selectedClub && this.selectedClub._id === club._id) {
+            this.selectedClub.roster = roster;
+          }
+        });
+        // Remove from free agents
+        this.updateFreeAgentsList();
+      },
+      error: (error) => {
+        console.error('Error adding player to club:', error);
+        alert('Failed to add player to club. Please try again.');
       }
-      this.freeAgents = this.freeAgents.filter(agent => agent._id !== player._id);
     });
   }
 
   removePlayer(club: Club, player: User): void {
-    this.api.removePlayerFromClub(club._id!, player._id).subscribe(() => {
-      if (this.selectedClub) {
-        this.selectedClub.roster = this.selectedClub.roster?.filter(p => p._id !== player._id);
+    if (!club._id) return;
+
+    if (confirm(`Are you sure you want to remove ${player.name} from the roster?`)) {
+      console.log('Removing player:', player, 'from club:', club._id);
+
+      this.api.removePlayerFromClub(club._id, player._id).subscribe(
+        (updatedClub) => {
+          console.log('Successfully removed player, updated club:', updatedClub);
+          
+          // Update the clubs list with the new club data
+          const clubIndex = this.clubs.findIndex(c => c._id === club._id);
+          if (clubIndex !== -1) {
+            this.clubs[clubIndex] = updatedClub;
+          }
+          
+          // If this is the currently selected club, refresh its roster
+          if (this.selectedClub && this.selectedClub._id === club._id) {
+            this.api.getClubRoster(club._id!).subscribe(roster => {
+              console.log('Fetched updated roster:', roster);
+              this.selectedClub!.roster = roster;
+              // Update the free agents list
+              this.updateFreeAgentsList();
+            });
+          }
+        },
+        error => {
+          console.error('Error removing player from club:', error);
+        }
+      );
+    }
+  }
+
+  private updateFreeAgentsList(): void {
+    console.log('Updating free agents list...');
+    this.api.getFreeAgents().subscribe(
+      agents => {
+        console.log('Fetched free agents:', agents);
+        this.freeAgents = agents;
+      },
+      error => {
+        console.error('Error fetching free agents:', error);
       }
-      this.freeAgents = [...this.freeAgents, player];
-    });
+    );
   }
 
   onLogoFileChange(event: any): void {

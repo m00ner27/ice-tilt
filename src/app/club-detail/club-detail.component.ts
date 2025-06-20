@@ -3,15 +3,22 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatchService, Match, PlayerMatchStats } from '../store/services/match.service';
+import { ApiService } from '../store/services/api.service';
 import { forkJoin } from 'rxjs';
 import { MatchHistoryComponent } from './match-history/match-history.component';
 import { Club, ClubStats } from '../store/models/models/club.interface';
 import { Player } from '../store/models/models/player.interface';
 import { PlayerStats } from '../store/models/models/player-stats.interface';
 
-// Keep only the ClubData interface for API response
-interface ClubData {
-  clubs: Club[];
+// Updated interface to match backend Club model
+interface BackendClub {
+  _id: string;
+  name: string;
+  logoUrl?: string;
+  manager: string;
+  primaryColour?: string;
+  seasons?: any[];
+  roster?: any[];
 }
 
 // Keep these stats interfaces as they're specific to this component
@@ -91,6 +98,29 @@ interface Notification {
     read: boolean;
 }
 
+// Default stats for players with no recorded games
+const DEFAULT_SKATER_STATS: SkaterStats = {
+  playerId: 0,
+  name: '',
+  number: 0,
+  position: '',
+  gamesPlayed: 0,
+  goals: 0,
+  assists: 0,
+  points: 0,
+  plusMinus: 0
+};
+
+const DEFAULT_GOALIE_STATS: GoalieStats = {
+  playerId: 0,
+  name: '',
+  number: 0,
+  gamesPlayed: 0,
+  savePercentage: 0,
+  goalsAgainstAverage: 0,
+  shutouts: 0
+};
+
 @Component({
   selector: 'app-club-detail',
   standalone: true,
@@ -100,9 +130,12 @@ interface Notification {
 })
 export class ClubDetailComponent implements OnInit {
   club: Club | undefined;
+  backendClub: BackendClub | undefined;
   matches: Match[] = [];
   skaterStats: SkaterStats[] = [];
   goalieStats: GoalieStats[] = [];
+  loading: boolean = false;
+  error: string | null = null;
   
   // Add default stats
   private defaultStats: CalculatedClubStats = {
@@ -123,15 +156,100 @@ export class ClubDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
-    private matchService: MatchService
+    private matchService: MatchService,
+    private apiService: ApiService
   ) {}
 
   ngOnInit() {
-    // Get the club name from the URL
+    // Get the club ID from the URL
     this.route.params.subscribe(params => {
-      const clubName = params['id'];
-      this.loadClubData(clubName);
+      const clubId = params['id'];
+      this.loadClubData(clubId);
     });
+  }
+
+  private loadClubData(clubId: string) {
+    this.loading = true;
+    this.error = null;
+
+    // Fetch club from backend by ID
+    this.apiService.getClubById(clubId).subscribe({
+      next: (backendClub) => {
+        this.backendClub = backendClub;
+        
+        // Map backend club to frontend Club interface
+        this.club = {
+          clubName: backendClub.name,
+          image: backendClub.logoUrl || 'assets/images/default-team.png',
+          manager: backendClub.manager,
+          colour: backendClub.primaryColour || '#666',
+          roster: [],
+          stats: { ...this.defaultStats }
+        };
+
+        // First, load the roster to ensure we have all players
+        this.apiService.getClubRoster(clubId).subscribe({
+          next: (roster) => {
+            // Initialize stats for all roster players
+            this.initializeRosterStats(roster);
+            
+            // Then load match data and update stats for players with games
+            this.matchService.getMatchesByTeam(backendClub.name).subscribe({
+              next: (matchData) => {
+                this.matches = matchData;
+                
+                if (this.club) {
+                  const calculatedStats = this.calculateTeamStats(backendClub.name, matchData);
+                  this.club.stats = calculatedStats;
+                  
+                  // Update stats for players who have played games
+                  this.calculatePlayerStats(backendClub.name);
+                }
+                this.loading = false;
+              },
+              error: (error) => {
+                console.error('Error loading match data:', error);
+                this.matches = [];
+                if (this.club) {
+                  this.club.stats = { ...this.defaultStats };
+                }
+                this.loading = false;
+              }
+            });
+          },
+          error: (error) => {
+            console.error('Error loading roster:', error);
+            this.loading = false;
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error loading club data:', error);
+        this.error = 'Failed to load club data';
+        this.loading = false;
+      }
+    });
+  }
+
+  private initializeRosterStats(roster: any[]) {
+    // Initialize skater stats
+    this.skaterStats = roster
+      .filter(player => player.playerProfile?.position !== 'Goalie')
+      .map(player => ({
+        ...DEFAULT_SKATER_STATS,
+        playerId: parseInt(player._id) || 0,
+        name: player.name,
+        position: player.playerProfile?.position || 'Forward'
+      }));
+
+    // Initialize goalie stats
+    this.goalieStats = roster
+      .filter(player => player.playerProfile?.position === 'Goalie')
+      .map(player => ({
+        ...DEFAULT_GOALIE_STATS,
+        playerId: parseInt(player._id) || 0,
+        name: player.name
+      }));
   }
 
   private calculateTeamStats(teamName: string, matches: Match[]): CalculatedClubStats {
@@ -229,48 +347,6 @@ export class ClubDetailComponent implements OnInit {
     stats.goalDifferential = stats.goalsFor - stats.goalsAgainst;
 
     return stats;
-  }
-
-  loadClubData(clubName: string) {
-    // First load just the club data
-    this.http.get<ClubData>('assets/mock_club_data.json').subscribe({
-      next: (data) => {
-        this.club = data.clubs.find(club => club.clubName === clubName);
-        if (!this.club) {
-          console.error('Club not found:', clubName);
-          return;
-        }
-        // Initialize stats with defaults
-        this.club.stats = { ...this.defaultStats };
-      },
-      error: (error) => {
-        console.error('Error loading club data:', error);
-      }
-    });
-
-    // Load match data and calculate stats
-    this.matchService.getMatchesByTeam(clubName).subscribe({
-      next: (matchData) => {
-        this.matches = matchData;
-        
-        // Calculate actual stats from matches
-        if (this.club) {
-          const calculatedStats = this.calculateTeamStats(clubName, matchData);
-          this.club.stats = calculatedStats;
-          
-          // Calculate player statistics
-          this.calculatePlayerStats(clubName);
-        }
-      },
-      error: (error) => {
-        console.error('Error loading match data:', error);
-        this.matches = [];
-        // Ensure we still have default stats even if match loading fails
-        if (this.club) {
-          this.club.stats = { ...this.defaultStats };
-        }
-      }
-    });
   }
   
   calculatePlayerStats(teamName: string) {

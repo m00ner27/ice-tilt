@@ -25,6 +25,13 @@ import { ApiService } from '../../store/services/api.service';
           </div>
         </div>
         <div class="stat-card">
+          <i class="fas fa-user"></i>
+          <div class="stat-content">
+            <h3>Total Users</h3>
+            <p class="stat-value">{{ usersCount }}</p>
+          </div>
+        </div>
+        <div class="stat-card">
           <i class="fas fa-trophy"></i>
           <div class="stat-content">
             <h3>Divisions</h3>
@@ -206,6 +213,8 @@ export class AdminDashboardComponent implements OnInit {
   divisions: any[] = [];
   games: any[] = [];
   recentActivity: any[] = [];
+  users: any[] = [];
+  usersCount: number = 0;
 
   constructor(
     private api: ApiService,
@@ -216,8 +225,11 @@ export class AdminDashboardComponent implements OnInit {
     this.api.getSeasons().subscribe(seasons => this.seasons = seasons);
     this.api.getClubs().subscribe(clubs => this.clubs = clubs);
     this.api.getDivisions().subscribe(divisions => this.divisions = divisions);
-    // TODO: Add games API call when available
-    
+    this.api.getUsers().subscribe(users => {
+      this.users = users;
+      this.usersCount = users.length;
+    });
+    this.api.getGames().subscribe(games => this.games = games);
     // Mock recent activity for now
     this.recentActivity = [
       { icon: 'fas fa-plus', message: 'New season "2024 Spring" created', time: '2 hours ago' },

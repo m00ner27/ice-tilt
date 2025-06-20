@@ -14,4 +14,5 @@ export interface Player {
     status: 'Signed' | 'Free Agent' | 'Pending';
     lastActive?: string;
     stats: PlayerStats;
+    secondaryPositions?: string[];
 } 

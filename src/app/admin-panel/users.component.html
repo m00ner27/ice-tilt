@@ -4,7 +4,58 @@
   <div *ngIf="error" class="error">{{ error }}</div>
   <div *ngIf="!loading && !error">
     <div class="user-card" *ngFor="let user of users">
-      <div class="user-discord">{{ user.discordId }}</div>
+      <div class="user-row">
+        <div class="user-discord">{{ user.discordUsername || user.discordId }}</div>
+        <button class="icon-button delete" (click)="editUser(user)">Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="modal" *ngIf="editingUser">
+    <div class="modal-content">
+      <h3>Edit User</h3>
+      <form (ngSubmit)="saveUser()">
+        <div class="form-group">
+          <label>Discord Username</label>
+          <input [(ngModel)]="editingUser.discordUsername" name="discordUsername">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input [(ngModel)]="editingUser.email" name="email">
+        </div>
+        <div class="form-group">
+          <label>Platform</label>
+          <input [(ngModel)]="editingUser.platform" name="platform">
+        </div>
+        <div class="form-group">
+          <label>Gamertag</label>
+          <input [(ngModel)]="editingUser.gamertag" name="gamertag">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <input [(ngModel)]="editingUser.role" name="role">
+        </div>
+        <div class="form-group">
+          <label>Player Profile</label>
+          <div *ngIf="editingUser.playerProfile">
+            <label>Position</label>
+            <input [(ngModel)]="editingUser.playerProfile.position" name="position">
+            <label>Handedness</label>
+            <input [(ngModel)]="editingUser.playerProfile.handedness" name="handedness">
+            <label>Location</label>
+            <input [(ngModel)]="editingUser.playerProfile.location" name="location">
+            <label>Region</label>
+            <input [(ngModel)]="editingUser.playerProfile.region" name="region">
+            <label>Status</label>
+            <input [(ngModel)]="editingUser.playerProfile.status" name="status">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit">Save</button>
+          <button type="button" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 </div> 

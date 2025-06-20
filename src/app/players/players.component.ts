@@ -4,6 +4,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Player } from '../store/models/models/player.interface';
+import { ApiService } from '../store/services/api.service';
 
 @Component({
   selector: 'app-players',
@@ -24,31 +25,42 @@ export class PlayersComponent implements OnInit {
   searchTerm: string = '';
   error: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.loadPlayers();
   }
 
   loadPlayers() {
-    console.log('Loading players...');
-    this.http.get<{players: Player[]}>('/assets/data/mock_all_players.json')
-      .subscribe({
-        next: (data) => {
-          console.log('Received data:', data);
-          if (data && Array.isArray(data.players)) {
-            this.players = data.players;
-            this.applyFilters();
-          } else {
-            console.error('Invalid data format:', data);
-            this.error = 'Invalid data format received';
-          }
-        },
-        error: (error: HttpErrorResponse) => {
-          console.error('Error loading players:', error);
-          this.error = `Error loading players data: ${error.message}`;
-        }
-      });
+    console.log('Loading players from backend...');
+    this.apiService.getFreeAgents().subscribe({
+      next: (users) => {
+        // Map backend user structure to Player interface
+        this.players = users.map((user: any) => {
+          const profile = user.playerProfile || {};
+          return {
+            id: user._id || user.id,
+            name: profile.name || user.name || '',
+            position: profile.position || 'Forward',
+            number: profile.number || '',
+            psnId: profile.psnId || user.psnId || '',
+            xboxGamertag: profile.xboxGamertag || user.xboxGamertag || '',
+            country: profile.location || '',
+            handedness: profile.handedness || 'Left',
+            currentClubId: profile.currentClubId || '',
+            currentClubName: profile.currentClubName || '',
+            status: profile.status || 'Free Agent',
+            lastActive: user.lastActive || '',
+            stats: user.stats || {},
+          };
+        });
+        this.applyFilters();
+      },
+      error: (error) => {
+        console.error('Error loading players:', error);
+        this.error = `Error loading players data: ${error.message}`;
+      }
+    });
   }
 
   applyFilters() {

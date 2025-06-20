@@ -67,7 +67,7 @@
       <div class="players-list">
         <div class="player-card" *ngFor="let player of filteredPlayers">
           <div class="player-info">
-            <h3>{{player.name}} #{{player.number}}</h3>
+            <h3>{{player.name}}<span *ngIf="player.number"> {{player.number}}</span></h3>
             <p class="position">{{player.position}}</p>
             <p class="status" [ngClass]="player.status.toLowerCase().replace(' ', '-')">{{player.status}}</p>
             <p class="details">

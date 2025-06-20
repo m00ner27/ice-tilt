@@ -2,18 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../store/services/api.service';
 
-// Simple interface for our club data
+// Updated interface to match backend Club model
 interface Club {
-  clubName: string;
-  image: string;
+  _id?: string;
+  name: string;
+  logoUrl?: string;
   manager: string;
-  colour: string;
-}
-
-interface ClubData {
-  clubs: Club[];
+  primaryColour?: string;
+  seasons?: any[];
+  roster?: any[];
 }
 
 @Component({
@@ -27,29 +26,37 @@ export class ClubListComponent implements OnInit {
   clubs: Club[] = [];
   filteredClubs: Club[] = [];
   searchText: string = '';
+  loading: boolean = false;
+  error: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.loadClubs();
   }
 
   loadClubs() {
-    this.http.get<ClubData>('assets/mock_club_data.json').subscribe({
-      next: (data) => {
-        this.clubs = data.clubs;
+    this.loading = true;
+    this.error = null;
+    
+    this.apiService.getClubs().subscribe({
+      next: (clubs) => {
+        this.clubs = clubs;
         this.sortClubs();
         this.filteredClubs = this.clubs;
+        this.loading = false;
       },
       error: (error) => {
         console.error('Error loading clubs:', error);
+        this.error = 'Failed to load clubs. Please try again.';
+        this.loading = false;
       }
     });
   }
 
   sortClubs() {
     this.clubs.sort((a, b) => 
-      a.clubName.toLowerCase().localeCompare(b.clubName.toLowerCase())
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
     );
   }
 
@@ -61,7 +68,7 @@ export class ClubListComponent implements OnInit {
 
     const searchTerm = this.searchText.toLowerCase();
     this.filteredClubs = this.clubs.filter(club => 
-      club.clubName.toLowerCase().includes(searchTerm) ||
+      club.name.toLowerCase().includes(searchTerm) ||
       club.manager.toLowerCase().includes(searchTerm)
     );
   }

@@ -4,6 +4,6 @@ export const environment = {
   apiUrl: 'http://localhost:3001',
   apiAudience: 'http://localhost:3000',
   apiAllowedList: [
-    'http://localhost:3000/api/*'
+    '/api/*'
   ]
 };
