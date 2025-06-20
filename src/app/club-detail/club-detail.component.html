@@ -90,15 +90,33 @@
   <div class="loading-stats" *ngIf="club && !club.stats">
     Calculating team statistics...
   </div>
-</div>
 
-<div class="club-detail-container" *ngIf="club && !loading && !error">
-  <!-- Roster Section -->
+  <!-- Signed Players Roster Table -->
   <div class="roster-section">
-    <h3>Team Roster</h3>
-    
+    <h4>Signed Players</h4>
+    <table class="roster-table signed-roster-table">
+      <thead>
+        <tr>
+          <th>Discord Username</th>
+          <th>Gamertag</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let player of signedPlayers">
+          <td>{{ player.discordUsername || player.discordId }}</td>
+          <td>{{ player.gamertag }}</td>
+        </tr>
+        <tr *ngIf="signedPlayers.length === 0">
+          <td colspan="2" class="no-data">No signed players</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Statistics Section (was Team Roster) -->
+  <div class="roster-section">
+    <h4>Statistics</h4>
     <!-- Skaters Table -->
-    <h4>Skaters</h4>
     <table class="roster-table skaters-table">
       <thead>
         <tr>

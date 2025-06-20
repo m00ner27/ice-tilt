@@ -187,9 +187,13 @@ export class ClubDetailComponent implements OnInit {
           stats: { ...this.defaultStats }
         };
 
-        // First, load the roster to ensure we have all players
+        // First, load the roster and assign it to the club
         this.apiService.getClubRoster(clubId).subscribe({
           next: (roster) => {
+            if (this.club) {
+              this.club.roster = roster; // Assign the fetched roster here
+              console.log('Assigned roster to this.club.roster:', this.club.roster);
+            }
             // Initialize stats for all roster players
             this.initializeRosterStats(roster);
             
@@ -458,5 +462,14 @@ export class ClubDetailComponent implements OnInit {
     // Calculate goals against average
     const totalGAA = (goalie.goalsAgainstAverage * (goalie.gamesPlayed - 1)) + goalsAgainst;
     goalie.goalsAgainstAverage = totalGAA / goalie.gamesPlayed;
+  }
+
+  get signedPlayers() {
+    if (!this.club || !this.club.roster) return [];
+    // Filter for players with status 'Signed'
+    return this.club.roster.filter((player: any) =>
+      player.playerProfile?.status === 'Signed' ||
+      (player.currentClubId && this.backendClub && player.currentClubId === this.backendClub._id)
+    );
   }
 }

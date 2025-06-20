@@ -15,4 +15,7 @@ export interface Player {
     lastActive?: string;
     stats: PlayerStats;
     secondaryPositions?: string[];
+    discordUsername?: string;
+    discordId?: string;
+    gamertag?: string;
 } 
