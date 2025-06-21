@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../store/services/api.service';
+import { EashlService } from '../../services/eashl.service';
 
 interface Club {
   _id?: string;
@@ -11,6 +12,8 @@ interface Club {
   primaryColour: string;
   seasons: any[];
   roster?: any[];
+  region: string;
+  eashlClubId: string;
 }
 
 interface Division {
@@ -148,6 +151,16 @@ interface User {
                 <option value="" disabled selected>Select Division</option>
                 <option *ngFor="let division of divisionsForSelectedSeason" [value]="division._id">{{ division.name }}</option>
               </select>
+            </div>
+
+            <div class="form-group">
+              <label>Region</label>
+              <input formControlName="region" type="text" placeholder="Enter region">
+            </div>
+
+            <div class="form-group">
+              <label>Eashl Club ID</label>
+              <input formControlName="eashlClubId" type="text" placeholder="Enter Eashl Club ID">
             </div>
 
             <div class="form-actions">
@@ -485,14 +498,20 @@ export class ClubsComponent implements OnInit {
   logoPreview: string | ArrayBuffer | null = null;
   uploadingLogo = false;
 
-  constructor(private fb: FormBuilder, private api: ApiService) {
+  constructor(
+    private fb: FormBuilder,
+    private api: ApiService,
+    private eashlService: EashlService
+  ) {
     this.clubForm = this.fb.group({
       name: ['', Validators.required],
-      logo: ['', Validators.required],
+      logo: [''],
       manager: ['', Validators.required],
-      color: ['#3498db', Validators.required],
+      color: ['#ffffff', Validators.required],
+      season: ['', Validators.required],
       division: ['', Validators.required],
-      season: ['', Validators.required]
+      region: [''],
+      eashlClubId: ['']
     });
   }
 
@@ -604,7 +623,9 @@ export class ClubsComponent implements OnInit {
             seasonId: form.season,
             divisionIds: [form.division]
           }
-        ]
+        ],
+        region: form.region,
+        eashlClubId: form.eashlClubId
       };
       this.api.addClub(clubData).subscribe(newClub => {
         this.clubs.push(newClub);
@@ -615,16 +636,19 @@ export class ClubsComponent implements OnInit {
 
   editClub(club: Club): void {
     this.editingClub = club;
+    this.isAddingClub = true;
+    this.logoPreview = club.logoUrl;
     this.clubForm.patchValue({
       name: club.name,
       logo: club.logoUrl,
       manager: club.manager,
       color: club.primaryColour,
       season: club.seasons[0]?.seasonId,
-      division: club.seasons[0]?.divisionIds[0]
+      division: club.seasons[0]?.divisionIds[0],
+      region: club.region,
+      eashlClubId: club.eashlClubId
     });
-    this.logoPreview = club.logoUrl;
-    this.isAddingClub = true;
+    this.loadDivisionsForSeason(club.seasons[0]?.seasonId);
   }
 
   updateClub(): void {
@@ -641,7 +665,9 @@ export class ClubsComponent implements OnInit {
             seasonId: form.season,
             divisionIds: [form.division]
           }
-        ]
+        ],
+        region: form.region,
+        eashlClubId: form.eashlClubId
       };
       this.api.updateClub(updated).subscribe(updatedClub => {
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
@@ -664,5 +690,11 @@ export class ClubsComponent implements OnInit {
     this.editingClub = null;
     this.isAddingClub = false;
     this.logoPreview = null;
+  }
+
+  loadDivisionsForSeason(seasonId: string): void {
+    this.api.getDivisions().subscribe(data => {
+      this.divisions = data.filter(d => d.seasonId === seasonId);
+    });
   }
 } 

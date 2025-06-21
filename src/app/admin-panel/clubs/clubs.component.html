@@ -16,6 +16,8 @@
       </div>
       <input formControlName="manager" type="text" placeholder="Manager" required />
       <input formControlName="color" type="color" required />
+      <input formControlName="region" type="text" placeholder="Region" required />
+      <input formControlName="eashlClubId" type="text" placeholder="EASHL Club ID" />
       <select formControlName="season" required>
         <option value="" disabled selected>Select Season</option>
         <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
@@ -50,9 +52,9 @@
     <ul class="free-agent-list">
       <li *ngFor="let agent of freeAgents">
         <span>
-          {{ agent.discordId || agent.name }} ({{ agent.position || 'N/A' }})
+          {{ agent.discordUsername }} ({{ agent.playerProfile?.primaryPosition || 'N/A' }})
         </span>
-        <button (click)="addPlayer(selectedClub, agent)" [disabled]="!selectedClub">Add to Club</button>
+        <button (click)="addPlayer(editingClub, agent)" [disabled]="!editingClub">Add to {{ editingClub?.name }}</button>
       </li>
     </ul>
   </div>

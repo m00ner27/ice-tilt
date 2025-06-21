@@ -19,6 +19,7 @@ interface BackendClub {
   primaryColour?: string;
   seasons?: any[];
   roster?: any[];
+  eashlClubId?: string; // Added eashlClubId
 }
 
 // Keep these stats interfaces as they're specific to this component
@@ -136,6 +137,7 @@ export class ClubDetailComponent implements OnInit {
   goalieStats: GoalieStats[] = [];
   loading: boolean = false;
   error: string | null = null;
+  allClubs: BackendClub[] = [];
   
   // Add default stats
   private defaultStats: CalculatedClubStats = {
@@ -172,115 +174,152 @@ export class ClubDetailComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    // Fetch club from backend by ID
-    this.apiService.getClubById(clubId).subscribe({
-      next: (backendClub) => {
-        this.backendClub = backendClub;
-        
-        // Map backend club to frontend Club interface
-        this.club = {
-          clubName: backendClub.name,
-          image: backendClub.logoUrl || 'assets/images/default-team.png',
-          manager: backendClub.manager,
-          colour: backendClub.primaryColour || '#666',
-          roster: [],
-          stats: { ...this.defaultStats }
-        };
+    // Fetch all clubs first to resolve opponent names later
+    this.apiService.getClubs().subscribe({
+      next: (allClubs) => {
+        this.allClubs = allClubs as BackendClub[];
 
-        // First, load the roster and assign it to the club
-        this.apiService.getClubRoster(clubId).subscribe({
-          next: (roster) => {
-            if (this.club) {
-              this.club.roster = roster.map((user: any) => {
-                const profile = user.playerProfile || {};
-                return {
-                  id: user._id,
-                  discordUsername: user.discordUsername,
-                  position: profile.position || 'C',
-                  status: profile.status || 'Free Agent',
-                  number: profile.number || '',
-                  psnId: user.platform === 'PS5' ? user.gamertag : '',
-                  xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',
-                  gamertag: user.gamertag || '',
-                  platform: user.platform,
-                  stats: user.stats || {},
-                  handedness: profile.handedness || 'Left',
-                  country: profile.country || '',
-                  currentClubId: user.currentClubId || '',
-                  currentClubName: user.currentClubName || '',
-                  secondaryPositions: profile.secondaryPositions || []
-                };
-              });
-              console.log('Assigned mapped roster to this.club.roster:', this.club.roster);
-            }
-            // Initialize stats for all roster players
-            this.initializeRosterStats(this.club?.roster || []);
+        // Fetch club from backend by ID
+        this.apiService.getClubById(clubId).subscribe({
+          next: (backendClub) => {
+            this.backendClub = backendClub;
             
-            // Then load match data and update stats for players with games
-            this.matchService.getMatchesByTeam(backendClub.name).subscribe({
-              next: (matchData) => {
-                this.matches = matchData;
-                
+            // Map backend club to frontend Club interface
+            this.club = {
+              clubName: backendClub.name,
+              image: backendClub.logoUrl || 'assets/images/default-team.png',
+              manager: backendClub.manager,
+              colour: backendClub.primaryColour || '#666',
+              roster: [],
+              stats: { ...this.defaultStats }
+            };
+
+            // First, load the roster and assign it to the club
+            this.apiService.getClubRoster(clubId).subscribe({
+              next: (roster) => {
                 if (this.club) {
-                  const calculatedStats = this.calculateTeamStats(backendClub.name, matchData);
-                  this.club.stats = calculatedStats;
-                  
-                  // Update stats for players who have played games
-                  this.calculatePlayerStats(backendClub.name);
+                  this.club.roster = roster.map((user: any) => {
+                    const profile = user.playerProfile || {};
+                    return {
+                      id: user._id,
+                      discordUsername: user.discordUsername,
+                      position: profile.position || 'C',
+                      status: profile.status || 'Free Agent',
+                      number: profile.number || '',
+                      gamertag: user.gamertag || user.discordUsername,
+                      platform: profile.platform || 'Unknown',
+                      stats: user.stats || {},
+                      psnId: profile.platform === 'PS5' ? user.gamertag : '',
+                      xboxGamertag: profile.platform === 'Xbox' ? user.gamertag : '',
+                      country: profile.country || '',
+                      handedness: profile.handedness || 'Left',
+                      currentClubId: user.currentClubId || '',
+                      currentClubName: user.currentClubName || '',
+                      secondaryPositions: profile.secondaryPositions || []
+                    };
+                  });
                 }
+                
+                // Load EASHL game data for this club
+                this.loadEashlGameData(clubId);
+                
                 this.loading = false;
               },
-              error: (error) => {
-                console.error('Error loading match data:', error);
-                this.matches = [];
-                if (this.club) {
-                  this.club.stats = { ...this.defaultStats };
-                }
+              error: (err) => {
+                console.error('Error loading roster:', err);
+                this.error = 'Failed to load roster';
                 this.loading = false;
               }
             });
           },
-          error: (error) => {
-            console.error('Error loading roster:', error);
+          error: (err) => {
+            console.error('Error loading club:', err);
+            this.error = 'Failed to load club data';
             this.loading = false;
           }
         });
       },
-      error: (error) => {
-        console.error('Error loading club data:', error);
-        this.error = 'Failed to load club data';
+      error: (err) => {
+        console.error('Error loading clubs:', err);
+        this.error = 'Failed to load clubs data';
         this.loading = false;
       }
     });
   }
 
-  private initializeRosterStats(roster: Player[]) {
-    // Initialize skater stats
-    this.skaterStats = roster
-      .filter(player => player.position !== 'G')
-      .map(player => ({
-        ...DEFAULT_SKATER_STATS,
-        playerId: parseInt(player.id) || 0,
-        name: player.discordUsername || '',
-        position: player.position || 'Forward'
-      }));
+  private loadEashlGameData(clubId: string) {
+    // Get all games for this club and process EASHL data
+    this.apiService.getGames().subscribe({
+      next: (games) => {
+        const clubGames = games.filter((game: any) => 
+          (game.homeClubId === clubId || game.awayClubId === clubId) && 
+          game.eashlData
+        );
+        
+        if (this.club && clubGames.length > 0) {
+          // Map games to the Match[] interface for the history component
+          this.matches = clubGames.map(game => {
+            const homeClub = this.allClubs.find(c => c._id === game.homeClubId);
+            const awayClub = this.allClubs.find(c => c._id === game.awayClubId);
 
-    // Initialize goalie stats
-    this.goalieStats = roster
-      .filter(player => player.position === 'G')
-      .map(player => ({
-        ...DEFAULT_GOALIE_STATS,
-        playerId: parseInt(player.id) || 0,
-        name: player.discordUsername || '',
-        position: 'G'
-      }));
+            const playerStats: PlayerMatchStats[] = [];
+            if (game.eashlData?.players) {
+              Object.entries(game.eashlData.players).forEach(([clubEashlId, clubPlayers]: [string, any]) => {
+                Object.entries(clubPlayers).forEach(([eaPlayerId, playerData]: [string, any]) => {
+                  let teamName = 'Unknown';
+                  if (homeClub && String(clubEashlId) === String(homeClub.eashlClubId)) {
+                    teamName = homeClub.name;
+                  } else if (awayClub && String(clubEashlId) === String(awayClub.eashlClubId)) {
+                    teamName = awayClub.name;
+                  }
+                  playerStats.push({
+                    playerId: parseInt(eaPlayerId),
+                    name: playerData.playername,
+                    team: teamName,
+                    number: 0, // Jersey number not available in this part of the API
+                    position: playerData.position,
+                    goals: parseInt(playerData.skgoals) || 0,
+                    assists: parseInt(playerData.skassists) || 0,
+                    plusMinus: parseInt(playerData.skplusmin) || 0,
+                    saves: parseInt(playerData.glsaves) || 0,
+                    shotsAgainst: parseInt(playerData.glshots) || 0,
+                    goalsAgainst: parseInt(playerData.glga) || 0,
+                    shutout: 0 // Shutout data not available in this part of the API
+                  });
+                });
+              });
+            }
+
+            return {
+              id: game._id,
+              homeTeam: homeClub?.name || 'Unknown',
+              awayTeam: awayClub?.name || 'Unknown',
+              homeScore: game.score?.home || 0,
+              awayScore: game.score?.away || 0,
+              date: game.date,
+              isOvertime: false, 
+              isShootout: false,
+              playerStats: playerStats
+            } as Match;
+          });
+
+          // Calculate and assign overall team stats
+          this.club.stats = this.calculateTeamStats(clubGames, clubId);
+          // Process and assign individual player stats
+          this.processEashlPlayerStats(clubGames, clubId);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading EASHL game data:', err);
+      }
+    });
   }
 
-  private calculateTeamStats(teamName: string, matches: Match[]): CalculatedClubStats {
+  private calculateTeamStats(games: any[], clubId: string): CalculatedClubStats {
     const stats: CalculatedClubStats = {
       wins: 0,
       losses: 0,
-      otLosses: 0,
+      otLosses: 0, // EASHL API doesn't provide OT/SO loss distinction, so this will be 0
       points: 0,
       gamesPlayed: 0,
       goalsFor: 0,
@@ -293,65 +332,35 @@ export class ClubDetailComponent implements OnInit {
     };
 
     // Sort matches by date to calculate streaks and last 10 games
-    const sortedMatches = [...matches].sort((a, b) => 
+    const sortedGames = [...games].sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
-    let currentStreak = '';
+    sortedGames.forEach(game => {
+      if (!game.score) return;
 
-    sortedMatches.forEach(match => {
       stats.gamesPlayed++;
-      let gameResult: 'W' | 'L' | 'OTL';
-      
-      if (match.homeTeam === teamName) {
-        // Team was home
-        stats.goalsFor += match.homeScore;
-        stats.goalsAgainst += match.awayScore;
+      let gameResult: 'W' | 'L' | 'OTL' = 'L';
+      const isHomeTeam = game.homeClubId === clubId;
 
-        if (match.homeScore > match.awayScore) {
-          // Win
+      if (isHomeTeam) {
+        stats.goalsFor += game.score.home;
+        stats.goalsAgainst += game.score.away;
+        if (game.score.home > game.score.away) {
           stats.wins++;
           gameResult = 'W';
         } else {
-          // Check if it was an OT/SO loss
-          if (match.isOvertime || match.isShootout) {
-            stats.otLosses++;
-            gameResult = 'OTL';
-          } else {
-            stats.losses++;
-            gameResult = 'L';
-          }
+          stats.losses++;
         }
-      } else {
-        // Team was away
-        stats.goalsFor += match.awayScore;
-        stats.goalsAgainst += match.homeScore;
-
-        if (match.awayScore > match.homeScore) {
-          // Win
+      } else { // Away team
+        stats.goalsFor += game.score.away;
+        stats.goalsAgainst += game.score.home;
+        if (game.score.away > game.score.home) {
           stats.wins++;
           gameResult = 'W';
         } else {
-          // Check if it was an OT/SO loss
-          if (match.isOvertime || match.isShootout) {
-            stats.otLosses++;
-            gameResult = 'OTL';
-          } else {
-            stats.losses++;
-            gameResult = 'L';
-          }
+          stats.losses++;
         }
-      }
-
-      // Calculate streak
-      if (stats.gamesPlayed === 1) {
-        stats.streakType = gameResult;
-        stats.streakCount = 1;
-      } else if (gameResult === stats.streakType) {
-        stats.streakCount++;
-      } else if (stats.gamesPlayed === 1) {
-        stats.streakType = gameResult;
-        stats.streakCount = 1;
       }
 
       // Track last 10 games
@@ -360,128 +369,95 @@ export class ClubDetailComponent implements OnInit {
       }
     });
 
-    // Calculate points (2 for wins, 1 for OT losses)
-    stats.points = (stats.wins * 2) + stats.otLosses;
+    // --- Streak Calculation ---
+    // It's simpler to calculate the streak after the lastTen array is built.
+    // The array is sorted newest to oldest.
+    if (stats.lastTen.length > 0) {
+      stats.streakType = stats.lastTen[0];
+      stats.streakCount = 1;
+      for (let i = 1; i < stats.lastTen.length; i++) {
+        if (stats.lastTen[i] === stats.streakType) {
+          stats.streakCount++;
+        } else {
+          break; // Streak broken
+        }
+      }
+    }
 
-    // Calculate win percentage (points earned out of total possible points)
-    const possiblePoints = stats.gamesPlayed * 2;
-    stats.winPercentage = possiblePoints > 0 ? (stats.points / possiblePoints) * 100 : 0;
-
-    // Calculate goal differential
+    stats.points = stats.wins * 2; // Simple points calculation
+    stats.winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0;
     stats.goalDifferential = stats.goalsFor - stats.goalsAgainst;
+
+    // Note: Streak calculation is simplified as a full implementation is complex.
+    // This can be enhanced later if needed.
 
     return stats;
   }
-  
-  calculatePlayerStats(teamName: string) {
-    // Track unique players
-    const skaters = new Map<number, SkaterStats>();
-    const goalies = new Map<number, GoalieStats>();
+
+  private processEashlPlayerStats(games: any[], clubId: string) {
+    const playerStatsMap = new Map<string, any>();
+    const pageClubEashlId = this.backendClub?.eashlClubId;
+
+    if (!pageClubEashlId) {
+      console.error("Club detail page is missing the eashlClubId, cannot process player stats.");
+      return;
+    }
     
-    // Process all matches
-    this.matches.forEach(match => {
-      // Process each player's stats from the match
-      match.playerStats.forEach(playerStat => {
-        if (playerStat.team === teamName) {
-          if (playerStat.position === 'G') {
-            // Process goalie stats
-            this.processGoalieStats(goalies, playerStat, match);
-          } else {
-            // Process skater stats
-            this.processSkaterStats(skaters, playerStat);
+    games.forEach(game => {
+      // The 'players' object is keyed by club ID.
+      if (game.eashlData?.players && game.eashlData.players[pageClubEashlId]) {
+        const clubPlayers = game.eashlData.players[pageClubEashlId];
+
+        // Now, clubPlayers is an object where keys are player IDs
+        Object.entries(clubPlayers).forEach(([eaPlayerId, playerData]: [string, any]) => {
+          if (!playerStatsMap.has(eaPlayerId)) {
+            playerStatsMap.set(eaPlayerId, {
+              playerId: eaPlayerId,
+              name: playerData.playername || 'Unknown',
+              number: 0, // Jersey number not available in this part of the API
+              position: playerData.position || 'Unknown',
+              gamesPlayed: 0,
+              goals: 0,
+              assists: 0,
+              points: 0,
+              plusMinus: 0,
+              savePercentage: 0,
+              goalsAgainstAverage: 0,
+              shutouts: 0
+            });
           }
-        }
-      });
+          
+          const stats = playerStatsMap.get(eaPlayerId);
+          stats.gamesPlayed++;
+          
+          if (playerData.position.toLowerCase() === 'goalie') {
+            stats.savePercentage += parseFloat(playerData.glsavepct) || 0;
+            stats.goalsAgainstAverage += parseFloat(playerData.glgaa) || 0;
+            // Shutout data not available
+          } else {
+            stats.goals += parseInt(playerData.skgoals) || 0;
+            stats.assists += parseInt(playerData.skassists) || 0;
+            stats.points = stats.goals + stats.assists;
+            stats.plusMinus += parseInt(playerData.skplusmin) || 0;
+          }
+        });
+      }
     });
     
-    // Convert maps to arrays
-    this.skaterStats = Array.from(skaters.values());
-    this.goalieStats = Array.from(goalies.values());
-    
-    // Sort skaters by points (descending)
-    this.skaterStats.sort((a, b) => b.points - a.points);
-    
-    // Sort goalies by save percentage (descending)
-    this.goalieStats.sort((a, b) => b.savePercentage - a.savePercentage);
-  }
-  
-  processSkaterStats(skaters: Map<number, SkaterStats>, playerStat: PlayerMatchStats) {
-    if (!playerStat.goals && !playerStat.assists && !playerStat.plusMinus) {
-      return; // Skip if no stats available
-    }
-    
-    // Check if this is a skater (not a goalie)
-    if (playerStat.position === 'G') {
-      return; // Skip goalies
-    }
-    
-    // Get or create skater stats
-    let skater = skaters.get(playerStat.playerId);
-    if (!skater) {
-      skater = {
-        playerId: playerStat.playerId,
-        name: playerStat.name,
-        number: playerStat.number,
-        position: playerStat.position,
-        gamesPlayed: 0,
-        goals: 0,
-        assists: 0,
-        points: 0,
-        plusMinus: 0
-      };
-      skaters.set(playerStat.playerId, skater);
-    }
-    
-    // Update stats
-    skater.gamesPlayed++;
-    skater.goals += playerStat.goals || 0;
-    skater.assists += playerStat.assists || 0;
-    skater.points = skater.goals + skater.assists;
-    skater.plusMinus += playerStat.plusMinus || 0;
-  }
-  
-  processGoalieStats(goalies: Map<number, GoalieStats>, playerStat: PlayerMatchStats, match: Match) {
-    if (!playerStat.saves && !playerStat.shotsAgainst) {
-      return; // Skip if no stats available
-    }
-    
-    // Check if this is a goalie
-    if (playerStat.position !== 'G') {
-      return; // Skip non-goalies
-    }
-    
-    // Get or create goalie stats
-    let goalie = goalies.get(playerStat.playerId);
-    if (!goalie) {
-      goalie = {
-        playerId: playerStat.playerId,
-        name: playerStat.name,
-        number: playerStat.number,
-        gamesPlayed: 0,
-        savePercentage: 0,
-        goalsAgainstAverage: 0,
-        shutouts: 0
-      };
-      goalies.set(playerStat.playerId, goalie);
-    }
-    
-    // Update games played and shutouts
-    goalie.gamesPlayed++;
-    goalie.shutouts += playerStat.shutout || 0;
-    
-    // Update saves and goals against for calculating averages
-    const saves = playerStat.saves || 0;
-    const shotsAgainst = playerStat.shotsAgainst || 0;
-    const goalsAgainst = playerStat.goalsAgainst || 0;
-    
-    // Calculate total saves and shots to get save percentage
-    const totalSaves = (goalie.savePercentage * (goalie.gamesPlayed - 1)) + 
-                       (saves / (shotsAgainst || 1));
-    goalie.savePercentage = totalSaves / goalie.gamesPlayed;
-    
-    // Calculate goals against average
-    const totalGAA = (goalie.goalsAgainstAverage * (goalie.gamesPlayed - 1)) + goalsAgainst;
-    goalie.goalsAgainstAverage = totalGAA / goalie.gamesPlayed;
+    // Post-process goalie stats for averages
+    playerStatsMap.forEach(stats => {
+      if (stats.position.toLowerCase() === 'goalie' && stats.gamesPlayed > 0) {
+        stats.savePercentage = stats.savePercentage / stats.gamesPlayed;
+        stats.goalsAgainstAverage = stats.goalsAgainstAverage / stats.gamesPlayed;
+      }
+    });
+
+    // Convert maps to arrays for display
+    this.skaterStats = Array.from(playerStatsMap.values())
+      .filter(player => player.position.toLowerCase() !== 'goalie');
+      
+    this.goalieStats = Array.from(playerStatsMap.values())
+      .filter(player => player.position.toLowerCase() === 'goalie');
   }
 
   get signedPlayers(): Player[] {

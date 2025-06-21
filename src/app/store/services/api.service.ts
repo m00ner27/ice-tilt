@@ -185,4 +185,12 @@ export class ApiService {
   getUsers(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/users`);
   }
+
+  getClubEashlGames(clubId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/eashl-games`);
+  }
+
+  getGameEashlData(gameId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/games/${gameId}/eashl-data`);
+  }
 }

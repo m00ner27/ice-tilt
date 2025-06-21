@@ -20,7 +20,6 @@
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
     "@auth0/auth0-angular": "^2.2.3",
-    "@logto/js": "^5.0.2",
     "@ngrx/effects": "^19.2.0",
     "@ngrx/store": "^19.2.0",
     "@ngrx/store-devtools": "^19.2.0",

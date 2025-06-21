@@ -28,6 +28,10 @@ interface Game {
     home: number;
     away: number;
   };
+  eashlData?: {
+    homeScore: number;
+    awayScore: number;
+  };
   homeClub?: Club;
   awayClub?: Club;
 }
@@ -195,7 +199,15 @@ export class StandingsComponent implements OnInit {
 
     // Calculate stats from games
     games.forEach(game => {
-      if (!game.score) return; // Skip games without scores
+      // Use game.score if available, as it's now the single source of truth for scores,
+      // populated by both manual entry and the EASHL data linking.
+      if (!game.score || typeof game.score.home === 'undefined' || typeof game.score.away === 'undefined') {
+        // Skip games without valid scores
+        return;
+      }
+
+      const homeScore = game.score.home;
+      const awayScore = game.score.away;
 
       const homeTeam = standingsMap.get(game.homeClubId);
       const awayTeam = standingsMap.get(game.awayClubId);
@@ -206,13 +218,13 @@ export class StandingsComponent implements OnInit {
         awayTeam.gamesPlayed++;
 
         // Update goals
-        homeTeam.goalsFor += game.score.home;
-        homeTeam.goalsAgainst += game.score.away;
-        awayTeam.goalsFor += game.score.away;
-        awayTeam.goalsAgainst += game.score.home;
+        homeTeam.goalsFor += homeScore;
+        homeTeam.goalsAgainst += awayScore;
+        awayTeam.goalsFor += awayScore;
+        awayTeam.goalsAgainst += homeScore;
 
         // Update wins/losses and points
-        if (game.score.home > game.score.away) {
+        if (homeScore > awayScore) {
           homeTeam.wins++;
           homeTeam.points += 2;
           awayTeam.losses++;

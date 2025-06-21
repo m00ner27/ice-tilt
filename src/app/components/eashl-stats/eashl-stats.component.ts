@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { EashlService } from '../../services/eashl.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,51 +9,27 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="container mt-4">
-      <h2>EASHL Stats</h2>
+      <h2>EASHL Match History</h2>
       
-      <!-- Club Stats Form -->
       <div class="card mb-4">
         <div class="card-body">
-          <h3>Club Statistics</h3>
+          <h3>Fetch Club Matches</h3>
           <div class="mb-3">
             <label for="clubId" class="form-label">Club ID</label>
-            <input type="text" class="form-control" id="clubId" [(ngModel)]="clubId">
+            <input type="text" class="form-control" id="clubId" [(ngModel)]="clubId" placeholder="Enter EA Club ID">
           </div>
-          <div class="mb-3">
-            <label for="platform" class="form-label">Platform</label>
-            <select class="form-select" id="platform" [(ngModel)]="platform">
-              <option value="common-gen5">PS5 / Xbox Series X|S</option>
-              <option value="common-gen4">PS4 / Xbox One</option>
-            </select>
-          </div>
-          <button class="btn btn-primary mt-2" (click)="loadClubStats()">Load Stats</button>
+          <button class="btn btn-primary" (click)="loadClubMatches()" [disabled]="isLoading">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {{ isLoading ? 'Loading...' : 'Fetch Matches' }}
+          </button>
 
-          <!-- Player Stats Table -->
-          <div *ngIf="clubStats && clubStats[clubId] && clubStats[clubId].members">
-            <h4>Player Stats</h4>
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th>Goals</th>
-                  <th>Assists</th>
-                  <th>Points</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let player of clubStats[clubId].members">
-                  <td>{{ player.playername }}</td>
-                  <td>{{ player.skg }} </td>
-                  <td>{{ player.ska }} </td>
-                  <td>{{ (player.skg || 0) + (player.ska || 0) }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div *ngIf="error" class="alert alert-danger mt-3">
+            {{ error }}
           </div>
 
-          <!-- Error or No Data -->
-          <div *ngIf="clubStats && (!clubStats[clubId] || !clubStats[clubId].members)">
-            <p>No player stats available for this club.</p>
+          <div *ngIf="clubMatches" class="mt-4">
+            <h4>Recent Matches</h4>
+            <pre>{{ clubMatches | json }}</pre>
           </div>
         </div>
       </div>
@@ -67,40 +43,34 @@ import { FormsModule } from '@angular/forms';
       background-color: #f8f9fa;
       padding: 1rem;
       border-radius: 4px;
+      max-height: 500px;
+      overflow-y: auto;
     }
   `]
 })
-export class EashlStatsComponent implements OnInit {
+export class EashlStatsComponent {
   clubId: string = '';
-  platform: string = 'common-gen5';
-  clubStats: any = null;
   clubMatches: any = null;
+  isLoading = false;
+  error: string | null = null;
 
   constructor(private eashlService: EashlService) {}
 
-  ngOnInit(): void {}
-
-  loadClubStats(): void {
+  loadClubMatches(): void {
     if (this.clubId) {
-      // Load club stats
-      this.eashlService.getClubStats(this.clubId, this.platform).subscribe({
-        next: (stats) => {
-          this.clubStats = stats;
-        },
-        error: (error) => {
-          console.error('Failed to load club stats:', error);
-          // Handle error (show message to user)
-        }
-      });
-
-      // Load club matches
+      this.isLoading = true;
+      this.error = null;
+      this.clubMatches = null;
+      
       this.eashlService.getClubMatches(this.clubId).subscribe({
         next: (matches) => {
           this.clubMatches = matches;
+          this.isLoading = false;
         },
-        error: (error) => {
-          console.error('Failed to load club matches:', error);
-          // Handle error (show message to user)
+        error: (err) => {
+          console.error('Failed to load club matches:', err);
+          this.error = 'Failed to load matches. Please check the Club ID and try again.';
+          this.isLoading = false;
         }
       });
     }
