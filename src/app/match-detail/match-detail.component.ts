@@ -45,22 +45,26 @@ export class MatchDetailComponent implements OnInit {
     if (navigation?.extras.state) {
       this.match = navigation.extras.state['match'] as Match;
       this.viewingTeam = navigation.extras.state['teamName'] as string;
+      if (this.match) {
+        this.processMatchData();
+      }
     }
   }
   
   ngOnInit(): void {
-    // Subscribe to route param changes so we reload the match when navigating between games
-    this.route.paramMap.subscribe(params => {
-      const id = Number(params.get('id'));
-      if (!isNaN(id)) {
-        this.loadMatch(id);
-      }
-    });
+    if (!this.match) {
+      this.route.paramMap.subscribe(params => {
+        const id = params.get('id');
+        if (id) {
+          this.loadMatch(id);
+        }
+      });
+    }
   }
   
-  loadMatch(id: number): void {
-    this.matchService.getMatches().subscribe(matches => {
-      this.match = matches.find(m => m.id === id) || null;
+  loadMatch(id: string): void {
+    this.matchService.getMatch(id).subscribe(match => {
+      this.match = match;
       if (this.match) {
         this.processMatchData();
       } else {
@@ -71,24 +75,23 @@ export class MatchDetailComponent implements OnInit {
   
   processMatchData(): void {
     if (!this.match) return;
-    
-    // Process player stats
+
     this.homeTeamPlayers = [];
     this.awayTeamPlayers = [];
     this.homeTeamGoalies = [];
     this.awayTeamGoalies = [];
-    
+
     this.match.playerStats.forEach(player => {
       const playerDisplay = this.convertToPlayerDisplay(player);
       
       if (player.team === this.match?.homeTeam) {
-        if (player.position === 'G') {
+        if (this.isGoalie(player.position)) {
           this.homeTeamGoalies.push(playerDisplay);
         } else {
           this.homeTeamPlayers.push(playerDisplay);
         }
       } else {
-        if (player.position === 'G') {
+        if (this.isGoalie(player.position)) {
           this.awayTeamGoalies.push(playerDisplay);
         } else {
           this.awayTeamPlayers.push(playerDisplay);
@@ -105,10 +108,10 @@ export class MatchDetailComponent implements OnInit {
     const basePlayer: PlayerStatDisplay = {
       name: player.name,
       number: player.number,
-      position: player.position
+      position: this.formatPosition(player.position)
     };
     
-    if (player.position === 'G') {
+    if (this.isGoalie(player.position)) {
       // Goalie stats
       return {
         ...basePlayer,
@@ -143,28 +146,58 @@ export class MatchDetailComponent implements OnInit {
     });
   }
   
-  getWinningTeam(): string {
-    if (!this.match) return '';
+  isTeamWinner(teamName: string | undefined): boolean {
+    if (!this.match || !this.match.eashlData || !teamName) {
+      return false;
+    }
     
-    return this.match.homeScore > this.match.awayScore ? 
-      this.match.homeTeam : this.match.awayTeam;
-  }
-  
-  isTeamWinner(teamName: string): boolean {
-    return teamName === this.getWinningTeam();
+    if (this.match.homeScore > this.match.awayScore) {
+      return teamName === this.match.homeTeam;
+    } else if (this.match.awayScore > this.match.homeScore) {
+      return teamName === this.match.awayTeam;
+    }
+    
+    return false;
   }
   
   goBack(): void {
     this.location.back();
   }
 
-  getTeamLogo(team: string): string {
+  private isGoalie(position: string): boolean {
+    const lowerPos = position.toLowerCase().replace(/\s/g, '');
+    return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
+  }
+
+  formatPosition(position: string): string {
+    const positionMap: { [key: string]: string } = {
+      'center': 'C',
+      'leftwing': 'LW',
+      'rightwing': 'RW',
+      'defenseman': 'D',
+      'defensemen': 'D',
+      'goaltender': 'G',
+      'goalie': 'G'
+    };
+    const key = position.toLowerCase().replace(/\s/g, '');
+    return positionMap[key] || position;
+  }
+
+  calculateSavePercentage(saves?: number, shotsAgainst?: number): string {
+    if (shotsAgainst === 0 || saves === undefined || shotsAgainst === undefined) {
+      return '.000';
+    }
+    const percentage = saves / shotsAgainst;
+    return percentage.toFixed(3).toString();
+  }
+
+  getTeamLogo(team: string | undefined): string {
     if (!team) return 'assets/images/square-default.png';
     const teamMap: { [key: string]: string } = {
       'roosters': 'square-iserlohnroosters.png',
       // Add more mappings as needed
     };
-    const key = team.replace(/\s+/g, '').toLowerCase();
+    const key = team.replace(/\s+/g, '').toLowerCase().replace(/^[^a-z0-9]+/, '');
     if (teamMap[key]) {
       return 'assets/images/' + teamMap[key];
     }

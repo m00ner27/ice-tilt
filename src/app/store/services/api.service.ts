@@ -135,6 +135,10 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/api/games/season/${seasonId}`);
   }
 
+  deleteGame(gameId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/games/${gameId}`);
+  }
+
   bulkUpdateGames(updates: any[]): Observable<any> {
     return this.http.post(`${this.apiUrl}/api/games/bulk-update`, updates);
   }
@@ -186,11 +190,23 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/api/users`);
   }
 
+  getUser(id: string) {
+    return this.http.get(`${this.apiUrl}/api/users/profile/${id}`);
+  }
+
   getClubEashlGames(clubId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/eashl-games`);
   }
 
   getGameEashlData(gameId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/api/games/${gameId}/eashl-data`);
+  }
+
+  unlinkGameStats(gameId: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/api/games/${gameId}/eashl-data`);
+  }
+
+  getClub(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/clubs/${id}`);
   }
 }

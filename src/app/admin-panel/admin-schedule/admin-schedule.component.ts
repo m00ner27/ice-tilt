@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService } from '../store/services/api.service';
-import { EashlService } from '../services/eashl.service';
+import { ApiService } from '../../store/services/api.service';
+import { EashlService } from '../../services/eashl.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -14,6 +14,13 @@ import { catchError, map } from 'rxjs/operators';
   template: `
     <div class="admin-schedule-page">
       <h2>Admin: Game Schedule</h2>
+      <div class="filter-controls">
+        <button (click)="setFilter('unlinked')" [class.active]="currentFilter === 'unlinked'">
+          Needs Linking <span *ngIf="unlinkedGamesCount > 0" class="count-badge">{{ unlinkedGamesCount }}</span>
+        </button>
+        <button (click)="setFilter('linked')" [class.active]="currentFilter === 'linked'">Completed</button>
+        <button (click)="setFilter('all')" [class.active]="currentFilter === 'all'">All Games</button>
+      </div>
       <div class="schedule-table-container">
         <table class="schedule-table">
           <thead>
@@ -21,13 +28,12 @@ import { catchError, map } from 'rxjs/operators';
               <th>Date/Time</th>
               <th>Home Team</th>
               <th>Away Team</th>
-              <th>Forfeit</th>
-              <th>Stats Files</th>
+              <th>Link / Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let game of games" (click)="loadEashlGames(game)">
+            <tr *ngFor="let game of filteredGames" (click)="loadEashlGames(game)">
               <td>{{ formatDateTime(game.date) }}</td>
               <td>
                 <img [src]="game.homeLogo" alt="Home Logo" class="team-logo" />
@@ -38,30 +44,36 @@ import { catchError, map } from 'rxjs/operators';
                 {{ game.awayTeam }}
               </td>
               <td>
-                <select [(ngModel)]="game.forfeitOption" class="forfeit-select">
-                  <option value="">NO CHANGE</option>
-                  <option value="forfeit-home">Forfeit Win: {{ game.homeTeam }}</option>
-                  <option value="forfeit-away">Forfeit Win: {{ game.awayTeam }}</option>
-                  <option value="forfeit-draw">Forfeit DRAW</option>
-                </select>
-                <span *ngIf="game.forfeitOption" class="forfeit-indicator">
-                  {{ getForfeitLabel(game) }}
-                </span>
-              </td>
-              <td>
                 <div class="stats-files">
-                  <select [(ngModel)]="game.selectedStatsFile" class="stats-file-select">
-                    <option value="">Link Stats File</option>
-                    <option *ngFor="let file of game.eashlGames" [value]="file.matchId">{{ file.label }}</option>
+                  <select [(ngModel)]="game.selectedFileOrAction" class="stats-file-select" (focus)="loadEashlGames(game)" (click)="$event.stopPropagation()">
+                    <option value="" disabled>{{ game.eashlMatchId ? 'Change Linked File' : 'Link Stats / Forfeit' }}</option>
+                    
+                    <!-- Forfeit Options -->
+                    <option value="forfeit-home">Forfeit Win: {{ game.homeTeam }}</option>
+                    <option value="forfeit-away">Forfeit Win: {{ game.awayTeam }}</option>
+                    <option value="forfeit-draw">Forfeit DRAW</option>
+                    
+                    <!-- File Options -->
+                    <ng-container *ngIf="game.eashlGames?.length > 0">
+                      <option disabled>──────────</option>
+                      <option *ngFor="let file of game.eashlGames" [value]="file.matchId">{{ file.label }}</option>
+                    </ng-container>
                   </select>
-                  <div class="linked-files" *ngIf="game.eashlMatchId">
+                  
+                  <div class="linked-files" *ngIf="game.eashlMatchId && !isForfeit(game.status)">
                     <span class="linked-file">Linked: {{ getLinkedFileName(game) }}</span>
+                  </div>
+
+                  <div class="forfeit-indicator" *ngIf="isForfeit(game.status)">
+                     {{ getForfeitDisplay(game) }}
                   </div>
                 </div>
               </td>
               <td>
-                <button class="action-btn" (click)="manualStats(game)">Manually Enter Stats</button>
-                <button class="action-btn merge" (click)="mergeStats(game)">Merge Stats</button>
+                <button class="action-btn" (click)="$event.stopPropagation(); manualStats(game)">Manually Enter Stats</button>
+                <button class="action-btn merge" (click)="$event.stopPropagation(); mergeStats(game)">Merge Stats</button>
+                <button *ngIf="game.eashlMatchId" class="action-btn unlink" (click)="$event.stopPropagation(); unlinkStats(game)">Unlink Stats</button>
+                <button *ngIf="!game.eashlMatchId" class="action-btn delete" (click)="$event.stopPropagation(); deleteGame(game)">Delete Game</button>
               </td>
             </tr>
           </tbody>
@@ -83,6 +95,40 @@ import { catchError, map } from 'rxjs/operators';
       color: #90caf9;
       margin-bottom: 24px;
       text-align: center;
+    }
+    .filter-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .filter-controls button {
+      background: #2c3446;
+      color: #fff;
+      border: 1px solid #394867;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-controls button:hover {
+      background: #394867;
+    }
+    .filter-controls button.active {
+      background: #1976d2;
+      border-color: #1976d2;
+      font-weight: 600;
+    }
+    .count-badge {
+      background-color: #d32f2f;
+      color: white;
+      border-radius: 12px;
+      padding: 3px 8px;
+      font-size: 0.85em;
+      margin-left: 8px;
+      vertical-align: middle;
+      line-height: 1;
     }
     .schedule-table-container {
       overflow-x: auto;
@@ -177,6 +223,20 @@ import { catchError, map } from 'rxjs/operators';
     .action-btn.merge:hover {
       background: #b71c1c;
     }
+    .action-btn.unlink {
+      background: #ff9800;
+      margin-top: 4px;
+    }
+    .action-btn.unlink:hover {
+      background: #f57c00;
+    }
+    .action-btn.delete {
+      background: #c62828;
+      margin-top: 4px;
+    }
+    .action-btn.delete:hover {
+      background: #ad1f1f;
+    }
     @media (max-width: 900px) {
       .schedule-table th, .schedule-table td {
         padding: 8px 6px;
@@ -214,7 +274,10 @@ import { catchError, map } from 'rxjs/operators';
 })
 export class AdminScheduleComponent implements OnInit {
   games: any[] = [];
+  filteredGames: any[] = [];
   clubs: any[] = [];
+  currentFilter: 'all' | 'linked' | 'unlinked' = 'unlinked';
+  unlinkedGamesCount: number = 0;
 
   constructor(
     private api: ApiService,
@@ -226,28 +289,51 @@ export class AdminScheduleComponent implements OnInit {
     this.loadClubsAndGames();
   }
 
+  setFilter(filter: 'all' | 'linked' | 'unlinked'): void {
+    this.currentFilter = filter;
+    this.applyFilter();
+  }
+
+  applyFilter(): void {
+    if (this.currentFilter === 'unlinked') {
+      this.filteredGames = this.games.filter(g => !g.eashlMatchId && !this.isForfeit(g.status));
+    } else if (this.currentFilter === 'linked') {
+      this.filteredGames = this.games.filter(g => g.eashlMatchId || this.isForfeit(g.status));
+    } else {
+      this.filteredGames = this.games;
+    }
+  }
+
+  calculateUnlinkedCount(): void {
+    this.unlinkedGamesCount = this.games.filter(g => !g.eashlMatchId && !this.isForfeit(g.status)).length;
+  }
+
   loadClubsAndGames(): void {
     this.api.getClubs().subscribe(clubs => {
       this.clubs = clubs;
       this.api.getGames().subscribe(games => {
         this.games = games.map(game => {
-          const homeClub = this.clubs.find(c => c._id === game.homeClubId);
-          const awayClub = this.clubs.find(c => c._id === game.awayClubId);
+          // Ensure that homeClubId and awayClubId are objects before accessing their properties
+          const homeId = game.homeClubId?._id || game.homeClubId;
+          const awayId = game.awayClubId?._id || game.awayClubId;
+
+          const homeClub = this.clubs.find(c => c._id === homeId);
+          const awayClub = this.clubs.find(c => c._id === awayId);
+          
           const mapped = {
             ...game,
             homeTeam: homeClub ? homeClub.name : 'Unknown',
             awayTeam: awayClub ? awayClub.name : 'Unknown',
             homeLogo: homeClub ? homeClub.logoUrl : '',
             awayLogo: awayClub ? awayClub.logoUrl : '',
-            forfeitOption: '',
-            selectedStatsFile: '',
+            selectedFileOrAction: '',
             eashlGames: []
           };
-          mapped._original = JSON.parse(JSON.stringify({
-            forfeitOption: mapped.forfeitOption,
-          }));
           return mapped;
         });
+        this.games.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        this.applyFilter();
+        this.calculateUnlinkedCount();
         console.log('Mapped games with clubs:', this.games);
       });
     });
@@ -260,8 +346,11 @@ export class AdminScheduleComponent implements OnInit {
       return;
     }
 
-    const homeClub = this.clubs.find(c => c._id === game.homeClubId);
-    const awayClub = this.clubs.find(c => c._id === game.awayClubId);
+    const homeId = game.homeClubId?._id || game.homeClubId;
+    const awayId = game.awayClubId?._id || game.awayClubId;
+
+    const homeClub = this.clubs.find(c => c._id === homeId);
+    const awayClub = this.clubs.find(c => c._id === awayId);
     console.log('Found Home Club:', homeClub);
     console.log('Found Away Club:', awayClub);
 
@@ -333,6 +422,23 @@ export class AdminScheduleComponent implements OnInit {
     return game.eashlMatchId ? `Match ID: ${game.eashlMatchId}` : '';
   }
 
+  isForfeit(status: string): boolean {
+    return status?.startsWith('forfeit');
+  }
+
+  getForfeitDisplay(game: any): string {
+    switch (game.status) {
+      case 'forfeit-home':
+        return `Forfeit Win: ${game.homeTeam}`;
+      case 'forfeit-away':
+        return `Forfeit Win: ${game.awayTeam}`;
+      case 'forfeit-draw':
+        return 'Forfeit DRAW';
+      default:
+        return '';
+    }
+  }
+
   manualStats(game: any) {
     this.router.navigate(['/admin/manual-stats', game._id]);
   }
@@ -355,14 +461,68 @@ export class AdminScheduleComponent implements OnInit {
     }
   }
 
+  unlinkStats(game: any) {
+    if (confirm(`Are you sure you want to unlink stats for ${game.homeTeam} vs ${game.awayTeam}?`)) {
+      this.api.unlinkGameStats(game._id).subscribe({
+        next: (updatedGame) => {
+          console.log('Stats unlinked', updatedGame);
+          const index = this.games.findIndex(g => g._id === game._id);
+          if (index !== -1) {
+            // update game in list
+            const updatedGameWithAssets = {
+              ...updatedGame,
+              homeLogo: this.games[index].homeLogo,
+              awayLogo: this.games[index].awayLogo,
+              homeTeam: this.games[index].homeTeam,
+              awayTeam: this.games[index].awayTeam,
+            };
+            this.games[index] = updatedGameWithAssets;
+            this.applyFilter();
+            this.calculateUnlinkedCount();
+          }
+        },
+        error: (err) => {
+          alert('Failed to unlink stats: ' + (err?.error?.message || err.message || 'Unknown error'));
+        }
+      });
+    }
+  }
+
+  deleteGame(game: any) {
+    if (confirm(`Are you sure you want to delete the game between ${game.homeTeam} and ${game.awayTeam}? This action cannot be undone.`)) {
+      this.api.deleteGame(game._id).subscribe({
+        next: () => {
+          alert('Game deleted successfully!');
+          this.loadClubsAndGames(); // Reload data
+        },
+        error: (err) => {
+          alert('Failed to delete game: ' + (err?.error?.message || err.message || 'Unknown error'));
+        }
+      });
+    }
+  }
+
   submitChanges() {
     const updates = this.games
-      .filter(game => game.forfeitOption || game.selectedStatsFile)
-      .map(game => ({
-        gameId: game._id,
-        forfeit: game.forfeitOption,
-        eashlMatchId: game.selectedStatsFile || game.eashlMatchId
-      }));
+      .filter(game => game.selectedFileOrAction)
+      .map(game => {
+        const selected = game.selectedFileOrAction;
+        const payload: { gameId: string; forfeit?: string | null; eashlMatchId?: string | null; status?: string } = {
+          gameId: game._id
+        };
+
+        if (selected.startsWith('forfeit-')) {
+          payload.forfeit = selected;
+          payload.status = selected;
+          payload.eashlMatchId = null; // Explicitly unlink stats
+        } else {
+          // It's a matchId
+          payload.eashlMatchId = selected;
+          payload.forfeit = null; // Explicitly remove forfeit
+          payload.status = 'pending_stats';
+        }
+        return payload;
+      });
 
     if (updates.length > 0) {
       this.api.bulkUpdateGames(updates).subscribe({

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ScheduleBarComponent } from '../schedule-bar/schedule-bar.component';
+import { Match, MatchService } from '../store/services/match.service';
 
 interface AggregatedPlayer {
   playerId: number;
@@ -31,39 +31,50 @@ export class HomeComponent implements OnInit {
   topPoints: AggregatedPlayer[] = [];
   topSavePct: any[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private matchService: MatchService) {}
 
   ngOnInit() {
-    this.http.get<any[]>('assets/data/mock_matches.json').subscribe(matches => {
+    this.matchService.getMatches().subscribe(matches => {
+      if (!matches) {
+        return;
+      }
       const playerMap: { [id: number]: AggregatedPlayer } = {};
       // Aggregate stats
       matches.forEach(match => {
-        match.playerStats.forEach((stat: any) => {
-          if (!playerMap[stat.playerId]) {
-            playerMap[stat.playerId] = {
-              playerId: stat.playerId,
-              name: stat.name,
-              team: stat.team,
-              number: stat.number,
-              position: stat.position,
-              goals: 0,
-              assists: 0,
-              points: 0,
-              saves: 0,
-              shotsAgainst: 0,
-              goalsAgainst: 0,
-              shutouts: 0
-            };
-          }
-          // Aggregate skater stats
-          if (stat.goals !== undefined) playerMap[stat.playerId].goals += stat.goals;
-          if (stat.assists !== undefined) playerMap[stat.playerId].assists += stat.assists;
-          // Aggregate goalie stats
-          if (stat.saves !== undefined) playerMap[stat.playerId].saves! += stat.saves;
-          if (stat.shotsAgainst !== undefined) playerMap[stat.playerId].shotsAgainst! += stat.shotsAgainst;
-          if (stat.goalsAgainst !== undefined) playerMap[stat.playerId].goalsAgainst! += stat.goalsAgainst;
-          if (stat.shutout !== undefined) playerMap[stat.playerId].shutouts! += stat.shutout;
-        });
+        if (match.eashlData?.players) {
+          const homePlayers = match.eashlData.players.home ? Object.values(match.eashlData.players.home) : [];
+          const awayPlayers = match.eashlData.players.away ? Object.values(match.eashlData.players.away) : [];
+          const allPlayers = [...homePlayers, ...awayPlayers];
+          
+          allPlayers.forEach((stat: any) => {
+            if (!stat.details) return; // Skip if player details are missing
+
+            if (!playerMap[stat.player_id]) {
+              playerMap[stat.player_id] = {
+                playerId: stat.player_id,
+                name: stat.details.name,
+                team: stat.details.team,
+                number: stat.details.number,
+                position: stat.details.pos,
+                goals: 0,
+                assists: 0,
+                points: 0,
+                saves: 0,
+                shotsAgainst: 0,
+                goalsAgainst: 0,
+                shutouts: 0
+              };
+            }
+            // Aggregate skater stats
+            if (stat.goals !== undefined) playerMap[stat.player_id].goals += stat.goals;
+            if (stat.assists !== undefined) playerMap[stat.player_id].assists += stat.assists;
+            // Aggregate goalie stats
+            if (stat.saves !== undefined) playerMap[stat.player_id].saves! += stat.saves;
+            if (stat.shots_against !== undefined) playerMap[stat.player_id].shotsAgainst! += stat.shots_against;
+            if (stat.goals_against !== undefined) playerMap[stat.player_id].goalsAgainst! += stat.goals_against;
+            if (stat.shutouts !== undefined) playerMap[stat.player_id].shutouts! += stat.shutouts;
+          });
+        }
       });
       // Calculate points for skaters
       Object.values(playerMap).forEach(p => {
@@ -96,13 +107,13 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  getTeamLogo(team: string): string {
+  getTeamLogo(team: string | undefined): string {
     if (!team) return 'assets/images/square-default.png';
     const teamMap: { [key: string]: string } = {
       'roosters': 'square-iserlohnroosters.png',
       // Add more mappings as needed
     };
-    const key = team.replace(/\s+/g, '').toLowerCase();
+    const key = team?.replace(/\s+/g, '').toLowerCase().replace(/^[^a-z0-9]+/, '') || '';
     if (teamMap[key]) {
       return 'assets/images/' + teamMap[key];
     }

@@ -6,16 +6,31 @@ export interface PlayerStats {
   plusMinus: number;
   pim: number;
   ppg: number;
-  shg: number;
   gwg: number;
-  shots: number;
-  shotPct: number;
+  shg: number;
+  deflections?: number;
   hits: number;
-  takeaways: number;
+  penaltiesDrawn?: number;
+  shots: number;
+  shotAttempts?: number;
+  shotPct?: number;
+  blockedShots?: number;
   giveaways: number;
-  faceoffPct?: number;  // Optional as not all players take faceoffs
-  blocked: number;
-  
+  takeaways: number;
+  interceptions?: number;
+  faceoffsWon?: number;
+  faceoffsLost?: number;
+  faceoffPct?: number;
+  passAttempts?: number;
+  passes?: number;
+  passPct?: number;
+  playerScore?: number;
+  possession?: number;
+  pkClearZone?: number;
+  toi?: number;
+  hatTricks?: number;
+  otgPct?: number;
+
   // Goalie stats (optional, only for goalies)
   saves?: number;
   goalsAgainst?: number;
@@ -25,7 +40,6 @@ export interface PlayerStats {
   wins?: number;
   losses?: number;
   otl?: number;  // Overtime Losses
-
   goalsAgainstAverage?: number;
   playerId?: number | string;
 } 

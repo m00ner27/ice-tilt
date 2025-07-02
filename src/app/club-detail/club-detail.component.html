@@ -9,7 +9,10 @@
 <div class="club-detail-container" *ngIf="club && !loading && !error">
   <button class="back-button" routerLink="/clubs">← Back to Clubs</button>
   
-  <div class="club-header" [style.border-color]="club?.colour" *ngIf="club && club.stats">
+  <div class="club-header" 
+       [style.background-color]="club.colour" 
+       [style.color]="getContrastingTextColor(club.colour)"
+       *ngIf="club && club.stats">
     <!-- Left: Logo -->
     <div class="header-left">
       <img [src]="club.image" [alt]="club.clubName" class="club-logo">

@@ -186,6 +186,8 @@ export class ClubDetailComponent implements OnInit {
             
             // Map backend club to frontend Club interface
             this.club = {
+              _id: backendClub._id,
+              name: backendClub.name,
               clubName: backendClub.name,
               image: backendClub.logoUrl || 'assets/images/default-team.png',
               manager: backendClub.manager,
@@ -221,7 +223,7 @@ export class ClubDetailComponent implements OnInit {
                 }
                 
                 // Load EASHL game data for this club
-                this.loadEashlGameData(clubId);
+                this.loadAndProcessMatches(clubId, backendClub.name);
                 
                 this.loading = false;
               },
@@ -247,75 +249,29 @@ export class ClubDetailComponent implements OnInit {
     });
   }
 
-  private loadEashlGameData(clubId: string) {
-    // Get all games for this club and process EASHL data
-    this.apiService.getGames().subscribe({
-      next: (games) => {
-        const clubGames = games.filter((game: any) => 
-          (game.homeClubId === clubId || game.awayClubId === clubId) && 
-          game.eashlData
+  private loadAndProcessMatches(clubId: string, clubName: string) {
+    this.matchService.getMatches().subscribe({
+      next: (allMatches) => {
+        const clubMatches = allMatches.filter(match =>
+          match.homeTeam === clubName || match.awayTeam === clubName
         );
-        
-        if (this.club && clubGames.length > 0) {
-          // Map games to the Match[] interface for the history component
-          this.matches = clubGames.map(game => {
-            const homeClub = this.allClubs.find(c => c._id === game.homeClubId);
-            const awayClub = this.allClubs.find(c => c._id === game.awayClubId);
 
-            const playerStats: PlayerMatchStats[] = [];
-            if (game.eashlData?.players) {
-              Object.entries(game.eashlData.players).forEach(([clubEashlId, clubPlayers]: [string, any]) => {
-                Object.entries(clubPlayers).forEach(([eaPlayerId, playerData]: [string, any]) => {
-                  let teamName = 'Unknown';
-                  if (homeClub && String(clubEashlId) === String(homeClub.eashlClubId)) {
-                    teamName = homeClub.name;
-                  } else if (awayClub && String(clubEashlId) === String(awayClub.eashlClubId)) {
-                    teamName = awayClub.name;
-                  }
-                  playerStats.push({
-                    playerId: parseInt(eaPlayerId),
-                    name: playerData.playername,
-                    team: teamName,
-                    number: 0, // Jersey number not available in this part of the API
-                    position: playerData.position,
-                    goals: parseInt(playerData.skgoals) || 0,
-                    assists: parseInt(playerData.skassists) || 0,
-                    plusMinus: parseInt(playerData.skplusmin) || 0,
-                    saves: parseInt(playerData.glsaves) || 0,
-                    shotsAgainst: parseInt(playerData.glshots) || 0,
-                    goalsAgainst: parseInt(playerData.glga) || 0,
-                    shutout: 0 // Shutout data not available in this part of the API
-                  });
-                });
-              });
-            }
-
-            return {
-              id: game._id,
-              homeTeam: homeClub?.name || 'Unknown',
-              awayTeam: awayClub?.name || 'Unknown',
-              homeScore: game.score?.home || 0,
-              awayScore: game.score?.away || 0,
-              date: game.date,
-              isOvertime: false, 
-              isShootout: false,
-              playerStats: playerStats
-            } as Match;
-          });
+        if (this.club && clubMatches.length > 0) {
+          this.matches = clubMatches;
 
           // Calculate and assign overall team stats
-          this.club.stats = this.calculateTeamStats(clubGames, clubId);
+          this.club.stats = this.calculateTeamStats(clubMatches, clubId);
           // Process and assign individual player stats
-          this.processEashlPlayerStats(clubGames, clubId);
+          this.processEashlPlayerStats(clubMatches);
         }
       },
       error: (err) => {
-        console.error('Error loading EASHL game data:', err);
+        console.error('Error loading match data:', err);
       }
     });
   }
 
-  private calculateTeamStats(games: any[], clubId: string): CalculatedClubStats {
+  private calculateTeamStats(matches: Match[], clubId: string): CalculatedClubStats {
     const stats: CalculatedClubStats = {
       wins: 0,
       losses: 0,
@@ -332,30 +288,35 @@ export class ClubDetailComponent implements OnInit {
     };
 
     // Sort matches by date to calculate streaks and last 10 games
-    const sortedGames = [...games].sort((a, b) => 
+    const sortedMatches = [...matches].sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
-    sortedGames.forEach(game => {
-      if (!game.score) return;
+    sortedMatches.forEach(match => {
+      // Only include matches that have a linked game file
+      if (!match.eashlData) {
+        return;
+      }
+
+      if (match.homeScore === undefined || match.awayScore === undefined || !match.homeClub) return;
 
       stats.gamesPlayed++;
       let gameResult: 'W' | 'L' | 'OTL' = 'L';
-      const isHomeTeam = game.homeClubId === clubId;
+      const isHomeTeam = match.homeClub._id === clubId;
 
       if (isHomeTeam) {
-        stats.goalsFor += game.score.home;
-        stats.goalsAgainst += game.score.away;
-        if (game.score.home > game.score.away) {
+        stats.goalsFor += match.homeScore;
+        stats.goalsAgainst += match.awayScore;
+        if (match.homeScore > match.awayScore) {
           stats.wins++;
           gameResult = 'W';
         } else {
           stats.losses++;
         }
       } else { // Away team
-        stats.goalsFor += game.score.away;
-        stats.goalsAgainst += game.score.home;
-        if (game.score.away > game.score.home) {
+        stats.goalsFor += match.awayScore;
+        stats.goalsAgainst += match.homeScore;
+        if (match.awayScore > match.homeScore) {
           stats.wins++;
           gameResult = 'W';
         } else {
@@ -394,7 +355,7 @@ export class ClubDetailComponent implements OnInit {
     return stats;
   }
 
-  private processEashlPlayerStats(games: any[], clubId: string) {
+  private processEashlPlayerStats(matches: Match[]) {
     const playerStatsMap = new Map<string, any>();
     const pageClubEashlId = this.backendClub?.eashlClubId;
 
@@ -403,10 +364,10 @@ export class ClubDetailComponent implements OnInit {
       return;
     }
     
-    games.forEach(game => {
+    matches.forEach(match => {
       // The 'players' object is keyed by club ID.
-      if (game.eashlData?.players && game.eashlData.players[pageClubEashlId]) {
-        const clubPlayers = game.eashlData.players[pageClubEashlId];
+      if (match.eashlData?.players && match.eashlData.players[pageClubEashlId]) {
+        const clubPlayers = match.eashlData.players[pageClubEashlId];
 
         // Now, clubPlayers is an object where keys are player IDs
         Object.entries(clubPlayers).forEach(([eaPlayerId, playerData]: [string, any]) => {
@@ -465,5 +426,31 @@ export class ClubDetailComponent implements OnInit {
       return [];
     }
     return this.club.roster.filter(player => player.status === 'Signed');
+  }
+
+  getContrastingTextColor(hexColor: string | undefined): string {
+    if (!hexColor) {
+      return '#FFFFFF'; // Default to white text if no color is provided
+    }
+
+    // Remove '#' if present
+    const cleanHex = hexColor.replace('#', '');
+
+    // Convert 3-digit hex to 6-digit
+    const fullHex = cleanHex.length === 3 ? cleanHex.split('').map(char => char + char).join('') : cleanHex;
+
+    if (fullHex.length !== 6) {
+      return '#FFFFFF'; // Return default for invalid hex
+    }
+
+    const r = parseInt(fullHex.substring(0, 2), 16);
+    const g = parseInt(fullHex.substring(2, 4), 16);
+    const b = parseInt(fullHex.substring(4, 6), 16);
+
+    // Calculate luminance using the WCAG formula
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // Return black for light backgrounds, white for dark backgrounds
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
   }
 }

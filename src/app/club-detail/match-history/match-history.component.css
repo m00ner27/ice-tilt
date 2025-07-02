@@ -86,9 +86,18 @@
 }
 
 .opponent {
+  display: flex;
+  align-items: center;
   font-weight: 600;
   font-size: 1.1em;
   color: white;
+}
+
+.opponent-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  object-fit: contain;
 }
 
 .vs {
@@ -99,9 +108,22 @@
 }
 
 .score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   font-size: 1.2em;
   color: white;
+}
+
+.score-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.score-separator {
+  margin: 0 4px;
 }
 
 .location-badge {

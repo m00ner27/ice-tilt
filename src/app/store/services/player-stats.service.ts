@@ -38,7 +38,7 @@ export class PlayerStatsService {
       takeaways: 0,
       giveaways: 0,
       faceoffPct: 0,
-      blocked: 0,
+      blockedShots: 0,
       savePercentage: 0,
       goalsAgainst: 0,
       gaa: 0,

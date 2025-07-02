@@ -18,11 +18,13 @@
       <div class="profile-header-row">
         <div class="header-top-row">
           <div class="header-left">
-            <h1>
-              <img *ngIf="player.clubLogo" [src]="player.clubLogo" [alt]="player.currentClubName" class="team-logo-profile" style="margin-right: 15px;">
-              {{ player.discordUsername }}<span class="player-number" *ngIf="player.number"> {{ player.number }}</span>
-            </h1>
-            <p *ngIf="player.currentClubName" class="player-club-name">{{ player.currentClubName }}</p>
+            <img *ngIf="player.clubLogo" [src]="player.clubLogo" [alt]="player.currentClubName" class="team-logo-profile">
+            <div>
+              <h1>
+                {{ player.discordUsername }}<span class="player-number" *ngIf="player.number"> {{ player.number }}</span>
+              </h1>
+              <p *ngIf="player.currentClubName" class="player-club-name">{{ player.currentClubName }}</p>
+            </div>
           </div>
           <div class="header-right">
             <div class="player-status" [ngClass]="player.status.toLowerCase()">
@@ -78,47 +80,155 @@
     </div>
 
     <!-- Stats Section -->
-    <div class="stats-section" *ngIf="playerStats">
+    <div class="stats-section" *ngIf="player?.stats">
       <h2>Season Statistics</h2>
       <div class="stats-grid">
         <!-- Common Stats -->
         <div class="stat-card">
-          <div class="stat-value">{{ playerStats.gamesPlayed }}</div>
+          <div class="stat-value">{{ player.stats.gamesPlayed || 0 }}</div>
           <div class="stat-label">Games Played</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ player.stats.wins || 0 }}</div>
+          <div class="stat-label">Wins</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ player.stats.losses || 0 }}</div>
+          <div class="stat-label">Losses</div>
         </div>
 
         <!-- Skater Stats -->
-        <ng-container *ngIf="player.position !== 'G' && playerStats.goals !== undefined">
+        <ng-container *ngIf="player.position !== 'G'">
           <div class="stat-card">
-            <div class="stat-value">{{ playerStats.goals }}</div>
+            <div class="stat-value">{{ player.stats.goals || 0 }}</div>
             <div class="stat-label">Goals</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ playerStats.assists }}</div>
+            <div class="stat-value">{{ player.stats.assists || 0 }}</div>
             <div class="stat-label">Assists</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ playerStats.points }}</div>
+            <div class="stat-value">{{ (player.stats.goals || 0) + (player.stats.assists || 0) }}</div>
             <div class="stat-label">Points</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ playerStats.plusMinus }}</div>
+            <div class="stat-value">{{ player.stats.plusMinus || 0 }}</div>
             <div class="stat-label">+/-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.shots || 0 }}</div>
+            <div class="stat-label">Shots</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.hits || 0 }}</div>
+            <div class="stat-label">Hits</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.pim || 0 }}</div>
+            <div class="stat-label">PIM</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.ppg || 0 }}</div>
+            <div class="stat-label">PPG</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.shg || 0 }}</div>
+            <div class="stat-label">SHG</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.gwg || 0 }}</div>
+            <div class="stat-label">GWG</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.faceoffsWon || 0 }}</div>
+            <div class="stat-label">FO Won</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.faceoffsLost || 0 }}</div>
+            <div class="stat-label">FO Lost</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.blockedShots || 0 }}</div>
+            <div class="stat-label">Blocked Shots</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.interceptions || 0 }}</div>
+            <div class="stat-label">Interceptions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.takeaways || 0 }}</div>
+            <div class="stat-label">Takeaways</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.giveaways || 0 }}</div>
+            <div class="stat-label">Giveaways</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.deflections || 0 }}</div>
+            <div class="stat-label">Deflections</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.penaltiesDrawn || 0 }}</div>
+            <div class="stat-label">Penalties Drawn</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.shotAttempts || 0 }}</div>
+            <div class="stat-label">Shot Attempts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ ((player.stats.shots || 0) > 0 ? ((player.stats.goals || 0) / (player.stats.shots || 1)) : 0) | percent:'1.1-1' }}</div>
+            <div class="stat-label">Shooting %</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.passAttempts || 0 }}</div>
+            <div class="stat-label">Pass Attempts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.passes || 0 }}</div>
+            <div class="stat-label">Passes Completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ ((player.stats.passAttempts || 0) > 0 ? ((player.stats.passes || 0) / (player.stats.passAttempts || 1)) : 0) | percent:'1.1-1' }}</div>
+            <div class="stat-label">Pass %</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.playerScore || 0 }}</div>
+            <div class="stat-label">Player Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.possession || 0 }}</div>
+            <div class="stat-label">Possession</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.pkClearZone || 0 }}</div>
+            <div class="stat-label">PK Clear Zone</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ ((player.stats.toi || 0) / (player.stats.gamesPlayed || 1) / 60) | number:'1.0-0' }}:{{ (((player.stats.toi || 0) / (player.stats.gamesPlayed || 1)) % 60) | number:'2.0-0' }}</div>
+            <div class="stat-label">Time on Ice</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ player.stats.hatTricks || 0 }}</div>
+            <div class="stat-label">Hat Tricks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ ((player.stats.otgPct || 0)) | number:'1.1-1' }}%</div>
+            <div class="stat-label">OTG%</div>
           </div>
         </ng-container>
 
         <!-- Goalie Stats -->
-        <ng-container *ngIf="player.position === 'G' && playerStats">
+        <ng-container *ngIf="player.position === 'G'">
           <div class="stat-card">
-            <div class="stat-value">{{ playerStats.savePercentage | number:'1.3-3' }}</div>
+            <div class="stat-value">{{ (player.stats.savePercentage || 0) | number:'1.3-3' }}</div>
             <div class="stat-label">Save %</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ playerStats.goalsAgainstAverage | number:'1.2-2' }}</div>
+            <div class="stat-value">{{ (player.stats.goalsAgainstAverage || 0) | number:'1.2-2' }}</div>
             <div class="stat-label">GAA</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ playerStats.shutouts }}</div>
+            <div class="stat-value">{{ player.stats.shutouts || 0 }}</div>
             <div class="stat-label">Shutouts</div>
           </div>
         </ng-container>

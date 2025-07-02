@@ -39,4 +39,8 @@ export interface Club {
     managerId?: string;
     division?: string;
     isActive?: boolean;
+    _id: string;
+    name: string;
+    eashlClubId?: string;
+    logoUrl?: string;
 } 

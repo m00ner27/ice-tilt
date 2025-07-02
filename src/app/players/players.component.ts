@@ -106,7 +106,7 @@ export class PlayersComponent implements OnInit {
             currentClubName: clubName,
             status: profile.status || 'Free Agent',
             lastActive: user.lastActive || '',
-            stats: user.stats || {},
+            stats: profile.stats || {},
             clubLogo: logo
           };
         });

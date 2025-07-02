@@ -20,10 +20,10 @@ import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
 import { SeasonsComponent } from './admin-panel/seasons/seasons.component';
 import { ClubsComponent } from './admin-panel/clubs/clubs.component';
-import { AddGamesComponent } from './admin-panel/add-games.component';
-import { AdminScheduleComponent } from './admin-panel/admin-schedule.component';
+import { AddGamesComponent } from './admin-panel/add-games/add-games.component';
+import { AdminScheduleComponent } from './admin-panel/admin-schedule/admin-schedule.component';
 import { EashlStatsComponent } from './components/eashl-stats/eashl-stats.component';
-import { UsersComponent } from './admin-panel/users.component';
+import { UsersComponent } from './admin-panel/users/users.component';
 import { ManualStatsComponent } from './admin-panel/manual-stats/manual-stats.component';
 import { CreateUserComponent } from './admin-panel/create-user/create-user.component';
 

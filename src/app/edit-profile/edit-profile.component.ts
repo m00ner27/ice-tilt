@@ -70,6 +70,11 @@ export class EditProfileComponent implements OnInit {
         const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
         this.http.get(`${environment.apiUrl}/api/users/me`, { headers }).subscribe({
           next: (user: any) => {
+            if (!user) {
+              this.error = 'Failed to load user profile (user not found).';
+              this.loading = false;
+              return;
+            }
             this.user = user;
             this.form.discordId = user.auth0Id || '';
             this.form.platform = user.platform || 'PS5';

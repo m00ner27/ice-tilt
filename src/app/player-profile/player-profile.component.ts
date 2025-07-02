@@ -1,10 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { Player } from '../store/models/models/player.interface';
-import { PlayerStats } from '../store/models/models/player-stats.interface';
-import { PlayerStatsService } from '../store/services/player-stats.service';
 import { ApiService } from '../store/services/api.service';
 import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
@@ -18,7 +15,6 @@ import { PositionPillComponent } from '../components/position-pill/position-pill
 })
 export class PlayerProfileComponent implements OnInit {
   player: Player | null = null;
-  playerStats: PlayerStats | null = null;
   clubLogoMap: { [key: string]: string } = {};
   countryEmojiMap: { [key: string]: string } = {};
   error: string | null = null;
@@ -26,24 +22,18 @@ export class PlayerProfileComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private apiService: ApiService,
-    private playerStatsService: PlayerStatsService
+    private apiService: ApiService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.buildCountryEmojiMap();
-    this.apiService.getClubs().subscribe(clubs => {
-      clubs.forEach(club => {
-        if (club.name && club.logoUrl) {
-          this.clubLogoMap[club.name.toLowerCase()] = club.logoUrl;
-        }
-      });
-      // After logos are mapped, get the player ID from the route
-      this.route.params.subscribe(params => {
-        const playerId = params['id'];
-        this.loadPlayerData(playerId);
-      });
-    });
+    const playerId = this.route.snapshot.paramMap.get('id');
+    if (playerId) {
+      this.loadPlayerData(playerId);
+    } else {
+      this.error = 'Player ID not found in URL.';
+      this.loading = false;
+    }
   }
 
   buildCountryEmojiMap() {
@@ -67,56 +57,55 @@ export class PlayerProfileComponent implements OnInit {
     countries.forEach(c => this.countryEmojiMap[c.name] = c.emoji);
   }
 
-  private loadPlayerData(playerId: string) {
-    // Fetch player from backend
-    this.apiService.getUsers().subscribe({
-      next: (users) => {
-        const user = users.find((u: any) => (u._id || u.id) === playerId);
-        if (user) {
-          const profile = user.playerProfile || {};
-          const clubName = user.currentClubName || '';
-          this.player = {
-            id: user._id || user.id,
-            discordUsername: user.discordUsername || '',
-            position: profile.position || 'C',
-            number: profile.number || '',
-            psnId: user.platform === 'PS5' ? user.gamertag : '',
-            xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',
-            gamertag: user.gamertag || '',
-            country: profile.country || '',
-            handedness: profile.handedness || 'Left',
-            currentClubId: user.currentClubId || '',
-            currentClubName: clubName,
-            status: profile.status || 'Free Agent',
-            lastActive: user.lastActive || '',
-            stats: user.stats || {},
-            secondaryPositions: profile.secondaryPositions || [],
-            clubLogo: this.clubLogoMap[clubName.toLowerCase()] || undefined
-          };
-          this.loadPlayerStats(playerId);
-        } else {
-          this.error = 'Player not found';
-          this.loading = false;
-        }
-      },
-      error: (error) => {
-        console.error('Error loading player:', error);
-        this.error = 'Error loading player data';
-        this.loading = false;
-      }
-    });
-  }
+  loadPlayerData(id: string) {
+    this.loading = true;
+    this.error = null;
 
-  private loadPlayerStats(playerId: string) {
-    // Load real player statistics from matches
-    this.playerStatsService.getPlayerStats(playerId).subscribe({
-      next: (stats) => {
-        this.playerStats = stats;
+    this.apiService.getUser(id).subscribe({
+      next: (user: any) => {
+        if (!user) {
+          this.error = 'Player not found.';
+          this.loading = false;
+          return;
+        }
+        
+        const profile = user.playerProfile || {};
+        this.player = {
+          id: user._id,
+          discordUsername: user.discordUsername || '',
+          position: profile.position || 'C',
+          number: profile.number || '',
+          psnId: user.platform === 'PS5' ? user.gamertag : '',
+          xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',
+          gamertag: user.gamertag || '',
+          country: profile.country || '',
+          handedness: profile.handedness || 'Left',
+          currentClubId: user.currentClubId || '',
+          currentClubName: user.currentClubName || '',
+          status: profile.status || 'Free Agent',
+          stats: profile.stats || {},
+          secondaryPositions: profile.secondaryPositions || [],
+          // clubLogo will be loaded next
+        };
+
+        // If the user has a club, fetch the club details to get the logo
+        if (this.player.currentClubId) {
+          this.apiService.getClub(this.player.currentClubId).subscribe({
+            next: (club: Club) => {
+              if (this.player) {
+                this.player.clubLogo = club.logoUrl;
+              }
+            },
+            // It's not critical if the logo fails to load, so we just log the error
+            error: (err: any) => console.error('Error loading club logo:', err)
+          });
+        }
+        
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Error loading player stats:', error);
-        this.error = 'Error loading player statistics';
+      error: (err: any) => {
+        this.error = 'Failed to load player data. You may not have permission to view this profile.';
+        console.error(err);
         this.loading = false;
       }
     });
@@ -134,4 +123,4 @@ export class PlayerProfileComponent implements OnInit {
     }
     return 'assets/images/square-' + key + '.png';
   }
-} 
+}

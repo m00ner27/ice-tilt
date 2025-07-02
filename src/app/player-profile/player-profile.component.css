@@ -63,6 +63,12 @@
   align-items: center;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .header-left h1 {
   margin: 0;
   font-size: 2rem;
@@ -224,8 +230,8 @@
 }
 
 .team-logo-profile {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
   margin-bottom: 0;
 }

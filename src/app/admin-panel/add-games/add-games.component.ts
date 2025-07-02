@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ApiService } from '../store/services/api.service';
+import { ApiService } from '../../store/services/api.service';
+import { forkJoin } from 'rxjs';
 
 interface Season {
   _id: string;

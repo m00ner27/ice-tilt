@@ -1,9 +1,6 @@
 <div class="match-history-container">
   <div class="match-history-header">
     <h3>Match History</h3>
-    <div class="record-badge">
-      <span class="wins">{{ wins }}</span>-<span class="losses">{{ losses }}</span>
-    </div>
   </div>
   
   <div class="match-list">
@@ -19,9 +16,17 @@
       <div class="match-date">{{ formatDate(match.date) }}</div>
       <div class="match-details">
         <div class="opponent">
-          <span class="vs">vs</span> {{ getOpponent(match) }}
+          <span class="vs">vs</span> 
+          <img [src]="getOpponentClub(match)?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="getOpponent(match)" class="opponent-logo">
+          {{ getOpponent(match) }}
         </div>
-        <div class="score">{{ getScoreDisplay(match) }}</div>
+        <div class="score">
+          <img [src]="getOurClub(match)?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="teamName" class="score-logo">
+          <span class="score-value">{{ getOurScore(match) }}</span>
+          <span class="score-separator">-</span>
+          <span class="score-value">{{ getOpponentScore(match) }}</span>
+          <img [src]="getOpponentClub(match)?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="getOpponent(match)" class="score-logo">
+        </div>
         <div class="location-badge">{{ getLocationLabel(match) }}</div>
       </div>
       <div class="view-details">View details</div>

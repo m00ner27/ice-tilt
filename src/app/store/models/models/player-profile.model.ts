@@ -1,3 +1,5 @@
+import { PlayerStats } from './player-stats.interface';
+
 export interface PlayerProfile {
   name: string;
   position: 'Forward' | 'Defense' | 'Goalie';
@@ -10,4 +12,7 @@ export interface PlayerProfile {
   bio?: string;
   status: 'Signed' | 'Free Agent' | 'Pending';
   currentClubId?: string | null;
+  stats?: PlayerStats;
+  number?: string;
+  country?: string;
 }

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../store/services/api.service';
+import { Match, MatchService } from '../store/services/match.service';
 
 @Component({
   selector: 'app-schedule',
@@ -12,10 +12,9 @@ import { ApiService } from '../store/services/api.service';
   styleUrls: ['./schedule.component.css']
 })
 export class ScheduleComponent implements OnInit {
-  matches: any[] = [];
-  filteredMatches: any[] = [];
+  matches: Match[] = [];
+  filteredMatches: Match[] = [];
   isLoading: boolean = true;
-  clubs: any[] = [];
   
   // Filtering/sorting options
   filterTeam: string = '';
@@ -25,50 +24,33 @@ export class ScheduleComponent implements OnInit {
   // Track unique teams for filter dropdown
   teamOptions: string[] = [];
 
-  constructor(private api: ApiService) { }
+  constructor(private matchService: MatchService) { }
 
   ngOnInit(): void {
-    this.loadClubsAndMatches();
+    this.loadSchedule();
   }
 
-  loadClubsAndMatches(): void {
+  loadSchedule(): void {
     this.isLoading = true;
-    this.api.getClubs().subscribe(clubs => {
-      this.clubs = clubs;
-      this.api.getGames().subscribe({
-        next: (games) => {
-          // Map backend games to schedule format
-          this.matches = games.map(game => {
-            const homeClub = this.clubs.find(c => c._id === game.homeClubId);
-            const awayClub = this.clubs.find(c => c._id === game.awayClubId);
-            return {
-              id: game._id,
-              date: game.date,
-              homeTeam: homeClub ? homeClub.name : 'Unknown',
-              awayTeam: awayClub ? awayClub.name : 'Unknown',
-              homeLogo: homeClub ? homeClub.logoUrl : '',
-              awayLogo: awayClub ? awayClub.logoUrl : '',
-              homeScore: game.score?.home ?? '',
-              awayScore: game.score?.away ?? ''
-            };
-          });
-          this.extractTeamOptions();
-          this.applyFiltersAndSort();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Error loading games:', error);
-          this.isLoading = false;
-        }
-      });
+    this.matchService.getMatches().subscribe({
+      next: (matches) => {
+        this.matches = matches;
+        this.extractTeamOptions();
+        this.applyFiltersAndSort();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading schedule:', error);
+        this.isLoading = false;
+      }
     });
   }
 
   extractTeamOptions(): void {
     const teams = new Set<string>();
     this.matches.forEach(match => {
-      teams.add(match.homeTeam);
-      teams.add(match.awayTeam);
+      if (match.homeTeam) teams.add(match.homeTeam);
+      if (match.awayTeam) teams.add(match.awayTeam);
     });
     this.teamOptions = Array.from(teams).sort();
   }
@@ -116,11 +98,6 @@ export class ScheduleComponent implements OnInit {
     this.applyFiltersAndSort();
   }
 
-  getTeamLogo(teamName: string): string {
-    const club = this.clubs.find(c => c.name === teamName);
-    return club && club.logoUrl ? club.logoUrl : 'assets/images/1ithlwords.png';
-  }
-
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -130,17 +107,18 @@ export class ScheduleComponent implements OnInit {
     });
   }
 
-  getMatchResult(match: any, team: string): string {
+  getMatchResult(match: Match, team: string): string {
     const isHome = match.homeTeam === team;
     const teamScore = isHome ? match.homeScore : match.awayScore;
     const opponentScore = isHome ? match.awayScore : match.homeScore;
     
     if (teamScore > opponentScore) return 'W';
     if (teamScore < opponentScore) return 'L';
-    return 'T'; // Tie (though our data doesn't have ties currently)
+    return 'T'; // Tie
   }
 
-  getResultClass(match: any, team: string): string {
+  getResultClass(match: Match, team: string): string {
+    if (!match.eashlData) return '';
     const result = this.getMatchResult(match, team);
     if (result === 'W') return 'win';
     if (result === 'L') return 'loss';

@@ -36,36 +36,37 @@
   gap: 2rem;
 }
 
-h1 {
-  color: white;
+.header-center h1 {
   margin: 0;
   font-size: 2em;
-  white-space: nowrap;
+  font-weight: 700;
 }
 
 /* Record box styling */
 .record-box {
   background-color: #1e2a38;
-  border: 1px solid #34495e;
-  border-radius: 8px;
-  padding: 0.5rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 5px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 150px;
+  min-width: 120px;
+  text-align: center;
 }
 
 .record-box .stat-label {
-  font-size: 0.8rem;
-  color: #8795a5;
-  text-transform: uppercase;
+  display: block;
+  font-size: 0.8em;
+  font-weight: 500;
+  opacity: 0.8;
   margin-bottom: 0.25rem;
 }
 
 .record-box .stat-value {
-  font-size: 1.75rem;
-  color: white;
-  font-weight: bold;
+  display: block;
+  font-size: 1.2em;
+  font-weight: 700;
 }
 
 /* Right section with manager and division */
@@ -74,6 +75,12 @@ h1 {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.25rem;
+  text-align: right;
+}
+
+.header-right p {
+  margin: 4px 0;
+  font-weight: 500;
 }
 
 .manager {

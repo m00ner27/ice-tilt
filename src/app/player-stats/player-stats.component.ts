@@ -1,7 +1,34 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatchService, Match, PlayerMatchStats } from '../store/services/match.service';
+import { MatchService, Match } from '../store/services/match.service';
 import { RouterModule } from '@angular/router';
+import { ApiService } from '../store/services/api.service'; // Import ApiService
+import { forkJoin } from 'rxjs';
+import { FormsModule } from '@angular/forms'; // Import FormsModule
+
+// Define interfaces for Season and Division
+interface Season {
+  _id: string;
+  name: string;
+  endDate: string; // Added endDate for Season
+  startDate: string; // Added startDate for Season
+}
+
+interface Division {
+  _id:string;
+  name: string;
+  seasonId: string;
+}
+
+interface ClubSeasonInfo {
+  seasonId: string;
+  divisionIds: string[];
+}
+
+interface Club {
+  name: string;
+  seasons?: ClubSeasonInfo[];
+}
 
 interface PlayerStats {
   playerId: number;
@@ -15,105 +42,204 @@ interface PlayerStats {
   assists: number;
   points: number;
   plusMinus: number;
+  division?: string; // Add division
+}
+
+// Grouped stats structure
+interface GroupedPlayerStats {
+  division: string;
+  stats: PlayerStats[];
 }
 
 @Component({
   selector: 'app-player-stats',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule], // Add FormsModule
   templateUrl: './player-stats.component.html',
   styleUrl: './player-stats.component.css'
 })
 export class PlayerStatsComponent implements OnInit {
-  playerStats: PlayerStats[] = [];
+  allMatches: Match[] = [];
+  allClubs: Club[] = []; // Store clubs with type
+  groupedStats: GroupedPlayerStats[] = [];
+  seasons: Season[] = [];
+  divisions: Division[] = [];
+  selectedSeasonId: string | null = null;
+  
   isLoading: boolean = true;
   sortColumn: string = 'points'; // Default sort by points
   sortDirection: 'asc' | 'desc' = 'desc'; // Default sort direction
   
-  constructor(private matchService: MatchService) { }
+  constructor(
+    private matchService: MatchService,
+    private apiService: ApiService // Inject ApiService
+  ) { }
   
   ngOnInit(): void {
-    this.loadPlayerStats();
+    this.loadInitialData();
   }
-  
-  loadPlayerStats(): void {
+
+  loadInitialData(): void {
     this.isLoading = true;
-    this.matchService.getMatches().subscribe({
-      next: (matches) => {
-        this.aggregatePlayerStats(matches);
-        this.isLoading = false;
+    forkJoin({
+      matches: this.matchService.getMatches(),
+      seasons: this.apiService.getSeasons(),
+      clubs: this.apiService.getClubs()
+    }).subscribe({
+      next: ({ matches, seasons, clubs }) => {
+        this.allMatches = matches;
+        this.allClubs = clubs;
+        this.seasons = seasons.sort((a, b) => {
+          const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
+          const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
+          return dateB - dateA;
+        });
+        
+        if (this.seasons.length > 0) {
+          this.selectedSeasonId = this.seasons[0]._id;
+          this.loadStatsForSeason(); // Initial stat load
+        } else {
+          this.isLoading = false;
+        }
       },
-      error: (error) => {
-        console.error('Error loading matches:', error);
+      error: (err) => {
+        console.error('Failed to load initial data', err);
         this.isLoading = false;
       }
     });
   }
   
-  aggregatePlayerStats(matches: Match[]): void {
-    // Map to store aggregated player stats by player ID
-    const statsMap = new Map<number, PlayerStats>();
+  onSeasonChange(): void {
+    this.loadStatsForSeason();
+  }
+
+  loadStatsForSeason(): void {
+    if (!this.selectedSeasonId) {
+      this.groupedStats = [];
+      return;
+    }
     
-    // Process each match
-    matches.forEach(match => {
-      // Process player stats from the match
-      match.playerStats.forEach(playerStat => {
-        // Skip goalies (they will be handled in GoalieStatsComponent)
-        if (playerStat.position === 'G') {
-          return;
+    this.isLoading = true;
+    this.apiService.getDivisionsBySeason(this.selectedSeasonId).subscribe({
+      next: (divisions) => {
+        this.divisions = divisions;
+        this.filterAndAggregateStats();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(`Failed to load divisions for season ${this.selectedSeasonId}`, err);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  filterAndAggregateStats(): void {
+    const season = this.seasons.find(s => s._id === this.selectedSeasonId);
+    if (!season) {
+      this.groupedStats = [];
+      return;
+    }
+
+    const seasonStart = new Date(season.startDate);
+    const seasonEnd = new Date(season.endDate);
+
+    // Filter matches by the selected season's date range
+    const filteredMatches = this.allMatches.filter(match => {
+      const matchDate = new Date(match.date);
+      return matchDate >= seasonStart && matchDate <= seasonEnd;
+    });
+    
+    // Create a map of team name to division name
+    const teamDivisionMap = new Map<string, string>();
+    const divisionIdToNameMap = new Map<string, string>();
+    this.divisions.forEach(d => divisionIdToNameMap.set(d._id, d.name));
+
+    this.allClubs.forEach(club => {
+      const seasonInfo = club.seasons?.find((s: ClubSeasonInfo) => s.seasonId === this.selectedSeasonId);
+      if (seasonInfo && seasonInfo.divisionIds?.length > 0) {
+        // Assuming one division per season for now
+        const divisionId = seasonInfo.divisionIds[0];
+        const divisionName = divisionIdToNameMap.get(divisionId);
+        if (divisionName) {
+          teamDivisionMap.set(club.name, divisionName);
         }
-        
-        // Get existing player stats or create new entry
+      }
+    });
+    
+    this.aggregatePlayerStats(filteredMatches, teamDivisionMap);
+  }
+  
+  aggregatePlayerStats(matches: Match[], teamDivisionMap: Map<string, string>): void {
+    const statsMap = new Map<number, PlayerStats>();
+    const teamLogoMap = new Map<string, string | undefined>();
+
+    // Create a map of team names to their logos from all matches
+    matches.forEach(match => {
+      if (match.homeTeam) teamLogoMap.set(match.homeTeam, match.homeClub?.logoUrl);
+      if (match.awayTeam) teamLogoMap.set(match.awayTeam, match.awayClub?.logoUrl);
+    });
+    
+    matches.forEach(match => {
+      match.playerStats.forEach(playerStat => {
+        if (this.isGoalie(playerStat.position)) {
+          return; // Skip goalies
+        }
+
         let existingStats = statsMap.get(playerStat.playerId);
-        
+
         if (!existingStats) {
-          // Initialize new player stats
           existingStats = {
             playerId: playerStat.playerId,
             name: playerStat.name,
             team: playerStat.team,
-            teamLogo: this.getTeamLogo(playerStat.team),
+            teamLogo: teamLogoMap.get(playerStat.team) || 'assets/images/1ithlwords.png',
             number: playerStat.number,
-            position: playerStat.position,
+            position: this.formatPosition(playerStat.position),
+            division: teamDivisionMap.get(playerStat.team) || 'Unknown',
             gamesPlayed: 0,
             goals: 0,
             assists: 0,
             points: 0,
             plusMinus: 0
           };
-          
           statsMap.set(playerStat.playerId, existingStats);
         }
-        
-        // Update stats
+
         existingStats.gamesPlayed++;
-        
-        if (playerStat.goals) {
-          existingStats.goals += playerStat.goals;
-          existingStats.points += playerStat.goals;
-        }
-        
-        if (playerStat.assists) {
-          existingStats.assists += playerStat.assists;
-          existingStats.points += playerStat.assists;
-        }
-        
-        if (playerStat.plusMinus) {
-          existingStats.plusMinus += playerStat.plusMinus;
-        }
+        existingStats.goals += playerStat.goals || 0;
+        existingStats.assists += playerStat.assists || 0;
+        existingStats.points = existingStats.goals + existingStats.assists;
+        existingStats.plusMinus += playerStat.plusMinus || 0;
+        existingStats.team = playerStat.team;
+        existingStats.teamLogo = teamLogoMap.get(playerStat.team) || 'assets/images/1ithlwords.png';
+        existingStats.division = teamDivisionMap.get(playerStat.team) || existingStats.division;
       });
     });
     
-    // Convert map to array and sort
-    this.playerStats = Array.from(statsMap.values());
-    this.sortPlayerStats(this.sortColumn, this.sortDirection);
+    const allPlayerStats = Array.from(statsMap.values());
+    
+    // Group stats by division
+    const divisionStatsMap = new Map<string, PlayerStats[]>();
+    allPlayerStats.forEach(stat => {
+      const divisionName = stat.division || 'Unassigned';
+      if (!divisionStatsMap.has(divisionName)) {
+        divisionStatsMap.set(divisionName, []);
+      }
+      divisionStatsMap.get(divisionName)!.push(stat);
+    });
+    
+    this.groupedStats = Array.from(divisionStatsMap.entries()).map(([division, stats]) => {
+      // Sort stats within each division group
+      this.sortPlayerStats(stats, this.sortColumn, this.sortDirection);
+      return { division, stats };
+    });
   }
   
-  sortPlayerStats(column: string, direction: 'asc' | 'desc'): void {
+  sortPlayerStats(stats: PlayerStats[], column: string, direction: 'asc' | 'desc'): void {
     this.sortColumn = column;
     this.sortDirection = direction;
     
-    this.playerStats.sort((a, b) => {
+    stats.sort((a, b) => {
       let comparison = 0;
       
       switch (column) {
@@ -154,64 +280,34 @@ export class PlayerStatsComponent implements OnInit {
   onSortColumn(column: string): void {
     // If clicking the same column, toggle direction
     const direction = this.sortColumn === column && this.sortDirection === 'desc' ? 'asc' : 'desc';
-    this.sortPlayerStats(column, direction);
+    
+    // Sort the stats within each division group
+    this.groupedStats.forEach(group => {
+      this.sortPlayerStats(group.stats, column, direction);
+    });
   }
   
   getColumnSortClass(column: string): string {
-    if (this.sortColumn !== column) {
-      return 'sortable';
-    }
-    
-    return this.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc';
+    if (this.sortColumn !== column) return '';
+    return this.sortDirection === 'desc' ? 'sort-desc' : 'sort-asc';
   }
-  
-  // Helper method to get team logo path
-  getTeamLogo(teamName: string): string {
-    // Based on actual team names from the mock data:
-    // - "Boats"
-    // - "Ragin Cajuns"
-    // - "Mutts"
-    // - "Roosters" (should be Iserlohn Roosters)
-    // - "Lights Out"
-    
-    // Map actual team names to logo files
-    const teamLogoMap: { [key: string]: string } = {
-      'Roosters': 'square-iserlohnroosters.png',
-      'Iserlohn Roosters': 'square-iserlohnroosters.png',
-      'Boats': 'square-boats.png',
-      'Blueline': 'square-blueline.png',
-      'Glorified Crew': 'square-glorifiedcrew.png',
-      'Lights Out': 'square-lightsout.png',
-      'Mutts': 'square-mutts.png',
-      'Ragin Cajuns': 'square-ragincajuns.png',
-      'York City Kings': 'square-yorkcitykings.png'
+
+  private isGoalie(position: string): boolean {
+    const lowerPos = position.toLowerCase().replace(/\s/g, '');
+    return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
+  }
+
+  formatPosition(position: string): string {
+    const positionMap: { [key: string]: string } = {
+      'center': 'C',
+      'leftwing': 'LW',
+      'rightwing': 'RW',
+      'defenseman': 'D',
+      'defensemen': 'D',
+      'goaltender': 'G',
+      'goalie': 'G'
     };
-    
-    // Try exact match first (case sensitive)
-    if (teamLogoMap[teamName]) {
-      return `assets/images/${teamLogoMap[teamName]}`;
-    }
-    
-    // Try case-insensitive match
-    const lowerCaseTeamName = teamName.toLowerCase();
-    for (const [key, value] of Object.entries(teamLogoMap)) {
-      if (key.toLowerCase() === lowerCaseTeamName) {
-        return `assets/images/${value}`;
-      }
-    }
-    
-    // Try partial match (for teams that might have shortened names in the data)
-    for (const [key, value] of Object.entries(teamLogoMap)) {
-      if (lowerCaseTeamName.includes(key.toLowerCase()) || 
-          key.toLowerCase().includes(lowerCaseTeamName)) {
-        return `assets/images/${value}`;
-      }
-    }
-    
-    // Log team name that couldn't be matched for debugging
-    console.log(`No logo match found for team: ${teamName}`);
-    
-    // Return default image as fallback
-    return 'assets/images/1ithlwords.png';
+    const key = position.toLowerCase().replace(/\s/g, '');
+    return positionMap[key] || position;
   }
 }
