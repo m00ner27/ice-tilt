@@ -176,7 +176,7 @@
             <div class="stat-label">Shot Attempts</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ ((player.stats.shots || 0) > 0 ? ((player.stats.goals || 0) / (player.stats.shots || 1)) : 0) | percent:'1.1-1' }}</div>
+            <div class="stat-value">{{ (player.stats.shotPct || 0) | number:'1.1-1' }}%</div>
             <div class="stat-label">Shooting %</div>
           </div>
           <div class="stat-card">
@@ -191,12 +191,9 @@
             <div class="stat-value">{{ ((player.stats.passAttempts || 0) > 0 ? ((player.stats.passes || 0) / (player.stats.passAttempts || 1)) : 0) | percent:'1.1-1' }}</div>
             <div class="stat-label">Pass %</div>
           </div>
+
           <div class="stat-card">
-            <div class="stat-value">{{ player.stats.playerScore || 0 }}</div>
-            <div class="stat-label">Player Score</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ player.stats.possession || 0 }}</div>
+            <div class="stat-value">{{ ((player.stats.possession || 0) / 60) | number:'1.0-0' }}:{{ ((player.stats.possession || 0) % 60) | number:'2.0-0' }}</div>
             <div class="stat-label">Possession</div>
           </div>
           <div class="stat-card">
@@ -210,10 +207,6 @@
           <div class="stat-card">
             <div class="stat-value">{{ player.stats.hatTricks || 0 }}</div>
             <div class="stat-label">Hat Tricks</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ ((player.stats.otgPct || 0)) | number:'1.1-1' }}%</div>
-            <div class="stat-label">OTG%</div>
           </div>
         </ng-container>
 

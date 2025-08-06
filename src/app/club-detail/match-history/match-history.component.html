@@ -17,15 +17,15 @@
       <div class="match-details">
         <div class="opponent">
           <span class="vs">vs</span> 
-          <img [src]="getOpponentClub(match)?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="getOpponent(match)" class="opponent-logo">
+          <img [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" [alt]="getOpponent(match)" class="opponent-logo">
           {{ getOpponent(match) }}
         </div>
         <div class="score">
-          <img [src]="getOurClub(match)?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="teamName" class="score-logo">
+          <img [src]="getImageUrl(getOurClub(match)?.logoUrl)" [alt]="teamName" class="score-logo">
           <span class="score-value">{{ getOurScore(match) }}</span>
           <span class="score-separator">-</span>
           <span class="score-value">{{ getOpponentScore(match) }}</span>
-          <img [src]="getOpponentClub(match)?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="getOpponent(match)" class="score-logo">
+          <img [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" [alt]="getOpponent(match)" class="score-logo">
         </div>
         <div class="location-badge">{{ getLocationLabel(match) }}</div>
       </div>

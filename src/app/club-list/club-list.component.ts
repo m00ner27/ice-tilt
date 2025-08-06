@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../store/services/api.service';
+import { environment } from '../../environments/environment';
 
 // Updated interface to match backend Club model
 interface Club {
@@ -71,5 +72,25 @@ export class ClubListComponent implements OnInit {
       club.name.toLowerCase().includes(searchTerm) ||
       club.manager.toLowerCase().includes(searchTerm)
     );
+  }
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/default-team.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 }

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Match, MatchService } from '../store/services/match.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-schedule-bar',
@@ -31,13 +32,30 @@ export class ScheduleBarComponent implements OnInit {
       this.upcomingMatches = [];
       return;
     }
-    console.log('All matches:', this.matches);
     
     this.upcomingMatches = this.matches
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by earliest first
       .slice(0, 10); // Show the 10 most recent matches
+  }
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/square-default.png';
+    }
     
-    console.log('Displayed matches:', this.upcomingMatches);
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 
   isFinal(match: Match): boolean {

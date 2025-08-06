@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { ScheduleBarComponent } from '../schedule-bar/schedule-bar.component';
 import { Match, MatchService } from '../store/services/match.service';
+import { RecentTransactionsComponent } from '../recent-transactions/recent-transactions.component';
 
 interface AggregatedPlayer {
   playerId: number;
@@ -23,7 +23,7 @@ interface AggregatedPlayer {
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
-  imports: [CommonModule, RouterModule, ScheduleBarComponent]
+  imports: [CommonModule, RouterModule, RecentTransactionsComponent]
 })
 export class HomeComponent implements OnInit {
   topGoals: AggregatedPlayer[] = [];

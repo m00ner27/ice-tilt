@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../store/services/api.service';
+import { environment } from '../../../environments/environment';
 
 interface Season {
   _id?: string;
@@ -89,7 +90,7 @@ interface Division {
             <div class="division-title">{{ division.name }}</div>
             <ul class="club-list">
               <li *ngFor="let club of getClubsForDivision(division._id)" class="club-list-item">
-                <img [src]="club.logoUrl" alt="Logo" class="club-logo" />
+                <img [src]="getImageUrl(club.logoUrl)" alt="Logo" class="club-logo" />
                 <span class="club-info">
                   <span class="club-name">{{ club.name }}</span>
                   <span class="club-manager">{{ club.manager }}</span>
@@ -584,5 +585,25 @@ export class SeasonsComponent implements OnInit {
         s.seasonId === this.selectedSeason?._id && s.divisionIds.includes(divisionId)
       )
     );
+  }
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/default-team.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 } 

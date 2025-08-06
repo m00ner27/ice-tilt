@@ -60,6 +60,35 @@
               (click)="onPositionFilterChange('Goalie')"
             >Goalies</button>
           </div>
+
+          <!-- Region Filters -->
+          <div class="region-filters">
+            <button 
+              [class.active]="regionFilter === 'All'"
+              (click)="onRegionFilterChange('All')"
+            >All Regions</button>
+            <button 
+              [class.active]="regionFilter === 'North America'"
+              (click)="onRegionFilterChange('North America')"
+            >North America</button>
+            <button 
+              [class.active]="regionFilter === 'Europe'"
+              (click)="onRegionFilterChange('Europe')"
+            >Europe</button>
+          </div>
+
+          <!-- Season Filter -->
+          <div class="season-filter">
+            <label for="seasonSelect">Season:</label>
+            <select 
+              id="seasonSelect" 
+              [(ngModel)]="seasonFilter" 
+              (change)="onSeasonFilterChange(seasonFilter)"
+              class="season-select"
+            >
+              <option *ngFor="let season of seasons" [value]="season.name">{{ season.name }}</option>
+            </select>
+          </div>
         </div>
       </div>
 

@@ -299,6 +299,6 @@
   color: #aaa; /* Lighter color to distinguish from the name */
   font-size: 1.2rem;
   margin-top: -10px; /* Pull it up closer to the name */
-  margin-left: 65px; /* Align with the player name, accounting for logo width */
+  margin-left: 0; /* Align with the player name */
   font-weight: 500;
 } 

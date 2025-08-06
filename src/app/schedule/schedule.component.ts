@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Match, MatchService } from '../store/services/match.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-schedule',
@@ -123,5 +124,25 @@ export class ScheduleComponent implements OnInit {
     if (result === 'W') return 'win';
     if (result === 'L') return 'loss';
     return '';
+  }
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/1ithlwords.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 }

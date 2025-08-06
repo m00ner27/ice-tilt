@@ -5,6 +5,8 @@ import { Player } from '../store/models/models/player.interface';
 import { ApiService } from '../store/services/api.service';
 import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
+import { environment } from '../../environments/environment';
+import { PlayerStatsService } from '../store/services/player-stats.service';
 
 @Component({
   selector: 'app-player-profile',
@@ -22,8 +24,29 @@ export class PlayerProfileComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private playerStatsService: PlayerStatsService
   ) {}
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/square-default.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
+  }
 
   ngOnInit(): void {
     this.buildCountryEmojiMap();
@@ -83,17 +106,57 @@ export class PlayerProfileComponent implements OnInit {
           currentClubId: user.currentClubId || '',
           currentClubName: user.currentClubName || '',
           status: profile.status || 'Free Agent',
-          stats: profile.stats || {},
+          stats: {
+            playerId: user._id,
+            gamesPlayed: 0,
+            goals: 0,
+            assists: 0,
+            points: 0,
+            plusMinus: 0,
+            pim: 0,
+            ppg: 0,
+            shg: 0,
+            gwg: 0,
+            shots: 0,
+            shotPct: 0,
+            hits: 0,
+            takeaways: 0,
+            giveaways: 0,
+            faceoffPct: 0,
+            blockedShots: 0,
+            savePercentage: 0,
+            goalsAgainst: 0,
+            gaa: 0,
+            goalsAgainstAverage: 0,
+            shutouts: 0,
+            wins: 0,
+            losses: 0,
+            otl: 0
+          },
           secondaryPositions: profile.secondaryPositions || [],
           // clubLogo will be loaded next
         };
+
+        // Load actual player statistics from games
+        this.playerStatsService.getPlayerStats(user._id, user.gamertag).subscribe({
+          next: (playerStats) => {
+            console.log('Player stats loaded:', playerStats);
+            if (this.player) {
+              this.player.stats = playerStats;
+            }
+          },
+          error: (err) => {
+            console.error('Error loading player stats:', err);
+            // Keep the default stats if there's an error
+          }
+        });
 
         // If the user has a club, fetch the club details to get the logo
         if (this.player.currentClubId) {
           this.apiService.getClub(this.player.currentClubId).subscribe({
             next: (club: Club) => {
               if (this.player) {
-                this.player.clubLogo = club.logoUrl;
+                this.player.clubLogo = this.getImageUrl(club.logoUrl);
               }
             },
             // It's not critical if the logo fails to load, so we just log the error

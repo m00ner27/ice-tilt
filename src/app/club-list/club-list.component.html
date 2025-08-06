@@ -31,7 +31,7 @@
          style="cursor: pointer;">
       <div class="club-content">
         <img 
-          [src]="club.logoUrl || 'assets/images/default-team.png'" 
+          [src]="getImageUrl(club.logoUrl)" 
           [alt]="club.name" 
           class="club-image"
           (error)="club.logoUrl = 'assets/images/default-team.png'"

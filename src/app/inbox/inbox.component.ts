@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../store/services/api.service';
 import { AuthService } from '@auth0/auth0-angular';
 import { switchMap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 interface Offer {
   _id: string;
@@ -31,6 +32,26 @@ export class InboxComponent implements OnInit {
     private apiService: ApiService,
     private auth: AuthService
   ) {}
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/square-default.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
+  }
 
   ngOnInit(): void {
     this.auth.user$.pipe(

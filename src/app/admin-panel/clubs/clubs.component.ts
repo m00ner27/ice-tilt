@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../store/services/api.service';
 import { EashlService } from '../../services/eashl.service';
+import { TransactionsService } from '../../store/services/transactions.service';
+import { environment } from '../../../environments/environment';
 
 interface Club {
   _id?: string;
@@ -53,7 +55,7 @@ interface User {
           <div class="list-container">
             <div class="list-item" *ngFor="let club of clubs">
               <div class="list-item-content">
-                <img [src]="club.logoUrl" [alt]="club.name" class="club-logo">
+                <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="club-logo">
                 <div>
                   <h4>{{ club.name }}</h4>
                   <p>{{ club.manager }}</p>
@@ -501,7 +503,8 @@ export class ClubsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
-    private eashlService: EashlService
+    private eashlService: EashlService,
+    private transactionsService: TransactionsService
   ) {
     this.clubForm = this.fb.group({
       name: ['', Validators.required],
@@ -522,6 +525,26 @@ export class ClubsComponent implements OnInit {
 
   get filteredRoster(): User[] {
     return (this.selectedClub?.roster || []).filter(p => !!p && p.discordUsername);
+  }
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/default-team.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 
   ngOnInit(): void {
@@ -556,6 +579,28 @@ export class ClubsComponent implements OnInit {
         console.log('Player added successfully:', updatedClub);
         this.updateFreeAgentsList();
         
+        // Log the transaction
+        const seasonId = club.seasons[0]?.seasonId || '';
+        const seasonName = this.seasons.find(s => s._id === seasonId)?.name || 'Unknown Season';
+        
+        this.transactionsService.logPlayerSigning(
+          club._id!,
+          club.name,
+          this.getImageUrl(club.logoUrl),
+          player._id,
+          player.discordUsername || player.discordId || 'Unknown Player',
+          seasonId,
+          seasonName,
+          'Admin' // TODO: Replace with actual user ID when auth is implemented
+        ).subscribe({
+          next: (transaction) => {
+            console.log('Transaction logged:', transaction);
+          },
+          error: (error) => {
+            console.error('Failed to log transaction:', error);
+          }
+        });
+        
         // Refresh the roster for the selected club
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(this.selectedClub);
@@ -573,6 +618,29 @@ export class ClubsComponent implements OnInit {
     this.api.removePlayerFromClub(club._id, player._id).subscribe({
       next: () => {
         this.updateFreeAgentsList();
+        
+        // Log the transaction
+        const seasonId = club.seasons[0]?.seasonId || '';
+        const seasonName = this.seasons.find(s => s._id === seasonId)?.name || 'Unknown Season';
+        
+        this.transactionsService.logPlayerRelease(
+          club._id!,
+          club.name,
+          this.getImageUrl(club.logoUrl),
+          player._id,
+          player.discordUsername || player.discordId || 'Unknown Player',
+          seasonId,
+          seasonName,
+          'Admin' // TODO: Replace with actual user ID when auth is implemented
+        ).subscribe({
+          next: (transaction) => {
+            console.log('Transaction logged:', transaction);
+          },
+          error: (error) => {
+            console.error('Failed to log transaction:', error);
+          }
+        });
+        
         // Refresh the roster for the selected club
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(this.selectedClub);

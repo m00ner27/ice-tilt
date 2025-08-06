@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { Match, PlayerMatchStats, MatchService } from '../store/services/match.service';
+import { environment } from '../../environments/environment';
 
 interface PlayerStatDisplay {
   name: string;
@@ -202,5 +203,25 @@ export class MatchDetailComponent implements OnInit {
       return 'assets/images/' + teamMap[key];
     }
     return 'assets/images/square-' + key + '.png';
+  }
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/square-default.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 } 

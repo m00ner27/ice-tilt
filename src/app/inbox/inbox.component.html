@@ -18,7 +18,7 @@
       <div *ngFor="let offer of offers" class="offer-item">
         <div class="offer-details">
           <img 
-            [src]="offer.clubId.logoUrl || 'assets/images/square-default.png'" 
+            [src]="getImageUrl(offer.clubId.logoUrl)" 
             [alt]="offer.clubId.name" 
             class="club-logo"
           />

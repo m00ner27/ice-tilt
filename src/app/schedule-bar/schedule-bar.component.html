@@ -7,13 +7,13 @@
         </div>
         <div class="teams">
           <div class="team">
-            <img [src]="match.homeClub?.logoUrl || 'assets/images/square-default.png'" alt="{{ match.homeTeam }} logo" class="team-logo">
+            <img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} logo" class="team-logo">
           </div>
           <span class="score">{{ match.homeScore }}</span>
-          <span class="vs">vs</span>
+          <span class="vs-text">VS</span>
           <span class="score">{{ match.awayScore }}</span>
           <div class="team">
-            <img [src]="match.awayClub?.logoUrl || 'assets/images/square-default.png'" alt="{{ match.awayTeam }} logo" class="team-logo">
+            <img [src]="getImageUrl(match.awayClub?.logoUrl)" alt="{{ match.awayTeam }} logo" class="team-logo">
           </div>
         </div>
         <div class="game-status">

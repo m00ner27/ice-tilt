@@ -15,6 +15,7 @@ import { StandingsComponent } from './standings/standings.component';
 import { PlayersComponent } from './players/players.component';
 import { PlayerProfileComponent } from './player-profile/player-profile.component';
 import { RealDataComponent } from './real-data/real-data.component';
+import { RecentTransactionsComponent } from './recent-transactions/recent-transactions.component';
 import { authGuard } from './core/guards/auth.guard';
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
@@ -41,6 +42,7 @@ export const routes: Routes = [
   { path: 'clubs/:id', component: ClubDetailComponent },
   { path: 'match/:id', component: MatchDetailComponent },
   { path: 'standings', component: StandingsComponent },
+  { path: 'transactions', component: RecentTransactionsComponent },
   { path: 'edit-profile', component: EditProfileComponent, canActivate: [authGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },

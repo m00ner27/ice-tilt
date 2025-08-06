@@ -1,66 +1,73 @@
-<!-- Recent Transactions Section -->
 <section class="recent-transactions-section mt-4">
-    <div class="container">
-      <!-- Sorting Tab for Seasons -->
-      <div class="season-sort mb-3">
-        <select id="season-select" class="form-control d-inline-block w-auto">
-          <option value="S18">All Divisions</option>
-          <option value="S19">NA S19 CORE</option>
-          <option value="S20">NA S19 Rammer</option>
-          <option value="S20">EU S7</option>
-        </select>
+  <div class="container">
+    <div class="transactions-container">
+      <div class="transactions-header">
+        <h3>Recent Transactions</h3>
+        <div class="header-controls" *ngIf="!isPreview">
+          <select 
+            [(ngModel)]="selectedSeason" 
+            (change)="onSeasonChange()" 
+            class="season-filter"
+          >
+            <option value="All">All Seasons</option>
+            <option *ngFor="let season of seasons" [value]="season.name">
+              {{ season.name }}
+            </option>
+          </select>
+          <select 
+            [(ngModel)]="selectedClub" 
+            (change)="onClubChange()" 
+            class="club-filter"
+          >
+            <option value="All">All Clubs</option>
+            <option *ngFor="let club of filteredClubs" [value]="club.name">
+              {{ club.name }}
+            </option>
+          </select>
+        </div>
       </div>
-  
-      <table class="table table-striped table-hover text-center">
-        <thead>
-          <tr>
-            <th>Club</th>
-            <th>Transaction</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="text-center">
-              <a routerLink="/club" class="team-link">
-                <img src="assets/images/square-boats.png" alt="Mutts Logo" class="team-logo"> Mutts
-              </a>
-            </td>
-            <td>
-              <a routerLink="/profile-view" class="transaction-link">
-                Mutts sign Mutt_Anderson for NA S18
-              </a>
-            </td>
-            <td>08/27/2024</td>
-          </tr>
-          <tr>
-            <td class="text-center">
-              <a routerLink="/club" class="team-link">
-                <img src="assets/images/square-lightsout.png" alt="Lights Out Logo" class="team-logo"> Lights Out
-              </a>
-            </td>
-            <td>
-              <a routerLink="/profile-view" class="transaction-link">
-                Lights Out release SheLuvvDJ20 for NA S18
-              </a>
-            </td>
-            <td>08/27/2024</td>
-          </tr>
-          <tr>
-            <td class="text-center">
-              <a routerLink="/club" class="team-link">
-                <img src="assets/images/square-glorifiedcrew.png" alt="Glorified Crew Logo" class="team-logo"> Glorified Crew
-              </a>
-            </td>
-            <td>
-              <a routerLink="/profile-view" class="transaction-link">
-                Glorified Crew release Saddzy for NA S18
-              </a>
-            </td>
-            <td>08/27/2024</td>
-          </tr>
-        </tbody>
-      </table>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading-state">
+        <p>Loading transactions...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error" class="error-state">
+        <p>{{ error }}</p>
+      </div>
+
+      <!-- Transactions Table -->
+      <div *ngIf="!loading && !error" class="transactions-table">
+        <div class="table-header">
+          <div class="club-column">Club</div>
+          <div class="transaction-column">Transaction</div>
+          <div class="date-column">Date</div>
+        </div>
+
+        <div class="table-body">
+          <div *ngFor="let transaction of transactions" class="table-row">
+            <div class="club-column">
+              <img *ngIf="transaction.clubLogoUrl" [src]="getImageUrl(transaction.clubLogoUrl)" [alt]="transaction.clubName" class="club-logo">
+              <span class="club-name">{{ transaction.clubName }}</span>
+            </div>
+            <div class="transaction-column">
+              <span class="transaction-text">
+                {{ transaction.clubName }} {{ transaction.transactionType === 'sign' ? 'sign' : 'release' }} {{ transaction.playerName }} for {{ transaction.seasonName }}
+              </span>
+            </div>
+            <div class="date-column">
+              {{ formatDate(transaction.date.toString()) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- No Transactions -->
+        <div *ngIf="transactions.length === 0" class="no-transactions">
+          <p>No transactions found for the selected filters</p>
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
   

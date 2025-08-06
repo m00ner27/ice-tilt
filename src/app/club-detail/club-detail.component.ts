@@ -9,6 +9,7 @@ import { MatchHistoryComponent } from './match-history/match-history.component';
 import { Club, ClubStats } from '../store/models/models/club.interface';
 import { Player } from '../store/models/models/player.interface';
 import { PlayerStats } from '../store/models/models/player-stats.interface';
+import { environment } from '../../environments/environment';
 
 // Updated interface to match backend Club model
 interface BackendClub {
@@ -162,6 +163,26 @@ export class ClubDetailComponent implements OnInit {
     private apiService: ApiService
   ) {}
 
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/default-team.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
+  }
+
   ngOnInit() {
     // Get the club ID from the URL
     this.route.params.subscribe(params => {
@@ -189,7 +210,7 @@ export class ClubDetailComponent implements OnInit {
               _id: backendClub._id,
               name: backendClub.name,
               clubName: backendClub.name,
-              image: backendClub.logoUrl || 'assets/images/default-team.png',
+              image: this.getImageUrl(backendClub.logoUrl),
               manager: backendClub.manager,
               colour: backendClub.primaryColour || '#666',
               roster: [],

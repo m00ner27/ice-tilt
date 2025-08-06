@@ -51,21 +51,22 @@
             <a [routerLink]="['/clubs', match.homeClub?._id]" class="team-link team-name">{{ match.homeTeam }}</a>
           </td>
           <td class="team-logo-cell">
-            <img [src]="match.homeClub?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="match.homeTeam + ' logo'" class="team-logo">
+            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="team-logo">
           </td>
           <td class="wl-cell">
             <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="win-indicator">W</span>
             <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="loss-indicator">L</span>
           </td>
           <td class="score-cell">
-            <span class="score">{{ match.homeScore }} - {{ match.awayScore }}</span>
+            <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="vs-text">VS</span>
+            <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="score">{{ match.homeScore }} - {{ match.awayScore }}</span>
           </td>
           <td class="wl-cell">
             <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="win-indicator">W</span>
             <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="loss-indicator">L</span>
           </td>
           <td class="team-logo-cell">
-            <img [src]="match.awayClub?.logoUrl || 'assets/images/1ithlwords.png'" [alt]="match.awayTeam + ' logo'" class="team-logo">
+            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="team-logo">
           </td>
           <td class="team-cell text-left">
             <a [routerLink]="['/clubs', match.awayClub?._id]" class="team-link team-name">{{ match.awayTeam }}</a>

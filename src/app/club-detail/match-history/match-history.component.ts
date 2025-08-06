@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Match, ClubInfo } from '../../store/services/match.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-match-history',
@@ -15,6 +16,26 @@ export class MatchHistoryComponent {
   @Input() teamName: string = '';
   
   constructor(private router: Router) { }
+
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/1ithlwords.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
+  }
   
   // Navigate to match detail page
   navigateToMatchDetail(match: Match): void {

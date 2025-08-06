@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { AuthService } from '@auth0/auth0-angular';
 
 @Component({
   selector: 'app-login',
@@ -8,14 +8,17 @@ import { OidcSecurityService } from 'angular-auth-oidc-client';
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
-  constructor(public oidcSecurityService: OidcSecurityService) {}
+  constructor(public auth: AuthService) {}
+  
   signIn() {
-    this.oidcSecurityService.authorize();
+    this.auth.loginWithRedirect();
   }
 
   signOut() {
-    this.oidcSecurityService.logoff().subscribe((result) => {
-      console.log('app sign-out', result);
+    this.auth.logout({
+      logoutParams: {
+        returnTo: window.location.origin
+      }
     });
   }
 }

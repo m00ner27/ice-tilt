@@ -24,10 +24,13 @@ export class PlayersComponent implements OnInit {
   players: Player[] = [];
   filteredPlayers: Player[] = [];
   clubs: Club[] = [];
+  seasons: any[] = [];
   clubLogoMap: { [key: string]: string } = {};
   countryEmojiMap: { [key: string]: string } = {};
   statusFilter: 'All' | 'Free Agent' | 'Signed' | 'Pending' = 'All';
   positionFilter: 'All' | 'Forward' | 'Defense' | 'Goalie' = 'All';
+  regionFilter: 'All' | 'North America' | 'Europe' = 'All';
+  seasonFilter: string = '';
   searchTerm: string = '';
   error: string | null = null;
   positionGroupMap: { [key: string]: string } = {
@@ -35,11 +38,31 @@ export class PlayersComponent implements OnInit {
     'LD': 'Defense', 'RD': 'Defense',
     'G': 'Goalie'
   };
+  
+  // Region mapping for countries
+  regionMap: { [key: string]: string } = {
+    'USA': 'North America', 'Canada': 'North America',
+    'Albania': 'Europe', 'Andorra': 'Europe', 'Austria': 'Europe', 
+    'Belarus': 'Europe', 'Belgium': 'Europe', 'Bosnia and Herzegovina': 'Europe',
+    'Bulgaria': 'Europe', 'Croatia': 'Europe', 'Czechia': 'Europe',
+    'Denmark': 'Europe', 'Estonia': 'Europe', 'Finland': 'Europe',
+    'France': 'Europe', 'Germany': 'Europe', 'Greece': 'Europe',
+    'Hungary': 'Europe', 'Iceland': 'Europe', 'Ireland': 'Europe',
+    'Italy': 'Europe', 'Latvia': 'Europe', 'Liechtenstein': 'Europe',
+    'Lithuania': 'Europe', 'Luxembourg': 'Europe', 'Malta': 'Europe',
+    'Moldova': 'Europe', 'Monaco': 'Europe', 'Montenegro': 'Europe',
+    'Netherlands': 'Europe', 'North Macedonia': 'Europe', 'Norway': 'Europe',
+    'Poland': 'Europe', 'Portugal': 'Europe', 'Romania': 'Europe',
+    'Russia': 'Europe', 'Serbia': 'Europe', 'Slovakia': 'Europe',
+    'Slovenia': 'Europe', 'Spain': 'Europe', 'Sweden': 'Europe',
+    'Switzerland': 'Europe', 'Ukraine': 'Europe', 'United Kingdom': 'Europe'
+  };
 
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.buildCountryEmojiMap();
+    this.loadSeasons();
     this.loadClubsAndPlayers();
   }
 
@@ -62,6 +85,25 @@ export class PlayersComponent implements OnInit {
       { name: 'Switzerland', emoji: '🇨🇭' }, { name: 'Ukraine', emoji: '🇺🇦' }, { name: 'United Kingdom', emoji: '🇬🇧' }
     ];
     countries.forEach(c => this.countryEmojiMap[c.name] = c.emoji);
+  }
+
+  loadSeasons() {
+    this.apiService.getSeasons().subscribe({
+      next: (seasons) => {
+        this.seasons = seasons;
+        if (this.seasons.length > 0) {
+          this.seasonFilter = this.seasons[0].name;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading seasons:', error);
+      }
+    });
+  }
+
+  getSeasonIdByName(seasonName: string): string {
+    const season = this.seasons.find(s => s.name === seasonName);
+    return season ? season._id : '';
   }
 
   loadClubsAndPlayers() {
@@ -89,8 +131,26 @@ export class PlayersComponent implements OnInit {
         // Map backend user structure to Player interface
         this.players = users.map((user: any) => {
           const profile = user.playerProfile || {};
-          const clubName = profile.currentClubName || user.currentClubName || '';
-          const logo = this.clubLogoMap[clubName.toLowerCase()] || undefined;
+          
+          // Determine player's status and club for the selected season
+          let clubName = '';
+          let clubId = '';
+          let status: 'Free Agent' | 'Signed' | 'Pending' = 'Free Agent';
+          let logo = undefined;
+          
+          if (this.seasonFilter && user.currentClubId) {
+            // Check if the user's club is active in the selected season
+            const userClub = this.clubs.find(club => club._id === user.currentClubId);
+            if (userClub && (userClub as any).seasons) {
+              const seasonInClub = (userClub as any).seasons.find((s: any) => s.seasonId === this.getSeasonIdByName(this.seasonFilter));
+              if (seasonInClub) {
+                clubName = userClub.name;
+                clubId = userClub._id;
+                status = 'Signed';
+                logo = this.clubLogoMap[clubName.toLowerCase()];
+              }
+            }
+          }
           
           return {
             id: user._id || user.id,
@@ -102,9 +162,9 @@ export class PlayersComponent implements OnInit {
             gamertag: user.gamertag || '',
             country: profile.country || '',
             handedness: profile.handedness || 'Left',
-            currentClubId: profile.currentClubId || user.currentClubId || '',
+            currentClubId: clubId,
             currentClubName: clubName,
-            status: profile.status || 'Free Agent',
+            status: status,
             lastActive: user.lastActive || '',
             stats: profile.stats || {},
             clubLogo: logo
@@ -126,11 +186,14 @@ export class PlayersComponent implements OnInit {
       const positionGroup = this.positionGroupMap[player.position] || 'Unknown';
       const matchesPosition = this.positionFilter === 'All' || positionGroup === this.positionFilter;
 
+      const playerRegion = this.regionMap[player.country || ''] || 'Unknown';
+      const matchesRegion = this.regionFilter === 'All' || playerRegion === this.regionFilter;
+
       const matchesSearch = (player.discordUsername?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.psnId?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.xboxGamertag?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false);
       
-      return matchesStatus && matchesPosition && matchesSearch;
+      return matchesStatus && matchesPosition && matchesRegion && matchesSearch;
     });
   }
 
@@ -142,6 +205,16 @@ export class PlayersComponent implements OnInit {
   onPositionFilterChange(position: 'All' | 'Forward' | 'Defense' | 'Goalie') {
     this.positionFilter = position;
     this.applyFilters();
+  }
+
+  onRegionFilterChange(region: 'All' | 'North America' | 'Europe') {
+    this.regionFilter = region;
+    this.applyFilters();
+  }
+
+  onSeasonFilterChange(season: string) {
+    this.seasonFilter = season;
+    this.loadPlayers(); // Reload players with new season filter
   }
 
   onSearchChange(event: Event) {
