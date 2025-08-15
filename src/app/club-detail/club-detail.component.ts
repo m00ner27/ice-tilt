@@ -218,7 +218,7 @@ export class ClubDetailComponent implements OnInit {
             };
 
             // First, load the roster and assign it to the club
-            this.apiService.getClubRoster(clubId).subscribe({
+            this.apiService.getClubGlobalRoster(clubId).subscribe({
               next: (roster) => {
                 if (this.club) {
                   this.club.roster = roster.map((user: any) => {

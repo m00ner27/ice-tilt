@@ -34,6 +34,11 @@ interface User {
   };
 }
 
+interface Season {
+  _id: string;
+  name: string;
+}
+
 @Component({
   selector: 'app-clubs',
   standalone: true,
@@ -49,6 +54,26 @@ interface User {
       </div>
 
       <div class="content-grid">
+        <!-- Season Selector -->
+        <div class="content-card">
+          <h3>Season Selection</h3>
+          <div class="season-selector" style="margin-bottom: 20px; border: 2px solid #e74c3c; padding: 15px; background: #2c3e50; border-radius: 8px;">
+            <label for="viewSeason" style="display: block; margin-bottom: 8px; color: #ecf0f1; font-weight: 500;">View Clubs for Season:</label>
+            <select id="viewSeason" [(ngModel)]="selectedSeasonId" (change)="onSeasonChange($event)" style="padding: 8px 12px; border: 1px solid #34495e; border-radius: 4px; background: #34495e; color: #ecf0f1; font-size: 14px; min-width: 200px;">
+              <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+            </select>
+            <span *ngIf="clubs.length > 0" style="margin-left: 10px; color: #90caf9;">
+              Showing {{ clubs.length }} clubs in this season
+            </span>
+          </div>
+          
+          <!-- Debug Info -->
+          <div style="background: #34495e; padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #ecf0f1;">
+            <strong>Debug Info:</strong> Seasons count: {{ seasons ? seasons.length : 0 }} | 
+            Selected season: {{ selectedSeasonId || 'None' }}
+          </div>
+        </div>
+        
         <!-- Clubs List -->
         <div class="content-card">
           <h3>All Clubs</h3>
@@ -79,6 +104,7 @@ interface User {
         <!-- Club Details -->
         <div class="content-card" *ngIf="selectedClub">
           <h3>{{ selectedClub.name }} - Roster</h3>
+          
           <div class="roster-section">
             <h4>Current Roster</h4>
             <div class="roster-list">
@@ -141,8 +167,7 @@ interface User {
 
             <div class="form-group">
               <label>Season</label>
-              <select formControlName="season">
-                <option value="" disabled selected>Select Season</option>
+              <select formControlName="season" (change)="onSeasonChange($event)">
                 <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
               </select>
             </div>
@@ -490,15 +515,16 @@ interface User {
 })
 export class ClubsComponent implements OnInit {
   clubs: Club[] = [];
-  freeAgents: User[] = [];
   selectedClub: Club | null = null;
-  clubForm: FormGroup;
   isAddingClub = false;
   editingClub: Club | null = null;
+  seasons: Season[] = [];
   divisions: Division[] = [];
-  seasons: any[] = [];
+  freeAgents: User[] = [];
+  clubForm: FormGroup;
   logoPreview: string | ArrayBuffer | null = null;
   uploadingLogo = false;
+  selectedSeasonId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -519,12 +545,21 @@ export class ClubsComponent implements OnInit {
   }
 
   get divisionsForSelectedSeason(): Division[] {
-    const selectedSeasonId = this.clubForm.get('season')?.value;
+    const selectedSeasonId = this.selectedSeasonId;
     return this.divisions.filter(d => d.seasonId === selectedSeasonId);
   }
 
   get filteredRoster(): User[] {
-    return (this.selectedClub?.roster || []).filter(p => !!p && p.discordUsername);
+    console.log('=== FILTERED ROSTER DEBUG ===');
+    console.log('Selected club:', this.selectedClub?.name);
+    console.log('Selected club roster:', this.selectedClub?.roster);
+    console.log('Roster length:', this.selectedClub?.roster?.length || 0);
+    
+    const filtered = (this.selectedClub?.roster || []).filter(p => !!p && p.discordUsername);
+    console.log('Filtered roster:', filtered.map(p => p.discordUsername));
+    console.log('=== END FILTERED ROSTER DEBUG ===');
+    
+    return filtered;
   }
 
   // Method to get the full image URL
@@ -552,109 +587,73 @@ export class ClubsComponent implements OnInit {
   }
 
   loadData(): void {
-    this.api.getSeasons().subscribe(seasons => this.seasons = seasons);
-    this.api.getDivisions().subscribe(data => this.divisions = data);
-    this.api.getClubs().subscribe(clubs => this.clubs = clubs);
-    this.api.getFreeAgents().subscribe(agents => this.freeAgents = agents);
-    this.clubForm.get('season')?.valueChanges.subscribe(() => {
-      this.clubForm.get('division')?.setValue('');
+    console.log('=== LOAD DATA DEBUG ===');
+    this.api.getSeasons().subscribe(seasons => {
+      console.log('Seasons loaded:', seasons);
+      console.log('Seasons count:', seasons.length);
+      this.seasons = seasons;
+      // Set the first season as default if none is selected
+      if (seasons.length > 0 && !this.selectedSeasonId) {
+        console.log('Setting default season:', seasons[0]);
+        this.selectedSeasonId = seasons[0]._id;
+        // Load free agents for the default season
+        this.loadFreeAgentsForSeason(seasons[0]._id);
+        // Load clubs for the default season
+        this.loadClubsForSeason(seasons[0]._id);
+      } else {
+        console.log('No seasons found or season already selected');
+      }
+      console.log('=== END LOAD DATA DEBUG ===');
     });
-  }
-
-  viewClubDetails(club: Club): void {
-    this.selectedClub = club;
-    if (club._id) {
-      this.api.getClubRoster(club._id).subscribe(roster => {
-        this.selectedClub!.roster = roster;
-      });
-    }
-  }
-
-  addPlayer(club: Club, player: User): void {
-    console.log(`Adding player: ${player._id} to club: ${club._id}`);
-    if (!club._id || !player._id) return;
-
-    this.api.addPlayerToClub(club._id, player._id).subscribe({
-      next: (updatedClub: any) => {
-        console.log('Player added successfully:', updatedClub);
-        this.updateFreeAgentsList();
-        
-        // Log the transaction
-        const seasonId = club.seasons[0]?.seasonId || '';
-        const seasonName = this.seasons.find(s => s._id === seasonId)?.name || 'Unknown Season';
-        
-        this.transactionsService.logPlayerSigning(
-          club._id!,
-          club.name,
-          this.getImageUrl(club.logoUrl),
-          player._id,
-          player.discordUsername || player.discordId || 'Unknown Player',
-          seasonId,
-          seasonName,
-          'Admin' // TODO: Replace with actual user ID when auth is implemented
-        ).subscribe({
-          next: (transaction) => {
-            console.log('Transaction logged:', transaction);
-          },
-          error: (error) => {
-            console.error('Failed to log transaction:', error);
-          }
-        });
-        
-        // Refresh the roster for the selected club
-        if (this.selectedClub && this.selectedClub._id === club._id) {
-          this.viewClubDetails(this.selectedClub);
-        }
-      },
-      error: (err: any) => {
-        console.error('Failed to add player:', err);
+    this.api.getDivisions().subscribe(data => this.divisions = data);
+    
+    this.clubForm.get('season')?.valueChanges.subscribe((seasonId) => {
+      this.clubForm.get('division')?.setValue('');
+      if (seasonId) {
+        this.loadFreeAgentsForSeason(seasonId);
+        this.loadClubsForSeason(seasonId);
       }
     });
   }
 
-  removePlayer(club: Club, player: User): void {
-    if (!club._id || !player._id) return;
+  private loadClubsForSeason(seasonId: string): void {
+    // Load all clubs and filter by season
+    this.api.getClubs().subscribe(allClubs => {
+      // Filter clubs that are active in this season
+      this.clubs = allClubs.filter(club => 
+        club.seasons && club.seasons.some((season: any) => season.seasonId === seasonId)
+      );
+      console.log(`Loaded ${this.clubs.length} clubs for season ${seasonId}`);
+      console.log('Clubs in this season:', this.clubs.map(c => c.name));
+    });
+  }
 
-    this.api.removePlayerFromClub(club._id, player._id).subscribe({
-      next: () => {
-        this.updateFreeAgentsList();
-        
-        // Log the transaction
-        const seasonId = club.seasons[0]?.seasonId || '';
-        const seasonName = this.seasons.find(s => s._id === seasonId)?.name || 'Unknown Season';
-        
-        this.transactionsService.logPlayerRelease(
-          club._id!,
-          club.name,
-          this.getImageUrl(club.logoUrl),
-          player._id,
-          player.discordUsername || player.discordId || 'Unknown Player',
-          seasonId,
-          seasonName,
-          'Admin' // TODO: Replace with actual user ID when auth is implemented
-        ).subscribe({
-          next: (transaction) => {
-            console.log('Transaction logged:', transaction);
-          },
-          error: (error) => {
-            console.error('Failed to log transaction:', error);
-          }
-        });
-        
-        // Refresh the roster for the selected club
-        if (this.selectedClub && this.selectedClub._id === club._id) {
-          this.viewClubDetails(this.selectedClub);
-        }
-      },
-      error: (err: any) => console.error('Failed to remove player', err)
+  private loadFreeAgentsForSeason(seasonId: string): void {
+    // Fetch season-specific free agents
+    this.api.getFreeAgentsForSeason(seasonId).subscribe(agents => {
+      this.freeAgents = agents;
+      console.log(`Loaded ${agents.length} free agents for season ${seasonId}`);
     });
   }
 
   private updateFreeAgentsList(): void {
-    this.api.getFreeAgents().subscribe(data => {
-      console.log('Fetched free agents:', data);
-      this.freeAgents = data;
-    });
+    // Get the current season from the form
+    const selectedSeasonId = this.selectedSeasonId;
+    
+    if (selectedSeasonId) {
+      // Refresh season-specific free agents
+      this.loadFreeAgentsForSeason(selectedSeasonId);
+    }
+    
+    // Refresh the selected club's roster if one is selected
+    if (this.selectedClub && this.selectedClub._id && selectedSeasonId) {
+      this.api.getClubRoster(this.selectedClub._id, selectedSeasonId).subscribe(roster => {
+        console.log('Refreshed club roster:', roster);
+        if (this.selectedClub) {
+          this.selectedClub.roster = roster;
+        }
+      });
+    }
   }
 
   onLogoFileChange(event: any): void {
@@ -675,6 +674,16 @@ export class ClubsComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = e => this.logoPreview = reader.result;
       reader.readAsDataURL(file);
+    }
+  }
+
+  onSeasonChange(event: any): void {
+    const seasonId = event.target.value;
+    if (seasonId) {
+      console.log('Season changed to:', seasonId);
+      this.selectedSeasonId = seasonId;
+      this.loadClubsForSeason(seasonId);
+      this.loadFreeAgentsForSeason(seasonId);
     }
   }
 
@@ -763,6 +772,112 @@ export class ClubsComponent implements OnInit {
   loadDivisionsForSeason(seasonId: string): void {
     this.api.getDivisions().subscribe(data => {
       this.divisions = data.filter(d => d.seasonId === seasonId);
+    });
+  }
+
+  viewClubDetails(club: Club): void {
+    console.log('=== VIEW CLUB DETAILS DEBUG ===');
+    console.log('Club selected:', club.name);
+    console.log('Club ID:', club._id);
+    console.log('Club roster before API call:', club.roster);
+    
+    this.selectedClub = club;
+    if (club._id) {
+      const selectedSeasonId = this.selectedSeasonId;
+      if (selectedSeasonId) {
+        this.api.getClubRoster(club._id, selectedSeasonId).subscribe({
+          next: (roster) => {
+            console.log('API returned roster:', roster);
+            console.log('Roster length:', roster.length);
+            console.log('Roster usernames:', roster.map((p: any) => p.discordUsername));
+            
+            this.selectedClub!.roster = roster;
+            console.log('Updated selectedClub roster:', this.selectedClub!.roster);
+            console.log('=== END VIEW CLUB DETAILS DEBUG ===');
+          },
+          error: (error) => {
+            console.error('Error fetching roster:', error);
+          }
+        });
+      }
+    }
+  }
+
+  addPlayer(club: Club, player: User): void {
+    if (!club._id || !player._id) {
+      console.error('Missing club or player ID');
+      return;
+    }
+
+    const selectedSeasonId = this.selectedSeasonId;
+    if (!selectedSeasonId) {
+      console.error('No season selected');
+      return;
+    }
+
+    this.api.addPlayerToClub(club._id, player._id, selectedSeasonId).subscribe({
+      next: () => {
+        console.log('Player added successfully');
+        
+        // Refresh the selected club if it's the one we just updated
+        if (this.selectedClub && this.selectedClub._id === club._id) {
+          this.viewClubDetails(club);
+        }
+        
+        // Refresh free agents list for the current season
+        this.updateFreeAgentsList();
+        
+        // Update the clubs list to reflect the change
+        const clubIndex = this.clubs.findIndex(c => c._id === club._id);
+        if (clubIndex > -1 && club._id) {
+          // Refresh just this club's roster
+          this.api.getClubRoster(club._id, selectedSeasonId).subscribe(roster => {
+            this.clubs[clubIndex].roster = roster;
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error adding player:', error);
+      }
+    });
+  }
+
+  removePlayer(club: Club, player: User): void {
+    if (!club._id || !player._id) {
+      console.error('Missing club or player ID');
+      return;
+    }
+
+    const selectedSeasonId = this.selectedSeasonId;
+    if (!selectedSeasonId) {
+      console.error('No season selected');
+      return;
+    }
+
+    this.api.removePlayerFromClub(club._id, player._id, selectedSeasonId).subscribe({
+      next: () => {
+        console.log('Player removed successfully');
+        
+        // Refresh the selected club if it's the one we just updated
+        if (this.selectedClub && this.selectedClub._id === club._id) {
+          this.viewClubDetails(club);
+        }
+        
+        // Refresh free agents list for the current season
+        this.updateFreeAgentsList();
+        
+        // Update the clubs list to reflect the change
+        const clubIndex = this.clubs.findIndex(c => c._id === club._id);
+        if (clubIndex > -1 && club._id) {
+          // Refresh just this club's roster
+          this.api.getClubRoster(club._id, selectedSeasonId).subscribe(roster => {
+            this.clubs[clubIndex].roster = roster;
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error removing player:', error);
+      }
     });
   }
 } 

@@ -3,6 +3,7 @@
     <img [src]="user.picture" alt="Profile Picture" class="profile-picture" />
     <div class="dropdown-menu" [class.show]="isDropdownOpen">
       <button [routerLink]="['/edit-profile']">Edit Profile</button>
+      <button [routerLink]="['/inbox']">Inbox</button>
       <button [routerLink]="['/manager-view']">Manager View</button>
       <button (click)="logout()">Logout</button>
     </div>

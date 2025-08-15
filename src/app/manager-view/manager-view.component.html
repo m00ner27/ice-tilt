@@ -1,125 +1,213 @@
 <section class="manager-view mt-5">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-md-10">
-          <div class="card shadow-sm">
-            <!-- Club Management Header -->
-            <div class="card-header text-center text-white">
-              <h3>Club Management</h3>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-12">
+        <div class="card shadow-sm">
+          <!-- Club Management Header -->
+          <div class="card-header text-center text-white">
+            <h3>Club Management</h3>
+          </div>
+          
+          <!-- Notification -->
+          <div *ngIf="notification" class="notification" [ngClass]="notification.type">
+            {{ notification.message }}
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLoading" class="loading">
+            <p>Loading manager data...</p>
+          </div>
+
+          <!-- Error State -->
+          <div *ngIf="error" class="error">
+            <p>{{ error }}</p>
+          </div>
+
+          <div class="card-body" *ngIf="!isLoading && !error">
+            <!-- Season and Club Selection -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="seasonSelect" class="form-label">Season:</label>
+                <select 
+                  id="seasonSelect" 
+                  class="form-select" 
+                  [(ngModel)]="selectedSeason"
+                  (change)="onSeasonChange()"
+                >
+                  <option *ngFor="let season of seasons" [value]="season.name">
+                    {{ season.name }}
+                  </option>
+                </select>
+                <small class="text-muted">
+                  Selected: {{ selectedSeason }} 
+                  ({{ seasons.length }} seasons available)
+                </small>
+              </div>
+              <div class="col-md-6">
+                <label for="clubSelect" class="form-label">Club:</label>
+                <select 
+                  id="clubSelect" 
+                  class="form-select" 
+                  [(ngModel)]="selectedClubId"
+                  (change)="onClubChange()"
+                >
+                  <option value="">Select a club</option>
+                  <option *ngFor="let club of managerClubs" [value]="club._id">
+                    {{ club.name }}
+                  </option>
+                </select>
+                <small class="text-muted">
+                  Available clubs: {{ managerClubs.length }} 
+                  ({{ getAvailableClubsText() }})
+                </small>
+              </div>
             </div>
-            <div class="card-body">
-              <!-- Roster Management Section -->
-              <h2 class="text-center mb-4">Roster</h2>
+
+            <!-- Refresh Button -->
+            <div class="row mb-3">
+              <div class="col-12 text-center">
+                <button 
+                  class="btn btn-secondary" 
+                  (click)="refreshData()"
+                  [disabled]="isLoading"
+                >
+                  <i class="fas fa-sync-alt me-2"></i>
+                  Refresh Data
+                </button>
+              </div>
+            </div>
+
+            <!-- Debug Section -->
+            <div class="row mb-3">
+              <div class="col-12">
+                <div class="alert alert-info">
+                  <strong>Debug Info:</strong><br>
+                  Selected Season: <strong>{{ selectedSeason }}</strong><br>
+                  Available Clubs: <strong>{{ managerClubs.length }}</strong><br>
+                  Club Names: <strong>{{ getAvailableClubsText() }}</strong><br>
+                  Selected Club: <strong>{{ selectedClub?.name || 'None' }}</strong>
+                </div>
+                <button class="btn btn-warning btn-sm" (click)="testSeasonFiltering()">
+                  Test Season Filtering
+                </button>
+              </div>
+            </div>
+
+            <!-- Roster Management Section -->
+            <div *ngIf="selectedClub" class="roster-section">
+              <h4 class="text-center mb-4">
+                <img [src]="getImageUrl(selectedClub.logoUrl)" [alt]="selectedClub.name" class="club-logo me-2" style="width: 30px; height: 30px;">
+                {{ selectedClub.name }} Roster
+              </h4>
+              
               <table class="table table-bordered manager-view-table">
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Rostered Players</th>
-                    <th>Promote to GM</th>
-                    <th>Remove GM</th>
-                    <th>Release Player</th>
+                    <th>Player</th>
+                    <th>Position</th>
+                    <th>Secondary Positions</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>1</td>
-                    <td>John Doe</td>
-                    <td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td>
+                  <tr *ngFor="let player of rosterPlayers; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ player.discordUsername }}</td>
+                    <td>
+                      <span *ngIf="player.playerProfile?.position" class="badge bg-primary">
+                        {{ player.playerProfile?.position }}
+                      </span>
+                    </td>
+                    <td>
+                      <span *ngFor="let pos of player.playerProfile?.secondaryPositions" class="badge bg-secondary me-1">
+                        {{ pos }}
+                      </span>
+                    </td>
+                    <td>
+                      <button 
+                        class="btn btn-danger btn-sm" 
+                        (click)="releasePlayer(player._id)"
+                      >
+                        Release
+                      </button>
+                    </td>
                   </tr>
-                  <tr>
-                    <td>2</td>
-                    <td>Jane Smith</td>
-                    <td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td>
+                  <tr *ngIf="rosterPlayers.length === 0">
+                    <td colspan="5" class="text-center">No players on roster</td>
                   </tr>
                 </tbody>
               </table>
-              <div class="text-center mb-4">
-                <button class="btn btn-primary">Submit Changes</button>
-              </div>
-  
-              <!-- Free Agents Section -->
-              <h2 class="text-center mb-4">Free Agents</h2>
+            </div>
+
+            <!-- Free Agents Section -->
+            <div class="free-agents-section mt-5">
+              <h4 class="text-center mb-4">Free Agents</h4>
+              
               <div class="mb-3">
-                <input type="text" class="form-control search-input" id="searchFreeAgents" placeholder="Search Free Agents">
+                <input 
+                  type="text" 
+                  class="form-control search-input" 
+                  [(ngModel)]="searchTerm"
+                  placeholder="Search Free Agents"
+                >
               </div>
+              
               <table class="table table-bordered manager-view-table">
                 <thead>
                   <tr>
+                    <th>Select</th>
                     <th>Username</th>
                     <th>Preferred Position</th>
                     <th>Secondary Positions</th>
-                    <th>Goals</th>
-                    <th>Assists</th>
-                    <th>Points</th>
-                    <th>Penalty Minutes</th>
-                    <th>Hits</th>
-                    <th>Send Signing Request</th>
+                    <th>Current Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><img src="assets/images/ithl-fan.png" alt="Player 1" class="small-team-logo"> slapshot_77</td>
-                    <td><span class="badge bg-danger">C</span></td>
+                  <tr *ngFor="let agent of getFilteredFreeAgents()">
                     <td>
-                      <span class="badge bg-primary">RW</span>
-                      <span class="badge bg-success">LW</span>
+                      <input 
+                        type="checkbox" 
+                        [checked]="selectedFreeAgents.includes(agent._id)"
+                        (change)="toggleFreeAgentSelection(agent._id)"
+                      >
                     </td>
-                    <td>25</td>
-                    <td>30</td>
-                    <td>55</td>
-                    <td>12</td>
-                    <td>50</td>
-                    <td><input type="checkbox"></td>
+                    <td>{{ agent.discordUsername }}</td>
+                    <td>
+                      <span *ngIf="agent.playerProfile?.position" class="badge bg-primary">
+                        {{ agent.playerProfile?.position }}
+                      </span>
+                    </td>
+                    <td>
+                      <span *ngFor="let pos of agent.playerProfile?.secondaryPositions" class="badge bg-secondary me-1">
+                        {{ pos }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge bg-success">Free Agent</span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="getFilteredFreeAgents().length === 0">
+                    <td colspan="5" class="text-center">No free agents found</td>
                   </tr>
                 </tbody>
               </table>
+              
               <div class="text-center mb-4">
-                <button class="btn btn-success">Send Signing Request</button>
+                <button 
+                  class="btn btn-success" 
+                  (click)="sendSigningRequests()"
+                  [disabled]="selectedFreeAgents.length === 0 || !selectedClub"
+                >
+                  Send Signing Request{{ selectedFreeAgents.length > 1 ? 's' : '' }} 
+                  ({{ selectedFreeAgents.length }})
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
-  
-<div class="manager-container">
-  <h1>Manager Dashboard</h1>
-  <p>Send contract offers to available free agents.</p>
-
-  <!-- Notification -->
-  <div *ngIf="notification" class="notification" [ngClass]="notification.type">
-    {{ notification.message }}
   </div>
-
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading">
-    <p>Loading free agents...</p>
-  </div>
-
-  <!-- Error State -->
-  <div *ngIf="error" class="error">
-    <p>{{ error }}</p>
-  </div>
-
-  <!-- Free Agents List -->
-  <div *ngIf="!isLoading && !error" class="free-agents-list">
-    <h2>Free Agents</h2>
-    <div *ngIf="freeAgents.length > 0; else noAgents">
-      <div *ngFor="let agent of freeAgents" class="agent-item">
-        <span class="agent-name">{{ agent.discordUsername }}</span>
-        <button (click)="sendOffer(agent._id)" class="btn-send-offer">
-          Send Offer
-        </button>
-      </div>
-    </div>
-    <ng-template #noAgents>
-      <p>No free agents available at this time.</p>
-    </ng-template>
-  </div>
-</div>
+</section>
   

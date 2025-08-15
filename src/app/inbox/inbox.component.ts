@@ -4,6 +4,7 @@ import { ApiService } from '../store/services/api.service';
 import { AuthService } from '@auth0/auth0-angular';
 import { switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { HttpClient } from '@angular/common/http';
 
 interface Offer {
   _id: string;
@@ -30,7 +31,8 @@ export class InboxComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private auth: AuthService
+    private auth: AuthService,
+    private http: HttpClient
   ) {}
 
   // Method to get the full image URL
@@ -61,8 +63,26 @@ export class InboxComponent implements OnInit {
           this.error = 'You must be logged in to view your inbox.';
           throw new Error('User not authenticated');
         }
-        this.userId = user.sub.split('|')[1];
-        return this.apiService.getInboxOffers(this.userId);
+        
+        // Get the MongoDB user ID by syncing with the database
+        return this.auth.getAccessTokenSilently({
+          authorizationParams: { audience: 'http://localhost:3000' }
+        }).pipe(
+          switchMap(token => 
+            this.http.post(
+              `${environment.apiUrl}/api/users/auth0-sync`,
+              {},
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+          ),
+          switchMap((dbUser: any) => {
+            this.userId = dbUser._id;
+            if (!this.userId) {
+              throw new Error('Could not get user ID from database');
+            }
+            return this.apiService.getInboxOffers(this.userId);
+          })
+        );
       })
     ).subscribe({
       next: (offers) => {

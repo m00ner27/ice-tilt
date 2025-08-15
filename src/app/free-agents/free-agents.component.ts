@@ -86,4 +86,8 @@ export class FreeAgentsComponent implements OnInit {
     this.searchTerm = target.value;
     this.applyFilters();
   }
+
+  refreshData() {
+    this.loadFreeAgents();
+  }
 }

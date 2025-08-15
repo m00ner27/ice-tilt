@@ -61,22 +61,41 @@ export class RecentTransactionsComponent implements OnInit {
   }
 
   updateFilteredClubs() {
+    console.log('updateFilteredClubs called with selectedSeason:', this.selectedSeason);
+    console.log('Available seasons:', this.seasons);
+    console.log('All clubs:', this.allClubs);
+    
     if (this.selectedSeason === 'All') {
       // If "All Seasons" is selected, show all clubs
       this.filteredClubs = this.allClubs;
+      console.log('All seasons selected, showing all clubs:', this.filteredClubs.length);
     } else {
       // Filter clubs based on the selected season
       this.filteredClubs = this.allClubs.filter(club => {
         if (!club.seasons || !Array.isArray(club.seasons)) {
+          console.log('Club has no seasons or invalid seasons:', club.name, club.seasons);
           return false;
         }
         
         // Check if the club has the selected season
-        return club.seasons.some((season: any) => {
-          const seasonInDb = this.seasons.find(s => s._id === season.seasonId);
-          return seasonInDb && seasonInDb.name === this.selectedSeason;
+        const hasSeason = club.seasons.some((season: any) => {
+          // Find the season by name in the seasons array
+          const seasonInDb = this.seasons.find(s => s.name === this.selectedSeason);
+          if (!seasonInDb) {
+            console.log('Season not found in database:', this.selectedSeason);
+            return false;
+          }
+          
+          console.log('Comparing club season:', season.seasonId, 'with selected season:', seasonInDb._id);
+          // Check if the club's season.seasonId matches the found season's _id
+          return season.seasonId === seasonInDb._id;
         });
+        
+        console.log(`Club ${club.name} has season ${this.selectedSeason}:`, hasSeason);
+        return hasSeason;
       });
+      
+      console.log('Filtered clubs for season', this.selectedSeason, ':', this.filteredClubs.map(c => c.name));
     }
 
     // Reset club selection if the currently selected club is not in the filtered list

@@ -34,6 +34,24 @@
   <!-- Clubs List -->
   <div class="list-section">
     <h3>Clubs</h3>
+    
+    <!-- Debug Info -->
+    <div style="background: #34495e; padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #ecf0f1;">
+      <strong>Debug Info:</strong> Seasons count: {{ seasons?.length || 0 }} | 
+      Selected season: {{ clubForm.get('season')?.value || 'None' }}
+    </div>
+    
+    <!-- Season Selector for Viewing Clubs -->
+    <div class="season-selector" style="margin-bottom: 20px; border: 2px solid #e74c3c;">
+      <label for="viewSeason">View Clubs for Season:</label>
+      <select id="viewSeason" [formControl]="clubForm.get('season')" (change)="onSeasonChange($event)">
+        <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+      </select>
+      <span *ngIf="clubs.length > 0" style="margin-left: 10px; color: #90caf9;">
+        Showing {{ clubs.length }} clubs in this season
+      </span>
+    </div>
+    
     <ul class="club-list">
       <li *ngFor="let club of clubs">
         <span>

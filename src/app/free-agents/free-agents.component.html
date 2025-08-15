@@ -48,6 +48,18 @@
         </div>
       </div>
 
+      <!-- Refresh Button -->
+      <div class="text-center mb-3">
+        <button 
+          class="btn btn-secondary" 
+          (click)="refreshData()"
+          [disabled]="isLoading"
+        >
+          <i class="fas fa-sync-alt me-2"></i>
+          Refresh Free Agents
+        </button>
+      </div>
+
       <!-- Free Agents List -->
       <div class="agents-list">
         <div class="agent-card" *ngFor="let player of filteredAgents">

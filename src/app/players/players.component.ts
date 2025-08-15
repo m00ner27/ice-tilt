@@ -138,14 +138,14 @@ export class PlayersComponent implements OnInit {
           let status: 'Free Agent' | 'Signed' | 'Pending' = 'Free Agent';
           let logo = undefined;
           
-          if (this.seasonFilter && user.currentClubId) {
-            // Check if the user's club is active in the selected season
-            const userClub = this.clubs.find(club => club._id === user.currentClubId);
-            if (userClub && (userClub as any).seasons) {
-              const seasonInClub = (userClub as any).seasons.find((s: any) => s.seasonId === this.getSeasonIdByName(this.seasonFilter));
-              if (seasonInClub) {
-                clubName = userClub.name;
-                clubId = userClub._id;
+          if (this.seasonFilter) {
+            // Use season-specific data if available
+            const seasonId = this.getSeasonIdByName(this.seasonFilter);
+            if (seasonId && user.seasons) {
+              const seasonEntry = user.seasons.find((s: any) => s.seasonId === seasonId);
+              if (seasonEntry && seasonEntry.status === 'Signed') {
+                clubName = seasonEntry.clubName || '';
+                clubId = seasonEntry.clubId || '';
                 status = 'Signed';
                 logo = this.clubLogoMap[clubName.toLowerCase()];
               }

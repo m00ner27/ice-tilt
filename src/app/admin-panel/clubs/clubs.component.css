@@ -70,4 +70,35 @@ button:hover {
   object-fit: contain;
   margin-right: 12px;
   vertical-align: middle;
+}
+
+.season-selector {
+  background: #2c3e50;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #34495e;
+}
+
+.season-selector label {
+  display: block;
+  margin-bottom: 8px;
+  color: #ecf0f1;
+  font-weight: 500;
+}
+
+.season-selector select {
+  padding: 8px 12px;
+  border: 1px solid #34495e;
+  border-radius: 4px;
+  background: #34495e;
+  color: #ecf0f1;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.season-selector select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 } 

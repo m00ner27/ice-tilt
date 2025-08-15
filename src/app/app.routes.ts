@@ -16,6 +16,7 @@ import { PlayersComponent } from './players/players.component';
 import { PlayerProfileComponent } from './player-profile/player-profile.component';
 import { RealDataComponent } from './real-data/real-data.component';
 import { RecentTransactionsComponent } from './recent-transactions/recent-transactions.component';
+import { InboxComponent } from './inbox/inbox.component';
 import { authGuard } from './core/guards/auth.guard';
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
@@ -43,6 +44,7 @@ export const routes: Routes = [
   { path: 'match/:id', component: MatchDetailComponent },
   { path: 'standings', component: StandingsComponent },
   { path: 'transactions', component: RecentTransactionsComponent },
+  { path: 'inbox', component: InboxComponent, canActivate: [authGuard] },
   { path: 'edit-profile', component: EditProfileComponent, canActivate: [authGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },

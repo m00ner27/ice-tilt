@@ -156,16 +156,23 @@ export class ApiService {
   }
 
   // Club roster methods
-  getClubRoster(clubId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster`);
+  getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`);
   }
 
-  addPlayerToClub(clubId: string, userId: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/api/clubs/${clubId}/roster`, { userId });
+  // Get global club roster (all players signed to the club across all seasons)
+  getClubGlobalRoster(clubId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster/global`);
   }
 
-  removePlayerFromClub(clubId: string, userId: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/api/clubs/${clubId}/roster/${userId}`);
+  // Add player to club roster
+  addPlayerToClub(clubId: string, userId: string, seasonId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/api/clubs/${clubId}/roster`, { userId, seasonId });
+  }
+
+  // Remove player from club roster
+  removePlayerFromClub(clubId: string, userId: string, seasonId: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/api/clubs/${clubId}/roster/${userId}?seasonId=${seasonId}`);
   }
 
   // Get free agents (users not in any club)
@@ -173,8 +180,22 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents`);
   }
 
+  // Get free agents for a specific season
+  getFreeAgentsForSeason(seasonId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents?seasonId=${seasonId}`);
+  }
+
   // Offer methods
-  sendContractOffer(offerData: { clubId: string; userId: string; sentBy: string; }): Observable<any> {
+  sendContractOffer(offerData: { 
+    clubId: string; 
+    clubName: string;
+    clubLogoUrl?: string;
+    userId: string; 
+    playerName: string;
+    seasonId?: string;
+    seasonName?: string;
+    sentBy: string; 
+  }): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/api/offers`, offerData);
   }
 
