@@ -7,6 +7,8 @@ import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
+import { catchError } from 'rxjs/operators';
+import { timeout } from 'rxjs/operators';
 
 interface FreeAgent {
   _id: string;
@@ -100,7 +102,7 @@ export class ManagerViewComponent implements OnInit {
         this.seasons = seasons;
         console.log('Loaded seasons:', seasons.map(s => ({ name: s.name, id: s._id })));
         
-        // Don't auto-select the first season, let user choose
+        // Auto-select the first season if none is selected
         if (seasons.length > 0 && !this.selectedSeason) {
           this.selectedSeason = seasons[0].name;
           console.log('Auto-selected first season:', this.selectedSeason);
@@ -114,6 +116,14 @@ export class ManagerViewComponent implements OnInit {
   loadManagerClubs() {
     console.log('=== loadManagerClubs CALLED ===');
     console.log('Method entry - selectedSeason:', this.selectedSeason);
+    
+    // Check if we have a selected season
+    if (!this.selectedSeason) {
+      console.error('No season selected, cannot load clubs');
+      this.isLoading = false;
+      this.error = 'Please select a season first.';
+      return of(null);
+    }
     
     // Always reload clubs from the API to ensure fresh data
     return this.apiService.getClubs().pipe(
@@ -135,6 +145,8 @@ export class ManagerViewComponent implements OnInit {
         if (!currentSeason) {
           console.error('Season not found:', this.selectedSeason);
           this.managerClubs = [];
+          this.isLoading = false;
+          this.error = `Season "${this.selectedSeason}" not found.`;
           return of(null);
         }
         
@@ -174,7 +186,7 @@ export class ManagerViewComponent implements OnInit {
           return this.loadClubData();
         } else {
           this.isLoading = false;
-          this.error = 'No clubs found for the selected season.';
+          this.error = `No clubs found for season "${this.selectedSeason}".`;
           return of(null);
         }
       })
@@ -184,46 +196,80 @@ export class ManagerViewComponent implements OnInit {
   loadClubData() {
     if (!this.selectedClub) return of(null);
 
-    // Load roster players
-    return this.apiService.getUsers().pipe(
-      switchMap(users => {
-        console.log('=== LOAD CLUB DATA DEBUG ===');
-        console.log('Selected club:', this.selectedClub?.name);
-        console.log('Selected season:', this.selectedSeason);
-        console.log('Total users loaded:', users.length);
+    console.log('=== LOAD CLUB DATA DEBUG ===');
+    console.log('Selected club:', this.selectedClub?.name);
+    console.log('Selected club ID:', this.selectedClub?._id);
+    console.log('Selected season:', this.selectedSeason);
+    
+    // Get the current season ID
+    const currentSeasonId = this.seasons.find(season => season.name === this.selectedSeason)?._id;
+    if (!currentSeasonId) {
+      console.error('Current season ID not found');
+      return of(null);
+    }
+    
+    console.log('Current season ID:', currentSeasonId);
+    console.log('About to call getClubRoster with:', {
+      clubId: this.selectedClub._id,
+      seasonId: currentSeasonId
+    });
+    
+    // Load the club's roster for the specific season using the new API
+    // Simplified RxJS chain to prevent hanging
+    this.apiService.getClubRoster(this.selectedClub._id, currentSeasonId).subscribe({
+      next: (roster) => {
+        console.log('=== ROSTER LOADED FROM API ===');
+        console.log('Raw roster response:', roster);
+        console.log('Roster type:', typeof roster);
+        console.log('Roster length:', roster?.length || 0);
+        console.log('Roster players:', roster?.map((p: any) => ({
+          id: p._id,
+          username: p.discordUsername,
+          position: p.playerProfile?.position
+        })) || []);
         
-        // Get roster players for the selected club in the selected season
-        this.rosterPlayers = users.filter((user: any) => {
-          // Check if user is on this club's roster for the current season
-          const seasonEntry = user.seasons?.find((s: any) => 
-            s.seasonId === this.seasons.find(season => season.name === this.selectedSeason)?._id
-          );
-          return seasonEntry && seasonEntry.clubId === this.selectedClub?._id;
+        // Set the roster players
+        this.rosterPlayers = roster || [];
+        console.log('Updated this.rosterPlayers:', this.rosterPlayers);
+        
+        // Load free agents for the current season
+        console.log('About to load free agents for season:', currentSeasonId);
+        this.apiService.getFreeAgentsForSeason(currentSeasonId).subscribe({
+          next: (freeAgents) => {
+            console.log('=== FREE AGENTS LOADED ===');
+            console.log('Free agents response:', freeAgents);
+            console.log('Free agents length:', freeAgents?.length || 0);
+            console.log('Free agent usernames:', freeAgents?.map((u: any) => u.discordUsername) || []);
+            
+            // Set the free agents
+            this.freeAgents = freeAgents || [];
+            
+            console.log('=== END LOAD CLUB DATA DEBUG ===');
+            console.log('Final rosterPlayers count:', this.rosterPlayers.length);
+            console.log('Final freeAgents count:', this.freeAgents.length);
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('=== ERROR LOADING FREE AGENTS ===');
+            console.error('Error:', error);
+            this.isLoading = false;
+            this.error = `Failed to load free agents: ${error.message || 'Unknown error'}`;
+          }
         });
-        console.log('Roster players found:', this.rosterPlayers.length);
-        
-        // Load free agents for the CURRENT SEASON
-        // A user is a free agent for a season if they're not on any club's roster for that season
-        this.freeAgents = users.filter((user: any) => {
-          // Check if user is already on a club's roster for the current season
-          const seasonId = this.seasons.find(season => season.name === this.selectedSeason)?._id;
-          const seasonEntry = user.seasons?.find((s: any) => s.seasonId === seasonId);
-          
-          // User is a free agent if they don't have a season entry or their status is 'Free Agent'
-          const isFreeAgent = !seasonEntry || seasonEntry.status === 'Free Agent';
-          
-          console.log(`User ${user.discordUsername}: seasonEntry=${seasonEntry ? 'Yes' : 'No'}, isFreeAgent=${isFreeAgent}`);
-          return isFreeAgent;
-        });
-        
-        console.log('Free agents found for season:', this.freeAgents.length);
-        console.log('Free agent usernames:', this.freeAgents.map(u => u.discordUsername));
-        console.log('=== END LOAD CLUB DATA DEBUG ===');
+      },
+      error: (error) => {
+        console.error('=== ERROR IN LOAD CLUB DATA ===');
+        console.error('Error loading club data:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        console.error('Error response:', error.error);
         
         this.isLoading = false;
-        return of(null);
-      })
-    );
+        this.error = `Failed to load club data: ${error.message || 'Unknown error'}`;
+      }
+    });
+    
+    return of(null); // Return immediately since we're using subscribe
   }
 
   onSeasonChange() {
@@ -256,10 +302,25 @@ export class ManagerViewComponent implements OnInit {
   }
 
   onClubChange() {
+    console.log('=== ON CLUB CHANGE DEBUG ===');
+    console.log('selectedClubId:', this.selectedClubId);
+    console.log('managerClubs:', this.managerClubs.map(c => ({ id: c._id, name: c.name })));
+    
     if (this.selectedClubId) {
       this.selectedClub = this.managerClubs.find(club => club._id === this.selectedClubId) || null;
-      this.loadClubData();
+      console.log('Selected club:', this.selectedClub);
+      
+      if (this.selectedClub) {
+        console.log('About to load club data for:', this.selectedClub.name);
+        this.loadClubData();
+      } else {
+        console.log('Club not found in managerClubs');
+      }
+    } else {
+      console.log('No club ID selected');
+      this.selectedClub = null;
     }
+    console.log('=== END ON CLUB CHANGE DEBUG ===');
   }
 
   refreshData() {
@@ -419,7 +480,14 @@ export class ManagerViewComponent implements OnInit {
       return;
     }
 
-    this.apiService.removePlayerFromClub(this.selectedClub._id, playerId, this.selectedSeason).subscribe({
+    // Get the current season ID
+    const currentSeasonId = this.seasons.find(season => season.name === this.selectedSeason)?._id;
+    if (!currentSeasonId) {
+      this.showNotification('error', 'Season not found.');
+      return;
+    }
+
+    this.apiService.removePlayerFromClub(this.selectedClub._id, playerId, currentSeasonId).subscribe({
       next: () => {
         this.showNotification('success', 'Player released successfully!');
         // Refresh the club data to show updated roster
@@ -449,6 +517,30 @@ export class ManagerViewComponent implements OnInit {
     
     // Otherwise, assume it's a local asset
     return logoUrl;
+  }
+
+  // Test method to directly test the Petosen Pallo roster endpoint
+  testPetosenPalloEndpoint() {
+    console.log('=== TESTING PETOSEN PALLO ENDPOINT DIRECTLY ===');
+    
+    const clubId = '68768d41ab18f6cd40f8d8c5';
+    const seasonId = '687649d7ab18f6cd40f8d83d';
+    
+    console.log('Testing with:');
+    console.log('  Club ID:', clubId);
+    console.log('  Season ID:', seasonId);
+    
+    // Test the endpoint directly
+    this.apiService.testPetosenPalloRoster().subscribe({
+      next: (response) => {
+        console.log('✅ Direct endpoint test SUCCESS:', response);
+        this.showNotification('success', 'Direct endpoint test successful!');
+      },
+      error: (error) => {
+        console.error('❌ Direct endpoint test FAILED:', error);
+        this.showNotification('error', `Direct endpoint test failed: ${error.message}`);
+      }
+    });
   }
 
   showNotification(type: 'success' | 'error', message: string) {

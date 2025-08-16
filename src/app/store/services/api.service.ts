@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { tap, catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,32 @@ import { environment } from '../../../environments/environment';
 export class ApiService {
   private apiUrl = environment.apiUrl; // Uses environment variable
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) { 
+    // Add request interceptor to track all HTTP requests
+    console.log('=== API SERVICE: Constructor initialized ===');
+  }
+
+  // Add method to test the specific endpoint directly
+  testPetosenPalloRoster(): Observable<any> {
+    const clubId = '68768d41ab18f6cd40f8d8c5';
+    const seasonId = '687649d7ab18f6cd40f8d83d';
+    const url = `${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`;
+    
+    console.log('=== TESTING PETOSEN PALLO ROSTER ENDPOINT ===');
+    console.log('Testing URL:', url);
+    
+    return this.http.get(url).pipe(
+      tap(response => {
+        console.log('=== TEST RESPONSE RECEIVED ===');
+        console.log('Response:', response);
+      }),
+      catchError(error => {
+        console.error('=== TEST ERROR RECEIVED ===');
+        console.error('Error:', error);
+        throw error;
+      })
+    );
+  }
 
   // Test basic connection
   testConnection(): Observable<any> {
@@ -157,7 +183,26 @@ export class ApiService {
 
   // Club roster methods
   getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`);
+    console.log('=== API SERVICE: getClubRoster ===');
+    console.log('clubId:', clubId);
+    console.log('seasonId:', seasonId);
+    console.log('URL:', `${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`);
+    
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`).pipe(
+      tap(response => {
+        console.log('=== API SERVICE: Response received ===');
+        console.log('Response:', response);
+        console.log('Response type:', typeof response);
+        console.log('Response length:', response?.length || 0);
+      }),
+      catchError(error => {
+        console.error('=== API SERVICE: Error in getClubRoster ===');
+        console.error('Error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      })
+    );
   }
 
   // Get global club roster (all players signed to the club across all seasons)
