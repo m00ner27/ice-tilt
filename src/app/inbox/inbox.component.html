@@ -22,9 +22,14 @@
             [alt]="offer.clubId.name" 
             class="club-logo"
           />
-          <span class="offer-text">
-            You have received a contract offer from <strong>{{ offer.clubId.name }}</strong>.
-          </span>
+          <div class="offer-info">
+            <span class="offer-text">
+              You have received a contract offer from <strong>{{ offer.clubId.name }}</strong>.
+            </span>
+            <span *ngIf="offer.seasonName" class="season-info">
+              Season: {{ offer.seasonName }}
+            </span>
+          </div>
         </div>
         <div class="offer-actions">
           <button (click)="respondToOffer(offer._id, 'accepted')" class="btn btn-accept">

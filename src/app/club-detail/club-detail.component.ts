@@ -1,15 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatchService, Match, PlayerMatchStats } from '../store/services/match.service';
 import { ApiService } from '../store/services/api.service';
+import { RosterUpdateService } from '../store/services/roster-update.service';
 import { forkJoin } from 'rxjs';
 import { MatchHistoryComponent } from './match-history/match-history.component';
 import { Club, ClubStats } from '../store/models/models/club.interface';
 import { Player } from '../store/models/models/player.interface';
 import { PlayerStats } from '../store/models/models/player-stats.interface';
 import { environment } from '../../environments/environment';
+import { Subscription } from 'rxjs';
 
 // Updated interface to match backend Club model
 interface BackendClub {
@@ -130,7 +132,7 @@ const DEFAULT_GOALIE_STATS: GoalieStats = {
   templateUrl: './club-detail.component.html',
   styleUrls: ['./club-detail.component.css']
 })
-export class ClubDetailComponent implements OnInit {
+export class ClubDetailComponent implements OnInit, OnDestroy {
   club: Club | undefined;
   backendClub: BackendClub | undefined;
   matches: Match[] = [];
@@ -139,6 +141,7 @@ export class ClubDetailComponent implements OnInit {
   loading: boolean = false;
   error: string | null = null;
   allClubs: BackendClub[] = [];
+  private rosterUpdateSubscription: Subscription | undefined;
   
   // Add default stats
   private defaultStats: CalculatedClubStats = {
@@ -160,7 +163,8 @@ export class ClubDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private http: HttpClient,
     private matchService: MatchService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private rosterUpdateService: RosterUpdateService
   ) {}
 
   // Method to get the full image URL
@@ -188,6 +192,15 @@ export class ClubDetailComponent implements OnInit {
     this.route.params.subscribe(params => {
       const clubId = params['id'];
       this.loadClubData(clubId);
+    });
+    
+    // Subscribe to roster updates to refresh data when needed
+    this.rosterUpdateSubscription = this.rosterUpdateService.rosterUpdates$.subscribe(event => {
+      console.log('Roster update received in club detail:', event);
+      if (event.action === 'sign' && event.clubId && this.club && this.club._id === event.clubId) {
+        console.log('Refreshing club data due to roster update');
+        this.loadClubData(event.clubId);
+      }
     });
   }
 
@@ -473,5 +486,11 @@ export class ClubDetailComponent implements OnInit {
 
     // Return black for light backgrounds, white for dark backgrounds
     return luminance > 0.5 ? '#000000' : '#FFFFFF';
+  }
+  
+  ngOnDestroy(): void {
+    if (this.rosterUpdateSubscription) {
+      this.rosterUpdateSubscription.unsubscribe();
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../store/services/api.service';
@@ -9,6 +9,8 @@ import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { timeout } from 'rxjs/operators';
+import { RosterUpdateService } from '../store/services/roster-update.service';
+import { Subscription } from 'rxjs';
 
 interface FreeAgent {
   _id: string;
@@ -48,7 +50,7 @@ interface RosterPlayer {
   templateUrl: './manager-view.component.html',
   styleUrls: ['./manager-view.component.css']
 })
-export class ManagerViewComponent implements OnInit {
+export class ManagerViewComponent implements OnInit, OnDestroy {
   freeAgents: FreeAgent[] = [];
   rosterPlayers: RosterPlayer[] = [];
   managerClubs: Club[] = [];
@@ -64,12 +66,14 @@ export class ManagerViewComponent implements OnInit {
   selectedFreeAgents: string[] = [];
   
   managerUserId: string | undefined;
+  private rosterUpdateSubscription: Subscription | undefined;
 
   constructor(
     private apiService: ApiService,
     private auth: AuthService,
     private http: HttpClient,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private rosterUpdateService: RosterUpdateService
   ) {}
 
   ngOnInit(): void {
@@ -89,6 +93,20 @@ export class ManagerViewComponent implements OnInit {
         console.error('Error loading manager data:', error);
         this.isLoading = false;
         this.error = 'Failed to load manager data.';
+      }
+    });
+    
+    // Subscribe to roster updates to refresh data when needed
+    this.rosterUpdateSubscription = this.rosterUpdateService.rosterUpdates$.subscribe(event => {
+      console.log('Roster update received in manager view:', event);
+      if (event.action === 'sign' && event.clubId) {
+        // Refresh the club data if it's the currently selected club
+        if (this.selectedClub && this.selectedClub._id === event.clubId) {
+          console.log('Refreshing club data due to roster update');
+          this.loadClubData();
+        }
+        // Also refresh the free agents list by reloading club data
+        this.loadClubData();
       }
     });
   }
@@ -336,6 +354,24 @@ export class ManagerViewComponent implements OnInit {
       }
     });
   }
+  
+  refreshFreeAgents() {
+    if (this.selectedClub && this.selectedClub._id) {
+      // Get the current season ID
+      const currentSeasonId = this.seasons.find(season => season.name === this.selectedSeason)?._id;
+      if (currentSeasonId) {
+        this.apiService.getFreeAgentsForSeason(currentSeasonId).subscribe({
+          next: (freeAgents) => {
+            this.freeAgents = freeAgents || [];
+            console.log('Free agents list refreshed:', this.freeAgents.length);
+          },
+          error: (error) => {
+            console.error('Error refreshing free agents:', error);
+          }
+        });
+      }
+    }
+  }
 
   getAvailableClubsText(): string {
     if (!this.managerClubs || this.managerClubs.length === 0) {
@@ -448,17 +484,40 @@ export class ManagerViewComponent implements OnInit {
               // Check for specific error types and show appropriate messages
               if (error.status === 400) {
                 const agent = this.freeAgents.find(a => a._id === request.userId);
+                const agentName = agent?.discordUsername || 'Unknown Player';
+                
                 if (error.error?.message?.includes('already has a pending offer from this club')) {
-                  console.log(`Player ${agent?.discordUsername} already has a pending offer from this club for this season`);
+                  console.log(`Player ${agentName} already has a pending offer from this club for this season`);
+                  this.showNotification('error', `${agentName} already has a pending offer from this club.`);
+                } else if (error.error?.message?.includes('already signed to a club')) {
+                  console.log(`Player ${agentName} is already signed to a club for this season`);
+                  this.showNotification('error', `${agentName} is already signed to a club for this season.`);
                 } else if (error.error?.message?.includes('too many pending offers')) {
-                  console.log(`Player ${agent?.discordUsername} already has too many pending offers`);
+                  console.log(`Player ${agentName} already has too many pending offers`);
+                  this.showNotification('error', `${agentName} already has too many pending offers.`);
                 } else {
                   console.log(`Bad request error: ${error.error?.message}`);
+                  this.showNotification('error', `Failed to send offer to ${agentName}: ${error.error?.message || 'Unknown error'}`);
                 }
+              } else {
+                const agent = this.freeAgents.find(a => a._id === request.userId);
+                const agentName = agent?.discordUsername || 'Unknown Player';
+                this.showNotification('error', `Failed to send offer to ${agentName}: ${error.message || 'Unknown error'}`);
               }
               
               if (completed + errors === requests.length) {
-                this.showNotification('error', `Sent ${completed} requests, but ${errors} failed.`);
+                if (errors === 0) {
+                  this.showNotification('success', `Successfully sent ${completed} signing request(s)!`);
+                  // Clear selected free agents on success
+                  this.selectedFreeAgents = [];
+                } else {
+                  const successMessage = completed > 0 ? `Successfully sent ${completed} request(s). ` : '';
+                  const errorMessage = `${errors} request(s) failed. Check notifications for details.`;
+                  this.showNotification('error', successMessage + errorMessage);
+                }
+                
+                // Refresh the free agents list to show current state
+                this.refreshFreeAgents();
               }
             }
           });
@@ -546,5 +605,11 @@ export class ManagerViewComponent implements OnInit {
   showNotification(type: 'success' | 'error', message: string) {
     this.notification = { type, message };
     setTimeout(() => this.notification = null, 5000);
+  }
+  
+  ngOnDestroy(): void {
+    if (this.rosterUpdateSubscription) {
+      this.rosterUpdateSubscription.unsubscribe();
+    }
   }
 }

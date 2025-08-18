@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../store/services/api.service';
 import { EashlService } from '../../services/eashl.service';
 import { TransactionsService } from '../../store/services/transactions.service';
+import { RosterUpdateService } from '../../store/services/roster-update.service';
 import { environment } from '../../../environments/environment';
+import { Subscription } from 'rxjs';
 
 interface Club {
   _id?: string;
@@ -513,7 +515,7 @@ interface Season {
     }
   `]
 })
-export class ClubsComponent implements OnInit {
+export class ClubsComponent implements OnInit, OnDestroy {
   clubs: Club[] = [];
   selectedClub: Club | null = null;
   isAddingClub = false;
@@ -525,12 +527,14 @@ export class ClubsComponent implements OnInit {
   logoPreview: string | ArrayBuffer | null = null;
   uploadingLogo = false;
   selectedSeasonId: string | null = null;
+  private rosterUpdateSubscription: Subscription | undefined;
 
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
     private eashlService: EashlService,
-    private transactionsService: TransactionsService
+    private transactionsService: TransactionsService,
+    private rosterUpdateService: RosterUpdateService
   ) {
     this.clubForm = this.fb.group({
       name: ['', Validators.required],
@@ -584,6 +588,20 @@ export class ClubsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+    
+    // Subscribe to roster updates to refresh data when needed
+    this.rosterUpdateSubscription = this.rosterUpdateService.rosterUpdates$.subscribe(event => {
+      console.log('Roster update received in admin clubs:', event);
+      if (event.action === 'sign' && event.clubId && event.seasonId) {
+        // Refresh the club data if it's the currently selected club
+        if (this.selectedClub && this.selectedClub._id === event.clubId) {
+          console.log('Refreshing club data due to roster update');
+          this.viewClubDetails(this.selectedClub);
+        }
+        // Also refresh the free agents list for the current season
+        this.updateFreeAgentsList();
+      }
+    });
   }
 
   loadData(): void {
@@ -879,5 +897,11 @@ export class ClubsComponent implements OnInit {
         console.error('Error removing player:', error);
       }
     });
+  }
+  
+  ngOnDestroy(): void {
+    if (this.rosterUpdateSubscription) {
+      this.rosterUpdateSubscription.unsubscribe();
+    }
   }
 } 

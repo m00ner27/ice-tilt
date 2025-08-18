@@ -191,7 +191,14 @@
                     </td>
                   </tr>
                   <tr *ngIf="getFilteredFreeAgents().length === 0">
-                    <td colspan="5" class="text-center">No free agents found</td>
+                    <td colspan="5" class="text-center">
+                      <span *ngIf="freeAgents.length === 0; else noMatchingResults">
+                        No free agents available for this season
+                      </span>
+                      <ng-template #noMatchingResults>
+                        No free agents match your search criteria
+                      </ng-template>
+                    </td>
                   </tr>
                 </tbody>
               </table>

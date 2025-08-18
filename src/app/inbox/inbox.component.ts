@@ -5,6 +5,7 @@ import { AuthService } from '@auth0/auth0-angular';
 import { switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
+import { RosterUpdateService } from '../store/services/roster-update.service';
 
 interface Offer {
   _id: string;
@@ -14,6 +15,8 @@ interface Offer {
     logoUrl?: string;
   };
   status: string;
+  seasonId?: string;
+  seasonName?: string;
 }
 
 @Component({
@@ -32,7 +35,8 @@ export class InboxComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private auth: AuthService,
-    private http: HttpClient
+    private http: HttpClient,
+    private rosterUpdateService: RosterUpdateService
   ) {}
 
   // Method to get the full image URL
@@ -85,10 +89,11 @@ export class InboxComponent implements OnInit {
         );
       })
     ).subscribe({
-      next: (offers) => {
-        this.offers = offers;
-        this.isLoading = false;
-      },
+              next: (offers) => {
+          this.offers = offers;
+          this.isLoading = false;
+          this.error = null; // Clear any previous errors
+        },
       error: (err) => {
         console.error('Error loading offers:', err);
         this.isLoading = false;
@@ -100,15 +105,59 @@ export class InboxComponent implements OnInit {
   }
 
   respondToOffer(offerId: string, response: 'accepted' | 'rejected'): void {
+    // Find the offer before removing it
+    const offer = this.offers.find(offer => offer._id === offerId);
+    
     this.apiService.respondToOffer(offerId, response).subscribe({
       next: () => {
         // Remove the offer from the list
         this.offers = this.offers.filter(offer => offer._id !== offerId);
+        
+        // If accepted, notify other components about the roster update
+        if (response === 'accepted' && offer && offer.clubId._id) {
+          this.rosterUpdateService.notifyPlayerSigned(
+            offer.clubId._id,
+            offer.seasonId || '',
+            this.userId || ''
+          );
+          
+          // Refresh the inbox to show updated offers (some may have been auto-rejected)
+          this.refreshInbox();
+        }
       },
       error: (err) => {
         console.error(`Failed to ${response} offer:`, err);
-        this.error = `An error occurred while trying to ${response} the offer.`;
+        
+        // Handle specific error cases
+        if (err.status === 400) {
+          if (err.error?.message?.includes('already signed to a club')) {
+            this.error = 'You are already signed to a club for this season. This offer is no longer valid.';
+            // Refresh the inbox to show current state
+            this.refreshInbox();
+          } else {
+            this.error = err.error?.message || `An error occurred while trying to ${response} the offer.`;
+          }
+        } else {
+          this.error = `An error occurred while trying to ${response} the offer.`;
+        }
       }
     });
+  }
+  
+  private refreshInbox(): void {
+    if (this.userId) {
+      this.isLoading = true;
+      this.error = null; // Clear any previous errors
+      this.apiService.getInboxOffers(this.userId).subscribe({
+        next: (offers) => {
+          this.offers = offers;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error refreshing inbox:', err);
+          this.isLoading = false;
+        }
+      });
+    }
   }
 }
