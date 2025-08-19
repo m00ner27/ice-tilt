@@ -65,7 +65,7 @@ interface Season {
               <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
             </select>
             <span *ngIf="clubs.length > 0" style="margin-left: 10px; color: #90caf9;">
-              Showing {{ clubs.length }} clubs in this season
+              Showing {{ clubs.length }} clubs in {{ getSelectedSeasonName() }}
             </span>
           </div>
           
@@ -553,6 +553,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
     return this.divisions.filter(d => d.seasonId === selectedSeasonId);
   }
 
+  getSelectedSeasonName(): string {
+    if (!this.selectedSeasonId) return '';
+    const season = this.seasons.find(s => s._id === this.selectedSeasonId);
+    return season ? season.name : '';
+  }
+
   get filteredRoster(): User[] {
     console.log('=== FILTERED ROSTER DEBUG ===');
     console.log('Selected club:', this.selectedClub?.name);
@@ -610,16 +616,16 @@ export class ClubsComponent implements OnInit, OnDestroy {
       console.log('Seasons loaded:', seasons);
       console.log('Seasons count:', seasons.length);
       this.seasons = seasons;
-      // Set the first season as default if none is selected
-      if (seasons.length > 0 && !this.selectedSeasonId) {
-        console.log('Setting default season:', seasons[0]);
+      // Auto-select the first season by default
+      if (seasons.length > 0) {
+        console.log('Seasons available:', seasons.map(s => s.name));
         this.selectedSeasonId = seasons[0]._id;
-        // Load free agents for the default season
-        this.loadFreeAgentsForSeason(seasons[0]._id);
-        // Load clubs for the default season
+        // Load clubs for the first season
         this.loadClubsForSeason(seasons[0]._id);
+        // Load free agents for the first season
+        this.loadFreeAgentsForSeason(seasons[0]._id);
       } else {
-        console.log('No seasons found or season already selected');
+        console.log('No seasons found');
       }
       console.log('=== END LOAD DATA DEBUG ===');
     });
@@ -639,7 +645,15 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.api.getClubs().subscribe(allClubs => {
       // Filter clubs that are active in this season
       this.clubs = allClubs.filter(club => 
-        club.seasons && club.seasons.some((season: any) => season.seasonId === seasonId)
+        club.seasons && club.seasons.some((season: any) => {
+          // Handle both object and string seasonId formats
+          if (typeof season.seasonId === 'object' && season.seasonId._id) {
+            return season.seasonId._id === seasonId;
+          } else if (typeof season.seasonId === 'string') {
+            return season.seasonId === seasonId;
+          }
+          return false;
+        })
       );
       console.log(`Loaded ${this.clubs.length} clubs for season ${seasonId}`);
       console.log('Clubs in this season:', this.clubs.map(c => c.name));
@@ -697,12 +711,10 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   onSeasonChange(event: any): void {
     const seasonId = event.target.value;
-    if (seasonId) {
-      console.log('Season changed to:', seasonId);
-      this.selectedSeasonId = seasonId;
-      this.loadClubsForSeason(seasonId);
-      this.loadFreeAgentsForSeason(seasonId);
-    }
+    console.log('Season changed to:', seasonId);
+    this.selectedSeasonId = seasonId;
+    this.loadClubsForSeason(seasonId);
+    this.loadFreeAgentsForSeason(seasonId);
   }
 
   addClub(): void {

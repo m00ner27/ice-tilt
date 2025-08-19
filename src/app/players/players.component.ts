@@ -141,13 +141,24 @@ export class PlayersComponent implements OnInit {
           if (this.seasonFilter) {
             // Use season-specific data if available
             const seasonId = this.getSeasonIdByName(this.seasonFilter);
-            if (seasonId && user.seasons) {
-              const seasonEntry = user.seasons.find((s: any) => s.seasonId === seasonId);
-              if (seasonEntry && seasonEntry.status === 'Signed') {
-                clubName = seasonEntry.clubName || '';
-                clubId = seasonEntry.clubId || '';
+            if (seasonId) {
+              // Check if user is on any club's roster for this season
+              const club = this.clubs.find(c => {
+                if (c.seasons && Array.isArray(c.seasons)) {
+                  return c.seasons.some((s: any) => 
+                    s.seasonId && s.seasonId.toString() === seasonId.toString() &&
+                    s.roster && Array.isArray(s.roster) &&
+                    s.roster.some((rosterUserId: any) => rosterUserId.toString() === user._id.toString())
+                  );
+                }
+                return false;
+              });
+              
+              if (club) {
+                clubName = club.name;
+                clubId = club._id;
                 status = 'Signed';
-                logo = this.clubLogoMap[clubName.toLowerCase()];
+                logo = club.logoUrl;
               }
             }
           }

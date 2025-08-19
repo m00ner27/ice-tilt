@@ -43,4 +43,11 @@ export interface Club {
     name: string;
     eashlClubId?: string;
     logoUrl?: string;
+    
+    // Season-specific data
+    seasons?: Array<{
+        seasonId: string | { _id: string; name: string };
+        roster?: string[];
+        [key: string]: any;
+    }>;
 } 

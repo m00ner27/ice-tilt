@@ -176,7 +176,13 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
           
           const hasSeason = club.seasons.some((s: any) => {
             console.log(`Club ${club.name}: comparing season ${s.seasonId} with selected season ${currentSeason._id}`);
-            return s.seasonId === currentSeason._id;
+            // Handle both object and string seasonId formats
+            if (typeof s.seasonId === 'object' && s.seasonId._id) {
+              return s.seasonId._id === currentSeason._id;
+            } else if (typeof s.seasonId === 'string') {
+              return s.seasonId === currentSeason._id;
+            }
+            return false;
           });
           
           console.log(`Club ${club.name} has season ${this.selectedSeason}:`, hasSeason);

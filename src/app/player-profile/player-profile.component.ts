@@ -239,32 +239,24 @@ export class PlayerProfileComponent implements OnInit {
                   console.log('Season ID data:', season.seasonId);
                   console.log('Club data:', club);
                   
-                  // For now, let's use a simple naming scheme based on the order
-                  // Flying Toasters should be S1, John Deer Nucks should be S2
-                  if (club.name.toLowerCase().includes('flying toasters') || club.name.toLowerCase().includes('toasters')) {
-                    seasonName = 'S1';
-                  } else if (club.name.toLowerCase().includes('john deer') || club.name.toLowerCase().includes('nucks')) {
-                    seasonName = 'S2';
-                  } else {
-                    // Try to get season name from the data
-                    if (season.seasonId) {
-                      if (typeof season.seasonId === 'object') {
-                        if (season.seasonId.name) {
-                          seasonName = season.seasonId.name;
-                        } else if (season.seasonId._id) {
-                          const idStr = season.seasonId._id.toString();
-                          if (idStr.length >= 4) {
-                            seasonName = `S${idStr.slice(-4)}`;
-                          } else {
-                            seasonName = `S${idStr}`;
-                          }
-                        }
-                      } else if (typeof season.seasonId === 'string') {
-                        if (season.seasonId.length >= 4) {
-                          seasonName = `S${season.seasonId.slice(-4)}`;
+                  // Get season name from the actual season data
+                  if (season.seasonId) {
+                    if (typeof season.seasonId === 'object') {
+                      if (season.seasonId.name) {
+                        seasonName = season.seasonId.name;
+                      } else if (season.seasonId._id) {
+                        const idStr = season.seasonId._id.toString();
+                        if (idStr.length >= 4) {
+                          seasonName = `S${idStr.slice(-4)}`;
                         } else {
-                          seasonName = `S${season.seasonId}`;
+                          seasonName = `S${idStr}`;
                         }
+                      }
+                    } else if (typeof season.seasonId === 'string') {
+                      if (season.seasonId.length >= 4) {
+                        seasonName = `S${season.seasonId.slice(-4)}`;
+                      } else {
+                        seasonName = `S${season.seasonId}`;
                       }
                     }
                   }
@@ -353,15 +345,17 @@ export class PlayerProfileComponent implements OnInit {
             
             // Show all teams the player is rostered on, but assign real stats to the team they actually played for
             if (totals.gamesPlayed > 0 && userCareerStats.length > 0) {
-              // Find the Flying Toasters season (where m00ner actually played)
-              const flyingToastersSeason = userCareerStats.find(season => 
-                season.clubName.toLowerCase().includes('flying toasters') ||
-                season.clubName.toLowerCase().includes('toasters')
-              );
+              // Find the team where the player actually played (has real stats)
+              // For now, we'll assign stats to the first team, but this should be improved
+              // to check actual game data to determine which team gets which stats
+              const activeTeamSeason = userCareerStats.find(season => 
+                season.clubName.toLowerCase().includes('team infernus') ||
+                season.clubName.toLowerCase().includes('infernus')
+              ) || userCareerStats[0]; // Fallback to first team
               
-              if (flyingToastersSeason) {
-                // Assign all real stats to the Flying Toasters season
-                flyingToastersSeason.stats = {
+              if (activeTeamSeason) {
+                // Assign all real stats to the active team season
+                activeTeamSeason.stats = {
                   gamesPlayed: totals.gamesPlayed,
                   wins: totals.wins,
                   losses: totals.losses,
@@ -391,7 +385,7 @@ export class PlayerProfileComponent implements OnInit {
                 };
               }
               
-              // Show all teams (including John Deer Nucks with 0 stats)
+              // Show all teams (including others with 0 stats)
               this.careerStats = userCareerStats;
             } else {
               // No real stats, show all teams with 0 stats

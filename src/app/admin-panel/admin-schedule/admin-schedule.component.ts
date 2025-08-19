@@ -374,8 +374,15 @@ export class AdminScheduleComponent implements OnInit {
     );
 
     forkJoin([homeGames$, awayGames$]).pipe(
-      map(([homeGames, awayGames]) => {
-        console.log('Raw data from API:', { homeGames, awayGames });
+      map(([homeResponse, awayResponse]) => {
+        console.log('Raw data from API:', { homeResponse, awayResponse });
+        
+        // Extract the arrays from the response objects
+        const homeGames = homeResponse?.homeGames || [];
+        const awayGames = awayResponse?.awayGames || [];
+        
+        console.log('Extracted games:', { homeGames, awayGames });
+        
         const allGames = [...homeGames, ...awayGames];
         const uniqueGames = Array.from(new Map(allGames.map(item => [item.matchId, item])).values());
         console.log('Unique games found:', uniqueGames);
