@@ -81,7 +81,7 @@
 
     <!-- Stats Section -->
     <div class="stats-section" *ngIf="player?.stats">
-      <h2>Season Statistics</h2>
+      <h2>Current Season Statistics</h2>
       <div class="stats-grid">
         <!-- Common Stats -->
         <div class="stat-card">
@@ -225,6 +225,160 @@
             <div class="stat-label">Shutouts</div>
           </div>
         </ng-container>
+      </div>
+    </div>
+
+    <!-- Career Statistics Section -->
+    <div class="career-stats-section" *ngIf="careerStats.length > 0">
+      <h2>Career Statistics</h2>
+      
+      <!-- Career Totals -->
+      <div class="career-totals">
+        <h3>Career Totals</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.gamesPlayed }}</div>
+            <div class="stat-label">Games Played</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.goals }}</div>
+            <div class="stat-label">Goals</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.assists }}</div>
+            <div class="stat-label">Assists</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.points }}</div>
+            <div class="stat-label">Points</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.plusMinus }}</div>
+            <div class="stat-label">+/-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.shots }}</div>
+            <div class="stat-label">Shots</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.hits }}</div>
+            <div class="stat-label">Hits</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ careerTotals.pim }}</div>
+            <div class="stat-label">PIM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Season-by-Season Breakdown -->
+      <div class="season-breakdown">
+        <h3>Season Breakdown</h3>
+        <div class="season-table-container">
+          <table class="season-table">
+            <thead>
+              <tr>
+                <th>Season</th>
+                <th>Team</th>
+                <th>GP</th>
+                <th>W</th>
+                <th>L</th>
+                <th>G</th>
+                <th>A</th>
+                <th>P</th>
+                <th>+/-</th>
+                <th>S</th>
+                <th>H</th>
+                <th>PIM</th>
+                <th>PPG</th>
+                <th>SHG</th>
+                <th>GWG</th>
+                <th>FO Won</th>
+                <th>FO Lost</th>
+                <th>BS</th>
+                <th>INT</th>
+                <th>TK</th>
+                <th>GV</th>
+                <th>DEF</th>
+                <th>PD</th>
+                <th>SA</th>
+                <th>Shot %</th>
+                <th>PA</th>
+                <th>PC</th>
+                <th>TOI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let season of careerStats" class="season-row">
+                <td class="season-name">{{ season.seasonName }}</td>
+                <td class="team-info">
+                  <img [src]="season.clubLogo" [alt]="season.clubName" class="team-logo">
+                  <span class="team-name">{{ season.clubName }}</span>
+                </td>
+                <td class="stat-value">{{ season.stats.gamesPlayed }}</td>
+                <td class="stat-value">{{ season.stats.wins }}</td>
+                <td class="stat-value">{{ season.stats.losses }}</td>
+                <td class="stat-value">{{ season.stats.goals }}</td>
+                <td class="stat-value">{{ season.stats.assists }}</td>
+                <td class="stat-value">{{ season.stats.points }}</td>
+                <td class="stat-value">{{ season.stats.plusMinus }}</td>
+                <td class="stat-value">{{ season.stats.shots }}</td>
+                <td class="stat-value">{{ season.stats.hits }}</td>
+                <td class="stat-value">{{ season.stats.pim }}</td>
+                <td class="stat-value">{{ season.stats.ppg }}</td>
+                <td class="stat-value">{{ season.stats.shg }}</td>
+                <td class="stat-value">{{ season.stats.gwg }}</td>
+                <td class="stat-value">{{ season.stats.faceoffsWon }}</td>
+                <td class="stat-value">{{ season.stats.faceoffsLost }}</td>
+                <td class="stat-value">{{ season.stats.blockedShots }}</td>
+                <td class="stat-value">{{ season.stats.interceptions }}</td>
+                <td class="stat-value">{{ season.stats.takeaways }}</td>
+                <td class="stat-value">{{ season.stats.giveaways }}</td>
+                <td class="stat-value">{{ season.stats.deflections }}</td>
+                <td class="stat-value">{{ season.stats.penaltiesDrawn }}</td>
+                <td class="stat-value">{{ season.stats.shotAttempts }}</td>
+                <td class="stat-value">{{ (season.stats.shotPct || 0) | number:'1.1-1' }}%</td>
+                <td class="stat-value">{{ season.stats.passAttempts }}</td>
+                <td class="stat-value">{{ season.stats.passesCompleted }}</td>
+                <td class="stat-value">{{ ((season.stats.toi || 0) / (season.stats.gamesPlayed || 1) / 60) | number:'1.0-0' }}:{{ (((season.stats.toi || 0) / (season.stats.gamesPlayed || 1)) % 60) | number:'2.0-0' }}</td>
+              </tr>
+              
+              <!-- Career Totals Row -->
+              <tr class="career-totals-row">
+                <td class="season-name">CAREER</td>
+                <td class="team-info">
+                  <span class="team-name">TOTALS</span>
+                </td>
+                <td class="stat-value">{{ careerTotals.gamesPlayed }}</td>
+                <td class="stat-value">{{ careerTotals.wins }}</td>
+                <td class="stat-value">{{ careerTotals.losses }}</td>
+                <td class="stat-value">{{ careerTotals.goals }}</td>
+                <td class="stat-value">{{ careerTotals.assists }}</td>
+                <td class="stat-value">{{ careerTotals.points }}</td>
+                <td class="stat-value">{{ careerTotals.plusMinus }}</td>
+                <td class="stat-value">{{ careerTotals.shots }}</td>
+                <td class="stat-value">{{ careerTotals.hits }}</td>
+                <td class="stat-value">{{ careerTotals.pim }}</td>
+                <td class="stat-value">{{ careerTotals.ppg }}</td>
+                <td class="stat-value">{{ careerTotals.shg }}</td>
+                <td class="stat-value">{{ careerTotals.gwg }}</td>
+                <td class="stat-value">{{ careerTotals.faceoffsWon }}</td>
+                <td class="stat-value">{{ careerTotals.faceoffsLost }}</td>
+                <td class="stat-value">{{ careerTotals.blockedShots }}</td>
+                <td class="stat-value">{{ careerTotals.interceptions }}</td>
+                <td class="stat-value">{{ careerTotals.takeaways }}</td>
+                <td class="stat-value">{{ careerTotals.giveaways }}</td>
+                <td class="stat-value">{{ careerTotals.deflections }}</td>
+                <td class="stat-value">{{ careerTotals.penaltiesDrawn }}</td>
+                <td class="stat-value">{{ careerTotals.shotAttempts }}</td>
+                <td class="stat-value">{{ (careerTotals.shotPct || 0) | number:'1.1-1' }}%</td>
+                <td class="stat-value">{{ careerTotals.passAttempts }}</td>
+                <td class="stat-value">{{ careerTotals.passesCompleted }}</td>
+                <td class="stat-value">{{ ((careerTotals.toi || 0) / (careerTotals.gamesPlayed || 1) / 60) | number:'1.0-0' }}:{{ (((careerTotals.toi || 0) / (careerTotals.gamesPlayed || 1)) % 60) | number:'2.0-0' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 

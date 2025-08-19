@@ -301,4 +301,210 @@
   margin-top: -10px; /* Pull it up closer to the name */
   margin-left: 0; /* Align with the player name */
   font-weight: 500;
+}
+
+/* Career Statistics Section */
+.career-stats-section {
+  background-color: #1a252f;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.career-stats-section h2 {
+  color: #3498db;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.career-totals {
+  margin-bottom: 2rem;
+}
+
+.career-totals h3 {
+  color: #ecf0f1;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.season-breakdown h3 {
+  color: #ecf0f1;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+/* Season Table */
+.season-table-container {
+  margin-top: 1rem;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #34495e;
+  background-color: #2c3e50;
+}
+
+.season-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.season-table thead {
+  background: #3498db;
+  color: white;
+}
+
+.season-table th {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.season-table th:first-child {
+  text-align: left;
+  padding-left: 1rem;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #3498db;
+}
+
+.season-table th:nth-child(2) {
+  text-align: left;
+  position: sticky;
+  left: 80px; /* Reduced to eliminate gap between Season and Team columns */
+  z-index: 10;
+  background: #3498db;
+}
+
+.season-table tbody tr {
+  border-bottom: 1px solid #34495e;
+  transition: background-color 0.2s ease;
+}
+
+.season-table tbody tr:hover {
+  background: #34495e;
+}
+
+.season-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.season-table td {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.season-table td:first-child {
+  text-align: left;
+  padding-left: 1rem;
+  font-weight: 600;
+  color: #3498db;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: #2c3e50;
+}
+
+.season-table td:nth-child(2) {
+  text-align: left;
+  padding-left: 0.5rem;
+  position: sticky;
+  left: 80px; /* Reduced to eliminate gap between Season and Team columns */
+  z-index: 5;
+  background: #2c3e50;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.team-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.team-name {
+  color: #ecf0f1;
+  font-weight: 500;
+}
+
+.season-name {
+  color: #3498db;
+  font-weight: 600;
+}
+
+.stat-value {
+  color: #ecf0f1;
+  font-weight: 600;
+}
+
+/* Smaller stat numbers specifically for the season breakdown table */
+.season-table .stat-value {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Career totals row styling */
+.career-totals-row {
+  background: #34495e !important;
+  border-top: 2px solid #3498db;
+}
+
+.career-totals-row .season-name {
+  color: #3498db;
+  font-weight: 700;
+  font-size: 0.9rem;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: #34495e;
+}
+
+.career-totals-row .team-name {
+  color: #3498db;
+  font-weight: 700;
+  font-size: 0.9rem;
+  position: sticky;
+  left: 80px; /* Reduced to eliminate gap between Season and Team columns */
+  z-index: 5;
+  background: #34495e;
+}
+
+.career-totals-row .stat-value {
+  color: #ecf0f1;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* Responsive adjustments for career stats */
+@media (max-width: 768px) {
+  .season-table-container {
+    font-size: 0.8rem;
+  }
+  
+  .season-table th,
+  .season-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .season-table th:first-child,
+  .season-table td:first-child {
+    padding-left: 0.5rem;
+  }
+  
+  .team-logo {
+    width: 24px;
+    height: 24px;
+  }
 } 
