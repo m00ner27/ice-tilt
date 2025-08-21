@@ -5,7 +5,7 @@
         <div class="carousel-inner">
           <!-- News Item 1 -->
           <div class="carousel-item active">
-            <a href="/article-1">
+            <a [routerLink]="['/article', 'new-season-begins']" class="announcement-link">
               <div class="carousel-image" style="background-image: url('assets/images/IMG_3840.jpg');">
                 <div class="carousel-caption">
                   <h3>Exciting Announcement: New Season Begins!</h3>
@@ -188,7 +188,7 @@
               <td class="text-center"><a routerLink="/profile-view">John Smith</a></td>
               <td class="text-center"><a routerLink="/profile-view">David Johnson</a></td>
               <td class="text-end">
-                <a routerLink="/game-summary" class="text-primary fw-bold me-2">Game Summary</a>
+                <span class="text-muted me-2">Game Summary</span>
               </td>
             </tr>
   
@@ -215,7 +215,7 @@
               <td class="text-center"><a routerLink="/profile-view">Michael Brown</a></td>
               <td class="text-center"><a routerLink="/profile-view">Chris Green</a></td>
               <td class="text-end">
-                <a routerLink="/game-summary" class="text-primary fw-bold me-2">Game Summary</a>
+                <span class="text-muted me-2">Game Summary</span>
               </td>
             </tr>
           </tbody>
@@ -233,7 +233,7 @@
         <div class="dropdown position-absolute top-0 end-0">
           <span class="dots-menu" role="button" data-bs-toggle="dropdown" aria-expanded="false">•••</span>
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-            <li><a class="dropdown-item" routerLink="/game-summary">Game Summary</a></li>
+            <li><span class="dropdown-item text-muted">Game Summary</span></li>
           </ul>
         </div>
       </div>
@@ -259,7 +259,7 @@
         <div class="dropdown position-absolute top-0 end-0">
           <span class="dots-menu" role="button" data-bs-toggle="dropdown" aria-expanded="false">•••</span>
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-            <li><a class="dropdown-item" routerLink="/game-summary">Game Summary</a></li>
+            <li><span class="dropdown-item text-muted">Game Summary</span></li>
           </ul>
         </div>
       </div>

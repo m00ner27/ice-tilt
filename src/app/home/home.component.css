@@ -26,6 +26,20 @@
     margin: 0;
   }
   
+  .announcement-link {
+    text-decoration: none;
+    display: block;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .announcement-link:hover {
+    transform: scale(1.02);
+  }
+  
+  .announcement-link:hover .carousel-caption {
+    background-color: #2a4a5fb0;
+  }
+  
   .carousel-control-prev-icon,
   .carousel-control-next-icon {
     background-color: rgba(0, 0, 0, 0.5); /* Darker control background */

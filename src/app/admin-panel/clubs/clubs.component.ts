@@ -168,18 +168,27 @@ interface Season {
             </div>
 
             <div class="form-group">
-              <label>Season</label>
-              <select formControlName="season" (change)="onSeasonChange($event)">
-                <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Division</label>
-              <select formControlName="division">
-                <option value="" disabled selected>Select Division</option>
-                <option *ngFor="let division of divisionsForSelectedSeason" [value]="division._id">{{ division.name }}</option>
-              </select>
+              <label>Seasons & Divisions</label>
+              <div class="seasons-container">
+                <div *ngFor="let season of seasons" class="season-item">
+                  <div class="season-header">
+                    <label class="season-checkbox">
+                      <input type="checkbox" 
+                             [checked]="isSeasonSelected(season._id)"
+                             (change)="onSeasonToggle(season._id, $event)">
+                      <span class="season-name">{{ season.name }}</span>
+                    </label>
+                  </div>
+                  <div *ngIf="isSeasonSelected(season._id)" class="division-selector">
+                    <select [formControlName]="'division_' + season._id" 
+                            (change)="onDivisionChange(season._id, $event)">
+                      <option value="">Select Division</option>
+                      <option *ngFor="let division of getDivisionsForSeason(season._id)" 
+                              [value]="division._id">{{ division.name }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="form-group">
@@ -500,6 +509,63 @@ interface Season {
       color: #fff;
     }
 
+    .seasons-container {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #394867;
+      border-radius: 6px;
+      padding: 12px;
+      background: #1a1f2e;
+    }
+
+    .season-item {
+      margin-bottom: 16px;
+      padding: 12px;
+      border: 1px solid #394867;
+      border-radius: 6px;
+      background: #23293a;
+    }
+
+    .season-header {
+      margin-bottom: 8px;
+    }
+
+    .season-checkbox {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      color: #90caf9;
+      font-weight: 500;
+    }
+
+    .season-checkbox input[type="checkbox"] {
+      margin-right: 8px;
+      accent-color: #1976d2;
+    }
+
+    .season-name {
+      font-size: 1rem;
+    }
+
+    .division-selector {
+      margin-left: 24px;
+    }
+
+    .division-selector select {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #394867;
+      border-radius: 4px;
+      background: #2c3446;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .division-selector select:focus {
+      outline: none;
+      border-color: #1976d2;
+    }
+
     @media (max-width: 768px) {
       .clubs-page {
         padding: 16px;
@@ -541,8 +607,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
       logo: [''],
       manager: ['', Validators.required],
       color: ['#ffffff', Validators.required],
-      season: ['', Validators.required],
-      division: ['', Validators.required],
       region: [''],
       eashlClubId: ['']
     });
@@ -560,15 +624,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   get filteredRoster(): User[] {
-    console.log('=== FILTERED ROSTER DEBUG ===');
-    console.log('Selected club:', this.selectedClub?.name);
-    console.log('Selected club roster:', this.selectedClub?.roster);
-    console.log('Roster length:', this.selectedClub?.roster?.length || 0);
-    
     const filtered = (this.selectedClub?.roster || []).filter(p => !!p && p.discordUsername);
-    console.log('Filtered roster:', filtered.map(p => p.discordUsername));
-    console.log('=== END FILTERED ROSTER DEBUG ===');
-    
     return filtered;
   }
 
@@ -597,11 +653,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
     
     // Subscribe to roster updates to refresh data when needed
     this.rosterUpdateSubscription = this.rosterUpdateService.rosterUpdates$.subscribe(event => {
-      console.log('Roster update received in admin clubs:', event);
       if (event.action === 'sign' && event.clubId && event.seasonId) {
         // Refresh the club data if it's the currently selected club
         if (this.selectedClub && this.selectedClub._id === event.clubId) {
-          console.log('Refreshing club data due to roster update');
           this.viewClubDetails(this.selectedClub);
         }
         // Also refresh the free agents list for the current season
@@ -611,31 +665,24 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   loadData(): void {
-    console.log('=== LOAD DATA DEBUG ===');
     this.api.getSeasons().subscribe(seasons => {
-      console.log('Seasons loaded:', seasons);
-      console.log('Seasons count:', seasons.length);
       this.seasons = seasons;
+      
+      // Load all divisions for all seasons
+      this.api.getDivisions().subscribe(divisions => {
+        this.divisions = divisions;
+        
+        // Add season controls to form after seasons are loaded
+        this.addSeasonControls();
+      });
+      
       // Auto-select the first season by default
       if (seasons.length > 0) {
-        console.log('Seasons available:', seasons.map(s => s.name));
         this.selectedSeasonId = seasons[0]._id;
         // Load clubs for the first season
         this.loadClubsForSeason(seasons[0]._id);
         // Load free agents for the first season
         this.loadFreeAgentsForSeason(seasons[0]._id);
-      } else {
-        console.log('No seasons found');
-      }
-      console.log('=== END LOAD DATA DEBUG ===');
-    });
-    this.api.getDivisions().subscribe(data => this.divisions = data);
-    
-    this.clubForm.get('season')?.valueChanges.subscribe((seasonId) => {
-      this.clubForm.get('division')?.setValue('');
-      if (seasonId) {
-        this.loadFreeAgentsForSeason(seasonId);
-        this.loadClubsForSeason(seasonId);
       }
     });
   }
@@ -655,8 +702,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
           return false;
         })
       );
-      console.log(`Loaded ${this.clubs.length} clubs for season ${seasonId}`);
-      console.log('Clubs in this season:', this.clubs.map(c => c.name));
+
     });
   }
 
@@ -664,7 +710,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     // Fetch season-specific free agents
     this.api.getFreeAgentsForSeason(seasonId).subscribe(agents => {
       this.freeAgents = agents;
-      console.log(`Loaded ${agents.length} free agents for season ${seasonId}`);
+
     });
   }
 
@@ -680,7 +726,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     // Refresh the selected club's roster if one is selected
     if (this.selectedClub && this.selectedClub._id && selectedSeasonId) {
       this.api.getClubRoster(this.selectedClub._id, selectedSeasonId).subscribe(roster => {
-        console.log('Refreshed club roster:', roster);
+
         if (this.selectedClub) {
           this.selectedClub.roster = roster;
         }
@@ -711,7 +757,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   onSeasonChange(event: any): void {
     const seasonId = event.target.value;
-    console.log('Season changed to:', seasonId);
+
     this.selectedSeasonId = seasonId;
     this.loadClubsForSeason(seasonId);
     this.loadFreeAgentsForSeason(seasonId);
@@ -720,20 +766,36 @@ export class ClubsComponent implements OnInit, OnDestroy {
   addClub(): void {
     if (this.clubForm.valid) {
       const form = this.clubForm.value;
+      
+      // Build seasons array from form data
+      const seasons: any[] = [];
+      this.seasons.forEach(season => {
+        const seasonControlName = `season_${season._id}`;
+        const divisionControlName = `division_${season._id}`;
+        
+        if (this.clubForm.get(seasonControlName)?.value) {
+          const divisionId = this.clubForm.get(divisionControlName)?.value;
+          if (divisionId) {
+            seasons.push({
+              seasonId: season._id,
+              divisionIds: [divisionId]
+            });
+          }
+        }
+      });
+      
+      console.log('Adding club with seasons:', seasons);
+      
       const clubData = {
         name: form.name,
         logoUrl: form.logo,
         manager: form.manager,
         primaryColour: form.color,
-        seasons: [
-          {
-            seasonId: form.season,
-            divisionIds: [form.division]
-          }
-        ],
+        seasons: seasons,
         region: form.region,
         eashlClubId: form.eashlClubId
       };
+      
       this.api.addClub(clubData).subscribe(newClub => {
         this.clubs.push(newClub);
         this.cancelClubForm();
@@ -745,37 +807,76 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.editingClub = club;
     this.isAddingClub = true;
     this.logoPreview = club.logoUrl;
+    
+    console.log('Editing club:', club.name);
+    console.log('Club seasons:', club.seasons);
+    
+    // Ensure season controls are added
+    this.addSeasonControls();
+    
+    // Set basic form values
     this.clubForm.patchValue({
       name: club.name,
       logo: club.logoUrl,
       manager: club.manager,
       color: club.primaryColour,
-      season: club.seasons[0]?.seasonId,
-      division: club.seasons[0]?.divisionIds[0],
       region: club.region,
       eashlClubId: club.eashlClubId
     });
-    this.loadDivisionsForSeason(club.seasons[0]?.seasonId);
+    
+    // Set season and division values
+    club.seasons?.forEach(seasonInfo => {
+      let seasonId = seasonInfo.seasonId;
+      if (typeof seasonId === 'object' && seasonId._id) {
+        seasonId = seasonId._id;
+      }
+      
+      if (seasonId) {
+        const seasonControlName = `season_${seasonId}`;
+        const divisionControlName = `division_${seasonId}`;
+        
+        this.clubForm.get(seasonControlName)?.setValue(true);
+        this.clubForm.get(divisionControlName)?.setValue(seasonInfo.divisionIds?.[0] || '');
+        
+        // No need to load divisions - they're already loaded globally
+      }
+    });
   }
 
   updateClub(): void {
     if (this.clubForm.valid && this.editingClub) {
       const form = this.clubForm.value;
+      
+      // Build seasons array from form data
+      const seasons: any[] = [];
+      this.seasons.forEach(season => {
+        const seasonControlName = `season_${season._id}`;
+        const divisionControlName = `division_${season._id}`;
+        
+        if (this.clubForm.get(seasonControlName)?.value) {
+          const divisionId = this.clubForm.get(divisionControlName)?.value;
+          if (divisionId) {
+            seasons.push({
+              seasonId: season._id,
+              divisionIds: [divisionId]
+            });
+          }
+        }
+      });
+      
+      console.log('Updated seasons for club:', seasons);
+      
       const updated = {
         ...this.editingClub,
         name: form.name,
         logoUrl: form.logo,
         manager: form.manager,
         primaryColour: form.color,
-        seasons: [
-          {
-            seasonId: form.season,
-            divisionIds: [form.division]
-          }
-        ],
+        seasons: seasons,
         region: form.region,
         eashlClubId: form.eashlClubId
       };
+      
       this.api.updateClub(updated).subscribe(updatedClub => {
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
         if (idx > -1) this.clubs[idx] = updatedClub;
@@ -799,31 +900,137 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.logoPreview = null;
   }
 
-  loadDivisionsForSeason(seasonId: string): void {
-    this.api.getDivisions().subscribe(data => {
-      this.divisions = data.filter(d => d.seasonId === seasonId);
+  addSeasonControls(): void {
+    // Add form controls for each season dynamically
+    this.seasons.forEach(season => {
+      const seasonControlName = `season_${season._id}`;
+      const divisionControlName = `division_${season._id}`;
+      
+      if (!this.clubForm.contains(seasonControlName)) {
+        this.clubForm.addControl(seasonControlName, this.fb.control(false));
+      }
+      if (!this.clubForm.contains(divisionControlName)) {
+        this.clubForm.addControl(divisionControlName, this.fb.control(''));
+      }
     });
+    
+    // Add custom validator for seasons
+    this.clubForm.setValidators(this.validateSeasons());
+  }
+
+  validateSeasons(): any {
+    return (formGroup: FormGroup) => {
+      if (!this.seasons || this.seasons.length === 0) {
+        return null; // Skip validation if seasons not loaded yet
+      }
+      
+      const hasSelectedSeason = this.seasons.some(season => {
+        const seasonControlName = `season_${season._id}`;
+        return formGroup.get(seasonControlName)?.value === true;
+      });
+      
+      if (!hasSelectedSeason) {
+        console.log('No seasons selected');
+        return { noSeasonsSelected: true };
+      }
+      
+      // Check that all selected seasons have divisions
+      const hasInvalidSeasons = this.seasons.some(season => {
+        const seasonControlName = `season_${season._id}`;
+        const divisionControlName = `division_${season._id}`;
+        
+        if (formGroup.get(seasonControlName)?.value === true) {
+          const divisionValue = formGroup.get(divisionControlName)?.value;
+          const isInvalid = !divisionValue || divisionValue === '';
+          if (isInvalid) {
+            console.log(`Season ${season.name} selected but no division chosen`);
+          }
+          return isInvalid;
+        }
+        return false;
+      });
+      
+      if (hasInvalidSeasons) {
+        console.log('Some seasons have incomplete divisions');
+        return { incompleteSeasons: true };
+      }
+      
+      console.log('Season validation passed');
+      return null;
+    };
+  }
+
+  // Removed loadDivisionsForSeason - divisions are loaded globally in loadData()
+
+  getDivisionsForSeason(seasonId: string): Division[] {
+    console.log('Getting divisions for season:', seasonId);
+    console.log('All divisions:', this.divisions);
+    
+    // Debug: Show the seasonId of each division
+    this.divisions.forEach((div, index) => {
+      console.log(`Division ${index}:`, div.name, '-> seasonId:', div.seasonId, 'Type:', typeof div.seasonId);
+    });
+    
+    // Debug: Show what we're comparing against
+    console.log('Looking for seasonId:', seasonId, 'Type:', typeof seasonId);
+    
+    const filtered = this.divisions.filter(d => d.seasonId === seasonId);
+    console.log('Filtered divisions for season', seasonId, ':', filtered);
+    return filtered;
+  }
+
+  isSeasonSelected(seasonId: string): boolean {
+    // First check the form value for current state
+    const seasonControlName = `season_${seasonId}`;
+    const formValue = this.clubForm.get(seasonControlName)?.value;
+    
+    if (formValue !== null && formValue !== undefined) {
+      return formValue === true;
+    }
+    
+    // Fallback to original club data for initial load
+    if (!this.editingClub) return false;
+    return this.editingClub.seasons?.some(s => {
+      if (typeof s.seasonId === 'object' && s.seasonId._id) {
+        return s.seasonId._id === seasonId;
+      }
+      return s.seasonId === seasonId;
+    }) || false;
+  }
+
+  onSeasonToggle(seasonId: string, event: any): void {
+    const isChecked = event.target.checked;
+    const seasonControlName = `season_${seasonId}`;
+    const divisionControlName = `division_${seasonId}`;
+    
+    this.clubForm.get(seasonControlName)?.setValue(isChecked);
+    
+    if (!isChecked) {
+      // Clear division selection when unchecking season
+      this.clubForm.get(divisionControlName)?.setValue('');
+    }
+    
+    // Trigger form validation
+    this.clubForm.updateValueAndValidity();
+  }
+
+  onDivisionChange(seasonId: string, event: any): void {
+    const divisionId = event.target.value;
+    const divisionControlName = `division_${seasonId}`;
+    this.clubForm.get(divisionControlName)?.setValue(divisionId);
+    
+    // Trigger form validation
+    this.clubForm.updateValueAndValidity();
   }
 
   viewClubDetails(club: Club): void {
-    console.log('=== VIEW CLUB DETAILS DEBUG ===');
-    console.log('Club selected:', club.name);
-    console.log('Club ID:', club._id);
-    console.log('Club roster before API call:', club.roster);
-    
     this.selectedClub = club;
     if (club._id) {
       const selectedSeasonId = this.selectedSeasonId;
       if (selectedSeasonId) {
         this.api.getClubRoster(club._id, selectedSeasonId).subscribe({
           next: (roster) => {
-            console.log('API returned roster:', roster);
-            console.log('Roster length:', roster.length);
-            console.log('Roster usernames:', roster.map((p: any) => p.discordUsername));
-            
             this.selectedClub!.roster = roster;
-            console.log('Updated selectedClub roster:', this.selectedClub!.roster);
-            console.log('=== END VIEW CLUB DETAILS DEBUG ===');
           },
           error: (error) => {
             console.error('Error fetching roster:', error);
@@ -847,8 +1054,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
     this.api.addPlayerToClub(club._id, player._id, selectedSeasonId).subscribe({
       next: () => {
-        console.log('Player added successfully');
-        
         // Refresh the selected club if it's the one we just updated
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(club);

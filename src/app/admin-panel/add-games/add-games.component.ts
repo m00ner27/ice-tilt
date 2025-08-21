@@ -46,16 +46,16 @@ interface Club {
           </select>
         </div>
         <div class="form-row">
-          <label>Team 1</label>
+          <label>Home Team</label>
           <select formControlName="team1">
-            <option value="" disabled selected>Select Team 1</option>
+            <option value="" disabled selected>Select Home Team</option>
             <option *ngFor="let club of filteredClubs" [value]="club._id">{{ club.name }}</option>
           </select>
         </div>
         <div class="form-row">
-          <label>Team 2</label>
+          <label>Away Team</label>
           <select formControlName="team2">
-            <option value="" disabled selected>Select Team 2</option>
+            <option value="" disabled selected>Select Away Team</option>
             <option *ngFor="let club of filteredClubs" [value]="club._id">{{ club.name }}</option>
           </select>
         </div>
@@ -168,10 +168,48 @@ export class AddGamesComponent implements OnInit {
   onDivisionChange() {
     const seasonId = this.gameForm.get('season')?.value;
     const divisionId = this.gameForm.get('division')?.value;
+    
+    console.log('Filtering clubs for season:', seasonId, 'division:', divisionId);
+    console.log('Available clubs:', this.clubs.map(c => ({ name: c.name, seasons: c.seasons })));
+    
     // Filter clubs that are in the selected season and division
-    this.filteredClubs = this.clubs.filter(club =>
-      club.seasons.some((s: any) => s.seasonId === seasonId && s.divisionIds.includes(divisionId))
-    );
+    this.filteredClubs = this.clubs.filter(club => {
+      const hasSeason = club.seasons.some((s: any) => {
+        // Handle both object and string seasonId formats
+        if (typeof s.seasonId === 'object' && s.seasonId._id) {
+          return s.seasonId._id === seasonId;
+        } else if (typeof s.seasonId === 'string') {
+          return s.seasonId === seasonId;
+        }
+        return false;
+      });
+      
+      if (!hasSeason) {
+        console.log('Club', club.name, 'not in season', seasonId);
+        return false;
+      }
+      
+      // Check if club has the selected division
+      const seasonInfo = club.seasons.find((s: any) => {
+        if (typeof s.seasonId === 'object' && s.seasonId._id) {
+          return s.seasonId._id === seasonId;
+        } else if (typeof s.seasonId === 'string') {
+          return s.seasonId === seasonId;
+        }
+        return false;
+      });
+      
+      if (seasonInfo && seasonInfo.divisionIds && seasonInfo.divisionIds.includes(divisionId)) {
+        console.log('Club', club.name, 'has season and division');
+        return true;
+      } else {
+        console.log('Club', club.name, 'missing division', divisionId);
+        return false;
+      }
+    });
+    
+    console.log('Filtered clubs:', this.filteredClubs.map(c => c.name));
+    
     this.gameForm.get('team1')?.setValue('');
     this.gameForm.get('team2')?.setValue('');
   }

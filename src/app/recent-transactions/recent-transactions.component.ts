@@ -186,5 +186,26 @@ export class RecentTransactionsComponent implements OnInit {
     // Otherwise, assume it's a local asset
     return logoUrl;
   }
+
+  getFormattedSeasonName(seasonId: string): string {
+    // Find the season in our seasons array
+    const season = this.seasons.find(s => s._id === seasonId);
+    if (season) {
+      return season.name;
+    }
+    
+    // If season not found, try to format the ID as a readable name
+    // This handles cases where the season might not be loaded yet
+    if (seasonId && seasonId.length > 0) {
+      // If it's already a readable name like "S1", "S2", return as is
+      if (seasonId.match(/^S\d+$/)) {
+        return seasonId;
+      }
+      // Otherwise, return a fallback
+      return `Season ${seasonId}`;
+    }
+    
+    return 'Unknown Season';
+  }
 }
 

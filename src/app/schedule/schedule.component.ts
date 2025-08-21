@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Match, MatchService } from '../store/services/match.service';
+import { ApiService } from '../store/services/api.service';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -19,13 +20,19 @@ export class ScheduleComponent implements OnInit {
   
   // Filtering/sorting options
   filterTeam: string = '';
+  filterSeason: string = '';
   sortCriteria: 'date' | 'homeTeam' | 'awayTeam' = 'date';
   sortDirection: 'asc' | 'desc' = 'desc';
   
-  // Track unique teams for filter dropdown
+  // Track unique teams and seasons for filter dropdowns
   teamOptions: string[] = [];
+  seasons: any[] = [];
+  allClubs: any[] = [];
 
-  constructor(private matchService: MatchService) { }
+  constructor(
+    private matchService: MatchService,
+    private apiService: ApiService
+  ) { }
 
   ngOnInit(): void {
     this.loadSchedule();
@@ -33,35 +40,120 @@ export class ScheduleComponent implements OnInit {
 
   loadSchedule(): void {
     this.isLoading = true;
+    
+    // Load matches, seasons, and clubs
     this.matchService.getMatches().subscribe({
       next: (matches) => {
         this.matches = matches;
-        this.extractTeamOptions();
+        console.log('Loaded matches:', matches.length);
+        console.log('Sample match season IDs:', matches.slice(0, 5).map(m => ({
+          id: m.id,
+          seasonId: m.seasonId,
+          homeTeam: m.homeTeam,
+          awayTeam: m.awayTeam
+        })));
+        this.updateTeamOptions();
         this.applyFiltersAndSort();
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading schedule:', error);
+        console.error('Error loading matches:', error);
         this.isLoading = false;
+      }
+    });
+    
+    // Load seasons
+    this.apiService.getSeasons().subscribe({
+      next: (seasons) => {
+        this.seasons = seasons.sort((a: any, b: any) => {
+          const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
+          const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
+          return dateB - dateA; // Most recent first
+        });
+        this.updateTeamOptions(); // Update team options when seasons load
+      },
+      error: (error) => {
+        console.error('Error loading seasons:', error);
+      }
+    });
+    
+    // Load clubs
+    this.apiService.getClubs().subscribe({
+      next: (clubs) => {
+        this.allClubs = clubs;
+        console.log('Loaded clubs:', clubs.length);
+        console.log('Sample club seasons:', clubs.slice(0, 3).map(c => ({
+          name: c.name,
+          seasons: c.seasons?.map((s: any) => ({
+            seasonId: s.seasonId,
+            divisionIds: s.divisionIds
+          }))
+        })));
+        this.updateTeamOptions(); // Update team options when clubs load
+      },
+      error: (error) => {
+        console.error('Error loading clubs:', error);
       }
     });
   }
 
-  extractTeamOptions(): void {
-    const teams = new Set<string>();
-    this.matches.forEach(match => {
-      if (match.homeTeam) teams.add(match.homeTeam);
-      if (match.awayTeam) teams.add(match.awayTeam);
-    });
-    this.teamOptions = Array.from(teams).sort();
+  updateTeamOptions(): void {
+    if (!this.seasons.length || !this.allClubs.length) {
+      return; // Wait for both to load
+    }
+    
+    if (this.filterSeason) {
+      // If a season is selected, only show teams that participate in that season
+      const seasonTeams = new Set<string>();
+      
+      this.allClubs.forEach(club => {
+        const seasonInfo = club.seasons?.find((s: any) => {
+          if (typeof s.seasonId === 'object' && s.seasonId._id) {
+            return s.seasonId._id === this.filterSeason;
+          } else if (typeof s.seasonId === 'string') {
+            return s.seasonId === this.filterSeason;
+          }
+          return false;
+        });
+        
+        if (seasonInfo) {
+          seasonTeams.add(club.name);
+        }
+      });
+      
+      this.teamOptions = Array.from(seasonTeams).sort();
+    } else {
+      // If no season is selected, show all teams that have played games
+      const teams = new Set<string>();
+      this.matches.forEach(match => {
+        if (match.homeTeam) teams.add(match.homeTeam);
+        if (match.awayTeam) teams.add(match.awayTeam);
+      });
+      this.teamOptions = Array.from(teams).sort();
+    }
   }
 
   applyFiltersAndSort(): void {
     // Apply team filter if selected
-    this.filteredMatches = this.matches.filter(match => {
+    let filtered = this.matches.filter(match => {
       if (!this.filterTeam) return true;
       return match.homeTeam === this.filterTeam || match.awayTeam === this.filterTeam;
     });
+
+    // Apply season filter if selected
+    filtered = filtered.filter(match => {
+      if (!this.filterSeason) return true;
+      console.log('Season filter check:', {
+        matchId: match.id,
+        matchSeasonId: match.seasonId,
+        filterSeason: this.filterSeason,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam
+      });
+      return match.seasonId === this.filterSeason;
+    });
+
+    this.filteredMatches = filtered;
 
     // Apply sorting
     this.filteredMatches.sort((a, b) => {
@@ -84,6 +176,20 @@ export class ScheduleComponent implements OnInit {
   }
 
   onFilterChange(): void {
+    this.applyFiltersAndSort();
+  }
+
+  onSeasonFilterChange(): void {
+    // Clear team filter when season changes to avoid invalid combinations
+    this.filterTeam = '';
+    this.updateTeamOptions();
+    this.applyFiltersAndSort();
+  }
+
+  clearAllFilters(): void {
+    this.filterTeam = '';
+    this.filterSeason = '';
+    this.updateTeamOptions();
     this.applyFiltersAndSort();
   }
 

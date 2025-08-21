@@ -53,7 +53,7 @@
             </div>
             <div class="transaction-column">
               <span class="transaction-text">
-                {{ transaction.clubName }} {{ transaction.transactionType === 'sign' ? 'sign' : 'release' }} {{ transaction.playerName }} for {{ transaction.seasonName }}
+                {{ transaction.clubName }} {{ transaction.transactionType === 'sign' ? 'sign' : 'release' }} {{ transaction.playerName }} for {{ getFormattedSeasonName(transaction.seasonId) }}
               </span>
             </div>
             <div class="date-column">

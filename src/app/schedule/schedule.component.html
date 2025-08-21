@@ -4,18 +4,41 @@
   <!-- Filter options -->
   <div class="filter-container">
     <div class="filter-group">
-      <label for="teamFilter">Filter by Team:</label>
+      <label for="seasonFilter">Filter by Season:</label>
       <select 
-        id="teamFilter" 
-        [(ngModel)]="filterTeam" 
-        (change)="onFilterChange()" 
+        id="seasonFilter" 
+        [(ngModel)]="filterSeason" 
+        (change)="onSeasonFilterChange()" 
         class="filter-select"
       >
-        <option value="">All Teams</option>
-        <option *ngFor="let team of teamOptions" [value]="team">{{ team }}</option>
+        <option value="">All Seasons</option>
+        <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
       </select>
     </div>
-  </div>
+    
+          <div class="filter-group">
+        <label for="teamFilter">Filter by Team:</label>
+        <select 
+          id="teamFilter" 
+          [(ngModel)]="filterTeam" 
+          (change)="onFilterChange()" 
+          class="filter-select"
+        >
+          <option value="">All Teams</option>
+          <option *ngFor="let team of teamOptions" [value]="team">{{ team }}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <button 
+          (click)="clearAllFilters()" 
+          class="clear-filters-btn"
+          type="button"
+        >
+          Clear All Filters
+        </button>
+      </div>
+    </div>
   
   <!-- Loading state -->
   <div *ngIf="isLoading" class="loading-container">
@@ -91,6 +114,7 @@
       <span class="loss-indicator">L</span> - Loss
     </div>
     <div class="legend-note">
+      <p>* Use the filters above to view games by season and/or team</p>
       <p>* Click on column headers to sort</p>
       <p>* Click "View Details" to see match statistics</p>
     </div>

@@ -24,6 +24,8 @@ interface Game {
   homeClubId: string;
   awayClubId: string;
   date: string;
+  isOvertime?: boolean;
+  eashlMatchId?: string;
   score?: {
     home: number;
     away: number;
@@ -53,6 +55,7 @@ interface TeamStanding {
   gamesPlayed: number;
   wins: number;
   losses: number;
+  otLosses: number;
   points: number;
   goalsFor: number;
   goalsAgainst: number;
@@ -130,6 +133,8 @@ export class StandingsComponent implements OnInit {
       this.clubs = clubs || [];
       this.games = games || [];
       
+
+      
       this.calculateStandings();
       this.isLoading = false;
     }).catch((error) => {
@@ -183,6 +188,7 @@ export class StandingsComponent implements OnInit {
         gamesPlayed: 0,
         wins: 0,
         losses: 0,
+        otLosses: 0,
         points: 0,
         goalsFor: 0,
         goalsAgainst: 0,
@@ -199,6 +205,8 @@ export class StandingsComponent implements OnInit {
 
     // Calculate stats from games
     games.forEach(game => {
+
+      
       // Use game.score if available, as it's now the single source of truth for scores,
       // populated by both manual entry and the EASHL data linking.
       if (!game.score || typeof game.score.home === 'undefined' || typeof game.score.away === 'undefined') {
@@ -223,16 +231,36 @@ export class StandingsComponent implements OnInit {
         awayTeam.goalsFor += awayScore;
         awayTeam.goalsAgainst += homeScore;
 
-        // Update wins/losses and points
+        // Update wins/losses and points, considering overtime
         if (homeScore > awayScore) {
           homeTeam.wins++;
           homeTeam.points += 2;
-          awayTeam.losses++;
-        } else {
+          
+          // Check if losing team gets OTL point
+          if (game.isOvertime) {
+            awayTeam.otLosses++;
+            awayTeam.points += 1; // 1 point for OTL
+          } else {
+            awayTeam.losses++;
+          }
+        } else if (awayScore > homeScore) {
           awayTeam.wins++;
           awayTeam.points += 2;
-          homeTeam.losses++;
+          
+          // Check if losing team gets OTL point
+          if (game.isOvertime) {
+            homeTeam.otLosses++;
+            homeTeam.points += 1; // 1 point for OTL
+          } else {
+            homeTeam.losses++;
+          }
+        } else {
+          // Tie game - both teams get 1 point (shouldn't happen in hockey but just in case)
+          homeTeam.points += 1;
+          awayTeam.points += 1;
         }
+        
+
       }
     });
 
@@ -268,6 +296,9 @@ export class StandingsComponent implements OnInit {
           break;
         case 'losses':
           comparison = a.losses - b.losses;
+          break;
+        case 'otLosses':
+          comparison = a.otLosses - b.otLosses;
           break;
         case 'points':
           comparison = a.points - b.points;

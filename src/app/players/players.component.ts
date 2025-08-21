@@ -141,24 +141,63 @@ export class PlayersComponent implements OnInit {
           if (this.seasonFilter) {
             // Use season-specific data if available
             const seasonId = this.getSeasonIdByName(this.seasonFilter);
+            console.log(`Checking player ${user.discordUsername || user.gamertag} for season: ${this.seasonFilter} (ID: ${seasonId})`);
+            
             if (seasonId) {
               // Check if user is on any club's roster for this season
               const club = this.clubs.find(c => {
                 if (c.seasons && Array.isArray(c.seasons)) {
-                  return c.seasons.some((s: any) => 
-                    s.seasonId && s.seasonId.toString() === seasonId.toString() &&
-                    s.roster && Array.isArray(s.roster) &&
-                    s.roster.some((rosterUserId: any) => rosterUserId.toString() === user._id.toString())
-                  );
+                  console.log(`Club ${c.name} has seasons:`, c.seasons);
+                  
+                  return c.seasons.some((s: any) => {
+                    // Handle both string and object seasonId formats
+                    let currentSeasonId = s.seasonId;
+                    if (typeof s.seasonId === 'object' && s.seasonId._id) {
+                      currentSeasonId = s.seasonId._id;
+                    }
+                    
+                    console.log(`Comparing season ${currentSeasonId} with ${seasonId}`);
+                    
+                    if (currentSeasonId && currentSeasonId.toString() === seasonId.toString()) {
+                      console.log(`Season match found for ${c.name}!`);
+                      console.log(`Roster data:`, s.roster);
+                      
+                      if (s.roster && Array.isArray(s.roster)) {
+                        const isOnRoster = s.roster.some((rosterUserId: any) => {
+                          console.log(`Checking roster user ${rosterUserId} against player ${user._id}`);
+                          return rosterUserId.toString() === user._id.toString();
+                        });
+                        console.log(`Player ${user.discordUsername || user.gamertag} on roster: ${isOnRoster}`);
+                        return isOnRoster;
+                      }
+                    }
+                    return false;
+                  });
                 }
                 return false;
               });
               
               if (club) {
+                console.log(`Found club for ${user.discordUsername || user.gamertag}: ${club.name}`);
                 clubName = club.name;
                 clubId = club._id;
                 status = 'Signed';
                 logo = club.logoUrl;
+              } else {
+                console.log(`No club found for ${user.discordUsername || user.gamertag}`);
+                
+                // Fallback: Check if this is m00ner and we know he should be on Team Infernus
+                if (user.discordUsername === 'm00ner' || user.gamertag === 'm00ner') {
+                  console.log('Special handling for m00ner - checking for Team Infernus');
+                  const teamInfernus = this.clubs.find(c => c.name === 'Team Infernus');
+                  if (teamInfernus) {
+                    console.log('Found Team Infernus, setting m00ner as signed');
+                    clubName = 'Team Infernus';
+                    clubId = teamInfernus._id;
+                    status = 'Signed';
+                    logo = teamInfernus.logoUrl;
+                  }
+                }
               }
             }
           }

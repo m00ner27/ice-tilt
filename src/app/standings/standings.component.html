@@ -39,6 +39,7 @@
               <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
               <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')">W</th>
               <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')">L</th>
+              <th (click)="onSortColumn('otLosses')" [ngClass]="getColumnSortClass('otLosses')">OTL</th>
               <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
               <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')">GF</th>
               <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')">GA</th>
@@ -63,6 +64,7 @@
               <td>{{ team.gamesPlayed }}</td>
               <td>{{ team.wins }}</td>
               <td>{{ team.losses }}</td>
+              <td>{{ team.otLosses }}</td>
               <td class="points-column">{{ team.points }}</td>
               <td>{{ team.goalsFor }}</td>
               <td>{{ team.goalsAgainst }}</td>
@@ -88,6 +90,7 @@
       <span>GP: Games Played</span>
       <span>W: Wins</span>
       <span>L: Losses</span>
+      <span>OTL: Overtime Losses</span>
       <span>PTS: Points</span>
       <span>GF: Goals For</span>
       <span>GA: Goals Against</span>
@@ -96,7 +99,7 @@
     </div>
     <div class="legend-note">
       <p>* Click on column headers to sort</p>
-      <p>* 2 points are awarded for a win, 0 for a loss</p>
+      <p>* 2 points for a win, 1 point for an overtime loss, 0 for a regulation loss</p>
     </div>
   </div>
 </div> 

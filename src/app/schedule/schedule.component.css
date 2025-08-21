@@ -53,6 +53,26 @@
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
 }
 
+.clear-filters-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background-color: #e74c3c;
+  border: 1px solid #c0392b;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.clear-filters-btn:hover {
+  background-color: #c0392b;
+}
+
+.clear-filters-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.3);
+}
+
 /* Loading State */
 .loading-container {
   text-align: center;

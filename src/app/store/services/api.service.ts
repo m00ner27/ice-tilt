@@ -93,7 +93,7 @@ export class ApiService {
   }
 
   updateSeason(season: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/seasons/${season._id}`, season);
+    return this.http.put(`${this.apiUrl}/api/seasons/${season._id}`, season);
   }
 
   // Division data methods
@@ -114,7 +114,7 @@ export class ApiService {
   }
 
   updateDivision(division: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/divisions/${division._id}`, division);
+    return this.http.put(`${this.apiUrl}/api/divisions/${division._id}`, division);
   }
 
   // Club data methods

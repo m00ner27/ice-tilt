@@ -20,8 +20,9 @@ interface Division {
 }
 
 interface ClubSeasonInfo {
-  seasonId: string;
-  divisionIds: string[];
+  seasonId: string | { _id: string; name: string };
+  divisionIds?: string[];
+  roster?: string[];
 }
 
 interface Club {
@@ -94,8 +95,13 @@ export class GoalieStatsComponent implements OnInit {
           return dateB - dateA;
         });
         
+        console.log('Loaded seasons:', this.seasons.map(s => ({ id: s._id, name: s.name, start: s.startDate, end: s.endDate })));
+        console.log('Loaded matches:', this.allMatches.length);
+        console.log('Sample match dates:', this.allMatches.slice(0, 5).map(m => ({ id: m.id, date: m.date, home: m.homeTeam, away: m.awayTeam })));
+        
         if (this.seasons.length > 0) {
-          this.selectedSeasonId = this.seasons[0]._id;
+          this.selectedSeasonId = 'all-seasons'; // Default to "All Seasons"
+          console.log('Auto-selected season: All Seasons');
           this.loadStatsForSeason();
         } else {
           this.isLoading = false;
@@ -119,41 +125,141 @@ export class GoalieStatsComponent implements OnInit {
     }
     
     this.isLoading = true;
-    this.apiService.getDivisionsBySeason(this.selectedSeasonId).subscribe({
-      next: (divisions) => {
-        this.divisions = divisions;
-        this.filterAndAggregateStats();
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error(`Failed to load divisions for season ${this.selectedSeasonId}`, err);
-        this.isLoading = false;
-      }
-    });
+    
+    // If "All Seasons" is selected, load all divisions and process all matches
+    if (this.selectedSeasonId === 'all-seasons') {
+      this.apiService.getDivisions().subscribe({
+        next: (divisions) => {
+          this.divisions = divisions;
+          this.filterAndAggregateStats();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Failed to load all divisions', err);
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Load divisions for specific season
+      this.apiService.getDivisionsBySeason(this.selectedSeasonId).subscribe({
+        next: (divisions) => {
+          this.divisions = divisions;
+          this.filterAndAggregateStats();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error(`Failed to load divisions for season ${this.selectedSeasonId}`, err);
+          this.isLoading = false;
+        }
+      });
+    }
   }
 
   filterAndAggregateStats(): void {
+    if (this.selectedSeasonId === 'all-seasons') {
+      console.log('Filtering goalie stats for ALL SEASONS');
+      console.log('Total matches available:', this.allMatches.length);
+      
+      // For "All Seasons", include all teams and all matches
+      const allTeams = new Set<string>();
+      this.allClubs.forEach(club => {
+        allTeams.add(club.name);
+      });
+      
+      console.log('All teams:', Array.from(allTeams));
+      
+      // Use all matches for "All Seasons"
+      const filteredMatches = this.allMatches;
+      console.log('Using all matches for All Seasons:', filteredMatches.length);
+      
+      // Create team division map for all seasons
+      const teamDivisionMap = new Map<string, string>();
+      const divisionIdToNameMap = new Map<string, string>();
+      this.divisions.forEach(d => divisionIdToNameMap.set(d._id, d.name));
+
+      this.allClubs.forEach(club => {
+        // For "All Seasons", use the first division found for each club
+        if (club.seasons && club.seasons.length > 0) {
+          const firstSeason = club.seasons[0];
+          if (firstSeason.divisionIds && firstSeason.divisionIds.length > 0) {
+            const divisionId = firstSeason.divisionIds[0];
+            const divisionName = divisionIdToNameMap.get(divisionId);
+            if (divisionName) {
+              teamDivisionMap.set(club.name, divisionName);
+            }
+          }
+        }
+      });
+      
+      console.log('Team division map for All Seasons:', teamDivisionMap);
+      
+      // Process stats for all matches
+      this.aggregateGoalieStats(filteredMatches, teamDivisionMap);
+      return;
+    }
+
     const season = this.seasons.find(s => s._id === this.selectedSeasonId);
     if (!season) {
       this.groupedStats = [];
       return;
     }
 
-    const seasonStart = new Date(season.startDate);
-    const seasonEnd = new Date(season.endDate);
-    
-    const filteredMatches = this.allMatches.filter(match => {
-      const matchDate = new Date(match.date);
-      return matchDate >= seasonStart && matchDate <= seasonEnd;
+    console.log('Filtering goalie stats for season:', season.name, 'ID:', season._id);
+    console.log('Total matches available:', this.allMatches.length);
+
+    // Instead of filtering by date, filter by season association
+    // Only include matches where teams are officially in the selected season
+    const seasonTeams = new Set<string>();
+    this.allClubs.forEach(club => {
+      const seasonInfo = club.seasons?.find((s: ClubSeasonInfo) => {
+        if (typeof s.seasonId === 'object' && s.seasonId._id) {
+          return s.seasonId._id === this.selectedSeasonId;
+        } else if (typeof s.seasonId === 'string') {
+          return s.seasonId === this.selectedSeasonId;
+        }
+        return false;
+      });
+      if (seasonInfo) {
+        seasonTeams.add(club.name);
+      }
     });
     
+    console.log('Teams in season:', Array.from(seasonTeams));
+    
+    // Filter matches to only include those from the specific season
+    const filteredMatches = this.allMatches.filter(match => {
+      // Check if the match belongs to the selected season
+      if (match.seasonId && match.seasonId === this.selectedSeasonId) {
+        // Also ensure at least one team is officially in this season
+        const homeTeamInSeason = match.homeClub?.name && seasonTeams.has(match.homeClub.name);
+        const awayTeamInSeason = match.awayClub?.name && seasonTeams.has(match.awayClub.name);
+        return homeTeamInSeason || awayTeamInSeason;
+      }
+      return false;
+    });
+    
+    console.log('Matches from specific season:', filteredMatches.length);
+    
+    // Create team division map for the selected season
     const teamDivisionMap = new Map<string, string>();
     const divisionIdToNameMap = new Map<string, string>();
     this.divisions.forEach(d => divisionIdToNameMap.set(d._id, d.name));
 
     this.allClubs.forEach(club => {
-      const seasonInfo = club.seasons?.find((s: ClubSeasonInfo) => s.seasonId === this.selectedSeasonId);
-      if (seasonInfo && seasonInfo.divisionIds?.length > 0) {
+      // Only process clubs that are in the selected season
+      if (!seasonTeams.has(club.name)) {
+        return;
+      }
+
+      const seasonInfo = club.seasons?.find((s: ClubSeasonInfo) => {
+        if (typeof s.seasonId === 'object' && s.seasonId._id) {
+          return s.seasonId._id === this.selectedSeasonId;
+        } else if (typeof s.seasonId === 'string') {
+          return s.seasonId === this.selectedSeasonId;
+        }
+        return false;
+      });
+      if (seasonInfo && seasonInfo.divisionIds && seasonInfo.divisionIds.length > 0) {
         const divisionId = seasonInfo.divisionIds[0];
         const divisionName = divisionIdToNameMap.get(divisionId);
         if (divisionName) {
@@ -162,6 +268,9 @@ export class GoalieStatsComponent implements OnInit {
       }
     });
     
+    console.log('Team division map:', teamDivisionMap);
+    
+    // Process stats for the filtered matches
     this.aggregateGoalieStats(filteredMatches, teamDivisionMap);
   }
   
@@ -169,6 +278,127 @@ export class GoalieStatsComponent implements OnInit {
     const statsMap = new Map<number, GoalieStats>();
     const teamLogoMap = new Map<string, string | undefined>();
 
+    console.log('Processing matches for goalie stats:', matches.length);
+    
+    // For "All Seasons", include all teams
+    if (this.selectedSeasonId === 'all-seasons') {
+      const allTeams = new Set<string>();
+      this.allClubs.forEach(club => {
+        allTeams.add(club.name);
+      });
+      console.log('All teams for All Seasons:', Array.from(allTeams));
+      
+      // Create a map of team names to their logos from all matches
+      matches.forEach(match => {
+        if (match.homeTeam) teamLogoMap.set(match.homeTeam, match.homeClub?.logoUrl);
+        if (match.awayTeam) teamLogoMap.set(match.awayTeam, match.awayClub?.logoUrl);
+      });
+      
+      matches.forEach(match => {
+        console.log('Processing match for All Seasons:', match.id, 'Home:', match.homeTeam, 'Away:', match.awayTeam);
+        console.log('Match eashlData:', match.eashlData);
+        
+        // Use eashlData.players instead of playerStats
+        if (match.eashlData?.players) {
+          console.log('Found eashlData.players:', Object.keys(match.eashlData.players));
+          
+          Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
+            console.log('Processing club ID:', clubId, 'Players:', clubPlayers);
+            
+            // Map club ID to team name
+            let teamName = 'Unknown';
+            if (match.homeClub?.eashlClubId === clubId) {
+              teamName = match.homeClub.name;
+            } else if (match.awayClub?.eashlClubId === clubId) {
+              teamName = match.awayClub.name;
+            }
+            
+            console.log('Mapped club ID', clubId, 'to team name:', teamName);
+            
+            // For "All Seasons", include all teams
+            if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+              Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
+                if (!this.isGoalie(playerData.position)) {
+                  return; // Skip non-goalies
+                }
+
+                const playerIdNum = parseInt(playerId);
+                let existingStats = statsMap.get(playerIdNum);
+
+                if (!existingStats) {
+                  existingStats = {
+                    playerId: playerIdNum,
+                    name: playerData.playername || 'Unknown',
+                    team: teamName,
+                    teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                    number: parseInt(playerData.jerseynum) || 0,
+                    division: teamDivisionMap.get(teamName) || 'Unknown',
+                    gamesPlayed: 0,
+                    saves: 0,
+                    shotsAgainst: 0,
+                    goalsAgainst: 0,
+                    shutouts: 0,
+                    savePercentage: 0,
+                    goalsAgainstAverage: 0
+                  };
+                  statsMap.set(playerIdNum, existingStats);
+                }
+
+                existingStats.gamesPlayed++;
+                existingStats.saves += parseInt(playerData.glsaves) || 0;
+                existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
+                existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
+                existingStats.shutouts += parseInt(playerData.glsoperiods) || 0;
+                existingStats.team = teamName;
+                existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+                existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+              });
+            }
+          });
+        }
+      });
+      
+      // Calculate derived stats for each goalie
+      statsMap.forEach(goalie => {
+        goalie.savePercentage = goalie.shotsAgainst > 0 ? 
+          goalie.saves / goalie.shotsAgainst : 0;
+        
+        goalie.goalsAgainstAverage = goalie.gamesPlayed > 0 ? 
+          goalie.goalsAgainst / goalie.gamesPlayed : 0;
+      });
+      
+      // Convert stats map to grouped stats
+      const allGoalieStats = Array.from(statsMap.values());
+      
+      // For "All Seasons", show as one combined table
+      this.groupedStats = [{
+        division: 'All Seasons',
+        stats: allGoalieStats.sort((a, b) => b.savePercentage - a.savePercentage || b.goalsAgainstAverage - a.goalsAgainstAverage)
+      }];
+      console.log('All Seasons combined stats:', this.groupedStats[0].stats.length, 'goalies');
+      return;
+    }
+    
+    // For specific season, we need to be strict about which teams are included
+    const currentSeason = this.seasons.find(s => s._id === this.selectedSeasonId);
+    
+    // Create a set of teams that are officially in the selected season
+    const seasonTeams = new Set<string>();
+    this.allClubs.forEach(club => {
+      const seasonInfo = club.seasons?.find((s: ClubSeasonInfo) => {
+        if (typeof s.seasonId === 'object' && s.seasonId._id) {
+          return s.seasonId._id === this.selectedSeasonId;
+        } else if (typeof s.seasonId === 'string') {
+          return s.seasonId === this.selectedSeasonId;
+        }
+        return false;
+      });
+      if (seasonInfo) {
+        seasonTeams.add(club.name);
+      }
+    });
+    console.log('Official teams in season:', Array.from(seasonTeams));
+    
     // Create a map of team names to their logos from all matches
     matches.forEach(match => {
       if (match.homeTeam) teamLogoMap.set(match.homeTeam, match.homeClub?.logoUrl);
@@ -176,42 +406,79 @@ export class GoalieStatsComponent implements OnInit {
     });
     
     matches.forEach(match => {
-      match.playerStats.forEach(playerStat => {
-        if (!this.isGoalie(playerStat.position)) {
-          return; // Skip non-goalies
-        }
+      console.log('Processing match:', match.id, 'Home:', match.homeTeam, 'Away:', match.awayTeam);
+      console.log('Match eashlData:', match.eashlData);
+      
+      // Use eashlData.players instead of playerStats
+      if (match.eashlData?.players) {
+        console.log('Found eashlData.players:', Object.keys(match.eashlData.players));
+        
+        Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
+          console.log('Processing club ID:', clubId, 'Players:', clubPlayers);
+          
+          // Map club ID to team name
+          let teamName = 'Unknown';
+          if (match.homeClub?.eashlClubId === clubId) {
+            teamName = match.homeClub.name;
+          } else if (match.awayClub?.eashlClubId === clubId) {
+            teamName = match.awayClub.name;
+          }
+          
+          console.log('Mapped club ID', clubId, 'to team name:', teamName);
+          
+          // Only include goalies from teams officially in the selected season
+          if (!seasonTeams.has(teamName)) {
+            console.log('Skipping team', teamName, '- not in selected season');
+            return;
+          }
+          
+          if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+            Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
+              if (!this.isGoalie(playerData.position)) {
+                return; // Skip non-goalies
+              }
 
-        let existingStats = statsMap.get(playerStat.playerId);
+              const playerIdNum = parseInt(playerId);
+              let existingStats = statsMap.get(playerIdNum);
 
-        if (!existingStats) {
-          existingStats = {
-            playerId: playerStat.playerId,
-            name: playerStat.name,
-            team: playerStat.team,
-            teamLogo: teamLogoMap.get(playerStat.team) || 'assets/images/1ithlwords.png',
-            number: playerStat.number,
-            division: teamDivisionMap.get(playerStat.team) || 'Unknown',
-            gamesPlayed: 0,
-            saves: 0,
-            shotsAgainst: 0,
-            goalsAgainst: 0,
-            shutouts: 0,
-            savePercentage: 0,
-            goalsAgainstAverage: 0
-          };
-          statsMap.set(playerStat.playerId, existingStats);
-        }
+              if (!existingStats) {
+                existingStats = {
+                  playerId: playerIdNum,
+                  name: playerData.playername || 'Unknown',
+                  team: teamName,
+                  teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                  number: parseInt(playerData.jerseynum) || 0,
+                  division: teamDivisionMap.get(teamName) || 'Unknown',
+                  gamesPlayed: 0,
+                  saves: 0,
+                  shotsAgainst: 0,
+                  goalsAgainst: 0,
+                  shutouts: 0,
+                  savePercentage: 0,
+                  goalsAgainstAverage: 0
+                };
+                statsMap.set(playerIdNum, existingStats);
+              }
 
-        existingStats.gamesPlayed++;
-        existingStats.saves += playerStat.saves || 0;
-        existingStats.shotsAgainst += playerStat.shotsAgainst || 0;
-        existingStats.goalsAgainst += playerStat.goalsAgainst || 0;
-        existingStats.shutouts += playerStat.shutout || 0;
-        existingStats.team = playerStat.team;
-        existingStats.teamLogo = teamLogoMap.get(playerStat.team) || 'assets/images/1ithlwords.png';
-        existingStats.division = teamDivisionMap.get(playerStat.team) || existingStats.division;
-      });
+              if (existingStats) {
+                existingStats.gamesPlayed++;
+                existingStats.saves += parseInt(playerData.glsaves) || 0;
+                existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
+                existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
+                existingStats.shutouts += parseInt(playerData.glsoperiods) || 0;
+                existingStats.team = teamName;
+                existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+                existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+              }
+            });
+          }
+        });
+      } else {
+        console.log('No eashlData.players found in match');
+      }
     });
+    
+    console.log('Final goalie stats map:', statsMap.size, 'goalies');
     
     // Calculate derived stats for each goalie
     statsMap.forEach(goalie => {
@@ -224,6 +491,7 @@ export class GoalieStatsComponent implements OnInit {
     
     const allGoalieStats = Array.from(statsMap.values());
 
+    // Group stats by division for all seasons (including Summer Tourney)
     const divisionStatsMap = new Map<string, GoalieStats[]>();
     allGoalieStats.forEach(stat => {
       const divisionName = stat.division || 'Unassigned';
@@ -237,6 +505,8 @@ export class GoalieStatsComponent implements OnInit {
       this.sortGoalieStats(stats, this.sortColumn, this.sortDirection);
       return { division, stats };
     });
+    console.log('Grouped by division:', this.groupedStats.length, 'groups');
+    console.log('Division breakdown:', this.groupedStats.map(g => ({ division: g.division, goalies: g.stats.length })));
   }
   
   sortGoalieStats(stats: GoalieStats[], column: string, direction: 'asc' | 'desc'): void {
@@ -305,5 +575,13 @@ export class GoalieStatsComponent implements OnInit {
   private isGoalie(position: string): boolean {
     const lowerPos = position.toLowerCase().replace(/\s/g, '');
     return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
+  }
+
+  private formatPosition(position: string): string {
+    const lowerPos = position.toLowerCase().replace(/\s/g, '');
+    if (lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender') {
+      return 'Goalie';
+    }
+    return position;
   }
 }

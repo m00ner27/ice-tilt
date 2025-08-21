@@ -12,6 +12,7 @@ import { ClubListComponent } from './club-list/club-list.component';
 import { ClubDetailComponent } from './club-detail/club-detail.component';
 import { MatchDetailComponent } from './match-detail/match-detail.component';
 import { StandingsComponent } from './standings/standings.component';
+import { ArticleComponent } from './article/article.component';
 import { PlayersComponent } from './players/players.component';
 import { PlayerProfileComponent } from './player-profile/player-profile.component';
 import { RealDataComponent } from './real-data/real-data.component';
@@ -44,6 +45,7 @@ export const routes: Routes = [
   { path: 'clubs/:id', component: ClubDetailComponent },
   { path: 'match/:id', component: MatchDetailComponent },
   { path: 'standings', component: StandingsComponent },
+  { path: 'article/:slug', component: ArticleComponent },
   { path: 'transactions', component: RecentTransactionsComponent },
   { path: 'inbox', component: InboxComponent, canActivate: [authGuard] },
   { path: 'profile', component: ViewProfileComponent, canActivate: [authGuard] },

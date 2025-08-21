@@ -9,6 +9,18 @@
 <div class="club-detail-container" *ngIf="club && !loading && !error">
   <button class="back-button" routerLink="/clubs">← Back to Clubs</button>
   
+  <!-- Season Selector -->
+  <div class="season-selector" *ngIf="seasons.length > 0">
+    <label for="seasonSelect">View Season:</label>
+    <select id="seasonSelect" 
+            [value]="selectedSeasonId || 'all-seasons'" 
+            (change)="onSeasonChange($any($event.target).value)">
+      <option *ngFor="let season of getClubSeasons()" [value]="season._id">
+        {{ season.name }}
+      </option>
+    </select>
+  </div>
+  
   <div class="club-header" 
        [style.background-color]="club.colour" 
        [style.color]="getContrastingTextColor(club.colour)"
@@ -31,7 +43,9 @@
     <!-- Right: Manager and Division -->
     <div class="header-right">
       <p class="manager">Manager: {{club.manager}}</p>
-      <p class="division" *ngIf="club.division">Division: {{club.division}}</p>
+      <p class="division" *ngIf="getSelectedSeasonDivision()">
+        Division: {{getSelectedSeasonDivision()}}
+      </p>
     </div>
   </div>
 

@@ -60,8 +60,17 @@ import { catchError, map } from 'rxjs/operators';
                     </ng-container>
                   </select>
                   
+                  <!-- Overtime Checkbox -->
+                  <div class="overtime-checkbox" *ngIf="game.selectedFileOrAction && !game.selectedFileOrAction.startsWith('forfeit-')">
+                    <label class="checkbox-label">
+                      <input type="checkbox" [(ngModel)]="game.isOvertime" (click)="$event.stopPropagation()">
+                      <span class="checkbox-text">Overtime Game</span>
+                    </label>
+                  </div>
+                  
                   <div class="linked-files" *ngIf="game.eashlMatchId && !isForfeit(game.status)">
                     <span class="linked-file">Linked: {{ getLinkedFileName(game) }}</span>
+                    <span class="overtime-indicator" *ngIf="game.isOvertime">⚡ OT</span>
                   </div>
 
                   <div class="forfeit-indicator" *ngIf="isForfeit(game.status)">
@@ -270,6 +279,35 @@ import { catchError, map } from 'rxjs/operators';
       font-size: 0.98rem;
       font-weight: 600;
     }
+    .overtime-checkbox {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      color: #90caf9;
+      font-size: 0.9rem;
+    }
+    .checkbox-label input[type="checkbox"] {
+      margin-right: 6px;
+      accent-color: #1976d2;
+    }
+    .checkbox-text {
+      font-weight: 500;
+    }
+    .overtime-indicator {
+      background: #ff5722;
+      color: #fff;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.85rem;
+      margin-left: 8px;
+      font-weight: 600;
+    }
   `]
 })
 export class AdminScheduleComponent implements OnInit {
@@ -421,11 +459,21 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   getLinkedFileName(game: any): string {
+    // If we have the actual game score, show it instead of the match ID
+    if (game.score && typeof game.score.home !== 'undefined' && typeof game.score.away !== 'undefined') {
+      const homeScore = game.score.home;
+      const awayScore = game.score.away;
+      const overtimeIndicator = game.isOvertime ? ' (OT)' : '';
+      return `${game.homeTeam} ${homeScore} - ${awayScore} ${game.awayTeam}${overtimeIndicator}`;
+    }
+    
+    // Fallback to the original method if score isn't available yet
     const linkedFile = game.eashlGames?.find((f: any) => f.matchId === game.eashlMatchId);
     if (linkedFile) {
       return linkedFile.label;
     }
-    // If games haven't been loaded, just show the ID
+    
+    // Last fallback - just show the ID
     return game.eashlMatchId ? `Match ID: ${game.eashlMatchId}` : '';
   }
 
@@ -514,7 +562,7 @@ export class AdminScheduleComponent implements OnInit {
       .filter(game => game.selectedFileOrAction)
       .map(game => {
         const selected = game.selectedFileOrAction;
-        const payload: { gameId: string; forfeit?: string | null; eashlMatchId?: string | null; status?: string } = {
+        const payload: { gameId: string; forfeit?: string | null; eashlMatchId?: string | null; status?: string; isOvertime?: boolean } = {
           gameId: game._id
         };
 
@@ -522,11 +570,13 @@ export class AdminScheduleComponent implements OnInit {
           payload.forfeit = selected;
           payload.status = selected;
           payload.eashlMatchId = null; // Explicitly unlink stats
+          payload.isOvertime = false; // Forfeit games are not overtime
         } else {
           // It's a matchId
           payload.eashlMatchId = selected;
           payload.forfeit = null; // Explicitly remove forfeit
           payload.status = 'pending_stats';
+          payload.isOvertime = game.isOvertime || false; // Include overtime flag
         }
         return payload;
       });

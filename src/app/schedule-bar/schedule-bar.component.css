@@ -65,13 +65,21 @@
   object-fit: contain;
 }
 
+.team:first-child .team-logo {
+  margin-right: -2px;
+}
+
+.team:last-child .team-logo {
+  margin-left: -2px;
+}
+
 .score {
   color: #212529;
   font-size: 1.3em;
   font-weight: bold;
 }
 
-.vs {
+.vs-text {
   color: #6c757d;
   font-size: 0.8em;
   font-weight: normal;

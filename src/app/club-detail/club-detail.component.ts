@@ -25,6 +25,21 @@ interface BackendClub {
   eashlClubId?: string; // Added eashlClubId
 }
 
+// Season interface for the selector
+interface Season {
+  _id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
+// Division interface
+interface Division {
+  _id: string;
+  name: string;
+  seasonId: string;
+}
+
 // Keep these stats interfaces as they're specific to this component
 interface SkaterStats {
   playerId: number;
@@ -143,6 +158,11 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
   allClubs: BackendClub[] = [];
   private rosterUpdateSubscription: Subscription | undefined;
   
+  // Multi-season support
+  seasons: Season[] = [];
+  selectedSeasonId: string | null = null;
+  divisions: Division[] = [];
+  
   // Add default stats
   private defaultStats: CalculatedClubStats = {
     wins: 0,
@@ -187,13 +207,124 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     return logoUrl;
   }
 
-  ngOnInit() {
-    // Get the club ID from the URL
-    this.route.params.subscribe(params => {
-      const clubId = params['id'];
-      this.loadClubData(clubId);
+  // Load seasons and set the most recent as default
+
+
+  // Load all divisions
+  private loadDivisions(): void {
+    this.apiService.getDivisions().subscribe({
+      next: (divisions) => {
+        this.divisions = divisions;
+      },
+      error: (err) => {
+        console.error('Error loading divisions:', err);
+      }
+    });
+  }
+
+  // Get the division name for the selected season
+  getSelectedSeasonDivision(): string | null {
+    if (!this.selectedSeasonId || !this.backendClub?.seasons) {
+      return null;
+    }
+    
+    const seasonInfo = this.backendClub.seasons.find(s => {
+      if (typeof s.seasonId === 'object' && s.seasonId._id) {
+        return s.seasonId._id === this.selectedSeasonId;
+      }
+      return s.seasonId === this.selectedSeasonId;
     });
     
+    if (seasonInfo?.divisionIds && seasonInfo.divisionIds.length > 0) {
+      const division = this.divisions.find(d => d._id === seasonInfo.divisionIds[0]);
+      return division?.name || null;
+    }
+    
+    return null;
+  }
+
+  // Set the default selected season to the most recent season that this club is actually in
+  private setDefaultSeasonForClub(backendClub: BackendClub): void {
+    if (!backendClub.seasons || backendClub.seasons.length === 0) {
+      // If club has no seasons, default to "All Seasons"
+      this.selectedSeasonId = null;
+      return;
+    }
+
+    // Get the season IDs that this club is actually associated with
+    const clubSeasonIds = backendClub.seasons.map(s => {
+      if (typeof s.seasonId === 'object' && s.seasonId._id) {
+        return s.seasonId._id;
+      }
+      return s.seasonId as string;
+    });
+
+    console.log('Club season IDs:', clubSeasonIds);
+
+    // Find the most recent season from the global seasons list that this club is in
+    const availableSeasons = this.seasons.filter(season => 
+      season._id !== 'all-seasons' && clubSeasonIds.includes(season._id)
+    );
+
+    console.log('Available seasons for this club:', availableSeasons);
+
+    if (availableSeasons.length > 0) {
+      // Set the most recent season (seasons are already sorted by date, most recent first)
+      this.selectedSeasonId = availableSeasons[0]._id;
+      console.log('Selected season ID:', this.selectedSeasonId);
+    } else {
+      // Fallback to "All Seasons" if no matching seasons found
+      this.selectedSeasonId = null;
+      console.log('No matching seasons found, defaulting to All Seasons');
+    }
+  }
+
+  // Get seasons that this club is actually associated with (for the dropdown)
+  getClubSeasons(): any[] {
+    if (!this.backendClub?.seasons || !this.seasons) {
+      console.log('getClubSeasons: Missing data', { backendClub: !!this.backendClub, seasons: !!this.seasons });
+      return [];
+    }
+
+    // Get the season IDs that this club is actually associated with
+    const clubSeasonIds = this.backendClub.seasons.map(s => {
+      if (typeof s.seasonId === 'object' && s.seasonId._id) {
+        return s.seasonId._id;
+      }
+      return s.seasonId as string;
+    });
+
+    console.log('getClubSeasons: Club season IDs:', clubSeasonIds);
+    console.log('getClubSeasons: All available seasons:', this.seasons.map(s => ({ id: s._id, name: s.name })));
+
+    // Filter global seasons to only include seasons this club is in
+    const clubSeasons = this.seasons.filter(season => 
+      season._id === 'all-seasons' || clubSeasonIds.includes(season._id)
+    );
+
+    console.log('getClubSeasons: Filtered seasons for dropdown:', clubSeasons.map(s => ({ id: s._id, name: s.name })));
+
+    return clubSeasons;
+  }
+
+  // Handle season selection change
+  onSeasonChange(seasonId: string): void {
+    if (seasonId === 'all-seasons') {
+      this.selectedSeasonId = null; // null means "All Seasons"
+    } else {
+      this.selectedSeasonId = seasonId;
+    }
+    
+    console.log('Season changed to:', seasonId === 'all-seasons' ? 'All Seasons' : seasonId);
+    
+    // Reload roster and stats with the new season filter (don't reload entire club data)
+    if (this.backendClub?._id) {
+      this.loadSeasonSpecificRoster(this.backendClub._id, this.backendClub);
+      this.loadAndProcessMatches(this.backendClub._id, this.backendClub.name);
+    }
+  }
+
+  ngOnInit() {
     // Subscribe to roster updates to refresh data when needed
     this.rosterUpdateSubscription = this.rosterUpdateService.rosterUpdates$.subscribe(event => {
       console.log('Roster update received in club detail:', event);
@@ -202,12 +333,51 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
         this.loadClubData(event.clubId);
       }
     });
+    
+    // Get the club ID from the URL and load data
+    this.route.params.subscribe(params => {
+      const clubId = params['id'];
+      // Load seasons first, then club data
+      this.loadSeasonsAndClubData(clubId);
+    });
   }
 
-  private loadClubData(clubId: string) {
+  // Load seasons first, then club data
+  private loadSeasonsAndClubData(clubId: string): void {
     this.loading = true;
     this.error = null;
 
+    // Load seasons first
+    this.apiService.getSeasons().subscribe({
+      next: (seasons) => {
+        this.seasons = seasons;
+        
+        // Sort seasons by start date (most recent first)
+        this.seasons.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+        
+        // Add "All Seasons" option at the beginning
+        this.seasons.unshift({
+          _id: 'all-seasons',
+          name: 'All Seasons',
+          startDate: '',
+          endDate: ''
+        });
+        
+        // Load divisions for all seasons
+        this.loadDivisions();
+        
+        // Now that seasons are loaded, load club data
+        this.loadClubData(clubId);
+      },
+      error: (err) => {
+        console.error('Error loading seasons:', err);
+        this.error = 'Failed to load seasons';
+        this.loading = false;
+      }
+    });
+  }
+
+  private loadClubData(clubId: string) {
     // Fetch all clubs first to resolve opponent names later
     this.apiService.getClubs().subscribe({
       next: (allClubs) => {
@@ -230,43 +400,12 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               stats: { ...this.defaultStats }
             };
 
-            // First, load the roster and assign it to the club
-            this.apiService.getClubGlobalRoster(clubId).subscribe({
-              next: (roster) => {
-                if (this.club) {
-                  this.club.roster = roster.map((user: any) => {
-                    const profile = user.playerProfile || {};
-                    return {
-                      id: user._id,
-                      discordUsername: user.discordUsername,
-                      position: profile.position || 'C',
-                      status: profile.status || 'Free Agent',
-                      number: profile.number || '',
-                      gamertag: user.gamertag || user.discordUsername,
-                      platform: profile.platform || 'Unknown',
-                      stats: user.stats || {},
-                      psnId: profile.platform === 'PS5' ? user.gamertag : '',
-                      xboxGamertag: profile.platform === 'Xbox' ? user.gamertag : '',
-                      country: profile.country || '',
-                      handedness: profile.handedness || 'Left',
-                      currentClubId: user.currentClubId || '',
-                      currentClubName: user.currentClubName || '',
-                      secondaryPositions: profile.secondaryPositions || []
-                    };
-                  });
-                }
-                
-                // Load EASHL game data for this club
-                this.loadAndProcessMatches(clubId, backendClub.name);
-                
-                this.loading = false;
-              },
-              error: (err) => {
-                console.error('Error loading roster:', err);
-                this.error = 'Failed to load roster';
-                this.loading = false;
-              }
-            });
+            // Set the default selected season to the most recent season that this club is actually in
+            this.setDefaultSeasonForClub(backendClub);
+            console.log('After setDefaultSeasonForClub, selectedSeasonId:', this.selectedSeasonId);
+
+            // Load roster based on selected season
+            this.loadSeasonSpecificRoster(clubId, backendClub);
           },
           error: (err) => {
             console.error('Error loading club:', err);
@@ -283,12 +422,123 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Load roster specific to the selected season
+  private loadSeasonSpecificRoster(clubId: string, backendClub: BackendClub): void {
+    if (this.selectedSeasonId === null) {
+      // If no season selected, load global roster (all seasons)
+      this.loadGlobalRoster(clubId, backendClub);
+      return;
+    }
+
+    // Load season-specific roster
+    this.apiService.getClubRoster(clubId, this.selectedSeasonId).subscribe({
+      next: (roster) => {
+        if (this.club) {
+          this.club.roster = roster.map((user: any) => {
+            const profile = user.playerProfile || {};
+            return {
+              id: user._id,
+              discordUsername: user.discordUsername,
+              position: profile.position || 'C',
+              status: profile.status || 'Free Agent',
+              number: profile.number || '',
+              gamertag: user.gamertag || user.discordUsername,
+              platform: profile.platform || 'Unknown',
+              stats: user.stats || {},
+              psnId: profile.platform === 'PS5' ? user.gamertag : '',
+              xboxGamertag: profile.platform === 'Xbox' ? user.gamertag : '',
+              country: profile.country || '',
+              handedness: profile.handedness || 'Left',
+              currentClubId: user.currentClubId || '',
+              currentClubName: user.currentClubName || '',
+              secondaryPositions: profile.secondaryPositions || []
+            };
+          });
+        }
+        
+        // Load EASHL game data for this club
+        this.loadAndProcessMatches(clubId, backendClub.name);
+        
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading season roster:', err);
+        // Fallback to global roster
+        this.loadGlobalRoster(clubId, backendClub);
+      }
+    });
+  }
+
+  // Load global roster (all seasons)
+  private loadGlobalRoster(clubId: string, backendClub: BackendClub): void {
+    this.apiService.getClubGlobalRoster(clubId).subscribe({
+      next: (roster) => {
+        if (this.club) {
+          this.club.roster = roster.map((user: any) => {
+            const profile = user.playerProfile || {};
+            return {
+              id: user._id,
+              discordUsername: user.discordUsername,
+              position: profile.position || 'C',
+              status: profile.status || 'Free Agent',
+              number: profile.number || '',
+              gamertag: user.gamertag || user.discordUsername,
+              platform: profile.platform || 'Unknown',
+              stats: user.stats || {},
+              psnId: profile.platform === 'PS5' ? user.gamertag : '',
+              xboxGamertag: profile.platform === 'Xbox' ? user.gamertag : '',
+              country: profile.country || '',
+              handedness: profile.handedness || 'Left',
+              currentClubId: user.currentClubId || '',
+              currentClubName: user.currentClubName || '',
+              secondaryPositions: profile.secondaryPositions || []
+            };
+          });
+        }
+        
+        // Load EASHL game data for this club
+        this.loadAndProcessMatches(clubId, backendClub.name);
+        
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading global roster:', err);
+        this.error = 'Failed to load roster';
+        this.loading = false;
+      }
+    });
+  }
+
   private loadAndProcessMatches(clubId: string, clubName: string) {
+    console.log('loadAndProcessMatches called with clubId:', clubId, 'clubName:', clubName);
     this.matchService.getMatches().subscribe({
       next: (allMatches) => {
-        const clubMatches = allMatches.filter(match =>
+        console.log('All matches loaded:', allMatches.length);
+        console.log('First few matches:', allMatches.slice(0, 3).map(m => ({ id: m.id, homeTeam: m.homeTeam, awayTeam: m.awayTeam, seasonId: m.seasonId })));
+        
+        let clubMatches = allMatches.filter(match =>
           match.homeTeam === clubName || match.awayTeam === clubName
         );
+        
+        console.log('Club matches after name filtering:', clubMatches.length);
+        console.log('Club matches details:', clubMatches.map(m => ({ id: m.id, homeTeam: m.homeTeam, awayTeam: m.awayTeam, seasonId: m.seasonId })));
+
+        // Filter matches by selected season if one is selected
+        if (this.selectedSeasonId !== null) {
+          console.log('Filtering matches by season:', this.selectedSeasonId);
+          console.log('All club matches before filtering:', clubMatches);
+          console.log('Match seasonIds:', clubMatches.map(m => ({ id: m.id, seasonId: m.seasonId, homeTeam: m.homeTeam, awayTeam: m.awayTeam })));
+          
+          clubMatches = clubMatches.filter(match => {
+            // Check if the match is in the selected season
+            // This assumes matches have a seasonId field
+            const matches = match.seasonId === this.selectedSeasonId;
+            console.log(`Match ${match.id}: seasonId=${match.seasonId}, selected=${this.selectedSeasonId}, matches=${matches}`);
+            return matches;
+          });
+          
+          console.log('Filtered matches:', clubMatches);
+        }
 
         if (this.club && clubMatches.length > 0) {
           this.matches = clubMatches;
@@ -297,6 +547,12 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
           this.club.stats = this.calculateTeamStats(clubMatches, clubId);
           // Process and assign individual player stats
           this.processEashlPlayerStats(clubMatches);
+        } else if (this.club) {
+          // No matches found for the selected season
+          this.matches = [];
+          this.club.stats = { ...this.defaultStats };
+          this.skaterStats = [];
+          this.goalieStats = [];
         }
       },
       error: (err) => {

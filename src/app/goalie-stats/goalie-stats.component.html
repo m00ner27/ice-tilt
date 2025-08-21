@@ -12,6 +12,7 @@
     <div class="filters-container">
       <label for="season-select">Season:</label>
       <select id="season-select" [(ngModel)]="selectedSeasonId" (ngModelChange)="onSeasonChange()">
+        <option value="all-seasons">All Seasons</option>
         <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
       </select>
     </div>

@@ -116,18 +116,59 @@
 .back-button {
   background: none;
   border: 2px solid #34495e;
-  color: white;
+  color: #90caf9;
   padding: 8px 16px;
-  border-radius: 20px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 1em;
+  transition: all 0.2s;
   margin-bottom: 20px;
-  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
 .back-button:hover {
   background: #34495e;
-  color: white;
+  color: #fff;
+}
+
+/* Season Selector Styling */
+.season-selector {
+  background: #2c3446;
+  border: 1px solid #394867;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.season-selector label {
+  color: #90caf9;
+  font-weight: 500;
+  font-size: 14px;
+  margin: 0;
+}
+
+.season-selector select {
+  background: #1a1f2e;
+  border: 1px solid #394867;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 14px;
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.season-selector select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.season-selector select option {
+  background: #1a1f2e;
+  color: #fff;
 }
 
 .roster-section {
