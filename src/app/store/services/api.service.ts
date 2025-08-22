@@ -169,6 +169,13 @@ export class ApiService {
     return this.http.post(`${this.apiUrl}/api/games/bulk-update`, updates);
   }
 
+  mergeGames(primaryGameId: string, secondaryGameId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/games/merge`, {
+      primaryGameId,
+      secondaryGameId
+    });
+  }
+
   getGame(gameId: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/games/${gameId}`);
   }

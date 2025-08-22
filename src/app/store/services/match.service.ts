@@ -39,6 +39,7 @@ export interface Match {
   // Keep a reference to the raw eashlData if needed elsewhere
   eashlData?: any; 
   seasonId?: string; // Add seasonId
+  eashlMatchId?: string; // Add eashlMatchId for merged games
 }
 
 @Injectable({
@@ -51,6 +52,19 @@ export class MatchService {
 
   private transformGameData(game: any): Match {
     const playerStats: PlayerMatchStats[] = [];
+
+    // Check if this is a merged game (has eashlMatchId with +)
+    const isMergedGame = game.eashlMatchId && game.eashlMatchId.includes('+');
+    
+    if (isMergedGame) {
+      console.log(`Processing merged game ${game._id} with eashlMatchId: ${game.eashlMatchId}`);
+      // Merged games should have combined player stats in eashlData
+      if (game.eashlData?.players) {
+        console.log('Found combined player stats for merged game');
+      } else {
+        console.log('No combined player stats found for merged game');
+      }
+    }
 
     if (game.eashlData?.players) {
       // Get the EASHL club IDs from the populated club data
@@ -115,9 +129,12 @@ export class MatchService {
       awayClub: game.awayClubId,
       homeScore: homeScore,
       awayScore: awayScore,
+      isOvertime: game.isOvertime || false,
+      isShootout: game.isShootout || false,
       playerStats: playerStats,
       eashlData: game.eashlData,
-      seasonId: game.seasonId // Populate seasonId
+      seasonId: game.seasonId, // Populate seasonId
+      eashlMatchId: game.eashlMatchId // Add eashlMatchId for merged games
     };
   }
   
@@ -128,6 +145,13 @@ export class MatchService {
   }
   
   getMatches(): Observable<Match[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/games`).pipe(
+      map(games => games.map(this.transformGameData))
+    );
+  }
+
+  // Method to force refresh matches (useful after data changes)
+  refreshMatches(): Observable<Match[]> {
     return this.http.get<any[]>(`${this.apiUrl}/games`).pipe(
       map(games => games.map(this.transformGameData))
     );

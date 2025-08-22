@@ -34,6 +34,8 @@ export class MatchDetailComponent implements OnInit {
   awayTeamPlayers: PlayerStatDisplay[] = [];
   homeTeamGoalies: PlayerStatDisplay[] = [];
   awayTeamGoalies: PlayerStatDisplay[] = [];
+  isMergedGame: boolean = false;
+  noStatsMessage: string = '';
   
   constructor(
     private route: ActivatedRoute,
@@ -77,10 +79,29 @@ export class MatchDetailComponent implements OnInit {
   processMatchData(): void {
     if (!this.match) return;
 
+    // Check if this is a merged game
+    this.isMergedGame = this.match.eashlMatchId?.includes('+') || false;
+    
     this.homeTeamPlayers = [];
     this.awayTeamPlayers = [];
     this.homeTeamGoalies = [];
     this.awayTeamGoalies = [];
+
+    if (this.isMergedGame) {
+      console.log('Merged game detected:', this.match.eashlMatchId);
+      // Merged games should now have combined player stats
+      if (!this.match.playerStats || this.match.playerStats.length === 0) {
+        this.noStatsMessage = `This game was created by merging multiple EASHL games (${this.match.eashlMatchId}). Player statistics are being processed and should be available shortly.`;
+        console.log('Merged game detected but no player stats yet');
+        return;
+      }
+    }
+
+    if (!this.match.playerStats || this.match.playerStats.length === 0) {
+      this.noStatsMessage = 'No detailed player statistics are available for this game.';
+      console.log('No player stats available for game:', this.match.id);
+      return;
+    }
 
     this.match.playerStats.forEach(player => {
       const playerDisplay = this.convertToPlayerDisplay(player);

@@ -16,7 +16,19 @@
     </div>
   </div>
   
-  <div class="match-content">
+  <!-- No Stats Message (only shown when truly no stats available) -->
+  <div class="no-stats-message" *ngIf="noStatsMessage">
+    <div class="message-content">
+      <h3>📊 Statistics Information</h3>
+      <p>{{ noStatsMessage }}</p>
+      <div class="merged-game-info" *ngIf="isMergedGame">
+        <p><strong>Processing Merged Game Statistics</strong></p>
+        <p>This game was created by merging multiple EA Sports NHL 25 matches. Player statistics are being combined and should be available shortly. The final score reflects the accurate combined results from all merged games.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="match-content" *ngIf="!noStatsMessage">
     <!-- Home Team Statistics -->
     <div class="team-stats">
       <h3><img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} Logo" class="team-logo-sm"> {{ match.homeTeam }} Stats</h3>

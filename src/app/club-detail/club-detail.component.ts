@@ -324,6 +324,13 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Method to refresh match data (can be called externally)
+  refreshMatchData(): void {
+    if (this.backendClub?._id) {
+      this.loadAndProcessMatches(this.backendClub._id, this.backendClub.name);
+    }
+  }
+
   ngOnInit() {
     // Subscribe to roster updates to refresh data when needed
     this.rosterUpdateSubscription = this.rosterUpdateService.rosterUpdates$.subscribe(event => {
@@ -544,7 +551,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
           this.matches = clubMatches;
 
           // Calculate and assign overall team stats
-          this.club.stats = this.calculateTeamStats(clubMatches, clubId);
+          this.club.stats = this.calculateTeamStats(clubMatches, clubName);
           // Process and assign individual player stats
           this.processEashlPlayerStats(clubMatches);
         } else if (this.club) {
@@ -561,11 +568,11 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  private calculateTeamStats(matches: Match[], clubId: string): CalculatedClubStats {
+  private calculateTeamStats(matches: Match[], clubName: string): CalculatedClubStats {
     const stats: CalculatedClubStats = {
       wins: 0,
       losses: 0,
-      otLosses: 0, // EASHL API doesn't provide OT/SO loss distinction, so this will be 0
+      otLosses: 0,
       points: 0,
       gamesPlayed: 0,
       goalsFor: 0,
@@ -583,16 +590,27 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     );
 
     sortedMatches.forEach(match => {
-      // Only include matches that have a linked game file
-      if (!match.eashlData) {
+      // Include matches that have either eashlData OR are merged games with valid scores
+      const hasEashlData = match.eashlData;
+      const isMergedGame = match.eashlMatchId && match.eashlMatchId.includes('+');
+      const hasValidScores = match.homeScore !== undefined && match.awayScore !== undefined;
+      
+      // Skip if no valid data to process
+      if (!hasEashlData && !isMergedGame) {
+        console.log(`Skipping match ${match.id}: no eashlData and not a merged game`);
         return;
       }
-
-      if (match.homeScore === undefined || match.awayScore === undefined || !match.homeClub) return;
+      
+      if (!hasValidScores) {
+        console.log(`Skipping match ${match.id}: no valid scores (home: ${match.homeScore}, away: ${match.awayScore})`);
+        return;
+      }
+      
+      console.log(`Processing match ${match.id}: homeScore=${match.homeScore}, awayScore=${match.awayScore}, eashlData=${!!hasEashlData}, merged=${isMergedGame}`);
 
       stats.gamesPlayed++;
       let gameResult: 'W' | 'L' | 'OTL' = 'L';
-      const isHomeTeam = match.homeClub._id === clubId;
+      const isHomeTeam = match.homeTeam === clubName;
 
       if (isHomeTeam) {
         stats.goalsFor += match.homeScore;
@@ -601,7 +619,13 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
           stats.wins++;
           gameResult = 'W';
         } else {
-          stats.losses++;
+          // Check if this was an overtime/shootout loss
+          if (match.isOvertime || match.isShootout) {
+            stats.otLosses++;
+            gameResult = 'OTL';
+          } else {
+            stats.losses++;
+          }
         }
       } else { // Away team
         stats.goalsFor += match.awayScore;
@@ -610,7 +634,13 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
           stats.wins++;
           gameResult = 'W';
         } else {
-          stats.losses++;
+          // Check if this was an overtime/shootout loss
+          if (match.isOvertime || match.isShootout) {
+            stats.otLosses++;
+            gameResult = 'OTL';
+          } else {
+            stats.losses++;
+          }
         }
       }
 
@@ -620,7 +650,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
       }
     });
 
-    // --- Streak Calculation ---
+        // --- Streak Calculation ---
     // It's simpler to calculate the streak after the lastTen array is built.
     // The array is sorted newest to oldest.
     if (stats.lastTen.length > 0) {
@@ -635,7 +665,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
       }
     }
 
-    stats.points = stats.wins * 2; // Simple points calculation
+    stats.points = stats.wins * 2 + stats.otLosses; // 2 points for wins, 1 point for OTL
     stats.winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0;
     stats.goalDifferential = stats.goalsFor - stats.goalsAgainst;
 
