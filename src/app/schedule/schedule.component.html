@@ -1,8 +1,8 @@
 <div class="schedule-container">
-  <h1 class="schedule-title">Game Schedule</h1>
+  <h1 *ngIf="!isPreview" class="schedule-title">Game Schedule</h1>
   
   <!-- Filter options -->
-  <div class="filter-container">
+  <div *ngIf="!isPreview" class="filter-container">
     <div class="filter-group">
       <label for="seasonFilter">Filter by Season:</label>
       <select 
@@ -53,23 +53,28 @@
           <th (click)="onSortChange('date')" [class.sort-asc]="sortCriteria === 'date' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'date' && sortDirection === 'desc'">
             Date
           </th>
-          <th (click)="onSortChange('homeTeam')" [class.sort-asc]="sortCriteria === 'homeTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'homeTeam' && sortDirection === 'desc'">
-            Home Team
-          </th>
           <th></th>
+          <th (click)="onSortChange('homeTeam')" [class.sort-asc]="sortCriteria === 'homeTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'homeTeam' && sortDirection === 'desc'">
+            <span class="header-full">Home Team</span>
+            <span class="header-mobile">Home</span>
+          </th>
           <th></th>
           <th>Score</th>
           <th></th>
-          <th></th>
           <th (click)="onSortChange('awayTeam')" [class.sort-asc]="sortCriteria === 'awayTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'awayTeam' && sortDirection === 'desc'">
-            Away Team
+            <span class="header-full">Away Team</span>
+            <span class="header-mobile">Away</span>
           </th>
-          <th>Details</th>
+          <th></th>
+          <th><span class="header-full">Details</span><span class="header-mobile">View</span></th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let match of filteredMatches">
-          <td class="date-cell">{{ formatDate(match.date) }}</td>
+          <td class="date-cell">
+            <span class="date-full">{{ formatDate(match.date) }}</span>
+            <span class="date-mobile">{{ formatDateMobile(match.date) }}</span>
+          </td>
           <td class="team-cell text-right">
             <a [routerLink]="['/clubs', match.homeClub?._id]" class="team-link team-name">{{ match.homeTeam }}</a>
           </td>
@@ -95,7 +100,10 @@
             <a [routerLink]="['/clubs', match.awayClub?._id]" class="team-link team-name">{{ match.awayTeam }}</a>
           </td>
           <td class="action-cell">
-            <a [routerLink]="['/match', match.id]" class="view-button">View Details</a>
+            <a [routerLink]="['/match', match.id]" class="view-button">
+              <span class="button-full">View Details</span>
+              <span class="button-mobile">View</span>
+            </a>
           </td>
         </tr>
       </tbody>
@@ -107,8 +115,13 @@
     <p>No matches found for the selected filters.</p>
   </div>
   
+  <!-- View Full Schedule Link (Preview Mode) -->
+  <div *ngIf="isPreview && filteredMatches.length > 0" class="view-full-schedule">
+    <a routerLink="/schedule" class="view-full-btn">View Full Schedule</a>
+  </div>
+  
   <!-- Legend -->
-  <div class="schedule-legend">
+  <div *ngIf="!isPreview" class="schedule-legend">
     <div class="legend-item">
       <span class="win-indicator">W</span> - Win
       <span class="loss-indicator">L</span> - Loss

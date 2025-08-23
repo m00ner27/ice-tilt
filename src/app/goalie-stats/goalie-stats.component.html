@@ -12,21 +12,25 @@
     <div class="filters-container">
       <label for="season-select">Season:</label>
       <select id="season-select" [(ngModel)]="selectedSeasonId" (ngModelChange)="onSeasonChange()">
-        <option value="all-seasons">All Seasons</option>
+        <option value="all-seasons">All-Time</option>
         <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
       </select>
     </div>
 
     <!-- Stats Tables per Division -->
     <div *ngFor="let group of groupedStats" class="division-group">
-      <h2 class="division-header">{{ group.division }}</h2>
+      <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
+        <img *ngIf="group.divisionData?.logoUrl" [src]="getImageUrl(group.divisionData?.logoUrl)" [alt]="group.division + ' logo'" class="division-logo">
+        {{ group.division }}
+      </h2>
       
       <div class="goalie-stats-table-container">
         <table class="goalie-stats-table">
           <thead>
             <tr>
-              <th [className]="getColumnSortClass('name')" (click)="onSortColumn('name')">Player</th>
-              <th [className]="getColumnSortClass('team')" (click)="onSortColumn('team')">Team</th>
+              <th class="sticky-column rank-column">Rank</th>
+              <th class="sticky-column goalie-name" [ngClass]="getColumnSortClass('name')" (click)="onSortColumn('name')">Player</th>
+              <th [ngClass]="getColumnSortClass('team')" (click)="onSortColumn('team')">Club</th>
               <th [className]="getColumnSortClass('gamesPlayed')" (click)="onSortColumn('gamesPlayed')">GP</th>
               <th [className]="getColumnSortClass('saves')" (click)="onSortColumn('saves')">SV</th>
               <th [className]="getColumnSortClass('shotsAgainst')" (click)="onSortColumn('shotsAgainst')">SA</th>
@@ -36,16 +40,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let goalie of group.stats">
-              <td class="goalie-name">
-                <span class="goalie-number">#{{ goalie.number }}</span>
+            <tr *ngFor="let goalie of group.stats; let i = index">
+              <td class="sticky-column rank-column">{{ i + 1 }}</td>
+              <td class="sticky-column goalie-name">
+                <img [src]="goalie.teamLogo" class="goalie-logo" [alt]="goalie.team + ' logo'">
                 {{ goalie.name }}
               </td>
               <td class="team-cell">
-                <div class="team-info">
-                  <img [src]="goalie.teamLogo" class="team-logo" [alt]="goalie.team + ' logo'">
-                  {{ goalie.team }}
-                </div>
+                <span class="team-name">{{ goalie.team }}</span>
               </td>
               <td>{{ goalie.gamesPlayed }}</td>
               <td>{{ goalie.saves }}</td>

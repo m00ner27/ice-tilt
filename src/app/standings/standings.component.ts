@@ -15,6 +15,7 @@ interface Division {
   _id: string;
   name: string;
   seasonId: string;
+  logoUrl?: string;
 }
 
 interface Game {
@@ -342,5 +343,25 @@ export class StandingsComponent implements OnInit {
   getSelectedSeasonName(): string {
     const season = this.seasons.find(s => s._id === this.selectedSeasonId);
     return season ? season.name : '';
+  }
+
+  // Helper method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/1ithlwords.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `http://localhost:3001${logoUrl}`; // Use API URL
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 } 

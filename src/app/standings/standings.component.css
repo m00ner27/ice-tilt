@@ -60,6 +60,16 @@
   background-color: #34495e;
   border-radius: 6px;
   border-left: 4px solid #3498db;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.division-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 /* Error State */

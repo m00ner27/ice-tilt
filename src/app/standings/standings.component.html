@@ -29,7 +29,10 @@
   <!-- Standings by Division -->
   <div *ngIf="!isLoading && !error && divisionStandings.length > 0" class="standings-content">
     <div *ngFor="let divisionStanding of divisionStandings" class="division-section">
-      <h2 class="division-title">{{ divisionStanding.division.name }}</h2>
+      <h2 class="division-title">
+        <img *ngIf="divisionStanding.division.logoUrl" [src]="getImageUrl(divisionStanding.division.logoUrl)" [alt]="divisionStanding.division.name + ' logo'" class="division-logo">
+        {{ divisionStanding.division.name }}
+      </h2>
       
       <div class="standings-table-container">
         <table class="standings-table">

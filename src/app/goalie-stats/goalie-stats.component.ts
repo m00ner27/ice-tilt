@@ -17,6 +17,7 @@ interface Division {
   _id: string;
   name: string;
   seasonId: string;
+  logoUrl?: string;
 }
 
 interface ClubSeasonInfo {
@@ -48,6 +49,7 @@ interface GoalieStats {
 
 interface GroupedGoalieStats {
   division: string;
+  divisionData?: Division;
   stats: GoalieStats[];
 }
 
@@ -373,6 +375,7 @@ export class GoalieStatsComponent implements OnInit {
       // For "All Seasons", show as one combined table
       this.groupedStats = [{
         division: 'All Seasons',
+        divisionData: undefined, // No specific division for All Seasons
         stats: allGoalieStats.sort((a, b) => b.savePercentage - a.savePercentage || b.goalsAgainstAverage - a.goalsAgainstAverage)
       }];
       console.log('All Seasons combined stats:', this.groupedStats[0].stats.length, 'goalies');
@@ -502,8 +505,9 @@ export class GoalieStatsComponent implements OnInit {
     });
 
     this.groupedStats = Array.from(divisionStatsMap.entries()).map(([division, stats]) => {
+      const divisionData = this.divisions.find(d => d.name === division);
       this.sortGoalieStats(stats, this.sortColumn, this.sortDirection);
-      return { division, stats };
+      return { division, divisionData, stats };
     });
     console.log('Grouped by division:', this.groupedStats.length, 'groups');
     console.log('Division breakdown:', this.groupedStats.map(g => ({ division: g.division, goalies: g.stats.length })));
@@ -583,5 +587,25 @@ export class GoalieStatsComponent implements OnInit {
       return 'Goalie';
     }
     return position;
+  }
+
+  // Helper method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/1ithlwords.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `http://localhost:3001${logoUrl}`; // Use API URL
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
   }
 }

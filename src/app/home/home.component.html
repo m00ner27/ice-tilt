@@ -64,7 +64,7 @@
             <ul class="list-group list-group-flush">
               <li class="list-group-item d-flex align-items-center" *ngFor="let p of topGoals; let i = index">
                 <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
                 <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
                 <span class="ms-auto stat-value">{{ p.goals }}</span>
               </li>
@@ -80,7 +80,7 @@
             <ul class="list-group list-group-flush">
               <li class="list-group-item d-flex align-items-center" *ngFor="let p of topAssists; let i = index">
                 <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
                 <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
                 <span class="ms-auto stat-value">{{ p.assists }}</span>
               </li>
@@ -96,7 +96,7 @@
             <ul class="list-group list-group-flush">
               <li class="list-group-item d-flex align-items-center" *ngFor="let p of topPoints; let i = index">
                 <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
                 <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
                 <span class="ms-auto stat-value">{{ p.points }}</span>
               </li>
@@ -112,7 +112,7 @@
             <ul class="list-group list-group-flush">
               <li class="list-group-item d-flex align-items-center" *ngFor="let p of topSavePct; let i = index">
                 <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="getTeamLogo(p.team)" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
                 <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
                 <span class="ms-auto stat-value">{{ p.savePercentage }}</span>
               </li>
@@ -128,160 +128,7 @@
 <app-recent-transactions [isPreview]="true"></app-recent-transactions>
 
 
-<!--Schedule Section -->
+<!-- Schedule Section -->
 <section class="schedule-section mt-4">
     <div class="container">
-      
-      <div class="row mb-3">
-        <div class="col-4">
-            <select id="sortSeason" class="form-select">
-                <option value="Season">Sort by Season</option>
-            </select>
-        </div>
-        <div class="col-4">
-          <select id="sortWeek" class="form-select">
-            <option value="Week">Sort by Week</option>
-          </select>
-        </div>
-        <div class="col-4">
-          <select id="sortClub" class="form-select">
-            <option value="Club">Sort by Club</option>
-          </select>
-        </div>
-      </div>
-  
-      <!-- Desktop Table Layout (md and up) -->
-      <div class="d-none d-md-block">
-        <table class="table text-center"> <!-- Removed table-striped table-hover -->
-          <thead>
-            <tr>
-              <th></th>
-              <th class="text-center" style="width: 30px;">Matchup</th>
-              <th></th>
-              <th class="pe-4">Results</th>
-              <th class="pe-4">Winning Goalie</th>
-              <th class="pe-4">Game Winning Goal</th>
-              <th class="text-end"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Matchup 1: Boats vs Glorified Crew -->
-            <tr>
-              <td class="text-end">
-                <div class="d-flex align-items-center justify-content-end">
-                  <span class="me-1"><a routerLink="/club">Boats</a></span>
-                  <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo">
-                </div>
-              </td>
-              <td class="text-center" style="width: 30px;">
-                <span class="fw-bold mx-1">VS</span>
-              </td>
-              <td class="text-start">
-                <div class="d-flex align-items-center justify-content-start">
-                  <img src="assets/images/square-glorifiedcrew.png" alt="Glorified Crew Logo" class="team-logo me-1">
-                  <span><a routerLink="/club">Glorified Crew</a></span>
-                </div>
-              </td>
-              <td class="text-center">
-                <span class="fw-bold">BOA 4</span>, <span>GLO 2</span>
-              </td>
-              <td class="text-center"><a routerLink="/profile-view">John Smith</a></td>
-              <td class="text-center"><a routerLink="/profile-view">David Johnson</a></td>
-              <td class="text-end">
-                <span class="text-muted me-2">Game Summary</span>
-              </td>
-            </tr>
-  
-            <!-- Matchup 2: York City Kings vs Roosters -->
-            <tr>
-              <td class="text-end">
-                <div class="d-flex align-items-center justify-content-end">
-                  <span class="me-1"><a routerLink="/club">York City Kings</a></span>
-                  <img src="assets/images/square-yorkcitykings.png" alt="York City Kings Logo" class="team-logo">
-                </div>
-              </td>
-              <td class="text-center" style="width: 30px;">
-                <span class="fw-bold mx-1">VS</span>
-              </td>
-              <td class="text-start">
-                <div class="d-flex align-items-center justify-content-start">
-                  <img src="assets/images/square-iserlohnroosters.png" alt="Roosters Logo" class="team-logo me-1">
-                  <span><a routerLink="/club">Roosters</a></span>
-                </div>
-              </td>
-              <td class="text-center">
-                <span class="fw-bold">YCK 4</span>, <span>ROO 3 (OT)</span>
-              </td>
-              <td class="text-center"><a routerLink="/profile-view">Michael Brown</a></td>
-              <td class="text-center"><a routerLink="/profile-view">Chris Green</a></td>
-              <td class="text-end">
-                <span class="text-muted me-2">Game Summary</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-  
-      <!-- Mobile Card Layout (below md) -->
-<div class="d-block d-md-none">
-
-    <!-- Card for Matchup 1: BOA vs GLO -->
-    <div class="matchup-card p-3 mb-3">
-      <!-- Score and dots menu row -->
-      <div class="position-relative mb-2">
-        <span class="fw-bold d-block text-center" style="color:#fff;">BOA 4, GLO 2</span>
-        <div class="dropdown position-absolute top-0 end-0">
-          <span class="dots-menu" role="button" data-bs-toggle="dropdown" aria-expanded="false">•••</span>
-          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-            <li><span class="dropdown-item text-muted">Game Summary</span></li>
-          </ul>
-        </div>
-      </div>
-  
-      <!-- Logos and VS row (centered) -->
-      <div class="d-flex align-items-center justify-content-center mt-2">
-        <img src="assets/images/square-boats.png" alt="Boats Logo" class="team-logo-sm me-3">
-        <span class="fw-bold text-white mx-3">VS</span>
-        <img src="assets/images/square-glorifiedcrew.png" alt="Glorified Crew Logo" class="team-logo-sm ms-3">
-      </div>
-  
-      <!-- Winning goalie and goal scorer -->
-      <div class="text-center mt-2 smaller-text">
-        W: John Smith, GWG: David Johnson
-      </div>
-    </div>
-  
-    <!-- Card for Matchup 2: YCK vs ROO -->
-    <div class="matchup-card p-3 mb-3">
-      <!-- Score and dots menu row -->
-      <div class="position-relative mb-2">
-        <span class="fw-bold d-block text-center" style="color:#fff;">YCK 4, ROO 3 (OT)</span>
-        <div class="dropdown position-absolute top-0 end-0">
-          <span class="dots-menu" role="button" data-bs-toggle="dropdown" aria-expanded="false">•••</span>
-          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-            <li><span class="dropdown-item text-muted">Game Summary</span></li>
-          </ul>
-        </div>
-      </div>
-  
-      <!-- Logos and VS row (centered) -->
-      <div class="d-flex align-items-center justify-content-center mt-2">
-        <img src="assets/images/square-yorkcitykings.png" alt="York City Kings Logo" class="team-logo-sm me-3">
-        <span class="fw-bold text-white mx-3">VS</span>
-        <img src="assets/images/square-iserlohnroosters.png" alt="Roosters Logo" class="team-logo-sm ms-3">
-      </div>
-  
-      <!-- Winning goalie and goal scorer -->
-      <div class="text-center mt-2 smaller-text">
-        W: Michael Brown, GWG: Chris Green
-      </div>
-    </div>
-
-    <div class="home-container">
-      <h2>Home with NgRx</h2>
-    </div>
-  
-  </div>
-  
-    </div>
-  </section>
+      <app-schedule [isPreview]="true"></app-schedule>

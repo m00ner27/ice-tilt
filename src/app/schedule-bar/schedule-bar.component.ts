@@ -33,9 +33,31 @@ export class ScheduleBarComponent implements OnInit {
       return;
     }
     
+    console.log('ScheduleBarComponent filtering matches:', {
+      totalMatches: this.matches.length,
+      matchDates: this.matches.map(m => ({ 
+        id: m.id, 
+        date: m.date, 
+        teams: `${m.homeTeam} vs ${m.awayTeam}`,
+        hasEashlData: !!m.eashlData,
+        eashlMatchId: m.eashlMatchId
+      }))
+    });
+    
     this.upcomingMatches = this.matches
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by earliest first
-      .slice(0, 10); // Show the 10 most recent matches
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by oldest first
+      .slice(-10); // Take the last 10 games (most recent on the right)
+    
+    console.log('ScheduleBarComponent filtered matches:', {
+      upcomingCount: this.upcomingMatches.length,
+      upcomingMatches: this.upcomingMatches.map(m => ({
+        id: m.id,
+        date: m.date,
+        teams: `${m.homeTeam} vs ${m.awayTeam}`,
+        hasEashlData: !!m.eashlData,
+        eashlMatchId: m.eashlMatchId
+      }))
+    });
   }
 
   // Method to get the full image URL
@@ -59,6 +81,7 @@ export class ScheduleBarComponent implements OnInit {
   }
 
   isFinal(match: Match): boolean {
-    return !!match.eashlData;
+    // A game is final if it has EASHL data OR if it's a merged game with scores
+    return !!match.eashlData || (!!match.eashlMatchId && match.eashlMatchId.includes('+') && match.homeScore !== undefined && match.awayScore !== undefined);
   }
 }

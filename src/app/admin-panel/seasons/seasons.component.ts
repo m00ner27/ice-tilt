@@ -15,6 +15,7 @@ interface Division {
   _id?: string;
   name: string;
   seasonId: string;
+  logoUrl?: string;
 }
 
 @Component({
@@ -67,6 +68,7 @@ interface Division {
           <div class="list-container">
             <div class="list-item" *ngFor="let division of getDivisionsForSelectedSeason()">
               <div class="list-item-content">
+                <img *ngIf="division.logoUrl" [src]="getImageUrl(division.logoUrl)" [alt]="division.name + ' logo'" class="division-logo">
                 <h4>{{ division.name }}</h4>
               </div>
               <div class="list-item-actions">
@@ -139,6 +141,17 @@ interface Division {
             <div class="form-group">
               <label>Division Name</label>
               <input formControlName="name" type="text" placeholder="Enter division name">
+            </div>
+            <div class="form-group">
+              <label>Division Logo</label>
+              <div class="file-upload">
+                <input type="file" accept="image/*" (change)="onDivisionLogoFileChange($event)">
+                <div *ngIf="divisionLogoPreview" class="logo-preview">
+                  <img [src]="divisionLogoPreview" alt="Logo Preview">
+                  <span *ngIf="uploadingDivisionLogo" class="upload-status">Uploading...</span>
+                </div>
+              </div>
+              <input formControlName="logoUrl" type="text" style="display:none">
             </div>
             <div class="form-actions">
               <button type="submit" class="primary-button" [disabled]="!divisionForm.valid">
@@ -440,6 +453,52 @@ interface Division {
       font-weight: 700;
       margin-bottom: 24px;
     }
+
+    /* Division logo styling */
+    .division-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #23293a;
+      border: 1px solid #394867;
+    }
+
+    /* File upload styling */
+    .file-upload {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-upload input[type="file"] {
+      background: #2c3446;
+      border: 1px solid #394867;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .logo-preview {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-preview img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #23293a;
+      border: 1px solid #394867;
+    }
+
+    .upload-status {
+      color: #90caf9;
+      font-size: 0.9rem;
+    }
   `]
 })
 export class SeasonsComponent implements OnInit {
@@ -453,6 +512,10 @@ export class SeasonsComponent implements OnInit {
   editingSeason: Season | null = null;
   editingDivision: Division | null = null;
   clubsInSeason: any[] = [];
+  
+  // Logo handling properties
+  divisionLogoPreview: string | null = null;
+  uploadingDivisionLogo = false;
 
   constructor(private fb: FormBuilder, private api: ApiService) {
     this.seasonForm = this.fb.group({
@@ -461,7 +524,8 @@ export class SeasonsComponent implements OnInit {
       endDate: ['', Validators.required]
     });
     this.divisionForm = this.fb.group({
-      name: ['', Validators.required]
+      name: ['', Validators.required],
+      logoUrl: ['']
     });
   }
 
@@ -529,10 +593,17 @@ export class SeasonsComponent implements OnInit {
   updateDivision(): void {
     if (this.divisionForm.valid && this.editingDivision) {
       const updated = { ...this.editingDivision, ...this.divisionForm.value };
-      this.api.updateDivision(updated).subscribe(updatedDivision => {
-        const idx = this.divisions.findIndex(d => d._id === updatedDivision._id);
-        if (idx > -1) this.divisions[idx] = updatedDivision;
-        this.cancelDivisionForm();
+      // Updating division with form data
+      
+      this.api.updateDivision(updated).subscribe({
+        next: (updatedDivision) => {
+          const idx = this.divisions.findIndex(d => d._id === updatedDivision._id);
+          if (idx > -1) this.divisions[idx] = updatedDivision;
+          this.cancelDivisionForm();
+        },
+        error: (error) => {
+          console.error('🚨 Error updating division:', error);
+        }
       });
     }
   }
@@ -557,7 +628,11 @@ export class SeasonsComponent implements OnInit {
 
   editDivision(division: Division): void {
     this.editingDivision = division;
-    this.divisionForm.patchValue({ name: division.name });
+    this.divisionForm.patchValue({ 
+      name: division.name,
+      logoUrl: division.logoUrl || ''
+    });
+    this.divisionLogoPreview = division.logoUrl ? this.getImageUrl(division.logoUrl) : null;
     this.isAddingDivision = true;
   }
 
@@ -571,6 +646,7 @@ export class SeasonsComponent implements OnInit {
     this.divisionForm.reset();
     this.editingDivision = null;
     this.isAddingDivision = false;
+    this.divisionLogoPreview = null;
   }
 
   getDivisionsForSelectedSeason(): Division[] {
@@ -606,4 +682,32 @@ export class SeasonsComponent implements OnInit {
     // Otherwise, assume it's a local asset
     return logoUrl;
   }
+
+  // Logo handling methods
+  onDivisionLogoFileChange(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.uploadingDivisionLogo = true;
+      
+      // Upload the file - using the EXACT same pattern as club logos
+      this.api.uploadFile(file).subscribe({
+        next: (res) => {
+          console.log('🔍 Division upload response:', res);
+          this.divisionForm.patchValue({ logoUrl: res.url });
+          this.divisionLogoPreview = this.getImageUrl(res.url);
+          this.uploadingDivisionLogo = false;
+        },
+        error: () => {
+          this.uploadingDivisionLogo = false;
+          alert('Error uploading logo. Please try again.');
+        }
+      });
+      
+      // Show local preview while uploading
+      const reader = new FileReader();
+      reader.onload = e => this.divisionLogoPreview = reader.result as string;
+      reader.readAsDataURL(file);
+    }
+  }
+
 } 

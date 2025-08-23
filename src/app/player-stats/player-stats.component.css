@@ -22,29 +22,34 @@
 .player-stats-table-container {
   width: 100%;
   overflow-x: auto;
+  position: relative;
+  background-color: #1a252f;
 }
 
 .player-stats-table {
   width: 100%;
   background-color: #1a252f;
   color: white;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid #34495e;
   border-radius: 8px;
-  overflow: hidden;
   margin-bottom: 20px;
+  min-width: 1400px; /* Ensure table is wide enough for all columns */
 }
 
 .player-stats-table th {
   background-color: #34495e;
   color: white;
-  padding: 12px 15px;
+  padding: 8px 12px;
   font-weight: bold;
   text-align: center;
   cursor: pointer;
   position: relative;
   transition: background-color 0.2s;
   white-space: nowrap;
+  min-width: 50px;
+  z-index: 1;
 }
 
 .player-stats-table th:hover {
@@ -52,19 +57,30 @@
 }
 
 .player-stats-table td {
-  padding: 10px 15px;
+  padding: 8px 12px;
   text-align: center;
   border-top: 1px solid #34495e;
+  white-space: nowrap;
+  min-width: 50px;
 }
 
 .player-stats-table tbody tr:hover {
   background-color: #2c3e50;
 }
 
+.player-stats-table tbody tr:hover .sticky-column {
+  background-color: #2c3e50 !important;
+}
+
 .player-name {
   text-align: left;
   font-weight: 500;
+  width: 180px;
   min-width: 180px;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .player-number {
@@ -74,22 +90,33 @@
   opacity: 0.7;
 }
 
+/* Player logo styling */
+.player-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 0;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Team column - simple, non-sticky */
 .team-cell {
   text-align: left;
   min-width: 120px;
 }
 
-.team-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.team-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .team-logo {
   width: 25px;
   height: 25px;
-  object-fit: cover;
-  border-radius: 50%;
+  object-fit: contain;
+  border-radius: 0;
 }
 
 .points-column {
@@ -98,6 +125,55 @@
 
 .positive {
   color: #4caf50;
+}
+
+/* Sticky columns for better navigation */
+.sticky-column {
+  position: sticky !important;
+  background-color: #1a252f !important;
+  z-index: 999 !important;
+  border-right: 2px solid #34495e !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Rank column - sticky at left edge */
+.rank-column,
+th.rank-column,
+td.rank-column {
+  left: 0 !important;
+  width: 50px !important;
+  min-width: 50px !important;
+  max-width: 50px !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+  z-index: 1000 !important;
+}
+
+/* Ensure rank header has same styling as other headers */
+th.rank-column {
+  background-color: #34495e !important;
+  color: white !important;
+  text-align: center !important;
+  padding: 8px 4px !important;
+}
+
+/* Player name column - sticky after rank */
+.player-name.sticky-column,
+th.player-name.sticky-column {
+  left: 50px !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  z-index: 999 !important;
+  text-align: left !important;
+}
+
+/* Ensure player name header has same styling as other headers */
+th.player-name.sticky-column {
+  background-color: #34495e !important;
+  color: white !important;
+  text-align: center !important;
+  padding: 8px 12px !important;
 }
 
 .negative {
@@ -124,6 +200,29 @@
   text-align: center;
   padding: 30px;
   color: white;
+}
+
+/* Division Styles - Match standings styling */
+.division-header {
+  color: white;
+  font-size: 1.5em;
+  margin-bottom: 15px;
+  margin-top: 30px;
+  padding: 10px 15px;
+  background-color: #34495e;
+  border-radius: 6px;
+  border-left: 4px solid #3498db;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.division-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 /* Legend styles */
@@ -176,6 +275,8 @@
   .team-logo {
     width: 20px;
     height: 20px;
+    border-radius: 0;
+    object-fit: contain;
   }
   
   .team-info {

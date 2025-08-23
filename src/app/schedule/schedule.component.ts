@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { environment } from '../../environments/environment';
   styleUrls: ['./schedule.component.css']
 })
 export class ScheduleComponent implements OnInit {
+  @Input() isPreview: boolean = false;
   matches: Match[] = [];
   filteredMatches: Match[] = [];
   isLoading: boolean = true;
@@ -45,13 +46,6 @@ export class ScheduleComponent implements OnInit {
     this.matchService.getMatches().subscribe({
       next: (matches) => {
         this.matches = matches;
-        console.log('Loaded matches:', matches.length);
-        console.log('Sample match season IDs:', matches.slice(0, 5).map(m => ({
-          id: m.id,
-          seasonId: m.seasonId,
-          homeTeam: m.homeTeam,
-          awayTeam: m.awayTeam
-        })));
         this.updateTeamOptions();
         this.applyFiltersAndSort();
         this.isLoading = false;
@@ -81,14 +75,6 @@ export class ScheduleComponent implements OnInit {
     this.apiService.getClubs().subscribe({
       next: (clubs) => {
         this.allClubs = clubs;
-        console.log('Loaded clubs:', clubs.length);
-        console.log('Sample club seasons:', clubs.slice(0, 3).map(c => ({
-          name: c.name,
-          seasons: c.seasons?.map((s: any) => ({
-            seasonId: s.seasonId,
-            divisionIds: s.divisionIds
-          }))
-        })));
         this.updateTeamOptions(); // Update team options when clubs load
       },
       error: (error) => {
@@ -143,13 +129,6 @@ export class ScheduleComponent implements OnInit {
     // Apply season filter if selected
     filtered = filtered.filter(match => {
       if (!this.filterSeason) return true;
-      console.log('Season filter check:', {
-        matchId: match.id,
-        matchSeasonId: match.seasonId,
-        filterSeason: this.filterSeason,
-        homeTeam: match.homeTeam,
-        awayTeam: match.awayTeam
-      });
       return match.seasonId === this.filterSeason;
     });
 
@@ -173,6 +152,11 @@ export class ScheduleComponent implements OnInit {
       
       return this.sortDirection === 'asc' ? comparison : -comparison;
     });
+    
+    // Limit to 10 games if in preview mode
+    if (this.isPreview) {
+      this.filteredMatches = this.filteredMatches.slice(0, 10);
+    }
   }
 
   onFilterChange(): void {
@@ -211,6 +195,15 @@ export class ScheduleComponent implements OnInit {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
+    });
+  }
+
+  formatDateMobile(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: '2-digit'
     });
   }
 
