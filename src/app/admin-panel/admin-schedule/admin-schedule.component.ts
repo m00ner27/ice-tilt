@@ -338,10 +338,10 @@ export class AdminScheduleComponent implements OnInit {
     console.log('Total games:', this.games.length);
     
     if (this.currentFilter === 'unlinked') {
-      this.filteredGames = this.games.filter(g => !g.eashlMatchId && !this.isForfeit(g.status));
+      this.filteredGames = this.games.filter(g => !this.isGameLinked(g) && !this.isForfeit(g.status));
       console.log('Unlinked games:', this.filteredGames.length);
     } else if (this.currentFilter === 'linked') {
-      this.filteredGames = this.games.filter(g => g.eashlMatchId || this.isForfeit(g.status));
+      this.filteredGames = this.games.filter(g => this.isGameLinked(g) || this.isForfeit(g.status));
       console.log('Linked games:', this.filteredGames.length);
     } else {
       this.filteredGames = this.games;
@@ -350,8 +350,28 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   calculateUnlinkedCount(): void {
-    this.unlinkedGamesCount = this.games.filter(g => !g.eashlMatchId && !this.isForfeit(g.status)).length;
+    this.unlinkedGamesCount = this.games.filter(g => !this.isGameLinked(g) && !this.isForfeit(g.status)).length;
     console.log('Unlinked count calculated:', this.unlinkedGamesCount);
+  }
+
+  private isGameLinked(game: any): boolean {
+    // A game is considered "linked" if it has:
+    // 1. An EASHL match ID, OR
+    // 2. Manual stats entered (eashlData with manualEntry flag)
+    const hasEashlMatchId = !!game.eashlMatchId;
+    const hasManualStats = !!(game.eashlData && game.eashlData.manualEntry);
+    const isLinked = hasEashlMatchId || hasManualStats;
+    
+    console.log(`=== GAME LINKING CHECK ===`);
+    console.log(`Game ID: ${game._id}`);
+    console.log(`EASHL Match ID: ${game.eashlMatchId}`);
+    console.log(`Has EASHL Match ID: ${hasEashlMatchId}`);
+    console.log(`EASHL Data:`, game.eashlData);
+    console.log(`Manual Entry Flag: ${game.eashlData?.manualEntry}`);
+    console.log(`Has Manual Stats: ${hasManualStats}`);
+    console.log(`Is Linked: ${isLinked}`);
+    
+    return isLinked;
   }
 
   loadClubsAndGames(): void {

@@ -678,25 +678,60 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
   private processEashlPlayerStats(matches: Match[]) {
     const playerStatsMap = new Map<string, any>();
     const pageClubEashlId = this.backendClub?.eashlClubId;
+    const pageClubName = this.backendClub?.name;
 
-    if (!pageClubEashlId) {
-      console.error("Club detail page is missing the eashlClubId, cannot process player stats.");
+    if (!pageClubEashlId && !pageClubName) {
+      console.error("Club detail page is missing both eashlClubId and name, cannot process player stats.");
       return;
     }
     
     matches.forEach(match => {
-      // The 'players' object is keyed by club ID.
-      if (match.eashlData?.players && match.eashlData.players[pageClubEashlId]) {
-        const clubPlayers = match.eashlData.players[pageClubEashlId];
+      if (!match.eashlData?.players) return;
 
-        // Now, clubPlayers is an object where keys are player IDs
-        Object.entries(clubPlayers).forEach(([eaPlayerId, playerData]: [string, any]) => {
-          if (!playerStatsMap.has(eaPlayerId)) {
-            playerStatsMap.set(eaPlayerId, {
-              playerId: eaPlayerId,
-              name: playerData.playername || 'Unknown',
-              number: 0, // Jersey number not available in this part of the API
-              position: playerData.position || 'Unknown',
+      // Check if this is a manual stats entry
+      const isManualEntry = match.eashlData.manualEntry;
+      
+      if (isManualEntry) {
+
+        
+        // Manual stats: players are stored with a 'team' field
+        Object.entries(match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+          // Determine if this player belongs to the current club
+          let isCurrentClubPlayer = false;
+          
+          if (playerData.team === 'home' && match.homeTeam === pageClubName) {
+            isCurrentClubPlayer = true;
+          } else if (playerData.team === 'away' && match.awayTeam === pageClubName) {
+            isCurrentClubPlayer = true;
+          }
+          
+          if (!isCurrentClubPlayer) {
+            return;
+          }
+
+          // For manual stats, try to find existing player by name first
+          const playerName = playerData.playername || playerData.name || 'Unknown';
+          let existingKey = null;
+          let existingStats = null;
+          
+          // Check if we already have a player with this name from EASHL stats
+          for (const [key, stats] of playerStatsMap.entries()) {
+            if (stats.name === playerName) {
+              existingKey = key;
+              existingStats = stats;
+
+              break;
+            }
+          }
+          
+          const playerKey = existingKey || playerName;
+          
+          if (!playerStatsMap.has(playerKey)) {
+            playerStatsMap.set(playerKey, {
+              playerId: playerKey,
+              name: playerName,
+              number: 0, // Manual stats don't have jersey numbers
+              position: this.normalizePosition(playerData.position || 'Unknown'),
               gamesPlayed: 0,
               goals: 0,
               assists: 0,
@@ -706,15 +741,30 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               goalsAgainstAverage: 0,
               shutouts: 0
             });
+          } else if (existingStats) {
+            // Update position if we're merging with existing EASHL stats
+            // Manual stats might have more accurate position info
+            existingStats.position = this.normalizePosition(playerData.position || existingStats.position);
           }
           
-          const stats = playerStatsMap.get(eaPlayerId);
+          const stats = playerStatsMap.get(playerKey);
           stats.gamesPlayed++;
           
-          if (playerData.position.toLowerCase() === 'goalie') {
-            stats.savePercentage += parseFloat(playerData.glsavepct) || 0;
-            stats.goalsAgainstAverage += parseFloat(playerData.glgaa) || 0;
-            // Shutout data not available
+
+          
+          if (this.isGoalie(playerData.position)) {
+            stats.saves = (stats.saves || 0) + (parseInt(playerData.glsaves) || 0);
+            stats.shotsAgainst = (stats.shotsAgainst || 0) + (parseInt(playerData.glshots) || 0);
+            stats.goalsAgainst = (stats.goalsAgainst || 0) + (parseInt(playerData.glga) || 0);
+            stats.shutouts = (stats.shutouts || 0) + (parseInt(playerData.glso) || 0);
+            // Calculate save percentage
+            if (stats.shotsAgainst > 0) {
+              stats.savePercentage = (stats.saves / stats.shotsAgainst) * 100;
+            }
+            // Calculate GAA (goals against average)
+            if (stats.gamesPlayed > 0) {
+              stats.goalsAgainstAverage = stats.goalsAgainst / stats.gamesPlayed;
+            }
           } else {
             stats.goals += parseInt(playerData.skgoals) || 0;
             stats.assists += parseInt(playerData.skassists) || 0;
@@ -722,23 +772,114 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
             stats.plusMinus += parseInt(playerData.skplusmin) || 0;
           }
         });
+      } else {
+        // Standard EASHL data: players are keyed by club ID
+        if (pageClubEashlId && match.eashlData.players[pageClubEashlId]) {
+          const clubPlayers = match.eashlData.players[pageClubEashlId];
+
+          Object.entries(clubPlayers).forEach(([eaPlayerId, playerData]: [string, any]) => {
+            // For EASHL data, try to find existing player by name first, then by ID
+            const playerName = playerData.playername || playerData.name || 'Unknown';
+            let existingKey = null;
+            let existingStats = null;
+            
+            // Check if we already have a player with this name from manual stats
+            for (const [key, stats] of playerStatsMap.entries()) {
+              if (stats.name === playerName) {
+                existingKey = key;
+                existingStats = stats;
+
+                break;
+              }
+            }
+            
+            const playerKey = existingKey || eaPlayerId;
+            
+                                     if (!playerStatsMap.has(playerKey)) {
+              playerStatsMap.set(playerKey, {
+                playerId: eaPlayerId,
+                name: playerName,
+                number: 0, // Jersey number not available in this part of the API
+                position: this.normalizePosition(playerData.position || 'Unknown'),
+                gamesPlayed: 0,
+                goals: 0,
+                assists: 0,
+                points: 0,
+                plusMinus: 0,
+                savePercentage: 0,
+                goalsAgainstAverage: 0,
+                shutouts: 0
+              });
+            } else if (existingStats) {
+              // Update position if we're merging with existing manual stats
+              // EASHL data typically has more accurate position info
+              existingStats.position = this.normalizePosition(playerData.position || existingStats.position);
+            }
+            
+            const stats = playerStatsMap.get(playerKey);
+            stats.gamesPlayed++;
+            
+            if (this.isGoalie(playerData.position)) {
+              stats.savePercentage += parseFloat(playerData.glsavepct) || 0;
+              stats.goalsAgainstAverage += parseFloat(playerData.glgaa) || 0;
+              // Shutout data not available
+            } else {
+              stats.goals += parseInt(playerData.skgoals) || 0;
+              stats.assists += parseInt(playerData.skassists) || 0;
+              stats.points = stats.goals + stats.assists;
+              stats.plusMinus += parseInt(playerData.skplusmin) || 0;
+            }
+          });
+        }
       }
     });
     
-    // Post-process goalie stats for averages
+    // Post-process goalie stats for averages (only for EASHL data)
     playerStatsMap.forEach(stats => {
-      if (stats.position.toLowerCase() === 'goalie' && stats.gamesPlayed > 0) {
-        stats.savePercentage = stats.savePercentage / stats.gamesPlayed;
-        stats.goalsAgainstAverage = stats.goalsAgainstAverage / stats.gamesPlayed;
+      if (this.isGoalie(stats.position) && stats.gamesPlayed > 0) {
+        // For manual stats, we already calculated these above
+        // For EASHL stats, we need to average them
+        if (!stats.saves && !stats.shotsAgainst) { // EASHL stats
+          stats.savePercentage = stats.savePercentage / stats.gamesPlayed;
+          stats.goalsAgainstAverage = stats.goalsAgainstAverage / stats.gamesPlayed;
+        }
       }
     });
 
+
+
     // Convert maps to arrays for display
     this.skaterStats = Array.from(playerStatsMap.values())
-      .filter(player => player.position.toLowerCase() !== 'goalie');
+      .filter(player => !this.isGoalie(player.position));
       
     this.goalieStats = Array.from(playerStatsMap.values())
-      .filter(player => player.position.toLowerCase() === 'goalie');
+      .filter(player => this.isGoalie(player.position));
+
+
+  }
+
+  private isGoalie(position: string): boolean {
+    const lowerPos = position.toLowerCase().replace(/\s/g, '');
+    return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
+  }
+
+  private normalizePosition(position: string): string {
+    const lowerPos = position.toLowerCase().replace(/\s/g, '');
+    const positionMap: { [key: string]: string } = {
+      'c': 'CENTER',
+      'center': 'CENTER',
+      'lw': 'LEFTWING',
+      'leftwing': 'LEFTWING',
+      'rw': 'RIGHTWING',
+      'rightwing': 'RIGHTWING',
+      'd': 'DEFENSEMEN',
+      'defenseman': 'DEFENSEMEN',
+      'defensemen': 'DEFENSEMEN',
+      'g': 'G',
+      'goalie': 'G',
+      'goaltender': 'G'
+    };
+    return positionMap[lowerPos] || position.toUpperCase();
   }
 
   get signedPlayers(): Player[] {

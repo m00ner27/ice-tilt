@@ -87,6 +87,18 @@ export class MatchDetailComponent implements OnInit {
     this.homeTeamGoalies = [];
     this.awayTeamGoalies = [];
 
+    // Check for manual stats first
+    console.log('=== CHECKING FOR MANUAL STATS ===');
+    console.log('Match EASHL Data:', this.match.eashlData);
+    console.log('Manual Entry Flag:', this.match.eashlData?.manualEntry);
+    console.log('EASHL Match ID:', this.match.eashlMatchId);
+    
+    if (this.match.eashlData && this.match.eashlData.manualEntry) {
+      console.log('Manual stats detected for game:', this.match.id);
+      this.processManualStats();
+      return;
+    }
+
     if (this.isMergedGame) {
       console.log('Merged game detected:', this.match.eashlMatchId);
       // Merged games should now have combined player stats
@@ -184,6 +196,80 @@ export class MatchDetailComponent implements OnInit {
   
   goBack(): void {
     this.location.back();
+  }
+
+  private processManualStats(): void {
+    if (!this.match?.eashlData?.players) {
+      this.noStatsMessage = 'Manual stats were entered but player data is incomplete.';
+      return;
+    }
+
+    // For manual stats, we need to determine team based on the data structure
+    // Since manual stats store players by their database ID, we need to check
+    // which team they were assigned to during entry
+    
+    // Get the home and away club IDs from the match
+    const homeClubId = (this.match as any).homeClubId?._id || (this.match as any).homeClubId;
+    const awayClubId = (this.match as any).awayClubId?._id || (this.match as any).awayClubId;
+
+    // Process manual stats from eashlData.players
+    Object.entries(this.match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+      const playerDisplay: PlayerStatDisplay = {
+        name: playerData.playername || playerData.name || 'Unknown Player',
+        number: 0, // Manual stats don't have jersey numbers
+        position: this.formatPosition(playerData.position || 'Unknown')
+      };
+
+      // Check if this is a goalie
+      if (this.isGoalie(playerData.position)) {
+        // Goalie stats
+        Object.assign(playerDisplay, {
+          saves: playerData.glsaves || 0,
+          shotsAgainst: playerData.glshots || 0,
+          savePercentage: playerData.glshots ? (playerData.glsaves || 0) / playerData.glshots : 0,
+          goalsAgainst: playerData.glga || 0,
+          shutout: playerData.glso || 0
+        });
+      } else {
+        // Skater stats
+        Object.assign(playerDisplay, {
+          goals: playerData.skgoals || 0,
+          assists: playerData.skassists || 0,
+          points: (playerData.skgoals || 0) + (playerData.skassists || 0),
+          plusMinus: playerData.skplusmin || 0
+        });
+      }
+
+      // For manual stats, determine team based on the stored team field
+      if (playerData.team === 'home') {
+        if (this.isGoalie(playerData.position)) {
+          this.homeTeamGoalies.push(playerDisplay);
+        } else {
+          this.homeTeamPlayers.push(playerDisplay);
+        }
+      } else if (playerData.team === 'away') {
+        if (this.isGoalie(playerData.position)) {
+          this.awayTeamGoalies.push(playerDisplay);
+        } else {
+          this.awayTeamPlayers.push(playerDisplay);
+        }
+      } else {
+        // Fallback: add to both teams if team is unknown
+        if (this.isGoalie(playerData.position)) {
+          this.homeTeamGoalies.push(playerDisplay);
+          this.awayTeamGoalies.push(playerDisplay);
+        } else {
+          this.homeTeamPlayers.push(playerDisplay);
+          this.awayTeamPlayers.push(playerDisplay);
+        }
+      }
+    });
+
+    // Sort skaters by points
+    this.homeTeamPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
+    this.awayTeamPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
+
+    this.noStatsMessage = ''; // Clear the message since we have stats
   }
 
   private isGoalie(position: string): boolean {

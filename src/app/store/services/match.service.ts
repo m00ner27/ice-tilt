@@ -56,6 +56,9 @@ export class MatchService {
     // Check if this is a merged game (has eashlMatchId with +)
     const isMergedGame = game.eashlMatchId && game.eashlMatchId.includes('+');
     
+    // Check if this is a manual stats entry
+    const isManualEntry = game.eashlData?.manualEntry;
+    
     if (isMergedGame) {
       console.log(`Processing merged game ${game._id} with eashlMatchId: ${game.eashlMatchId}`);
       // Merged games should have combined player stats in eashlData
@@ -66,7 +69,36 @@ export class MatchService {
       }
     }
 
-    if (game.eashlData?.players) {
+    if (isManualEntry) {
+      console.log(`Processing manual stats entry for game ${game._id}`);
+      // Manual stats store players by their database ID, not by club
+      if (game.eashlData?.players) {
+        Object.entries(game.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+          // For manual stats, determine team based on the stored team field
+          let teamName = 'Unknown';
+          if (playerData.team === 'home') {
+            teamName = game.homeClubId?.name || 'Home Team';
+          } else if (playerData.team === 'away') {
+            teamName = game.awayClubId?.name || 'Away Team';
+          }
+          
+          playerStats.push({
+            playerId: parseInt(playerId),
+            name: playerData.playername || playerData.name || 'Unknown',
+            team: teamName,
+            number: 0, // Manual stats don't have jersey numbers
+            position: playerData.position || 'Unknown',
+            goals: parseInt(playerData.skgoals) || 0,
+            assists: parseInt(playerData.skassists) || 0,
+            plusMinus: parseInt(playerData.skplusmin) || 0,
+            saves: parseInt(playerData.glsaves) || 0,
+            shotsAgainst: parseInt(playerData.glshots) || 0,
+            goalsAgainst: parseInt(playerData.glga) || 0,
+            shutout: parseInt(playerData.glso) || 0
+          });
+        });
+      }
+    } else if (game.eashlData?.players) {
       // Get the EASHL club IDs from the populated club data
       const homeEashlClubId = game.homeClubId?.eashlClubId;
       const awayEashlClubId = game.awayClubId?.eashlClubId;

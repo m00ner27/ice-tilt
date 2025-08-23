@@ -177,7 +177,7 @@ export class ApiService {
   }
 
   getGame(gameId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/games/${gameId}`);
+    return this.http.get(`${this.apiUrl}/api/games/${gameId}`);
   }
 
   getTeamPlayers(teamId: string): Observable<any[]> {
@@ -186,6 +186,10 @@ export class ApiService {
 
   saveGameStats(stats: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/games/stats`, stats);
+  }
+
+  saveManualGameStats(gameStats: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/games/manual-stats`, gameStats);
   }
 
   // Club roster methods
