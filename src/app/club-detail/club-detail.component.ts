@@ -243,40 +243,11 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  // Set the default selected season to the most recent season that this club is actually in
+  // Set the default selected season to "All Seasons" for initial page load
   private setDefaultSeasonForClub(backendClub: BackendClub): void {
-    if (!backendClub.seasons || backendClub.seasons.length === 0) {
-      // If club has no seasons, default to "All Seasons"
-      this.selectedSeasonId = null;
-      return;
-    }
-
-    // Get the season IDs that this club is actually associated with
-    const clubSeasonIds = backendClub.seasons.map(s => {
-      if (typeof s.seasonId === 'object' && s.seasonId._id) {
-        return s.seasonId._id;
-      }
-      return s.seasonId as string;
-    });
-
-    console.log('Club season IDs:', clubSeasonIds);
-
-    // Find the most recent season from the global seasons list that this club is in
-    const availableSeasons = this.seasons.filter(season => 
-      season._id !== 'all-seasons' && clubSeasonIds.includes(season._id)
-    );
-
-    console.log('Available seasons for this club:', availableSeasons);
-
-    if (availableSeasons.length > 0) {
-      // Set the most recent season (seasons are already sorted by date, most recent first)
-      this.selectedSeasonId = availableSeasons[0]._id;
-      console.log('Selected season ID:', this.selectedSeasonId);
-    } else {
-      // Fallback to "All Seasons" if no matching seasons found
-      this.selectedSeasonId = null;
-      console.log('No matching seasons found, defaulting to All Seasons');
-    }
+    // Always start with "All Seasons" selected (null means "All Seasons")
+    this.selectedSeasonId = null;
+    console.log('Defaulting to All Seasons for initial page load');
   }
 
   // Get seasons that this club is actually associated with (for the dropdown)

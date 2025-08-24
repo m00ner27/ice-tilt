@@ -134,6 +134,13 @@
   font-weight: 500;
 }
 
+.secondary-positions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
 /* Gaming IDs Section */
 .gaming-ids-section {
   background-color: #2c3e50;
@@ -240,6 +247,64 @@
   color: #3498db;
   font-weight: 500;
   font-size: 1.1em;
+}
+
+/* Career Clubs Section */
+.career-clubs-section {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.career-clubs-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.career-clubs-section .detail-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+}
+
+.career-clubs-section .label {
+  align-self: center;
+  margin: 0;
+}
+
+.career-club-item {
+  display: flex;
+  align-items: center;
+}
+
+.career-club-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 2px solid #34495e;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.career-club-logo:hover {
+  border-color: #3498db;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.career-club-logo.clickable {
+  cursor: pointer;
+}
+
+.career-club-logo.clickable:hover {
+  border-color: #3498db;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
 }
 
 /* Action Buttons */
@@ -367,16 +432,19 @@
 .season-table th:first-child {
   text-align: left;
   padding-left: 1rem;
+  padding-right: 1rem;
   position: sticky;
   left: 0;
   z-index: 10;
   background: #3498db;
+  min-width: 120px;
+  white-space: nowrap;
 }
 
 .season-table th:nth-child(2) {
-  text-align: left;
+  text-align: center;
   position: sticky;
-  left: 80px; /* Reduced to eliminate gap between Season and Team columns */
+  left: 120px; /* Position after the Season column's full width */
   z-index: 10;
   background: #3498db;
 }
@@ -403,19 +471,22 @@
 .season-table td:first-child {
   text-align: left;
   padding-left: 1rem;
+  padding-right: 1rem;
   font-weight: 600;
   color: #3498db;
   position: sticky;
   left: 0;
   z-index: 5;
   background: #2c3e50;
+  min-width: 120px;
+  white-space: nowrap;
 }
 
 .season-table td:nth-child(2) {
   text-align: left;
   padding-left: 0.5rem;
   position: sticky;
-  left: 80px; /* Reduced to eliminate gap between Season and Team columns */
+  left: 120px; /* Position after the Season column's full width */
   z-index: 5;
   background: #2c3e50;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
@@ -507,4 +578,261 @@
     width: 24px;
     height: 24px;
   }
+  
+  /* Adjust sticky column positioning for mobile */
+  .season-table th:nth-child(2),
+  .season-table td:nth-child(2) {
+    left: 100px; /* Mobile: Season column is smaller, so Team column starts earlier */
+  }
 } 
+
+/* Game-by-Game Stats Section */
+.game-stats-section {
+  background-color: #1a252f;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.game-stats-section h2 {
+  color: #3498db;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.no-games-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #ecf0f1;
+  font-style: italic;
+}
+
+.no-games-message p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.game-stats-table-container {
+  margin-top: 1rem;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #34495e;
+  background-color: #2c3e50;
+}
+
+.game-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #2c3e50;
+  font-size: 0.8rem;
+}
+
+/* Match the season breakdown table font sizes exactly */
+.game-stats-table .stat-value {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.game-stats-table thead {
+  background: #3498db;
+  color: white;
+}
+
+.game-stats-table th {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.game-stats-table th:first-child {
+  text-align: left;
+  padding-left: 1rem;
+  background: #3498db;
+}
+
+
+
+.game-stats-table th:nth-child(2) {
+  text-align: left;
+  background: #3498db;
+}
+
+.game-stats-table tbody tr {
+  border-bottom: 1px solid #34495e;
+  transition: background-color 0.2s ease;
+}
+
+.game-stats-table tbody tr:hover {
+  background: #34495e;
+}
+
+.game-stats-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.game-stats-table td {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.game-stats-table td:first-child {
+  text-align: left;
+  padding-left: 1rem;
+  font-weight: 600;
+  color: #3498db;
+  background: #2c3e50;
+}
+
+
+
+
+
+
+
+.game-stats-table td:nth-child(2) {
+  text-align: left;
+  padding-left: 0.5rem;
+  background: #2c3e50;
+}
+
+.game-date {
+  min-width: 120px;
+  color: #3498db;
+  font-weight: 600;
+}
+
+.club-header {
+  text-align: center;
+}
+
+.game-club {
+  min-width: 120px;
+  color: white;
+  font-weight: 600;
+}
+
+.club-info, .opponent-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.club-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.club-name, .opponent-name {
+  color: white;
+  font-weight: 600;
+}
+
+.result-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.result-letter {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.final-score {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.game-opponent {
+  min-width: 140px;
+}
+
+.opponent-name {
+  font-weight: 500;
+  color: #ecf0f1;
+  display: block;
+  text-align: left;
+}
+
+.game-opponent {
+  min-width: 140px;
+  text-align: left;
+}
+
+.game-score {
+  font-size: 0.75rem;
+  color: #bdc3c7;
+  display: block;
+}
+
+.game-result {
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  padding: 4px 8px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.game-result.W {
+  background: #27ae60;
+  color: white;
+}
+
+.game-result.L {
+  background: #e74c3c;
+  color: white;
+}
+
+.game-result.T {
+  background: #f39c12;
+  color: white;
+}
+
+.stat-value {
+  color: #ecf0f1;
+  font-weight: 600;
+}
+
+.stat-value.positive {
+  color: #27ae60;
+}
+
+.stat-value.negative {
+  color: #e74c3c;
+}
+
+/* Responsive adjustments for game stats */
+@media (max-width: 768px) {
+  .game-stats-table-container {
+    font-size: 0.8rem;
+  }
+  
+  .game-stats-table th,
+  .game-stats-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .game-stats-table th:first-child,
+  .game-stats-table td:first-child {
+    padding-left: 0.5rem;
+  }
+  
+  .game-stats-table th:nth-child(2),
+  .game-stats-table td:nth-child(2) {
+    padding-left: 0.25rem;
+  }
+  
+
+} 
+
+ 

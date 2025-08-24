@@ -186,18 +186,7 @@ export class PlayersComponent implements OnInit {
               } else {
                 console.log(`No club found for ${user.discordUsername || user.gamertag}`);
                 
-                // Fallback: Check if this is m00ner and we know he should be on Team Infernus
-                if (user.discordUsername === 'm00ner' || user.gamertag === 'm00ner') {
-                  console.log('Special handling for m00ner - checking for Team Infernus');
-                  const teamInfernus = this.clubs.find(c => c.name === 'Team Infernus');
-                  if (teamInfernus) {
-                    console.log('Found Team Infernus, setting m00ner as signed');
-                    clubName = 'Team Infernus';
-                    clubId = teamInfernus._id;
-                    status = 'Signed';
-                    logo = teamInfernus.logoUrl;
-                  }
-                }
+
               }
             }
           }
@@ -206,6 +195,7 @@ export class PlayersComponent implements OnInit {
             id: user._id || user.id,
             discordUsername: user.discordUsername || '',
             position: profile.position || 'C',
+            secondaryPositions: profile.secondaryPositions || [],
             number: profile.number || '',
             psnId: user.platform === 'PS5' ? user.gamertag : '',
             xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',

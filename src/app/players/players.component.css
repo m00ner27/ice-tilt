@@ -114,10 +114,28 @@ button.active {
   font-size: 1.2em;
 }
 
-.position {
-  color: #3498db;
-  margin: 5px 0;
+.positions-section {
+  margin: 10px 0;
+}
+
+.position-group {
+  margin: 8px 0;
+}
+
+.position-header {
+  color: #8795a5;
+  margin: 0 0 5px 0;
+  font-size: 0.9em;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.secondary-positions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 5px;
 }
 
 .status {

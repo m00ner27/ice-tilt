@@ -44,7 +44,7 @@ interface PlayerStats {
   assists: number;
   points: number;
   plusMinus: number;
-  timeOnIce: number; // Time on ice in minutes
+  
   shots: number; // Shots on goal
   hits: number; // Hits
   blockedShots: number; // Blocked shots
@@ -293,70 +293,86 @@ export class PlayerStatsComponent implements OnInit {
       });
       
       matches.forEach(match => {
-        // Use eashlData.players instead of playerStats
-        if (match.eashlData?.players) {
-          Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
-            // Map club ID to team name
-            let teamName = 'Unknown';
-            if (match.homeClub?.eashlClubId === clubId) {
-              teamName = match.homeClub.name;
-            } else if (match.awayClub?.eashlClubId === clubId) {
-              teamName = match.awayClub.name;
-            }
-            
-            // For "All Seasons", include all teams
-            if (typeof clubPlayers === 'object' && clubPlayers !== null) {
-              Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
-                if (this.isGoalie(playerData.position)) {
-                  return; // Skip goalies
+        // Check if this is a manual stats entry
+        const isManualEntry = match.eashlData?.manualEntry;
+        
+
+        
+        if (isManualEntry) {
+          // Process manual stats: players are stored with a 'team' field
+          if (match.eashlData?.players) {
+            Object.entries(match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+              if (!playerData.position || this.isGoalie(playerData.position)) {
+                return; // Skip goalies or players without position
+              }
+
+              // Determine team name from manual stats
+              let teamName = 'Unknown';
+              if (playerData.team === 'home') {
+                teamName = match.homeTeam;
+              } else if (playerData.team === 'away') {
+                teamName = match.awayTeam;
+              }
+
+              // For "All Seasons", include all teams
+              const playerName = playerData.playername || playerData.name || 'Unknown';
+              
+              // Try to find existing player by name first, then by ID
+              let existingKey = null;
+              for (const [key, stats] of statsMap.entries()) {
+                if (stats.name === playerName) {
+                  existingKey = key;
+                  break;
                 }
+              }
+              
+              const playerKey = existingKey || playerName;
+              let existingStats = statsMap.get(playerKey);
 
-                const playerIdNum = parseInt(playerId);
-                let existingStats = statsMap.get(playerIdNum);
+              if (!existingStats) {
+                existingStats = {
+                  playerId: playerKey,
+                  name: playerName,
+                  team: teamName,
+                  teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                  number: 0, // Manual stats don't have jersey numbers
+                  position: this.formatPosition(playerData.position),
+                  division: teamDivisionMap.get(teamName) || 'Unknown',
+                  gamesPlayed: 0,
+                  goals: 0,
+                  assists: 0,
+                  points: 0,
+                  plusMinus: 0,
+                  shots: 0,
+                  hits: 0,
+                  blockedShots: 0,
+                  penaltyMinutes: 0,
+                  powerPlayGoals: 0,
+                  shortHandedGoals: 0,
+                  gameWinningGoals: 0,
+                  takeaways: 0,
+                  giveaways: 0,
+                  passAttempts: 0,
+                  passes: 0,
+                  passPercentage: 0,
+                  shotPercentage: 0,
+                  playerScore: 0,
+                  possession: 0,
+                  faceoffsWon: 0,
+                  faceoffsLost: 0,
+                  faceoffPercentage: 0
+                };
+                statsMap.set(playerKey, existingStats);
+              }
 
-                if (!existingStats) {
-                  existingStats = {
-                    playerId: playerIdNum,
-                    name: playerData.playername || 'Unknown',
-                    team: teamName,
-                    teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
-                    number: parseInt(playerData.jerseynum) || 0,
-                    position: this.formatPosition(playerData.position),
-                    division: teamDivisionMap.get(teamName) || 'Unknown',
-                    gamesPlayed: 0,
-                    goals: 0,
-                    assists: 0,
-                    points: 0,
-                    plusMinus: 0,
-                    timeOnIce: 0,
-                    shots: 0,
-                    hits: 0,
-                    blockedShots: 0,
-                    penaltyMinutes: 0,
-                    powerPlayGoals: 0,
-                    shortHandedGoals: 0,
-                    gameWinningGoals: 0,
-                    takeaways: 0,
-                    giveaways: 0,
-                    passAttempts: 0,
-                    passes: 0,
-                    passPercentage: 0,
-                    shotPercentage: 0,
-                    playerScore: 0,
-                    possession: 0,
-                    faceoffsWon: 0,
-                    faceoffsLost: 0,
-                    faceoffPercentage: 0
-                  };
-                  statsMap.set(playerIdNum, existingStats);
-                }
-
-                                                                          existingStats.gamesPlayed++;
+              existingStats.gamesPlayed++;
               existingStats.goals += parseInt(playerData.skgoals) || 0;
               existingStats.assists += parseInt(playerData.skassists) || 0;
-              existingStats.points += (parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0);
+              existingStats.points = existingStats.goals + existingStats.assists;
               existingStats.plusMinus += parseInt(playerData.skplusmin) || 0;
-              existingStats.timeOnIce += parseInt(playerData.sktoi) || 0;
+              
+
+              
               existingStats.shots += parseInt(playerData.skshots) || 0;
               existingStats.hits += parseInt(playerData.skhits) || 0;
               existingStats.blockedShots += parseInt(playerData.skblk) || 0;
@@ -372,9 +388,94 @@ export class PlayerStatsComponent implements OnInit {
               existingStats.possession += parseInt(playerData.skpossession) || 0;
               existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
               existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
-              });
-            }
-          });
+            });
+          }
+        } else {
+          // Process EASHL data: players are organized by club ID
+          if (match.eashlData?.players) {
+            Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
+              // Map club ID to team name
+              let teamName = 'Unknown';
+              if (match.homeClub?.eashlClubId === clubId) {
+                teamName = match.homeClub.name;
+              } else if (match.awayClub?.eashlClubId === clubId) {
+                teamName = match.awayClub.name;
+              }
+              
+              // For "All Seasons", include all teams
+              if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+                Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
+                  if (!playerData.position || this.isGoalie(playerData.position)) {
+                    return; // Skip goalies or players without position
+                  }
+
+                  const playerIdNum = parseInt(playerId);
+                  let existingStats = statsMap.get(playerIdNum);
+
+                  if (!existingStats) {
+                    existingStats = {
+                      playerId: playerIdNum,
+                      name: playerData.playername || 'Unknown',
+                      team: teamName,
+                      teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                      number: parseInt(playerData.jerseynum) || 0,
+                      position: this.formatPosition(playerData.position),
+                      division: teamDivisionMap.get(teamName) || 'Unknown',
+                      gamesPlayed: 0,
+                      goals: 0,
+                      assists: 0,
+                      points: 0,
+                      plusMinus: 0,
+                      shots: 0,
+                      hits: 0,
+                      blockedShots: 0,
+                      penaltyMinutes: 0,
+                      powerPlayGoals: 0,
+                      shortHandedGoals: 0,
+                      gameWinningGoals: 0,
+                      takeaways: 0,
+                      giveaways: 0,
+                      passAttempts: 0,
+                      passes: 0,
+                      passPercentage: 0,
+                      shotPercentage: 0,
+                      playerScore: 0,
+                      possession: 0,
+                      faceoffsWon: 0,
+                      faceoffsLost: 0,
+                      faceoffPercentage: 0
+                    };
+                    statsMap.set(playerIdNum, existingStats);
+                  }
+
+                  existingStats.gamesPlayed++;
+                  existingStats.goals += parseInt(playerData.skgoals) || 0;
+                  existingStats.assists += parseInt(playerData.skassists) || 0;
+                  existingStats.points += (parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0);
+                  existingStats.plusMinus += parseInt(playerData.skplusmin) || 0;
+                  
+
+
+                  
+                  existingStats.shots += parseInt(playerData.skshots) || 0;
+                  existingStats.hits += parseInt(playerData.skhits) || 0;
+                  existingStats.blockedShots += parseInt(playerData.skblk) || 0;
+                  existingStats.penaltyMinutes += parseInt(playerData.skpim) || 0;
+                  existingStats.powerPlayGoals += parseInt(playerData.skppg) || 0;
+                  existingStats.shortHandedGoals += parseInt(playerData.skshg) || 0;
+                  existingStats.gameWinningGoals += parseInt(playerData.skgwg) || 0;
+                  existingStats.takeaways += parseInt(playerData.sktakeaways) || 0;
+                  existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
+                  existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
+                  existingStats.passes += parseInt(playerData.skpasses) || 0;
+                  existingStats.playerScore += parseInt(playerData.score) || 0;
+                  existingStats.possession += parseInt(playerData.skpossession) || 0;
+                  existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
+                  existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+                });
+              }
+            });
+          }
         }
       });
       
@@ -433,79 +534,186 @@ export class PlayerStatsComponent implements OnInit {
     });
     
     matches.forEach(match => {
-      // Use eashlData.players instead of playerStats
-      if (match.eashlData?.players) {
-        Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
-          // Map club ID to team name
-          let teamName = 'Unknown';
-          if (match.homeClub?.eashlClubId === clubId) {
-            teamName = match.homeClub.name;
-          } else if (match.awayClub?.eashlClubId === clubId) {
-            teamName = match.awayClub.name;
-          }
-          
-          // Only include players from teams officially in the selected season
-          if (!seasonTeams.has(teamName)) {
-            return;
-          }
-          
-          if (typeof clubPlayers === 'object' && clubPlayers !== null) {
-            Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
-              if (this.isGoalie(playerData.position)) {
-                return; // Skip goalies
+      // Check if this is a manual stats entry
+      const isManualEntry = match.eashlData?.manualEntry;
+      
+      if (isManualEntry) {
+        // Process manual stats: players are stored with a 'team' field
+        if (match.eashlData?.players) {
+          Object.entries(match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+            if (!playerData.position || this.isGoalie(playerData.position)) {
+              return; // Skip goalies or players without position
+            }
+
+            // Determine team name from manual stats
+            let teamName = 'Unknown';
+            if (playerData.team === 'home') {
+              teamName = match.homeTeam;
+            } else if (playerData.team === 'away') {
+              teamName = match.awayTeam;
+            }
+
+            // Only include players from teams officially in the selected season
+            if (!seasonTeams.has(teamName)) {
+              return;
+            }
+
+            const playerName = playerData.playername || playerData.name || 'Unknown';
+            
+            // Try to find existing player by name first, then by ID
+            let existingKey = null;
+            for (const [key, stats] of statsMap.entries()) {
+              if (stats.name === playerName) {
+                existingKey = key;
+                break;
               }
+            }
+            
+            const playerKey = existingKey || playerName;
+            let existingStats = statsMap.get(playerKey);
 
-              const playerIdNum = parseInt(playerId);
-              let existingStats = statsMap.get(playerIdNum);
+            if (!existingStats) {
+              existingStats = {
+                playerId: playerKey,
+                name: playerName,
+                team: teamName,
+                teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                number: 0, // Manual stats don't have jersey numbers
+                position: this.formatPosition(playerData.position),
+                division: teamDivisionMap.get(teamName) || 'Unknown',
+                gamesPlayed: 0,
+                goals: 0,
+                assists: 0,
+                points: 0,
+                plusMinus: 0,
+                shots: 0,
+                hits: 0,
+                blockedShots: 0,
+                penaltyMinutes: 0,
+                powerPlayGoals: 0,
+                shortHandedGoals: 0,
+                gameWinningGoals: 0,
+                takeaways: 0,
+                giveaways: 0,
+                passAttempts: 0,
+                passes: 0,
+                passPercentage: 0,
+                shotPercentage: 0,
+                playerScore: 0,
+                possession: 0,
+                faceoffsWon: 0,
+                faceoffsLost: 0,
+                faceoffPercentage: 0
+              };
+              statsMap.set(playerKey, existingStats);
+            }
 
-              if (!existingStats) {
-                existingStats = {
-                  playerId: playerIdNum,
-                  name: playerData.playername || 'Unknown',
-                  team: teamName,
-                  teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
-                  number: parseInt(playerData.jerseynum) || 0,
-                  position: this.formatPosition(playerData.position),
-                  division: teamDivisionMap.get(teamName) || 'Unknown',
-                  gamesPlayed: 0,
-                  goals: 0,
-                  assists: 0,
-                  points: 0,
-                  plusMinus: 0,
-                  timeOnIce: 0,
-                  shots: 0,
-                  hits: 0,
-                  blockedShots: 0,
-                  penaltyMinutes: 0,
-                  powerPlayGoals: 0,
-                  shortHandedGoals: 0,
-                  gameWinningGoals: 0,
-                  takeaways: 0,
-                  giveaways: 0,
-                  passAttempts: 0,
-                  passes: 0,
-                  passPercentage: 0,
-                  shotPercentage: 0,
-                  playerScore: 0,
-                  possession: 0,
-                  faceoffsWon: 0,
-                  faceoffsLost: 0,
-                  faceoffPercentage: 0
-                };
-                statsMap.set(playerIdNum, existingStats);
-              }
+            existingStats.gamesPlayed++;
+            existingStats.goals += parseInt(playerData.skgoals) || 0;
+            existingStats.assists += parseInt(playerData.skassists) || 0;
+            existingStats.points = existingStats.goals + existingStats.assists;
+            existingStats.plusMinus += parseInt(playerData.skplusmin) || 0;
+            
 
-              existingStats.gamesPlayed++;
-              existingStats.goals += parseInt(playerData.skgoals) || 0;
-              existingStats.assists += parseInt(playerData.skassists) || 0;
-              existingStats.points = existingStats.goals + existingStats.assists;
-              existingStats.plusMinus += parseInt(playerData.skplusmin) || 0;
-              existingStats.team = teamName;
-              existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
-              existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
-            });
-          }
-        });
+            
+            existingStats.shots += parseInt(playerData.skshots) || 0;
+            existingStats.hits += parseInt(playerData.skhits) || 0;
+            existingStats.blockedShots += parseInt(playerData.skblk) || 0;
+            existingStats.penaltyMinutes += parseInt(playerData.skpim) || 0;
+            existingStats.powerPlayGoals += parseInt(playerData.skppg) || 0;
+            existingStats.shortHandedGoals += parseInt(playerData.skshg) || 0;
+            existingStats.gameWinningGoals += parseInt(playerData.skgwg) || 0;
+            existingStats.takeaways += parseInt(playerData.sktakeaways) || 0;
+            existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
+            existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
+            existingStats.passes += parseInt(playerData.skpasses) || 0;
+            existingStats.playerScore += parseInt(playerData.score) || 0;
+            existingStats.possession += parseInt(playerData.skpossession) || 0;
+            existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
+            existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+            
+            existingStats.team = teamName;
+            existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+            existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+          });
+        }
+      } else {
+        // Process EASHL data: players are organized by club ID
+        if (match.eashlData?.players) {
+          Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
+            // Map club ID to team name
+            let teamName = 'Unknown';
+            if (match.homeClub?.eashlClubId === clubId) {
+              teamName = match.homeClub.name;
+            } else if (match.awayClub?.eashlClubId === clubId) {
+              teamName = match.awayClub.name;
+            }
+            
+            // Only include players from teams officially in the selected season
+            if (!seasonTeams.has(teamName)) {
+              return;
+            }
+            
+            if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+              Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
+                if (!playerData.position || this.isGoalie(playerData.position)) {
+                  return; // Skip goalies or players without position
+                }
+
+                const playerIdNum = parseInt(playerId);
+                let existingStats = statsMap.get(playerIdNum);
+
+                if (!existingStats) {
+                  existingStats = {
+                    playerId: playerIdNum,
+                    name: playerData.playername || 'Unknown',
+                    team: teamName,
+                    teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                    number: parseInt(playerData.jerseynum) || 0,
+                    position: this.formatPosition(playerData.position),
+                    division: teamDivisionMap.get(teamName) || 'Unknown',
+                    gamesPlayed: 0,
+                    goals: 0,
+                    assists: 0,
+                    points: 0,
+                    plusMinus: 0,
+                    shots: 0,
+                    hits: 0,
+                    blockedShots: 0,
+                    penaltyMinutes: 0,
+                    powerPlayGoals: 0,
+                    shortHandedGoals: 0,
+                    gameWinningGoals: 0,
+                    takeaways: 0,
+                    giveaways: 0,
+                    passAttempts: 0,
+                    passes: 0,
+                    passPercentage: 0,
+                    shotPercentage: 0,
+                    playerScore: 0,
+                    possession: 0,
+                    faceoffsWon: 0,
+                    faceoffsLost: 0,
+                    faceoffPercentage: 0
+                  };
+                  statsMap.set(playerIdNum, existingStats);
+                }
+
+                existingStats.gamesPlayed++;
+                existingStats.goals += parseInt(playerData.skgoals) || 0;
+                existingStats.assists += parseInt(playerData.skassists) || 0;
+                existingStats.points = existingStats.goals + existingStats.assists;
+                existingStats.plusMinus += parseInt(playerData.skplusmin) || 0;
+                
+                
+                
+                existingStats.team = teamName;
+                existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+                existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+              });
+            }
+          });
+        }
       }
     });
     
@@ -563,9 +771,7 @@ export class PlayerStatsComponent implements OnInit {
         case 'plusMinus':
           comparison = a.plusMinus - b.plusMinus;
           break;
-        case 'timeOnIce':
-          comparison = a.timeOnIce - b.timeOnIce;
-          break;
+
         case 'shots':
           comparison = a.shots - b.shots;
           break;
@@ -636,14 +842,10 @@ export class PlayerStatsComponent implements OnInit {
     return this.sortDirection === 'desc' ? 'sort-desc' : 'sort-asc';
   }
   
-  formatTimeOnIce(minutes: number): string {
-    if (!minutes || minutes === 0) return '0:00';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}:${mins.toString().padStart(2, '0')}` : `${mins}:00`;
-  }
 
-  private isGoalie(position: string): boolean {
+
+  private isGoalie(position: string | undefined | null): boolean {
+    if (!position) return false;
     const lowerPos = position.toLowerCase().replace(/\s/g, '');
     return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
   }

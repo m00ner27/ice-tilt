@@ -40,7 +40,7 @@
               <th [className]="getColumnSortClass('assists')" (click)="onSortColumn('assists')">A</th>
               <th [className]="getColumnSortClass('points')" (click)="onSortColumn('points')">PTS</th>
               <th [className]="getColumnSortClass('plusMinus')" (click)="onSortColumn('plusMinus')">+/-</th>
-              <th [className]="getColumnSortClass('timeOnIce')" (click)="onSortColumn('timeOnIce')">TOI</th>
+
               <th [className]="getColumnSortClass('shots')" (click)="onSortColumn('shots')">S</th>
               <th [className]="getColumnSortClass('shotPercentage')" (click)="onSortColumn('shotPercentage')">S%</th>
               <th [className]="getColumnSortClass('hits')" (click)="onSortColumn('hits')">H</th>
@@ -76,7 +76,7 @@
               <td [ngClass]="{'positive': player.plusMinus > 0, 'negative': player.plusMinus < 0}">
                 {{ player.plusMinus > 0 ? '+' : '' }}{{ player.plusMinus }}
               </td>
-              <td>{{ formatTimeOnIce(player.timeOnIce) }}</td>
+
               <td>{{ player.shots }}</td>
               <td>{{ player.shotPercentage }}%</td>
               <td>{{ player.hits }}</td>

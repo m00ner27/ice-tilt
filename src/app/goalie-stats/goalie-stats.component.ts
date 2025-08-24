@@ -320,8 +320,8 @@ export class GoalieStatsComponent implements OnInit {
             // For "All Seasons", include all teams
             if (typeof clubPlayers === 'object' && clubPlayers !== null) {
               Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
-                if (!this.isGoalie(playerData.position)) {
-                  return; // Skip non-goalies
+                if (!playerData.position || !this.isGoalie(playerData.position)) {
+                  return; // Skip non-goalies or players without position
                 }
 
                 const playerIdNum = parseInt(playerId);
@@ -437,8 +437,8 @@ export class GoalieStatsComponent implements OnInit {
           
           if (typeof clubPlayers === 'object' && clubPlayers !== null) {
             Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
-              if (!this.isGoalie(playerData.position)) {
-                return; // Skip non-goalies
+              if (!playerData.position || !this.isGoalie(playerData.position)) {
+                return; // Skip non-goalies or players without position
               }
 
               const playerIdNum = parseInt(playerId);
@@ -576,7 +576,8 @@ export class GoalieStatsComponent implements OnInit {
     return this.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc';
   }
 
-  private isGoalie(position: string): boolean {
+  private isGoalie(position: string | undefined | null): boolean {
+    if (!position) return false;
     const lowerPos = position.toLowerCase().replace(/\s/g, '');
     return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
   }

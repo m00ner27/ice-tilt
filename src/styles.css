@@ -1,4 +1,19 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* CSS Variables for consistent theming */
+:root {
+  --primary-color: #1e40af;
+  --primary-dark: #1e3a8a;
+  --card-bg: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --hover-bg: #f3f4f6;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
 body {
     background: linear-gradient(to bottom, #092d4bec, #4a8dcba9), 
     url("/assets/images/IMG_2896.jpg");

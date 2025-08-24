@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Player } from '../store/models/models/player.interface';
 import { ApiService } from '../store/services/api.service';
 import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
 import { environment } from '../../environments/environment';
 import { PlayerStatsService } from '../store/services/player-stats.service';
+import { MatchService, Match } from '../store/services/match.service';
 
 @Component({
   selector: 'app-player-profile',
@@ -24,11 +25,16 @@ export class PlayerProfileComponent implements OnInit {
   careerStats: any[] = [];
   careerTotals: any = {};
   loadingCareerStats: boolean = false;
+  gameByGameStats: any[] = [];
+  loadingGameStats: boolean = false;
+  allClubs: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private apiService: ApiService,
-    private playerStatsService: PlayerStatsService
+    private playerStatsService: PlayerStatsService,
+    private matchService: MatchService
   ) {}
 
   // Method to get the full image URL
@@ -49,6 +55,55 @@ export class PlayerProfileComponent implements OnInit {
     
     // Otherwise, assume it's a local asset
     return logoUrl;
+  }
+
+  // Method to get club logo URL by club name
+  getClubLogoUrl(clubName: string): string {
+    console.log('getClubLogoUrl called for:', clubName);
+    console.log('allClubs available:', this.allClubs);
+    
+    const club = this.allClubs.find(club => club.name === clubName);
+    console.log('Found club for', clubName, ':', club);
+    
+    if (club?.logoUrl) {
+      const logoUrl = this.getImageUrl(club.logoUrl);
+      console.log('Logo URL for', clubName, ':', logoUrl);
+      return logoUrl;
+    }
+    
+    console.log('No logo found for', clubName, '- using default');
+    return 'assets/images/square-default.png';
+  }
+
+  // Method to get all clubs the player has played for
+  getCareerClubs(): any[] {
+    if (!this.allClubs || this.allClubs.length === 0) {
+      return [];
+    }
+    
+    // Get unique club names from career stats
+    const careerClubNames = new Set<string>();
+    this.careerStats.forEach(stat => {
+      if (stat.clubName) {
+        careerClubNames.add(stat.clubName);
+      }
+    });
+    
+    // Filter allClubs to only include clubs the player has played for
+    const careerClubs = this.allClubs.filter(club => 
+      careerClubNames.has(club.name)
+    );
+    
+    console.log('Career clubs found:', careerClubs);
+    return careerClubs;
+  }
+
+  // Method to navigate to club detail page
+  navigateToClub(clubId: string): void {
+    if (clubId) {
+      console.log('Navigating to club:', clubId);
+      this.router.navigate(['/clubs', clubId]);
+    }
   }
 
   ngOnInit(): void {
@@ -167,7 +222,7 @@ export class PlayerProfileComponent implements OnInit {
           });
         }
         
-        // Load career statistics
+        // Load career statistics first, then game-by-game stats
         this.loadCareerStats(user);
         
         this.loading = false;
@@ -186,6 +241,9 @@ export class PlayerProfileComponent implements OnInit {
     // Get all clubs to check which ones the user has played for
     this.apiService.getClubs().subscribe({
       next: (clubs) => {
+        // Store all clubs for logo lookup
+        this.allClubs = clubs;
+        
         const userCareerStats: any[] = [];
         let totals = {
           gamesPlayed: 0,
@@ -385,22 +443,28 @@ export class PlayerProfileComponent implements OnInit {
                 };
               }
               
-              // Show all teams (including others with 0 stats)
-              this.careerStats = userCareerStats;
-            } else {
-              // No real stats, show all teams with 0 stats
-              this.careerStats = userCareerStats;
-            }
+                          // Show all teams (including others with 0 stats)
+            this.careerStats = this.sortSeasonsByDate(userCareerStats);
+          } else {
+            // No real stats, show all teams with 0 stats
+            this.careerStats = this.sortSeasonsByDate(userCareerStats);
+          }
             
             this.careerTotals = totals;
             this.loadingCareerStats = false;
+            
+            // Now that career stats are loaded, load game-by-game stats
+            this.loadGameByGameStats(user);
           },
           error: (err) => {
             console.error('Error loading player stats for career:', err);
             // Use the basic career data without real stats
-            this.careerStats = userCareerStats;
+            this.careerStats = this.sortSeasonsByDate(userCareerStats);
             this.careerTotals = totals;
             this.loadingCareerStats = false;
+            
+            // Still try to load game-by-game stats even if career stats fail
+            this.loadGameByGameStats(user);
           }
         });
       },
@@ -409,6 +473,172 @@ export class PlayerProfileComponent implements OnInit {
         this.loadingCareerStats = false;
       }
     });
+  }
+
+  loadGameByGameStats(user: any) {
+    this.loadingGameStats = true;
+    
+    this.matchService.getMatches().subscribe({
+      next: (matches) => {
+        const playerGames: any[] = [];
+        
+        matches.forEach(match => {
+          if (!match.eashlData || !match.eashlData.players) {
+            return;
+          }
+          
+          // Check if this is a manual stats entry
+          const isManualEntry = match.eashlData.manualEntry;
+          
+          if (isManualEntry) {
+            // Process manual stats: players are stored with a 'team' field
+            Object.entries(match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+              if (playerData.playername === user.gamertag || playerData.name === user.gamertag) {
+                const teamName = playerData.team === 'home' ? match.homeTeam : match.awayTeam;
+                const opponentName = playerData.team === 'home' ? match.awayTeam : match.homeTeam;
+                
+                const gameStats = {
+                  date: match.date,
+                  homeTeam: match.homeTeam,
+                  awayTeam: match.awayTeam,
+                  homeScore: match.homeScore,
+                  awayScore: match.homeScore,
+                  team: teamName,
+                  opponent: opponentName,
+                  teamLogoUrl: this.getClubLogoUrl(teamName),
+                  opponentLogoUrl: this.getClubLogoUrl(opponentName),
+                  result: this.getGameResult(playerData.team === 'home' ? match.homeScore : match.awayScore, 
+                                           playerData.team === 'home' ? match.awayScore : match.homeScore),
+                goals: parseInt(playerData.skgoals) || 0,
+                assists: parseInt(playerData.skassists) || 0,
+                points: (parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0),
+                plusMinus: parseInt(playerData.skplusmin) || 0,
+                shots: parseInt(playerData.skshots) || 0,
+                hits: parseInt(playerData.skhits) || 0,
+                pim: parseInt(playerData.skpim) || 0,
+                ppg: parseInt(playerData.skppg) || 0,
+                shg: parseInt(playerData.skshg) || 0,
+                gwg: parseInt(playerData.skgwg) || 0,
+                faceoffsWon: parseInt(playerData.skfow) || 0,
+                faceoffsLost: parseInt(playerData.skfol) || 0,
+                blockedShots: parseInt(playerData.skblk) || 0,
+                interceptions: parseInt(playerData.skint) || 0,
+                takeaways: parseInt(playerData.sktakeaways) || 0,
+                giveaways: parseInt(playerData.skgiveaways) || 0,
+                deflections: parseInt(playerData.skdef) || 0,
+                penaltiesDrawn: parseInt(playerData.skpd) || 0,
+                shotAttempts: parseInt(playerData.sksa) || 0,
+                shotPercentage: this.calculateShotPercentage(parseInt(playerData.skgoals) || 0, parseInt(playerData.skshots) || 0),
+                passAttempts: parseInt(playerData.skpassattempts) || 0,
+                passes: parseInt(playerData.skpasses) || 0,
+                timeOnIce: parseInt(playerData.sktoi) || 0,
+                position: playerData.position
+              };
+                playerGames.push(gameStats);
+              }
+            });
+          } else {
+            // Process EASHL data: players are organized by club ID
+            Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
+              if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+                Object.values(clubPlayers).forEach((playerData: any) => {
+                  if (playerData.playername === user.gamertag) {
+                    // Determine team name from club ID
+                    let teamName = 'Unknown';
+                    let opponentName = 'Unknown';
+                    if (match.homeClub?.eashlClubId === clubId) {
+                      teamName = match.homeTeam;
+                      opponentName = match.awayTeam;
+                    } else if (match.awayClub?.eashlClubId === clubId) {
+                      teamName = match.awayTeam;
+                      opponentName = match.homeTeam;
+                    }
+                    
+                    const gameStats = {
+                      date: match.date,
+                      homeTeam: match.homeTeam,
+                      awayTeam: match.awayTeam,
+                      homeScore: match.homeScore,
+                      awayScore: match.awayScore,
+                      team: teamName,
+                      opponent: opponentName,
+                      teamLogoUrl: this.getClubLogoUrl(teamName),
+                      opponentLogoUrl: this.getClubLogoUrl(opponentName),
+                      result: this.getGameResult(teamName === match.homeTeam ? match.homeScore : match.awayScore,
+                                               teamName === match.homeTeam ? match.awayScore : match.homeScore),
+                      goals: parseInt(playerData.skgoals) || 0,
+                      assists: parseInt(playerData.skassists) || 0,
+                      points: (parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0),
+                      plusMinus: parseInt(playerData.skplusmin) || 0,
+                      shots: parseInt(playerData.skshots) || 0,
+                      hits: parseInt(playerData.skhits) || 0,
+                      pim: parseInt(playerData.skpim) || 0,
+                      ppg: parseInt(playerData.skppg) || 0,
+                      shg: parseInt(playerData.skshg) || 0,
+                      gwg: parseInt(playerData.skgwg) || 0,
+                      faceoffsWon: parseInt(playerData.skfow) || 0,
+                      faceoffsLost: parseInt(playerData.skfol) || 0,
+                      blockedShots: parseInt(playerData.skblk) || 0,
+                      interceptions: parseInt(playerData.skint) || 0,
+                      takeaways: parseInt(playerData.sktakeaways) || 0,
+                      giveaways: parseInt(playerData.skgiveaways) || 0,
+                      deflections: parseInt(playerData.skdef) || 0,
+                      penaltiesDrawn: parseInt(playerData.skpd) || 0,
+                      shotAttempts: parseInt(playerData.sksa) || 0,
+                      shotPercentage: this.calculateShotPercentage(parseInt(playerData.skgoals) || 0, parseInt(playerData.skshots) || 0),
+                      passAttempts: parseInt(playerData.skpassattempts) || 0,
+                      passes: parseInt(playerData.skpasses) || 0,
+                      timeOnIce: parseInt(playerData.sktoi) || 0,
+                      position: playerData.position
+                    };
+                    playerGames.push(gameStats);
+                  }
+                });
+              }
+            });
+          }
+        });
+        
+        // Sort games by date (most recent first)
+        this.gameByGameStats = playerGames.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        this.loadingGameStats = false;
+      },
+      error: (err) => {
+        console.error('Error loading game-by-game stats:', err);
+        this.loadingGameStats = false;
+      }
+    });
+  }
+
+  private getGameResult(teamScore: number, opponentScore: number): string {
+    if (teamScore > opponentScore) {
+      return 'W';
+    } else if (teamScore < opponentScore) {
+      return 'L';
+    } else {
+      return 'T';
+    }
+  }
+
+  formatGameDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: '2-digit'
+    });
+  }
+
+  calculateShotPercentage(goals: number, shots: number): number {
+    if (shots === 0) return 0;
+    return parseFloat(((goals / shots) * 100).toFixed(1));
+  }
+
+  formatTimeOnIce(seconds: number): string {
+    if (!seconds || seconds === 0) return '0:00';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
   getTeamLogo(team: string): string {
@@ -422,5 +652,21 @@ export class PlayerProfileComponent implements OnInit {
       return 'assets/images/' + teamMap[key];
     }
     return 'assets/images/square-' + key + '.png';
+  }
+
+  private sortSeasonsByDate(seasons: any[]): any[] {
+    return seasons.sort((a, b) => {
+      // Extract season number from season name (e.g., "S2024" -> 2024)
+      const getSeasonNumber = (seasonName: string): number => {
+        const match = seasonName.match(/S(\d+)/);
+        return match ? parseInt(match[1]) : 0;
+      };
+      
+      const seasonA = getSeasonNumber(a.seasonName);
+      const seasonB = getSeasonNumber(b.seasonName);
+      
+      // Sort newest to oldest (descending order)
+      return seasonB - seasonA;
+    });
   }
 }
