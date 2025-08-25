@@ -101,15 +101,15 @@
               {{player.discordUsername}}<span *ngIf="player.number"> {{player.number}}</span>
             </h3>
             <div class="positions-section">
-              <div class="position-group">
-                <h4 class="position-header">Position:</h4>
+              <h4 class="position-header">Position:</h4>
+              <div class="primary-position">
                 <app-position-pill [position]="player.position"></app-position-pill>
               </div>
-              <div class="position-group" *ngIf="player.secondaryPositions && player.secondaryPositions.length > 0">
-                <h4 class="position-header">Secondary Positions:</h4>
-                <div class="secondary-positions">
-                  <app-position-pill *ngFor="let pos of player.secondaryPositions" [position]="pos"></app-position-pill>
-                </div>
+              <div class="secondary-positions" *ngIf="player.secondaryPositions && player.secondaryPositions.length > 0">
+                <div class="secondary-label">SECONDARY POSITIONS</div>
+                <span class="bracket">[</span>
+                <app-position-pill *ngFor="let pos of player.secondaryPositions" [position]="pos"></app-position-pill>
+                <span class="bracket">]</span>
               </div>
             </div>
             <p class="status" [ngClass]="player.status.toLowerCase().replace(' ', '-')">{{player.status}}</p>

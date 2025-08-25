@@ -34,26 +34,46 @@
         </div>
       </div>
       <div class="player-details">
-        <div class="detail-item">
-          <span class="label">Position:</span>
-          <span class="value">
+        <div class="details-header">
+          <h3>Player Information</h3>
+        </div>
+        
+        <div class="details-list">
+          <div class="list-item">
+            <span class="list-icon">🏒</span>
+            <span class="secondary-label">Position:</span>
             <app-position-pill [position]="player.position"></app-position-pill>
             <ng-container *ngIf="player.secondaryPositions && player.secondaryPositions.length">
-              <span class="secondary-positions">
-                <ng-container *ngFor="let pos of player.secondaryPositions">
-                  <app-position-pill [position]="pos"></app-position-pill>
-                </ng-container>
-              </span>
+              <span class="secondary-label">Secondary:</span>
+              <ng-container *ngFor="let pos of player.secondaryPositions">
+                <app-position-pill [position]="pos"></app-position-pill>
+              </ng-container>
             </ng-container>
-          </span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Handedness:</span>
-          <span class="value">{{ player.handedness }}</span>
-        </div>
-        <div class="detail-item" *ngIf="player.country">
-          <span class="label">Country:</span>
-          <span class="value">{{ countryEmojiMap[player.country] }} {{ player.country }}</span>
+          </div>
+          
+          <div class="list-item">
+            <span class="list-icon">✋</span>
+            <span class="secondary-label">Handedness:</span>
+            <span class="list-value">{{ player.handedness }}</span>
+          </div>
+          
+          <div class="list-item" *ngIf="player.country">
+            <span class="list-icon">🌍</span>
+            <span class="secondary-label">Country:</span>
+            <span class="list-value">{{ countryEmojiMap[player.country] }} {{ player.country }}</span>
+          </div>
+          
+          <div class="list-item">
+            <span class="list-icon">📊</span>
+            <span class="secondary-label">Stats:</span>
+            <span class="list-value">{{ careerTotals?.gamesPlayed || 0 }} Games • {{ careerTotals?.points || 0 }} Points • {{ careerTotals?.goals || 0 }} Goals</span>
+          </div>
+          
+          <div class="list-item" *ngIf="player.platform">
+            <span class="list-icon">🎮</span>
+            <span class="secondary-label">Platform:</span>
+            <span class="list-value">{{ player.platform }}</span>
+          </div>
         </div>
       </div>
       
@@ -73,9 +93,9 @@
       </div>
     </div>
 
-    <!-- Gaming IDs Section -->
+    <!-- Gaming ID Section -->
     <div class="gaming-ids-section" *ngIf="player.psnId || player.xboxGamertag || player.gamertag">
-      <h2>Gaming IDs</h2>
+      <h2>Gaming ID</h2>
       <div class="gaming-ids">
         <div class="id-item" *ngIf="player.psnId">
           <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo">

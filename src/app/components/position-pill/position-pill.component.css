@@ -1,16 +1,68 @@
 .position-pill {
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 12px;
-  font-size: 0.9em;
-  font-weight: 500;
+  font-size: 0.75em;
+  font-weight: 600;
   color: white;
   text-align: center;
   display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.position-c { background-color: #e74c3c; } /* Red */
-.position-lw { background-color: #00ae48; } /* Green */
-.position-rw { background-color: #3498db; } /* Blue */
-.position-ld { background-color: #06eec0; } /* Turquoise */
-.position-rd { background-color: #f1c40f; color: #333; } /* Yellow */
-.position-g { background-color: #9b59b6; } /* Purple */ 
+.position-pill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.position-pill:hover::before {
+  left: 100%;
+}
+
+.position-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced position colors with gradients */
+.position-c { 
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.position-lw { 
+  background: linear-gradient(135deg, #00ae48, #27ae60);
+  border-color: rgba(0, 174, 72, 0.3);
+}
+
+.position-rw { 
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border-color: rgba(52, 152, 219, 0.3);
+}
+
+.position-ld { 
+  background: linear-gradient(135deg, #06eec0, #1abc9c);
+  border-color: rgba(6, 238, 192, 0.3);
+}
+
+.position-rd { 
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  border-color: rgba(241, 196, 15, 0.3);
+  color: #2c3e50;
+}
+
+.position-g { 
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  border-color: rgba(155, 89, 181, 0.3);
+} 

@@ -21,6 +21,7 @@ import { PositionPillComponent } from '../components/position-pill/position-pill
   styleUrls: ['./players.component.css']
 })
 export class PlayersComponent implements OnInit {
+  // TEST COMMENT TO FORCE RECOMPILE
   players: Player[] = [];
   filteredPlayers: Player[] = [];
   clubs: Club[] = [];
@@ -29,6 +30,7 @@ export class PlayersComponent implements OnInit {
   countryEmojiMap: { [key: string]: string } = {};
   statusFilter: 'All' | 'Free Agent' | 'Signed' | 'Pending' = 'All';
   positionFilter: 'All' | 'Forward' | 'Defense' | 'Goalie' = 'All';
+  secondaryPositionFilter: 'All' | 'Forward' | 'Defense' | 'Goalie' = 'All';
   regionFilter: 'All' | 'North America' | 'Europe' = 'All';
   seasonFilter: string = '';
   searchTerm: string = '';
@@ -226,6 +228,15 @@ export class PlayersComponent implements OnInit {
       const positionGroup = this.positionGroupMap[player.position] || 'Unknown';
       const matchesPosition = this.positionFilter === 'All' || positionGroup === this.positionFilter;
 
+      // Check if player has secondary positions that match the filter
+      let matchesSecondaryPosition = this.secondaryPositionFilter === 'All';
+      if (this.secondaryPositionFilter !== 'All' && player.secondaryPositions && player.secondaryPositions.length > 0) {
+        matchesSecondaryPosition = player.secondaryPositions.some(pos => {
+          const secondaryPosGroup = this.positionGroupMap[pos] || 'Unknown';
+          return secondaryPosGroup === this.secondaryPositionFilter;
+        });
+      }
+
       const playerRegion = this.regionMap[player.country || ''] || 'Unknown';
       const matchesRegion = this.regionFilter === 'All' || playerRegion === this.regionFilter;
 
@@ -233,7 +244,7 @@ export class PlayersComponent implements OnInit {
                           (player.psnId?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.xboxGamertag?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false);
       
-      return matchesStatus && matchesPosition && matchesRegion && matchesSearch;
+      return matchesStatus && matchesPosition && matchesSecondaryPosition && matchesRegion && matchesSearch;
     });
   }
 
@@ -244,6 +255,11 @@ export class PlayersComponent implements OnInit {
 
   onPositionFilterChange(position: 'All' | 'Forward' | 'Defense' | 'Goalie') {
     this.positionFilter = position;
+    this.applyFilters();
+  }
+
+  onSecondaryPositionFilterChange(position: 'All' | 'Forward' | 'Defense' | 'Goalie') {
+    this.secondaryPositionFilter = position;
     this.applyFilters();
   }
 
