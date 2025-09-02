@@ -6,415 +6,138 @@ import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../store/services/api.service';
 import { environment } from '../../environments/environment';
 import { switchMap } from 'rxjs/operators';
-// Define a more complete User interface that matches the API response
-interface User {
-  _id?: string;
-  discordUsername?: string;
-  platform?: string;
-  gamertag?: string;
-  currentClubId?: {
-    _id: string;
-    name: string;
-    logoUrl?: string;
-  } | null;
-  participatingSeasons?: Array<{
-    _id: string;
-    name?: string;
-  }>;
-  playerProfile?: {
-    position?: string;
-    secondaryPositions?: string[];
-    handedness?: string;
-    country?: string;
-    region?: string;
-    status?: string;
-  };
-}
+import { Player } from '../store/models/models/player.interface';
+import { Club } from '../store/models/models/club.interface';
+import { PositionPillComponent } from '../components/position-pill/position-pill.component';
+import { PlayerStatsService } from '../store/services/player-stats.service';
+import { MatchService, Match } from '../store/services/match.service';
 
 @Component({
   selector: 'app-view-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  template: `
-    <div class="profile-container">
-      <!-- Loading State -->
-      <div *ngIf="isLoading" class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>Loading your profile...</p>
-      </div>
-
-      <!-- Profile Content -->
-      <div *ngIf="!isLoading && user" class="profile-content">
-        <!-- Profile Header -->
-        <div class="profile-header">
-          <div class="profile-avatar">
-            <img 
-              [src]="getClubLogoUrl(user.currentClubId?.logoUrl)" 
-              [alt]="user.currentClubId?.name || 'No Club'"
-              class="club-logo"
-            />
-          </div>
-          <div class="profile-info">
-            <h1 class="username">{{ user.discordUsername }}</h1>
-            <p class="club-name" *ngIf="user.currentClubId?.name">
-              {{ user.currentClubId?.name }}
-            </p>
-            <p class="club-name no-club" *ngIf="!user.currentClubId?.name">
-              Free Agent
-            </p>
-          </div>
-        </div>
-
-        <!-- Profile Details -->
-        <div class="profile-details">
-          <div class="detail-section">
-            <h3>Position</h3>
-            <div class="position-tags">
-              <span class="position-tag primary">{{ user.playerProfile?.position }}</span>
-              <span 
-                *ngFor="let pos of user.playerProfile?.secondaryPositions" 
-                class="position-tag secondary"
-              >
-                {{ pos }}
-              </span>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h3>Handedness</h3>
-            <p>{{ user.playerProfile?.handedness }}</p>
-          </div>
-
-          <div class="detail-section">
-            <h3>Country</h3>
-            <p>{{ user.playerProfile?.country }}</p>
-          </div>
-
-          <div class="detail-section">
-            <h3>Region</h3>
-            <p>{{ user.playerProfile?.region }}</p>
-          </div>
-
-          <div class="detail-section">
-            <h3>Status</h3>
-            <p class="status {{ user.playerProfile?.status?.toLowerCase()?.replace(' ', '-') }}">
-              {{ user.playerProfile?.status }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Gaming IDs -->
-        <div class="gaming-ids">
-          <h3>Gaming IDs</h3>
-          <div class="gaming-id-item">
-            <span class="platform">{{ user.platform }}</span>
-            <span class="gamertag">{{ user.gamertag }}</span>
-          </div>
-        </div>
-
-        <!-- Season Participation -->
-        <div class="seasons-section" *ngIf="user.participatingSeasons && user.participatingSeasons.length > 0">
-          <h3>Seasons Participating</h3>
-          <div class="seasons-list">
-            <span 
-              *ngFor="let season of user.participatingSeasons" 
-              class="season-tag"
-            >
-              {{ season.name || 'Season ' + season._id }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Edit Profile Button -->
-        <div class="actions">
-          <button 
-            class="edit-profile-btn"
-            (click)="editProfile()"
-          >
-            Edit Profile
-          </button>
-        </div>
-      </div>
-
-      <!-- Error State -->
-      <div *ngIf="!isLoading && !user && error" class="error-container">
-        <p class="error-message">{{ error }}</p>
-        <button (click)="retryLoad()" class="retry-btn">Retry</button>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .profile-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      color: white;
-    }
-
-    .loading-container {
-      text-align: center;
-      padding: 40px;
-    }
-
-    .loading-spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .profile-header {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-    }
-
-    .profile-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      overflow: hidden;
-      background: #2c3e50;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .club-logo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .profile-info h1 {
-      margin: 0 0 10px 0;
-      font-size: 2.5rem;
-      color: #ecf0f1;
-    }
-
-    .club-name {
-      margin: 0;
-      font-size: 1.2rem;
-      color: #bdc3c7;
-    }
-
-    .no-club {
-      color: #e74c3c;
-      font-style: italic;
-    }
-
-    .profile-details {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .detail-section {
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-    }
-
-    .detail-section h3 {
-      margin: 0 0 15px 0;
-      color: #3498db;
-      font-size: 1.1rem;
-    }
-
-    .detail-section p {
-      margin: 0;
-      color: #ecf0f1;
-      font-size: 1rem;
-    }
-
-    .position-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .position-tag {
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: bold;
-    }
-
-    .position-tag.primary {
-      background: #e74c3c;
-      color: white;
-    }
-
-    .position-tag.secondary {
-      background: #3498db;
-      color: white;
-    }
-
-    .status {
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: bold;
-      display: inline-block;
-    }
-
-    .status.free-agent {
-      background: #e67e22;
-      color: white;
-    }
-
-    .status.signed {
-      background: #27ae60;
-      color: white;
-    }
-
-    .gaming-ids {
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      margin-bottom: 30px;
-    }
-
-    .gaming-ids h3 {
-      margin: 0 0 15px 0;
-      color: #3498db;
-      font-size: 1.1rem;
-    }
-
-    .gaming-id-item {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .platform {
-      background: #9b59b6;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 15px;
-      font-size: 0.9rem;
-      font-weight: bold;
-    }
-
-    .gamertag {
-      color: #ecf0f1;
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
-
-    .seasons-section {
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      margin-bottom: 30px;
-    }
-
-    .seasons-section h3 {
-      margin: 0 0 15px 0;
-      color: #3498db;
-      font-size: 1.1rem;
-    }
-
-    .seasons-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .season-tag {
-      background: #34495e;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-    }
-
-    .actions {
-      text-align: center;
-      margin-top: 30px;
-    }
-
-    .edit-profile-btn {
-      background: #3498db;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .edit-profile-btn:hover {
-      background: #2980b9;
-    }
-
-    .error-container {
-      text-align: center;
-      padding: 40px;
-    }
-
-    .error-message {
-      color: #e74c3c;
-      margin-bottom: 20px;
-    }
-
-    .retry-btn {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .retry-btn:hover {
-      background: #c0392b;
-    }
-
-    @media (max-width: 768px) {
-      .profile-header {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .profile-details {
-        grid-template-columns: 1fr;
-      }
-    }
-  `]
+  imports: [CommonModule, RouterModule, PositionPillComponent],
+  templateUrl: './view-profile.component.html',
+  styleUrls: ['./view-profile.component.css']
 })
 export class ViewProfileComponent implements OnInit {
-  user: User | null = null;
-  isLoading = true;
+  player: Player | null = null;
+  clubLogoMap: { [key: string]: string } = {};
+  countryEmojiMap: { [key: string]: string } = {};
   error: string | null = null;
+  loading: boolean = true;
+  careerStats: any[] = [];
+  careerTotals: any = {};
+  loadingCareerStats: boolean = false;
+  gameByGameStats: any[] = [];
+  loadingGameStats: boolean = false;
+  allClubs: any[] = [];
 
   constructor(
     private authService: AuthService,
     private http: HttpClient,
+    private router: Router,
     private apiService: ApiService,
-    private router: Router
+    private playerStatsService: PlayerStatsService,
+    private matchService: MatchService
   ) {}
 
+  // Method to get the full image URL
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/square-default.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // If it's a relative path starting with /uploads, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
+  }
+
+  // Method to get club logo URL by club name
+  getClubLogoUrl(clubName: string): string {
+    console.log('getClubLogoUrl called for:', clubName);
+    console.log('allClubs available:', this.allClubs);
+    
+    const club = this.allClubs.find(club => club.name === clubName);
+    console.log('Found club for', clubName, ':', club);
+    
+    if (club?.logoUrl) {
+      const logoUrl = this.getImageUrl(club.logoUrl);
+      console.log('Logo URL for', clubName, ':', logoUrl);
+      return logoUrl;
+    }
+    
+    console.log('No logo found for', clubName, '- using default');
+    return 'assets/images/square-default.png';
+  }
+
+  // Method to get all clubs the player has played for
+  getCareerClubs(): any[] {
+    if (!this.allClubs || this.allClubs.length === 0) {
+      return [];
+    }
+    
+    // Get unique club names from career stats
+    const careerClubNames = new Set<string>();
+    this.careerStats.forEach(stat => {
+      if (stat.clubName) {
+        careerClubNames.add(stat.clubName);
+      }
+    });
+    
+    // Filter allClubs to only include clubs the player has played for
+    const careerClubs = this.allClubs.filter(club => 
+      careerClubNames.has(club.name)
+    );
+    
+    console.log('Career clubs found:', careerClubs);
+    return careerClubs;
+  }
+
+  // Method to navigate to club detail page
+  navigateToClub(clubId: string): void {
+    if (clubId) {
+      console.log('Navigating to club:', clubId);
+      this.router.navigate(['/clubs', clubId]);
+    }
+  }
+
   ngOnInit(): void {
+    this.buildCountryEmojiMap();
     this.loadUserProfile();
   }
 
+  buildCountryEmojiMap() {
+    const countries = [
+      { name: 'USA', emoji: '🇺🇸' }, { name: 'Canada', emoji: '🇨🇦' },
+      { name: 'Albania', emoji: '🇦🇱' }, { name: 'Andorra', emoji: '🇦🇩' }, { name: 'Austria', emoji: '🇦🇹' }, 
+      { name: 'Belarus', emoji: '🇧🇾' }, { name: 'Belgium', emoji: '🇧🇪' }, { name: 'Bosnia and Herzegovina', emoji: '🇧🇦' },
+      { name: 'Bulgaria', emoji: '🇧🇬' }, { name: 'Croatia', emoji: '🇭🇷' }, { name: 'Czechia', emoji: '🇨🇿' },
+      { name: 'Denmark', emoji: '🇩🇰' }, { name: 'Estonia', emoji: '🇪🇪' }, { name: 'Finland', emoji: '🇫🇮' },
+      { name: 'France', emoji: '🇫🇷' }, { name: 'Germany', emoji: '🇩🇪' }, { name: 'Greece', emoji: '🇬🇷' },
+      { name: 'Hungary', emoji: '🇭🇺' }, { name: 'Iceland', emoji: '🇮🇸' }, { name: 'Ireland', 'emoji': '🇮🇪' },
+      { name: 'Italy', emoji: '🇮🇹' }, { name: 'Latvia', emoji: '🇱🇻' }, { name: 'Liechtenstein', emoji: '🇱🇮' },
+      { name: 'Lithuania', emoji: '🇱🇹' }, { name: 'Luxembourg', emoji: '🇱🇺' }, { name: 'Malta', emoji: '🇲🇹' },
+      { name: 'Moldova', emoji: '🇲🇩' }, { name: 'Monaco', emoji: '🇲🇨' }, { name: 'Montenegro', emoji: '🇲🇪' },
+      { name: 'Netherlands', emoji: '🇳🇱' }, { name: 'North Macedonia', emoji: '🇲🇰' }, { name: 'Norway', emoji: '🇳🇴' },
+      { name: 'Poland', emoji: '🇵🇱' }, { name: 'Portugal', emoji: '🇵🇹' }, { name: 'Romania', emoji: '🇷🇴' },
+      { name: 'Russia', emoji: '🇷🇺' }, { name: 'Serbia', emoji: '🇷🇸' }, { name: 'Slovakia', emoji: '🇸🇰' },
+      { name: 'Slovenia', emoji: '🇸🇮' }, { name: 'Spain', emoji: '🇪🇸' }, { name: 'Sweden', emoji: '🇸🇪' },
+      { name: 'Switzerland', emoji: '🇨🇭' }, { name: 'Ukraine', emoji: '🇺🇦' }, { name: 'United Kingdom', emoji: '🇬🇧' }
+    ];
+    countries.forEach(c => this.countryEmojiMap[c.name] = c.emoji);
+  }
+
   loadUserProfile(): void {
-    this.isLoading = true;
+    this.loading = true;
     this.error = null;
 
     // Get current user from auth service
@@ -422,13 +145,13 @@ export class ViewProfileComponent implements OnInit {
       next: (currentUser) => {
         if (!currentUser) {
           this.error = 'User not authenticated';
-          this.isLoading = false;
+          this.loading = false;
           return;
         }
 
         if (!currentUser.sub) {
           this.error = 'User ID not found';
-          this.isLoading = false;
+          this.loading = false;
           return;
         }
 
@@ -451,36 +174,549 @@ export class ViewProfileComponent implements OnInit {
             return this.apiService.getUser(dbUser._id);
           })
         ).subscribe({
-          next: (user: User) => {
-            this.user = user;
-            this.isLoading = false;
+          next: (user: any) => {
+            this.loadPlayerData(user._id, user);
           },
           error: (err: any) => {
             console.error('Error fetching user profile:', err);
             this.error = 'Failed to load profile. Please try again.';
-            this.isLoading = false;
+            this.loading = false;
           }
         });
       },
       error: (err: any) => {
         console.error('Error getting current user:', err);
         this.error = 'Failed to load profile. Please try again.';
-        this.isLoading = false;
+        this.loading = false;
       }
     });
   }
 
-  getClubLogoUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
+  loadPlayerData(id: string, user: any) {
+    this.loading = true;
+    this.error = null;
+
+    if (!user) {
+      this.error = 'Player not found.';
+      this.loading = false;
+      return;
     }
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
+    
+    const profile = user.playerProfile || {};
+    this.player = {
+      id: user._id,
+      discordUsername: user.discordUsername || '',
+      position: profile.position || 'C',
+      number: profile.number || '',
+      psnId: user.platform === 'PS5' ? user.gamertag : '',
+      xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',
+      gamertag: user.gamertag || '',
+      country: profile.country || '',
+      handedness: profile.handedness || 'Left',
+      currentClubId: user.currentClubId || '',
+      currentClubName: user.currentClubName || '',
+      status: profile.status || 'Free Agent',
+      stats: {
+        playerId: user._id,
+        gamesPlayed: 0,
+        goals: 0,
+        assists: 0,
+        points: 0,
+        plusMinus: 0,
+        pim: 0,
+        ppg: 0,
+        shg: 0,
+        gwg: 0,
+        shots: 0,
+        shotPct: 0,
+        hits: 0,
+        takeaways: 0,
+        giveaways: 0,
+        faceoffPct: 0,
+        blockedShots: 0,
+        savePercentage: 0,
+        goalsAgainst: 0,
+        gaa: 0,
+        goalsAgainstAverage: 0,
+        shutouts: 0,
+        wins: 0,
+        losses: 0,
+        otl: 0
+      },
+      secondaryPositions: profile.secondaryPositions || [],
+      // clubLogo will be loaded next
+    };
+
+    // Load actual player statistics from games
+    this.playerStatsService.getPlayerStats(user._id, user.gamertag).subscribe({
+      next: (stats: any) => {
+        if (stats && stats.length > 0) {
+          // Calculate totals from all seasons
+          const totals = stats.reduce((acc: any, season: any) => {
+            acc.gamesPlayed += season.gamesPlayed || 0;
+            acc.goals += season.goals || 0;
+            acc.assists += season.assists || 0;
+            acc.points += season.points || 0;
+            acc.plusMinus += season.plusMinus || 0;
+            acc.pim += season.pim || 0;
+            acc.ppg += season.ppg || 0;
+            acc.shg += season.shg || 0;
+            acc.gwg += season.gwg || 0;
+            acc.shots += season.shots || 0;
+            acc.hits += season.hits || 0;
+            acc.takeaways += season.takeaways || 0;
+            acc.giveaways += season.giveaways || 0;
+            acc.blockedShots += season.blockedShots || 0;
+            acc.wins += season.wins || 0;
+            acc.losses += season.losses || 0;
+            acc.otl += season.otl || 0;
+            return acc;
+          }, {
+            gamesPlayed: 0,
+            goals: 0,
+            assists: 0,
+            points: 0,
+            plusMinus: 0,
+            pim: 0,
+            ppg: 0,
+            shg: 0,
+            gwg: 0,
+            shots: 0,
+            hits: 0,
+            takeaways: 0,
+            giveaways: 0,
+            blockedShots: 0,
+            wins: 0,
+            losses: 0,
+            otl: 0
+          });
+
+          // Calculate shot percentage
+          if (totals.shots > 0) {
+            totals.shotPct = (totals.goals / totals.shots * 100).toFixed(1);
+          }
+
+          // Calculate faceoff percentage
+          if (totals.faceoffsWon && totals.faceoffsLost) {
+            totals.faceoffPct = (totals.faceoffsWon / (totals.faceoffsWon + totals.faceoffsLost) * 100).toFixed(1);
+          }
+
+          this.player!.stats = totals;
+          this.careerStats = stats;
+          this.careerTotals = totals;
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        console.error('Error loading player stats:', error);
+        this.loading = false;
+      }
+    });
+
+    // Load all clubs for logo mapping
+    this.apiService.getClubs().subscribe({
+      next: (clubs: Club[]) => {
+        this.allClubs = clubs;
+        console.log('Loaded clubs:', clubs);
+      },
+      error: (error: any) => {
+        console.error('Error loading clubs:', error);
+      }
+    });
+
+    // Load career statistics
+    this.loadCareerStats(user);
+    
+    // Load game-by-game stats
+    this.loadGameByGameStats(user);
+  }
+
+
+
+  loadCareerStats(user: any) {
+    this.loadingCareerStats = true;
+    
+    // Get all clubs to check which ones the user has played for
+    this.apiService.getClubs().subscribe({
+      next: (clubs) => {
+        // Store all clubs for logo lookup
+        this.allClubs = clubs;
+        
+        const userCareerStats: any[] = [];
+        let totals = {
+          gamesPlayed: 0,
+          wins: 0,
+          losses: 0,
+          goals: 0,
+          assists: 0,
+          points: 0,
+          plusMinus: 0,
+          pim: 0,
+          shots: 0,
+          hits: 0,
+          ppg: 0,
+          shg: 0,
+          gwg: 0,
+          faceoffsWon: 0,
+          faceoffsLost: 0,
+          blockedShots: 0,
+          interceptions: 0,
+          takeaways: 0,
+          giveaways: 0,
+          deflections: 0,
+          penaltiesDrawn: 0,
+          shotAttempts: 0,
+          shotPct: 0,
+          passAttempts: 0,
+          passesCompleted: 0,
+          toi: 0,
+          savePercentage: 0,
+          goalsAgainst: 0,
+          shutouts: 0
+        };
+
+        console.log('Clubs loaded for career stats:', clubs);
+        
+        // Check each club for user's participation
+        clubs.forEach((club: any) => {
+          console.log(`Checking club: ${club.name}`, club);
+          if (club.seasons && Array.isArray(club.seasons)) {
+            console.log(`Club ${club.name} has ${club.seasons.length} seasons:`, club.seasons);
+            club.seasons.forEach((season: any) => {
+              console.log(`Season data:`, season);
+              if (season.roster && Array.isArray(season.roster)) {
+                const userInRoster = season.roster.some((rosterUserId: any) => 
+                  rosterUserId.toString() === user._id.toString()
+                );
+                
+                if (userInRoster) {
+                  // User played for this club in this season
+                  let seasonName = 'Unknown Season';
+                  console.log('Season ID data:', season.seasonId);
+                  console.log('Club data:', club);
+                  
+                  // Get season name from the actual season data
+                  if (season.seasonId) {
+                    if (typeof season.seasonId === 'object') {
+                      if (season.seasonId.name) {
+                        seasonName = season.seasonId.name;
+                      } else if (season.seasonId._id) {
+                        const idStr = season.seasonId._id.toString();
+                        if (idStr.length >= 4) {
+                          seasonName = `S${idStr.slice(-4)}`;
+                        } else {
+                          seasonName = `S${idStr}`;
+                        }
+                      }
+                    } else if (typeof season.seasonId === 'string') {
+                      if (season.seasonId.length >= 4) {
+                        seasonName = `S${season.seasonId.slice(-4)}`;
+                      } else {
+                        seasonName = `S${season.seasonId}`;
+                      }
+                    }
+                  }
+                  
+                  console.log('Final season name:', seasonName);
+                  
+                  const seasonStats = {
+                    seasonName: seasonName,
+                    clubName: club.name,
+                    clubLogo: this.getImageUrl(club.logoUrl),
+                    seasonId: typeof season.seasonId === 'object' ? season.seasonId._id : season.seasonId,
+                    stats: {
+                      gamesPlayed: 0,
+                      wins: 0,
+                      losses: 0,
+                      goals: 0,
+                      assists: 0,
+                      points: 0,
+                      plusMinus: 0,
+                      pim: 0,
+                      shots: 0,
+                      hits: 0,
+                      ppg: 0,
+                      shg: 0,
+                      gwg: 0,
+                      faceoffsWon: 0,
+                      faceoffsLost: 0,
+                      blockedShots: 0,
+                      interceptions: 0,
+                      takeaways: 0,
+                      giveaways: 0,
+                      deflections: 0,
+                      penaltiesDrawn: 0,
+                      shotAttempts: 0,
+                      shotPct: 0,
+                      passAttempts: 0,
+                      passesCompleted: 0,
+                      toi: 0
+                    }
+                  };
+                  
+                  userCareerStats.push(seasonStats);
+                }
+              }
+            });
+          }
+        });
+
+        // Now fetch the actual player stats and update the career data
+        this.playerStatsService.getPlayerStats(user._id, user.gamertag).subscribe({
+          next: (playerStats) => {
+            console.log('Career stats loaded:', playerStats);
+            
+            // Update career totals with real stats
+            if (playerStats) {
+              totals.gamesPlayed = playerStats.gamesPlayed || 0;
+              totals.wins = playerStats.wins || 0;
+              totals.losses = playerStats.losses || 0;
+              totals.goals = playerStats.goals || 0;
+              totals.assists = playerStats.assists || 0;
+              totals.points = playerStats.points || 0;
+              totals.plusMinus = playerStats.plusMinus || 0;
+              totals.pim = playerStats.pim || 0;
+              totals.shots = playerStats.shots || 0;
+              totals.hits = playerStats.hits || 0;
+              totals.ppg = playerStats.ppg || 0;
+              totals.shg = playerStats.shg || 0;
+              totals.gwg = playerStats.gwg || 0;
+              totals.faceoffsWon = playerStats.faceoffsWon || 0;
+              totals.faceoffsLost = playerStats.faceoffsLost || 0;
+              totals.blockedShots = playerStats.blockedShots || 0;
+              totals.interceptions = playerStats.interceptions || 0;
+              totals.takeaways = playerStats.takeaways || 0;
+              totals.giveaways = playerStats.giveaways || 0;
+              totals.deflections = playerStats.deflections || 0;
+              totals.penaltiesDrawn = playerStats.penaltiesDrawn || 0;
+              totals.shotAttempts = playerStats.shotAttempts || 0;
+              totals.shotPct = playerStats.shotPct || 0;
+              totals.passAttempts = playerStats.passAttempts || 0;
+              totals.passesCompleted = playerStats.passes || 0;
+              totals.toi = playerStats.toi || 0;
+              totals.savePercentage = playerStats.savePercentage || 0;
+              totals.goalsAgainst = playerStats.goalsAgainst || 0;
+              totals.shutouts = playerStats.shutouts || 0;
+            }
+            
+            // Show all teams the player is rostered on, but assign real stats to the team they actually played for
+            if (totals.gamesPlayed > 0 && userCareerStats.length > 0) {
+              // Find the team where the player actually played (has real stats)
+              // For now, we'll assign stats to the first team, but this should be improved
+              // to check actual game data to determine which team gets which stats
+              const activeTeamSeason = userCareerStats.find(season => 
+                season.clubName.toLowerCase().includes('team infernus') ||
+                season.clubName.toLowerCase().includes('infernus')
+              ) || userCareerStats[0]; // Fallback to first team
+              
+              if (activeTeamSeason) {
+                // Assign all real stats to the active team season
+                activeTeamSeason.stats = {
+                  gamesPlayed: totals.gamesPlayed,
+                  wins: totals.wins,
+                  losses: totals.losses,
+                  goals: totals.goals,
+                  assists: totals.assists,
+                  points: totals.points,
+                  plusMinus: totals.plusMinus,
+                  pim: totals.pim,
+                  shots: totals.shots,
+                  hits: totals.hits,
+                  ppg: totals.ppg || 0,
+                  shg: totals.shg || 0,
+                  gwg: totals.gwg || 0,
+                  faceoffsWon: totals.faceoffsWon || 0,
+                  faceoffsLost: totals.faceoffsLost || 0,
+                  blockedShots: totals.blockedShots || 0,
+                  interceptions: totals.interceptions || 0,
+                  takeaways: totals.takeaways || 0,
+                  giveaways: totals.giveaways || 0,
+                  deflections: totals.deflections || 0,
+                  penaltiesDrawn: totals.penaltiesDrawn || 0,
+                  shotAttempts: totals.shotAttempts || 0,
+                  shotPct: totals.shotPct || 0,
+                  passAttempts: totals.passAttempts || 0,
+                  passesCompleted: totals.passesCompleted || 0,
+                  toi: totals.toi || 0
+                };
+              }
+              
+              // Show all teams (including others with 0 stats)
+              this.careerStats = this.sortSeasonsByDate(userCareerStats);
+            } else {
+              // No real stats, show all teams with 0 stats
+              this.careerStats = this.sortSeasonsByDate(userCareerStats);
+            }
+              
+            this.careerTotals = totals;
+            this.loadingCareerStats = false;
+          },
+          error: (err) => {
+            console.error('Error loading player stats for career:', err);
+            // Use the basic career data without real stats
+            this.careerStats = this.sortSeasonsByDate(userCareerStats);
+            this.careerTotals = totals;
+            this.loadingCareerStats = false;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error loading career stats:', err);
+        this.loadingCareerStats = false;
+      }
+    });
+  }
+
+  sortSeasonsByDate(seasons: any[]): any[] {
+    return seasons.sort((a, b) => {
+      // Sort by season name, putting newer seasons first
+      return b.seasonName.localeCompare(a.seasonName);
+    });
+  }
+
+  loadGameByGameStats(user: any) {
+    this.loadingGameStats = true;
+    
+    this.matchService.getMatches().subscribe({
+      next: (matches) => {
+        const playerGames: any[] = [];
+        
+        matches.forEach(match => {
+          if (!match.eashlData || !match.eashlData.players) {
+            return;
+          }
+          
+          // Check if this is a manual stats entry
+          const isManualEntry = match.eashlData.manualEntry;
+          
+          if (isManualEntry) {
+            // Process manual stats: players are stored with a 'team' field
+            Object.entries(match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+              if (playerData.playername === user.gamertag || playerData.name === user.gamertag) {
+                const teamName = playerData.team === 'home' ? match.homeTeam : match.awayTeam;
+                const opponentName = playerData.team === 'home' ? match.awayTeam : match.homeTeam;
+                
+                const gameStats = {
+                  date: match.date,
+                  homeTeam: match.homeTeam,
+                  awayTeam: match.awayTeam,
+                  homeScore: match.homeScore,
+                  awayScore: match.awayScore,
+                  team: teamName,
+                  opponent: opponentName,
+                  teamLogoUrl: this.getClubLogoUrl(teamName),
+                  opponentLogoUrl: this.getClubLogoUrl(opponentName),
+                  result: this.getGameResult(playerData.team === 'home' ? match.homeScore : match.awayScore, 
+                                           playerData.team === 'home' ? match.awayScore : match.homeScore),
+                  goals: parseInt(playerData.skgoals) || 0,
+                  assists: parseInt(playerData.skassists) || 0,
+                  points: (parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0),
+                  plusMinus: parseInt(playerData.skplusmin) || 0,
+                  shots: parseInt(playerData.skshots) || 0,
+                  hits: parseInt(playerData.skhits) || 0,
+                  pim: parseInt(playerData.skpim) || 0,
+                  ppg: parseInt(playerData.skppg) || 0,
+                  shg: parseInt(playerData.skshg) || 0,
+                  gwg: parseInt(playerData.skgwg) || 0,
+                  faceoffsWon: parseInt(playerData.skfow) || 0,
+                  faceoffsLost: parseInt(playerData.skfol) || 0,
+                  blockedShots: parseInt(playerData.skblk) || 0,
+                  interceptions: parseInt(playerData.skint) || 0,
+                  takeaways: parseInt(playerData.sktakeaways) || 0,
+                  giveaways: parseInt(playerData.skgiveaways) || 0,
+                  deflections: parseInt(playerData.skdef) || 0,
+                  penaltiesDrawn: parseInt(playerData.skpd) || 0,
+                  shotAttempts: parseInt(playerData.sksa) || 0,
+                  shotPercentage: this.calculateShotPercentage(parseInt(playerData.skgoals) || 0, parseInt(playerData.skshots) || 0),
+                  passAttempts: parseInt(playerData.skpassattempts) || 0,
+                  passes: parseInt(playerData.skpasses) || 0,
+                  timeOnIce: parseInt(playerData.sktoi) || 0,
+                  position: playerData.position
+                };
+                playerGames.push(gameStats);
+              }
+            });
+          } else {
+            // Process EASHL data: players are organized by club ID
+            Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
+              if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+                Object.values(clubPlayers).forEach((playerData: any) => {
+                  if (playerData.playername === user.gamertag) {
+                    // Determine team name from club ID
+                    let teamName = 'Unknown';
+                    let opponentName = 'Unknown';
+                    if (match.homeClub?.eashlClubId === clubId) {
+                      teamName = match.homeTeam;
+                      opponentName = match.awayTeam;
+                    } else if (match.awayClub?.eashlClubId === clubId) {
+                      teamName = match.awayTeam;
+                      opponentName = match.homeTeam;
+                    }
+                    
+                    const gameStats = {
+                      date: match.date,
+                      homeTeam: match.homeTeam,
+                      awayTeam: match.awayTeam,
+                      homeScore: match.homeScore,
+                      awayScore: match.awayScore,
+                      team: teamName,
+                      opponent: opponentName,
+                      teamLogoUrl: this.getClubLogoUrl(teamName),
+                      opponentLogoUrl: this.getClubLogoUrl(opponentName),
+                      result: this.getGameResult(teamName === match.homeTeam ? match.homeScore : match.awayScore,
+                                               teamName === match.homeTeam ? match.awayScore : match.homeScore),
+                      goals: parseInt(playerData.skgoals) || 0,
+                      assists: parseInt(playerData.skassists) || 0,
+                      points: (parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0),
+                      plusMinus: parseInt(playerData.skplusmin) || 0,
+                      shots: parseInt(playerData.skshots) || 0,
+                      hits: parseInt(playerData.skhits) || 0,
+                      pim: parseInt(playerData.skpim) || 0,
+                      ppg: parseInt(playerData.skppg) || 0,
+                      shg: parseInt(playerData.skshg) || 0,
+                      gwg: parseInt(playerData.skgwg) || 0,
+                      faceoffsWon: parseInt(playerData.skfow) || 0,
+                      faceoffsLost: parseInt(playerData.skfol) || 0,
+                      blockedShots: parseInt(playerData.skblk) || 0,
+                      interceptions: parseInt(playerData.skint) || 0,
+                      takeaways: parseInt(playerData.sktakeaways) || 0,
+                      giveaways: parseInt(playerData.skgiveaways) || 0,
+                      deflections: parseInt(playerData.skdef) || 0,
+                      penaltiesDrawn: parseInt(playerData.skpd) || 0,
+                      shotAttempts: parseInt(playerData.sksa) || 0,
+                      shotPercentage: this.calculateShotPercentage(parseInt(playerData.skgoals) || 0, parseInt(playerData.skshots) || 0),
+                      passAttempts: parseInt(playerData.skpassattempts) || 0,
+                      passes: parseInt(playerData.skpasses) || 0,
+                      timeOnIce: parseInt(playerData.sktoi) || 0,
+                      position: playerData.position
+                    };
+                    playerGames.push(gameStats);
+                  }
+                });
+              }
+            });
+          }
+        });
+        
+        // Sort games by date (most recent first)
+        this.gameByGameStats = playerGames.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        this.loadingGameStats = false;
+      },
+      error: (err) => {
+        console.error('Error loading game-by-game stats:', err);
+        this.loadingGameStats = false;
+      }
+    });
+  }
+
+  private getGameResult(teamScore: number, opponentScore: number): string {
+    if (teamScore > opponentScore) {
+      return 'W';
+    } else if (teamScore < opponentScore) {
+      return 'L';
+    } else {
+      return 'T';
     }
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    return logoUrl;
   }
 
   editProfile(): void {
@@ -489,5 +725,26 @@ export class ViewProfileComponent implements OnInit {
 
   retryLoad(): void {
     this.loadUserProfile();
+  }
+
+  formatGameDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: '2-digit'
+    });
+  }
+
+  calculateShotPercentage(goals: number, shots: number): number {
+    if (shots === 0) return 0;
+    return parseFloat(((goals / shots) * 100).toFixed(1));
+  }
+
+  formatTimeOnIce(seconds: number): string {
+    if (!seconds || seconds === 0) return '0:00';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 }
