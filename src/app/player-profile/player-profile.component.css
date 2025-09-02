@@ -3,65 +3,65 @@
 .spinner{width:50px;height:50px;border:4px solid #1a252f;border-top:4px solid #3498db;border-radius:50%;margin:0 auto 1rem;animation:spin 1s linear infinite}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .error-state{background:#1a252f;border-radius:8px;border:1px solid #e74c3c}
-.profile-content{background:#1a252f;border-radius:8px;padding:2rem;box-shadow:0 4px 6px rgba(0,0,0,0.1)}
+.profile-content{background:#1a252f;border-radius:8px;padding:2rem;box-shadow:0 4px 6px rgba(0,0,0,.1)}
 .profile-header{margin-bottom:2rem;border-bottom:1px solid #34495e;padding-bottom:1rem}
-.profile-header-row{display:flex;flex-direction:column;gap:0.25rem;margin-bottom:1.5rem}
+.profile-header-row{display:flex;flex-direction:column;gap:.25rem;margin-bottom:1.5rem}
 .header-top-row{display:flex;justify-content:space-between;align-items:center}
 .header-left{display:flex;align-items:center;gap:1rem}
 .header-left h1{margin:0;font-size:2rem;color:#fff}
 .player-number{color:#3498db}
-.player-status,.status-badge{padding:0.5rem 1rem;border-radius:20px;font-weight:500;font-size:0.9rem;margin-left:0.75rem;display:inline-block;text-transform:uppercase;letter-spacing:0.5px}
-.player-status.free.agent,.status-badge.free-agent{background:linear-gradient(135deg,#e67e22,#f39c12);color:#fff;box-shadow:0 2px 8px rgba(230,126,34,0.3)}
-.player-status.signed,.status-badge.signed{background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;box-shadow:0 2px 8px rgba(39,174,96,0.3)}
-.player-status.pending,.status-badge.pending{background:linear-gradient(135deg,#f1c40f,#f39c12);color:#2c3e50;box-shadow:0 2px 8px rgba(241,196,15,0.3)}
-.player-details{background:linear-gradient(135deg,rgba(52,73,94,0.8),rgba(44,62,80,0.9));border-radius:8px;padding:12px;margin-bottom:16px;border:1px solid rgba(52,152,219,0.3);box-shadow:0 2px 8px rgba(0,0,0,0.3);backdrop-filter:blur(10px)}
-.details-header{text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(52,152,219,0.5)}
-.details-header h3{color:#3498db;font-size:1rem;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:0.3px}
+.player-status,.status-badge{padding:.5rem 1rem;border-radius:20px;font-weight:500;font-size:.9rem;margin-left:.75rem;display:inline-block;text-transform:uppercase;letter-spacing:.5px}
+.player-status.free.agent,.status-badge.free-agent{background:linear-gradient(135deg,#e67e22,#f39c12);color:#fff;box-shadow:0 2px 8px rgba(230,126,34,.3)}
+.player-status.signed,.status-badge.signed{background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;box-shadow:0 2px 8px rgba(39,174,96,.3)}
+.player-status.pending,.status-badge.pending{background:linear-gradient(135deg,#f1c40f,#f39c12);color:#2c3e50;box-shadow:0 2px 8px rgba(241,196,15,.3)}
+.player-details{background:linear-gradient(135deg,rgba(52,73,94,.8),rgba(44,62,80,.9));border-radius:8px;padding:12px;margin-bottom:16px;border:1px solid rgba(52,152,219,.3);box-shadow:0 2px 8px rgba(0,0,0,.3);backdrop-filter:blur(10px)}
+.details-header{text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(52,152,219,.5)}
+.details-header h3{color:#3498db;font-size:1rem;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:.3px}
 .details-list{display:flex;flex-direction:column;gap:8px}
-.list-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1)}
+.list-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1)}
 .list-item:last-child{border-bottom:none}
-.list-icon,.detail-icon{font-size:1rem;color:#3498db;min-width:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))}
-.list-label,.detail-label{color:#3498db;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.2px;min-width:80px}
-.list-value,.detail-value{color:#ecf0f1;font-weight:500;font-size:0.9rem}
-.secondary-label{color:#3498db;font-size:0.7rem;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.2px;text-align:center;padding:2px 6px;background:rgba(52,152,219,0.1);border-radius:3px;border:1px solid rgba(52,152,219,0.3)}
-.career-clubs-section{margin-top:1rem;text-align:left;background:linear-gradient(135deg,rgba(52,73,94,0.6),rgba(44,62,80,0.7));border-radius:8px;padding:16px;border:1px solid rgba(52,152,219,0.2)}
-.career-clubs-logos{display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.5rem;justify-content:flex-start;align-items:center}
+.list-icon,.detail-icon{font-size:1rem;color:#3498db;min-width:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
+.list-label,.detail-label{color:#3498db;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.2px;min-width:80px}
+.list-value,.detail-value{color:#ecf0f1;font-weight:500;font-size:.9rem}
+.secondary-label{color:#3498db;font-size:.7rem;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.2px;text-align:center;padding:2px 6px;background:rgba(52,152,219,.1);border-radius:3px;border:1px solid rgba(52,152,219,.3)}
+.career-clubs-section{margin-top:1rem;text-align:left;background:linear-gradient(135deg,rgba(52,73,94,.6),rgba(44,62,80,.7));border-radius:8px;padding:16px;border:1px solid rgba(52,152,219,.2)}
+.career-clubs-logos{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:.5rem;justify-content:flex-start;align-items:center}
 .career-clubs-section .detail-item{display:flex;align-items:center;justify-content:flex-start;gap:1rem}
-.career-clubs-section .label{align-self:center;margin:0;color:#3498db;font-weight:600;font-size:0.9rem;text-transform:uppercase;letter-spacing:0.3px}
+.career-clubs-section .label{align-self:center;margin:0;color:#3498db;font-weight:600;font-size:.9rem;text-transform:uppercase;letter-spacing:.3px}
 .career-club-item{display:flex;align-items:center}
-.career-club-logo{width:40px;height:40px;object-fit:contain;border-radius:50%;border:2px solid #34495e;transition:all 0.2s ease;cursor:pointer}
-.career-club-logo:hover,.career-club-logo.clickable:hover{border-color:#3498db;transform:scale(1.1);box-shadow:0 4px 8px rgba(52,152,219,0.3)}
+.career-club-logo{width:40px;height:40px;object-fit:contain;border-radius:50%;border:2px solid #34495e;transition:all .2s ease;cursor:pointer}
+.career-club-logo:hover,.career-club-logo.clickable:hover{border-color:#3498db;transform:scale(1.1);box-shadow:0 4px 8px rgba(52,152,219,.3)}
 .gaming-ids-section{background:#2c3e50;border-radius:8px;padding:1.5rem;margin-bottom:2rem}
 .gaming-ids{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
-.id-item{display:flex;gap:0.5rem;align-items:center}
+.id-item{display:flex;gap:.5rem;align-items:center}
 .platform-logo{width:20px;height:20px;flex-shrink:0}
 .platform{color:#8795a5}
 .id{color:#3498db;font-weight:500}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-top:1rem}
 .stat-card{background:#2c3e50;border-radius:8px;padding:1rem;text-align:center}
-.stat-value{font-size:1.5rem;font-weight:bold;color:#3498db;margin-bottom:0.5rem}
-.stat-label{color:#8795a5;font-size:0.9rem}
+.stat-value{font-size:1.5rem;font-weight:bold;color:#3498db;margin-bottom:.5rem}
+.stat-label{color:#8795a5;font-size:.9rem}
 .team-logo-profile{width:60px;height:60px;object-fit:contain;margin-bottom:0}
 .action-buttons{display:flex;gap:1rem;margin-top:2rem}
-.back-button{padding:0.75rem 1.5rem;border-radius:4px;background:transparent;border:1px solid #3498db;color:#3498db;cursor:pointer;transition:all 0.2s ease}
+.back-button{padding:.75rem 1.5rem;border-radius:4px;background:transparent;border:1px solid #3498db;color:#3498db;cursor:pointer;transition:all .2s ease}
 .back-button:hover{background:#3498db;color:#fff}
-.career-stats-section,.game-stats-section{background:#1a252f;border-radius:8px;padding:2rem;margin-top:2rem;box-shadow:0 4px 6px rgba(0,0,0,0.1)}
+.career-stats-section,.game-stats-section{background:#1a252f;border-radius:8px;padding:2rem;margin-top:2rem;box-shadow:0 4px 6px rgba(0,0,0,.1)}
 .career-stats-section h2,.game-stats-section h2{color:#3498db;margin-bottom:1.5rem;font-size:1.8rem}
 .career-totals,.season-breakdown{margin-bottom:2rem}
 .career-totals h3,.season-breakdown h3{color:#ecf0f1;margin-bottom:1rem;font-size:1.4rem}
 .season-table-container,.game-stats-table-container{margin-top:1rem;overflow-x:auto;border-radius:8px;border:1px solid #34495e;background:#2c3e50}
-.season-table,.game-stats-table{width:100%;border-collapse:collapse;background:#2c3e50;font-size:0.9rem}
+.season-table,.game-stats-table{width:100%;border-collapse:collapse;background:#2c3e50;font-size:.9rem}
 .season-table thead,.game-stats-table thead{background:#3498db;color:#fff}
-.season-table th,.game-stats-table th{padding:0.75rem 0.5rem;text-align:center;font-weight:600;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px}
+.season-table th,.game-stats-table th{padding:.75rem .5rem;text-align:center;font-weight:600;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px}
 .season-table th:first-child,.game-stats-table th:first-child{text-align:left;padding-left:1rem;background:#3498db}
 .season-table th:nth-child(2),.game-stats-table th:nth-child(2){text-align:left;background:#3498db}
-.season-table tbody tr,.game-stats-table tbody tr{border-bottom:1px solid #34495e;transition:background-color 0.2s ease}
+.season-table tbody tr,.game-stats-table tbody tr{border-bottom:1px solid #34495e;transition:background-color .2s ease}
 .season-table tbody tr:hover,.game-stats-table tbody tr:hover{background:#34495e}
 .season-table tbody tr:last-child,.game-stats-table tbody tr:last-child{border-bottom:none}
-.season-table td,.game-stats-table td{padding:0.75rem 0.5rem;text-align:center;vertical-align:middle}
+.season-table td,.game-stats-table td{padding:.75rem .5rem;text-align:center;vertical-align:middle}
 .season-table td:first-child,.game-stats-table td:first-child{text-align:left;padding-left:1rem;font-weight:600;color:#3498db;background:#2c3e50}
-.season-table td:nth-child(2),.game-stats-table td:nth-child(2){text-align:left;padding-left:0.5rem;background:#2c3e50}
-.team-info,.club-info,.opponent-info{display:flex;align-items:center;gap:0.5rem}
+.season-table td:nth-child(2),.game-stats-table td:nth-child(2){text-align:left;padding-left:.5rem;background:#2c3e50}
+.team-info,.club-info,.opponent-info{display:flex;align-items:center;gap:.5rem}
 .team-logo,.club-logo{width:32px;height:32px;border-radius:50%;object-fit:cover}
 .team-name,.club-name,.opponent-name{color:#ecf0f1;font-weight:500}
 .season-name{color:#3498db;font-weight:600}
@@ -72,25 +72,25 @@
 .game-club{min-width:120px;color:#fff;font-weight:600}
 .result-info{display:flex;flex-direction:row;align-items:center;gap:8px;justify-content:center}
 .result-letter{font-weight:bold;font-size:1.1em}
-.final-score{font-size:0.9em;opacity:0.8}
+.final-score{font-size:.9em;opacity:.8}
 .game-opponent{min-width:140px;text-align:left}
-.game-result{font-weight:700;font-size:0.8rem;border-radius:4px;padding:4px 8px;min-width:80px;text-align:center}
+.game-result{font-weight:700;font-size:.8rem;border-radius:4px;padding:4px 8px;min-width:80px;text-align:center}
 .game-result.W{background:#27ae60;color:#fff}
 .game-result.L{background:#e74c3c;color:#fff}
 .game-result.T{background:#f39c12;color:#fff}
 .stat-value.positive{color:#27ae60}
 .stat-value.negative{color:#e74c3c}
 .career-totals-row{background:#34495e!important;border-top:2px solid #3498db}
-.career-totals-row .season-name{color:#3498db;font-weight:700;font-size:0.9rem}
-.career-totals-row .team-name{color:#3498db;font-weight:700;font-size:0.9rem}
-.career-totals-row .stat-value{color:#ecf0f1;font-weight:700;font-size:0.85rem}
+.career-totals-row .season-name{color:#3498db;font-weight:700;font-size:.9rem}
+.career-totals-row .team-name{color:#3498db;font-weight:700;font-size:.9rem}
+.career-totals-row .stat-value{color:#ecf0f1;font-weight:700;font-size:.85rem}
 @media (max-width:768px){
 .profile-container{padding:1rem}
 .profile-content{padding:1rem}
 h1{font-size:1.5rem}
 .stats-grid{grid-template-columns:repeat(2,1fr)}
-.season-table-container,.game-stats-table-container{font-size:0.8rem}
-.season-table th,.season-table td,.game-stats-table th,.game-stats-table td{padding:0.5rem 0.25rem}
-.season-table th:first-child,.season-table td:first-child,.game-stats-table th:first-child,.game-stats-table td:first-child{padding-left:0.5rem}
+.season-table-container,.game-stats-table-container{font-size:.8rem}
+.season-table th,.season-table td,.game-stats-table th,.game-stats-table td{padding:.5rem .25rem}
+.season-table th:first-child,.season-table td:first-child,.game-stats-table th:first-child,.game-stats-table td:first-child{padding-left:.5rem}
 .team-logo,.club-logo{width:24px;height:24px}
 }
