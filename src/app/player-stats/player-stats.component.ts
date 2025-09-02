@@ -64,6 +64,7 @@ interface PlayerStats {
   faceoffsWon: number;
   faceoffsLost: number;
   faceoffPercentage: number;
+  penaltyKillCorsiZone: number; // PKCZ - Penalty Kill Corsi Zone
   division?: string;
 }
 
@@ -360,7 +361,8 @@ export class PlayerStatsComponent implements OnInit {
                   possession: 0,
                   faceoffsWon: 0,
                   faceoffsLost: 0,
-                  faceoffPercentage: 0
+                  faceoffPercentage: 0,
+                  penaltyKillCorsiZone: 0
                 };
                 statsMap.set(playerKey, existingStats);
               }
@@ -388,6 +390,7 @@ export class PlayerStatsComponent implements OnInit {
               existingStats.possession += parseInt(playerData.skpossession) || 0;
               existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
               existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+              existingStats.penaltyKillCorsiZone += parseInt(playerData.skpkc) || 0;
             });
           }
         } else {
@@ -443,7 +446,8 @@ export class PlayerStatsComponent implements OnInit {
                       possession: 0,
                       faceoffsWon: 0,
                       faceoffsLost: 0,
-                      faceoffPercentage: 0
+                      faceoffPercentage: 0,
+                      penaltyKillCorsiZone: 0
                     };
                     statsMap.set(playerIdNum, existingStats);
                   }
@@ -603,7 +607,8 @@ export class PlayerStatsComponent implements OnInit {
                 possession: 0,
                 faceoffsWon: 0,
                 faceoffsLost: 0,
-                faceoffPercentage: 0
+                faceoffPercentage: 0,
+                penaltyKillCorsiZone: 0
               };
               statsMap.set(playerKey, existingStats);
             }
@@ -694,7 +699,8 @@ export class PlayerStatsComponent implements OnInit {
                     possession: 0,
                     faceoffsWon: 0,
                     faceoffsLost: 0,
-                    faceoffPercentage: 0
+                    faceoffPercentage: 0,
+                    penaltyKillCorsiZone: 0
                   };
                   statsMap.set(playerIdNum, existingStats);
                 }

@@ -11,10 +11,30 @@ export interface PlayerMatchStats {
   goals?: number;
   assists?: number;
   plusMinus?: number;
+  shots?: number;
+  timeOnIce?: string;
+  shotPercentage?: number;
+  hits?: number;
+  blockedShots?: number;
+  penaltyMinutes?: number;
+  powerPlayGoals?: number;
+  shortHandedGoals?: number;
+  gameWinningGoals?: number;
+  takeaways?: number;
+  giveaways?: number;
+  passes?: number;
+  passPercentage?: number;
+  faceoffsWon?: number;
+  faceoffsLost?: number;
+  faceoffPercentage?: number;
+  playerScore?: number;
+  penaltyKillCorsiZone?: number;
   saves?: number;
   shotsAgainst?: number;
   goalsAgainst?: number;
+  goalsAgainstAverage?: number;
   shutout?: number;
+  shutoutPeriods?: number;
 }
 
 export interface ClubInfo {
@@ -91,10 +111,30 @@ export class MatchService {
             goals: parseInt(playerData.skgoals) || 0,
             assists: parseInt(playerData.skassists) || 0,
             plusMinus: parseInt(playerData.skplusmin) || 0,
+            shots: parseInt(playerData.skshots) || 0,
+            timeOnIce: playerData.sktoi || 'N/A',
+            shotPercentage: playerData.skshots ? (parseInt(playerData.skgoals) || 0) / parseInt(playerData.skshots) * 100 : 0,
+            hits: parseInt(playerData.skhits) || 0,
+            blockedShots: parseInt(playerData.skblk) || 0,
+            penaltyMinutes: parseInt(playerData.skpim) || 0,
+            powerPlayGoals: parseInt(playerData.skppg) || 0,
+            shortHandedGoals: parseInt(playerData.skshg) || 0,
+            gameWinningGoals: parseInt(playerData.skgwg) || 0,
+            takeaways: parseInt(playerData.sktakeaways) || 0,
+            giveaways: parseInt(playerData.skgiveaways) || 0,
+            passes: parseInt(playerData.skpasses) || 0,
+            passPercentage: parseInt(playerData.skpasspercentage) || 0,
+            faceoffsWon: parseInt(playerData.skfow) || 0,
+            faceoffsLost: parseInt(playerData.skfol) || 0,
+            faceoffPercentage: parseInt(playerData.skfopercentage) || 0,
+            playerScore: parseInt(playerData.score) || 0,
+            penaltyKillCorsiZone: parseInt(playerData.skpkc) || 0,
             saves: parseInt(playerData.glsaves) || 0,
             shotsAgainst: parseInt(playerData.glshots) || 0,
             goalsAgainst: parseInt(playerData.glga) || 0,
-            shutout: parseInt(playerData.glso) || 0
+            goalsAgainstAverage: parseFloat(playerData.glgaa) || 0,
+            shutout: parseInt(playerData.glso) || 0,
+            shutoutPeriods: parseInt(playerData.glsoperiods) || 0
           });
         });
       }
@@ -116,10 +156,30 @@ export class MatchService {
             goals: parseInt(playerData.skgoals) || 0,
             assists: parseInt(playerData.skassists) || 0,
             plusMinus: parseInt(playerData.skplusmin) || 0,
+            shots: parseInt(playerData.skshots) || 0,
+            timeOnIce: playerData.sktoi || 'N/A',
+            shotPercentage: playerData.skshots ? (parseInt(playerData.skgoals) || 0) / parseInt(playerData.skshots) * 100 : 0,
+            hits: parseInt(playerData.skhits) || 0,
+            blockedShots: parseInt(playerData.skblk) || 0,
+            penaltyMinutes: parseInt(playerData.skpim) || 0,
+            powerPlayGoals: parseInt(playerData.skppg) || 0,
+            shortHandedGoals: parseInt(playerData.skshg) || 0,
+            gameWinningGoals: parseInt(playerData.skgwg) || 0,
+            takeaways: parseInt(playerData.sktakeaways) || 0,
+            giveaways: parseInt(playerData.skgiveaways) || 0,
+            passes: parseInt(playerData.skpasses) || 0,
+            passPercentage: parseInt(playerData.skpasspercentage) || 0,
+            faceoffsWon: parseInt(playerData.skfow) || 0,
+            faceoffsLost: parseInt(playerData.skfol) || 0,
+            faceoffPercentage: parseInt(playerData.skfopercentage) || 0,
+            playerScore: parseInt(playerData.score) || 0,
+            penaltyKillCorsiZone: parseInt(playerData.skpkc) || 0,
             saves: parseInt(playerData.glsaves) || 0,
             shotsAgainst: parseInt(playerData.glshots) || 0,
             goalsAgainst: parseInt(playerData.glga) || 0,
-            shutout: parseInt(playerData.glso) || 0
+            goalsAgainstAverage: parseFloat(playerData.glgaa) || 0,
+            shutout: parseInt(playerData.glso) || 0,
+            shutoutPeriods: parseInt(playerData.glsoperiods) || 0
           });
         });
       };

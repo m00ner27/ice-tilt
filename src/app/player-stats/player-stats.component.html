@@ -56,6 +56,7 @@
               <th [className]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
               <th [className]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
               <th [className]="getColumnSortClass('playerScore')" (click)="onSortColumn('playerScore')">PS</th>
+              <th [className]="getColumnSortClass('penaltyKillCorsiZone')" (click)="onSortColumn('penaltyKillCorsiZone')">PKCZ</th>
             </tr>
           </thead>
           <tbody>
@@ -92,6 +93,7 @@
               <td>{{ player.faceoffsWon }}</td>
               <td>{{ player.faceoffPercentage }}%</td>
               <td>{{ player.playerScore }}</td>
+              <td>{{ player.penaltyKillCorsiZone }}</td>
             </tr>
           </tbody>
         </table>
@@ -101,6 +103,40 @@
     <!-- No Stats Message -->
     <div *ngIf="groupedStats.length === 0" class="no-data-container">
       <p>No player statistics available for the selected season.</p>
+    </div>
+    
+    <!-- Stats Legend -->
+    <div class="schedule-legend" *ngIf="!isLoading">
+      <div class="legend-item">
+        <span class="legend-abbr">Pos</span> - Position
+        <span class="legend-abbr">GP</span> - Games Played
+        <span class="legend-abbr">G</span> - Goals
+        <span class="legend-abbr">A</span> - Assists
+        <span class="legend-abbr">PTS</span> - Points
+        <span class="legend-abbr">+/-</span> - Plus/Minus
+        <span class="legend-abbr">S</span> - Shots
+        <span class="legend-abbr">S%</span> - Shot Percentage
+      </div>
+      <div class="legend-item">
+        <span class="legend-abbr">H</span> - Hits
+        <span class="legend-abbr">BS</span> - Blocked Shots
+        <span class="legend-abbr">PIM</span> - Penalty Minutes
+        <span class="legend-abbr">TK</span> - Takeaways
+        <span class="legend-abbr">GV</span> - Giveaways
+      </div>
+      <div class="legend-item">
+        <span class="legend-abbr">PPG</span> - Power Play Goals
+        <span class="legend-abbr">SHG</span> - Short Handed Goals
+        <span class="legend-abbr">GWG</span> - Game Winning Goals
+        <span class="legend-abbr">PKCZ</span> - Penalty Kill Corsi Zone
+      </div>
+      <div class="legend-item">
+        <span class="legend-abbr">P</span> - Passes
+        <span class="legend-abbr">P%</span> - Pass Percentage
+        <span class="legend-abbr">FOW</span> - Faceoffs Won
+        <span class="legend-abbr">FO%</span> - Faceoff Percentage
+        <span class="legend-abbr">PS</span> - Player Score
+      </div>
     </div>
   </div>
 </div>

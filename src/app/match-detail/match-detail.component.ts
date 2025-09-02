@@ -13,11 +13,28 @@ interface PlayerStatDisplay {
   assists?: number;
   points?: number;
   plusMinus?: number;
+  shots?: number;
+  shotPercentage?: number;
+  hits?: number;
+  blockedShots?: number;
+  penaltyMinutes?: number;
+  powerPlayGoals?: number;
+  shortHandedGoals?: number;
+  gameWinningGoals?: number;
+  takeaways?: number;
+  giveaways?: number;
+  passes?: number;
+  passPercentage?: number;
+  faceoffsWon?: number;
+  faceoffsLost?: number;
+  faceoffPercentage?: number;
+  playerScore?: number;
+  penaltyKillCorsiZone?: number;
   saves?: number;
   shotsAgainst?: number;
   savePercentage?: number;
   goalsAgainst?: number;
-  shutout?: number;
+
 }
 
 @Component({
@@ -115,8 +132,33 @@ export class MatchDetailComponent implements OnInit {
       return;
     }
 
+    console.log('=== PROCESSING PLAYER STATS ===');
+    console.log('Raw player stats:', this.match.playerStats);
+    
     this.match.playerStats.forEach(player => {
+      console.log('Processing player:', player.name, 'Stats:', {
+        goals: player.goals,
+        assists: player.assists,
+        shots: player.shots,
+        hits: player.hits,
+        blockedShots: player.blockedShots,
+        penaltyMinutes: player.penaltyMinutes,
+        powerPlayGoals: player.powerPlayGoals,
+        shortHandedGoals: player.shortHandedGoals,
+        gameWinningGoals: player.gameWinningGoals,
+        takeaways: player.takeaways,
+        giveaways: player.giveaways,
+        passes: player.passes,
+        passPercentage: player.passPercentage,
+        faceoffsWon: player.faceoffsWon,
+        faceoffsLost: player.faceoffsLost,
+        faceoffPercentage: player.faceoffPercentage,
+        playerScore: player.playerScore,
+        penaltyKillCorsiZone: player.penaltyKillCorsiZone
+      });
+      
       const playerDisplay = this.convertToPlayerDisplay(player);
+      console.log('Converted player display:', playerDisplay);
       
       if (player.team === this.match?.homeTeam) {
         if (this.isGoalie(player.position)) {
@@ -153,8 +195,7 @@ export class MatchDetailComponent implements OnInit {
         shotsAgainst: player.shotsAgainst,
         savePercentage: player.shotsAgainst ? 
           player.saves! / player.shotsAgainst : 0,
-        goalsAgainst: player.goalsAgainst,
-        shutout: player.shutout
+        goalsAgainst: player.goalsAgainst
       };
     } else {
       // Skater stats
@@ -163,7 +204,25 @@ export class MatchDetailComponent implements OnInit {
         goals: player.goals || 0,
         assists: player.assists || 0,
         points: (player.goals || 0) + (player.assists || 0),
-        plusMinus: player.plusMinus || 0
+        plusMinus: player.plusMinus || 0,
+        shots: player.shots || 0,
+        shotPercentage: player.shots ? (player.goals || 0) / player.shots * 100 : 0,
+        hits: player.hits || 0,
+        blockedShots: player.blockedShots || 0,
+        penaltyMinutes: player.penaltyMinutes || 0,
+        powerPlayGoals: player.powerPlayGoals || 0,
+        shortHandedGoals: player.shortHandedGoals || 0,
+        gameWinningGoals: player.gameWinningGoals || 0,
+        takeaways: player.takeaways || 0,
+        giveaways: player.giveaways || 0,
+        passes: player.passes || 0,
+        passPercentage: player.passPercentage || 0,
+        faceoffsWon: player.faceoffsWon || 0,
+        faceoffsLost: player.faceoffsLost || 0,
+        faceoffPercentage: (player.faceoffsWon && player.faceoffsLost) ? 
+          (player.faceoffsWon / (player.faceoffsWon + player.faceoffsLost) * 100) : 0,
+        playerScore: player.playerScore || 0,
+        penaltyKillCorsiZone: player.penaltyKillCorsiZone || 0
       };
     }
   }
@@ -196,6 +255,31 @@ export class MatchDetailComponent implements OnInit {
   
   goBack(): void {
     this.location.back();
+  }
+
+  getTeamTotalGoals(team: 'home' | 'away'): number {
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.goals || 0), 0);
+  }
+
+  getTeamTotalAssists(team: 'home' | 'away'): number {
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.assists || 0), 0);
+  }
+
+  getTeamTotalShots(team: 'home' | 'away'): number {
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.shots || 0), 0);
+  }
+
+  getTeamTotalHits(team: 'home' | 'away'): number {
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.hits || 0), 0);
+  }
+
+  getTeamTotalBlocks(team: 'home' | 'away'): number {
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.blockedShots || 0), 0);
   }
 
   private processManualStats(): void {

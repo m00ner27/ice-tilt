@@ -320,3 +320,28 @@ th.player-name.sticky-column {
   outline: none;
   border-color: #3498db;
 }
+
+/* Legend */
+.schedule-legend {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: #1a252f;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  color: white;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.legend-abbr {
+  display: inline-block;
+  font-weight: bold;
+  padding: 0 5px;
+  color: #3498db;
+}
