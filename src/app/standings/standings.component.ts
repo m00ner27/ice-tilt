@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
+import { environment } from '../../environments/environment';
 
 interface Season {
   _id: string;
@@ -358,7 +359,7 @@ export class StandingsComponent implements OnInit {
     
     // If it's a relative path starting with /uploads, prepend the API URL
     if (logoUrl.startsWith('/uploads/')) {
-      return `http://localhost:3001${logoUrl}`; // Use API URL
+      return `${environment.apiUrl}${logoUrl}`; // Use API URL
     }
     
     // Otherwise, assume it's a local asset

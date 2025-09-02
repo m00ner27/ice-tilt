@@ -157,7 +157,7 @@ export class ViewProfileComponent implements OnInit {
 
         // Get the MongoDB user ID by syncing with the database
         this.authService.getAccessTokenSilently({
-          authorizationParams: { audience: 'http://localhost:3000' }
+          authorizationParams: { audience: environment.apiAudience }
         }).pipe(
           switchMap(token => 
             this.http.post(

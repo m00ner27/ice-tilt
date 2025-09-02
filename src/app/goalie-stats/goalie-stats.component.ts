@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
 import { forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
+import { environment } from '../../environments/environment';
 
 interface Season {
   _id: string;
@@ -603,7 +604,7 @@ export class GoalieStatsComponent implements OnInit {
     
     // If it's a relative path starting with /uploads, prepend the API URL
     if (logoUrl.startsWith('/uploads/')) {
-      return `http://localhost:3001${logoUrl}`; // Use API URL
+      return `${environment.apiUrl}${logoUrl}`; // Use API URL
     }
     
     // Otherwise, assume it's a local asset

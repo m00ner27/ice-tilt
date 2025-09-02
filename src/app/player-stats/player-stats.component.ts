@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service'; // Import ApiService
 import { forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
+import { environment } from '../../environments/environment';
 
 // Define interfaces for Season and Division
 interface Season {
@@ -887,7 +888,7 @@ export class PlayerStatsComponent implements OnInit {
     
     // If it's a relative path starting with /uploads, prepend the API URL
     if (logoUrl.startsWith('/uploads/')) {
-      const fullUrl = `http://localhost:3001${logoUrl}`;
+      const fullUrl = `${environment.apiUrl}${logoUrl}`;
       console.log('🔍 Upload path detected, constructed URL:', fullUrl);
       return fullUrl;
     }

@@ -436,7 +436,7 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
 
     // Get the MongoDB user ID for the manager
     this.auth.getAccessTokenSilently({
-      authorizationParams: { audience: 'http://localhost:3000' }
+      authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => 
         this.http.post(

@@ -61,7 +61,7 @@ export class AppComponent implements OnInit {
 
         // Sync user with MongoDB
         this.auth.getAccessTokenSilently({
-          authorizationParams: { audience: 'http://localhost:3000' }
+          authorizationParams: { audience: environment.apiAudience }
         }).subscribe(token => {
           this.http.post(
             `${environment.apiUrl}/api/users/auth0-sync`,
