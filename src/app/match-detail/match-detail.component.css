@@ -1,3 +1,4 @@
+/* Base Styles */
 .match-detail-container {
   padding: 20px;
   max-width: 1200px;
@@ -22,6 +23,7 @@
   color: white;
 }
 
+/* Match Header */
 .match-header {
   background-color: #1a252f;
   padding: 20px;
@@ -48,64 +50,95 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  padding: 15px 20px;
-  background-color: #2c3e50;
-  min-width: 180px;
-  transition: transform 0.2s ease;
-  gap: 4px;
-}
-
-.team.winner {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  transform: scale(1.05);
-  background-color: #1e5a32;
-  border: 1px solid #4caf50;
+  gap: 8px;
 }
 
 .team-name {
-  font-weight: 600;
   font-size: 1.2em;
-  margin-bottom: 5px;
-  color: white;
+  font-weight: 600;
 }
 
 .team-score {
-  font-size: 2.5em;
-  font-weight: 700;
-  color: white;
+  font-size: 2em;
+  font-weight: bold;
+  color: #3498db;
 }
 
 .vs-label {
-  font-size: 1.2em;
-  font-weight: 500;
+  font-size: 1.5em;
+  font-weight: bold;
   color: #ccc;
 }
 
+.team.winner .team-score {
+  color: #27ae60;
+}
+
+/* No Stats Message */
+.no-stats-message {
+  background-color: #1a252f;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.message-content h3 {
+  color: #3498db;
+  margin-bottom: 10px;
+}
+
+.merged-game-info {
+  background-color: #2c3e50;
+  border-radius: 6px;
+  padding: 15px;
+  margin-top: 15px;
+  border-left: 4px solid #3498db;
+}
+
+/* Match Content - Side by Side Layout */
 .match-content {
   display: flex;
-  flex-wrap: wrap;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
+/* Team Stats */
 .team-stats {
-  flex: 1;
-  min-width: 300px;
   background-color: #1a252f;
-  padding: 20px;
   border-radius: 8px;
   border: 1px solid #34495e;
+  padding: 20px;
+  margin-bottom: 20px;
+  flex: 1;
+  min-width: 0; /* Allow flex shrinking */
+  overflow-x: auto; /* Allow horizontal scrolling */
 }
 
+.team-stats h3 {
+  color: #3498db;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.team-logo-sm {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Team Summary Stats */
 .team-summary-stats {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
   margin-bottom: 20px;
   padding: 15px;
-  background-color: rgba(52, 73, 94, 0.3);
+  background-color: #2c3e50;
   border-radius: 6px;
-  border: 1px solid rgba(52, 152, 219, 0.2);
 }
 
 .summary-stat {
@@ -116,58 +149,36 @@
 }
 
 .summary-stat .stat-label {
-  font-size: 0.8rem;
   color: #8795a5;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
 .summary-stat .stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
   color: #3498db;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 
-.team-stats h3 {
-  color: white;
-  margin: 0 0 15px 0;
-  font-size: 1.3em;
-  border-bottom: 2px solid #34495e;
-  padding-bottom: 8px;
-}
-
-.team-stats h4 {
-  color: #ccc;
-  margin: 20px 0 10px;
-  font-size: 1.1em;
-}
-
-.stats-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  color: white;
-  font-size: 0.8rem;
-  min-width: 1200px; /* Ensure table has minimum width for all columns */
-}
-
+/* Tables */
 .table-container {
   margin-top: 10px;
   border-radius: 6px;
   border: 1px solid #34495e;
   position: relative;
-  overflow-x: auto;
+  overflow-x: auto !important;
   overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  display: block;
 }
 
-/* Custom scrollbar styling */
 .table-container::-webkit-scrollbar {
   height: 8px;
 }
 
 .table-container::-webkit-scrollbar-track {
-  background: #2c3e50;
+  background: #1a252f;
   border-radius: 4px;
 }
 
@@ -177,199 +188,66 @@
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
-  background: #4a5f7a;
+  background: #3498db;
 }
 
-.stats-table th,
+.stats-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #1a252f;
+  color: white;
+  font-size: 0.8rem;
+  table-layout: auto;
+  min-width: 1000px !important; /* Force wider table to trigger scrolling */
+}
+
+.stats-table th {
+  background-color: #34495e;
+  color: white;
+  padding: 8px 6px;
+  text-align: center;
+  font-weight: 600;
+  border-bottom: 2px solid #3498db;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
 .stats-table td {
   padding: 8px 6px;
   text-align: center;
   border-bottom: 1px solid #34495e;
   white-space: nowrap;
+  font-size: 0.75rem;
 }
 
-/* Make goalie tables more compact */
-.goalie-table {
-  min-width: 400px !important; /* Much smaller minimum width for goalie tables */
-}
-
-.goalie-table th,
-.goalie-table td {
-  padding: 4px 2px !important;
-  font-size: 0.7rem !important;
-}
-
-/* Specific column widths for goalie tables */
-.goalie-table th:nth-child(1),
-.goalie-table td:nth-child(1) {
-  width: 25px; /* # column */
-}
-
-.goalie-table th:nth-child(2),
-.goalie-table td:nth-child(2) {
-  width: 80px; /* Name column */
-  text-align: left !important;
-}
-
-.goalie-table th:nth-child(3),
-.goalie-table th:nth-child(4),
-.goalie-table th:nth-child(5),
-.goalie-table th:nth-child(6),
-.goalie-table td:nth-child(3),
-.goalie-table td:nth-child(4),
-.goalie-table td:nth-child(5),
-.goalie-table td:nth-child(6) {
-  width: 40px; /* SA, SV, SV%, GA columns */
-}
-
-.stats-table th {
-  background-color: #34495e;
-  font-weight: 600;
-  color: white;
-  font-size: 0.9em;
-}
-
-.stats-table th:first-child,
-.stats-table td:first-child {
-  text-align: center;
-}
-
-.stats-table th:nth-child(2),
-.stats-table td:nth-child(2) {
-  text-align: left;
-}
-
-.positive {
-  color: #4caf50;
-}
-
-.negative {
-  color: #f44336;
-}
-
-.loading {
-  text-align: center;
-  color: white;
-  padding: 20px;
-  font-size: 1.2em;
-}
-
-.team-logo-sm {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-  vertical-align: middle;
-  margin-right: 10px;
-}
-
-.no-stats-message {
-  background-color: #1a252f;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #34495e;
-  margin-bottom: 20px;
-  text-align: center;
-  color: white;
-}
-
-.message-content h3 {
-  color: #3498db;
-  margin: 0 0 15px 0;
-  font-size: 1.4em;
-}
-
-.message-content p {
-  color: #ccc;
-  line-height: 1.6;
-  margin: 10px 0;
-}
-
-.merged-game-info {
+.stats-table tbody tr:hover {
   background-color: #2c3e50;
-  padding: 15px;
-  border-radius: 6px;
-  margin-top: 15px;
-  text-align: left;
 }
 
-.merged-game-info p:first-child {
-  color: #f39c12;
-  font-weight: 600;
-  margin-bottom: 8px;
+.stats-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
-.merged-game-info p:last-child {
-  color: #bdc3c7;
-  margin-bottom: 0;
+/* Goalie Table */
+.goalie-table {
+  min-width: 300px;
 }
 
-@media (max-width: 768px) {
-  .match-content {
-    flex-direction: column;
-  }
-  
-  .team-stats {
-    width: 100%;
-  }
-  
-  .stats-table {
-    font-size: 0.7rem;
-    min-width: 800px; /* Smaller minimum width for mobile */
-  }
-  
-  .goalie-table {
-    min-width: 300px !important; /* Even smaller for mobile goalie tables */
-  }
-  
-  .stats-table th,
-  .stats-table td {
-    padding: 4px 2px;
-    white-space: nowrap; /* Prevent text wrapping in cells */
-  }
-  
-  .stats-table th:nth-child(2),
-  .stats-table td:nth-child(2) {
-    min-width: 80px; /* Ensure name column has enough space */
-  }
-  
-  .team-summary-stats {
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-  
-  .table-container {
-    border-radius: 4px;
-  }
+.goalie-table th, .goalie-table td {
+  padding: 6px 8px;
+  font-size: 0.75rem;
 }
 
-/* Legend */
-.schedule-legend {
-  margin-top: 30px;
-  padding: 15px;
-  background-color: #1a252f;
-  border: 1px solid #34495e;
-  border-radius: 8px;
-  color: white;
-}
+.goalie-table th:nth-child(1), .goalie-table td:nth-child(1) { width: 40px; }
+.goalie-table th:nth-child(2), .goalie-table td:nth-child(2) { width: 120px; }
+.goalie-table th:nth-child(3), .goalie-table td:nth-child(3) { width: 50px; }
+.goalie-table th:nth-child(4), .goalie-table td:nth-child(4) { width: 50px; }
+.goalie-table th:nth-child(5), .goalie-table td:nth-child(5) { width: 60px; }
+.goalie-table th:nth-child(6), .goalie-table td:nth-child(6) { width: 50px; }
 
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.legend-abbr {
-  display: inline-block;
-  font-weight: bold;
-  padding: 0 5px;
-  color: #3498db;
-}
-
-/* Make both # and Name columns sticky */
-.stats-table th:nth-child(1),
-.stats-table td:nth-child(1) {
+/* Sticky Columns */
+.stats-table th:nth-child(1), .stats-table td:nth-child(1) {
   position: sticky !important;
   left: 0 !important;
   z-index: 10 !important;
@@ -380,10 +258,9 @@
   max-width: 40px !important;
 }
 
-.stats-table th:nth-child(2),
-.stats-table td:nth-child(2) {
+.stats-table th:nth-child(2), .stats-table td:nth-child(2) {
   position: sticky !important;
-  left: 40px !important; /* Position after the # column */
+  left: 40px !important;
   z-index: 10 !important;
   background-color: #1a252f !important;
   border-right: 2px solid #34495e !important;
@@ -393,14 +270,126 @@
   max-width: 120px !important;
 }
 
-.stats-table thead th:nth-child(1),
-.stats-table thead th:nth-child(2) {
+.stats-table thead th:nth-child(1), .stats-table thead th:nth-child(2) {
   background-color: #34495e !important;
   z-index: 11 !important;
 }
 
-/* Ensure table has proper structure for sticky positioning */
-.stats-table {
-  border-collapse: separate !important;
-  border-spacing: 0 !important;
-} 
+/* Stats Legend */
+.schedule-legend {
+  background-color: #1a252f;
+  border: 1px solid #34495e;
+  border-radius: 6px;
+  padding: 15px;
+  margin-top: 20px;
+  font-size: 0.85rem;
+}
+
+.legend-item {
+  margin-bottom: 8px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-abbr {
+  background-color: #3498db;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-right: 8px;
+  font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .match-content {
+    flex-direction: column;
+  }
+  
+  .team-stats {
+    overflow-x: auto !important;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .match-detail-container {
+    padding: 10px;
+  }
+
+  .match-teams {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .team-summary-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .team-stats {
+    overflow-x: auto !important;
+    width: 100%;
+  }
+
+  .stats-table {
+    font-size: 0.8rem;
+    min-width: 1000px !important; /* Force wider table to trigger scrolling */
+  }
+
+  .stats-table th, .stats-table td {
+    padding: 2px 1px;
+    font-size: 0.75rem;
+  }
+
+  .stats-table th:nth-child(1), .stats-table td:nth-child(1) {
+    width: 25px !important;
+    min-width: 25px !important;
+    max-width: 25px !important;
+  }
+
+  .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
+    left: 25px !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .match-detail-container {
+    padding: 5px;
+  }
+
+  .team-stats {
+    padding: 10px;
+    overflow-x: auto !important;
+    width: 100%;
+  }
+
+  .stats-table {
+    font-size: 0.7rem;
+    min-width: 1000px !important; /* Force wider table to trigger scrolling */
+  }
+
+  .stats-table th, .stats-table td {
+    padding: 1px 0.5px;
+    font-size: 0.65rem;
+  }
+
+  .stats-table th:nth-child(1), .stats-table td:nth-child(1) {
+    width: 20px !important;
+    min-width: 20px !important;
+    max-width: 20px !important;
+  }
+
+  .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
+    left: 20px !important;
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+  }
+}
