@@ -1,9 +1,9 @@
 export const environment = {
   production: true,
-  apiPlayerProfilesUrl: 'https://icetilt-api.onrender.com/api/player-profiles',
-  apiUrl: 'https://icetilt-api.onrender.com',
-  apiAudience: 'https://icetilt-api.onrender.com',
+  apiPlayerProfilesUrl: 'https://ice-tilt-backend.onrender.com/api/player-profiles',
+  apiUrl: 'https://ice-tilt-backend.onrender.com',
+  apiAudience: 'https://ice-tilt-backend.onrender.com',
   apiAllowedList: [
-    'https://icetilt-api.onrender.com/api/*'
+    'https://ice-tilt-backend.onrender.com/api/*'
   ]
 };
