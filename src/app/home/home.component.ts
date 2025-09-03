@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { Match, MatchService } from '../store/services/match.service';
 import { RecentTransactionsComponent } from '../recent-transactions/recent-transactions.component';
 import { ScheduleComponent } from '../schedule/schedule.component';
+import { environment } from '../../environments/environment';
 
 interface AggregatedPlayer {
   playerId: number;
@@ -35,6 +36,35 @@ export class HomeComponent implements OnInit {
 
   constructor(private matchService: MatchService) {}
 
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/1ithlwords.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
+      return logoUrl;
+    }
+    
+    // If it starts with /uploads/, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // If it matches the timestamp pattern (e.g., "1754503785707-306812067-HCPurijat.png")
+    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
+      return `${environment.apiUrl}/uploads/${logoUrl}`;
+    }
+    
+    // If it starts with uploads/, prepend the API URL
+    if (logoUrl.startsWith('uploads/')) {
+      return `${environment.apiUrl}/${logoUrl}`;
+    }
+    
+    // For any other case, return as is (might be a relative path or filename)
+    return logoUrl;
+  }
+
   ngOnInit() {
     this.matchService.getMatches().subscribe(matches => {
       if (!matches) {
@@ -46,8 +76,8 @@ export class HomeComponent implements OnInit {
       
       // Build team logo map from club data
       matches.forEach(match => {
-        if (match.homeTeam) teamLogoMap.set(match.homeTeam, match.homeClub?.logoUrl || 'assets/images/1ithlwords.png');
-        if (match.awayTeam) teamLogoMap.set(match.awayTeam, match.awayClub?.logoUrl || 'assets/images/1ithlwords.png');
+        if (match.homeTeam) teamLogoMap.set(match.homeTeam, this.getImageUrl(match.homeClub?.logoUrl));
+        if (match.awayTeam) teamLogoMap.set(match.awayTeam, this.getImageUrl(match.awayClub?.logoUrl));
       });
       
       // Aggregate stats across ALL matches (all-time leaders)
@@ -79,7 +109,7 @@ export class HomeComponent implements OnInit {
                   playerId: numericPlayerId,
                   name: playerName,
                   team: teamName,
-                  teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                  teamLogo: teamLogoMap.get(teamName) || this.getImageUrl('assets/images/1ithlwords.png'),
                   number: player.jerseynum || player.number || 0,
                   position: player.position || 'Unknown',
                   goals: 0,
