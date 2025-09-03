@@ -18,8 +18,8 @@ bootstrapApplication(AppComponent, {
 
     // Auth0 Configuration
     provideAuth0({
-      domain: 'dev-51tl555qz78d354r.us.auth0.com', // Auth0 domain
-      clientId: 'WgWpaLK0yww0VSuHQuvcKBAUWPCJcO4e', // Auth0 Client ID
+      domain: environment.auth0.domain, // Auth0 domain
+      clientId: environment.auth0.clientId, // Auth0 Client ID
       authorizationParams: {
         redirect_uri: window.location.origin, // Use your application's base URL
         audience: environment.apiAudience, // Uses environment variable

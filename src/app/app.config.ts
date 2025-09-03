@@ -13,8 +13,8 @@ export const appConfig: ApplicationConfig = {
 
     // Auth0 Configuration for standalone apps
     provideAuth0({
-      domain: 'dev-dev-51tl555qz78d354r.us.auth0.com',
-      clientId: 'WgWpaLK0yww0VSuHQuvcKBAUWPCJcO4e',
+      domain: environment.auth0.domain,
+      clientId: environment.auth0.clientId,
       authorizationParams: {
         redirect_uri: window.location.origin,
         audience: environment.apiAudience,
