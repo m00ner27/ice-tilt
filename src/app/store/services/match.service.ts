@@ -230,21 +230,21 @@ export class MatchService {
     };
   }
   
-  getMatch(id: string): Observable<Match> {
-    return this.http.get<any>(`${this.apiUrl}/games/${id}`).pipe(
+    getMatch(id: string): Observable<Match> {
+    return this.http.get<any>(`${this.apiUrl}/api/games/${id}`).pipe(
       map(this.transformGameData)
     );
   }
-  
+
   getMatches(): Observable<Match[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/games`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
       map(games => games.map(this.transformGameData))
     );
   }
 
   // Method to force refresh matches (useful after data changes)
   refreshMatches(): Observable<Match[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/games`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
       map(games => games.map(this.transformGameData))
     );
   }
