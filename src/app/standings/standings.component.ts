@@ -359,7 +359,17 @@ export class StandingsComponent implements OnInit {
     
     // If it's a relative path starting with /uploads, prepend the API URL
     if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`; // Use API URL
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // If it's a filename that looks like an upload (has timestamp pattern), add /uploads/ prefix
+    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
+      return `${environment.apiUrl}/uploads/${logoUrl}`;
+    }
+    
+    // If it starts with 'uploads/' (no leading slash), add the API URL
+    if (logoUrl.startsWith('uploads/')) {
+      return `${environment.apiUrl}/${logoUrl}`;
     }
     
     // Otherwise, assume it's a local asset

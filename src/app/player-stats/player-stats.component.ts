@@ -893,6 +893,20 @@ export class PlayerStatsComponent implements OnInit {
       return fullUrl;
     }
     
+    // If it's a filename that looks like an upload (has timestamp pattern), add /uploads/ prefix
+    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
+      const fullUrl = `${environment.apiUrl}/uploads/${logoUrl}`;
+      console.log('🔍 Timestamp filename detected, constructed URL:', fullUrl);
+      return fullUrl;
+    }
+    
+    // If it starts with 'uploads/' (no leading slash), add the API URL
+    if (logoUrl.startsWith('uploads/')) {
+      const fullUrl = `${environment.apiUrl}/${logoUrl}`;
+      console.log('🔍 Uploads path detected, constructed URL:', fullUrl);
+      return fullUrl;
+    }
+    
     // Otherwise, assume it's a local asset
     console.log('🔍 Local asset path, returning:', logoUrl);
     return logoUrl;

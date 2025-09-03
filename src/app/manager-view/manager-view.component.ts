@@ -580,6 +580,16 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
       return `${environment.apiUrl}${logoUrl}`;
     }
     
+    // If it's a filename that looks like an upload (has timestamp pattern), add /uploads/ prefix
+    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
+      return `${environment.apiUrl}/uploads/${logoUrl}`;
+    }
+    
+    // If it starts with 'uploads/' (no leading slash), add the API URL
+    if (logoUrl.startsWith('uploads/')) {
+      return `${environment.apiUrl}/${logoUrl}`;
+    }
+    
     // Otherwise, assume it's a local asset
     return logoUrl;
   }
