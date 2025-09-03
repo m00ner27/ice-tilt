@@ -354,3 +354,170 @@ h2 {
 .player-link:hover {
   color: #3498db;
 }
+
+/* Schedule Section Responsive Styles */
+.schedule-section {
+  overflow-x: auto;
+}
+
+.schedule-section .schedule-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #34495e;
+  background-color: #1a252f;
+}
+
+.schedule-section .schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1a252f;
+  color: white;
+  font-size: 0.9rem;
+  min-width: 800px;
+}
+
+/* Responsive breakpoints for schedule section */
+@media (max-width: 1200px) and (min-width: 1025px) {
+  .schedule-section .schedule-table {
+    min-width: 650px;
+    font-size: 0.85rem;
+  }
+  
+  .schedule-section .schedule-table th, 
+  .schedule-section .schedule-table td {
+    padding: 8px 5px;
+  }
+  
+  .schedule-section .schedule-table th:first-child, 
+  .schedule-section .schedule-table td:first-child {
+    padding-left: 10px;
+    min-width: 100px;
+  }
+  
+  .schedule-section .schedule-table th:nth-child(2), 
+  .schedule-section .schedule-table td:nth-child(2) {
+    left: 100px;
+    min-width: 120px;
+  }
+  
+  .schedule-section .team-logo {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .schedule-section .schedule-table {
+    min-width: 600px;
+    font-size: 0.8rem;
+  }
+  
+  .schedule-section .schedule-table th, 
+  .schedule-section .schedule-table td {
+    padding: 6px 4px;
+  }
+  
+  .schedule-section .schedule-table th:first-child, 
+  .schedule-section .schedule-table td:first-child {
+    padding-left: 8px;
+    min-width: 90px;
+  }
+  
+  .schedule-section .schedule-table th:nth-child(2), 
+  .schedule-section .schedule-table td:nth-child(2) {
+    left: 90px;
+    min-width: 110px;
+  }
+  
+  .schedule-section .team-logo {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule-section .schedule-table {
+    min-width: 500px;
+    font-size: 0.75rem;
+  }
+  
+  .schedule-section .schedule-table th, 
+  .schedule-section .schedule-table td {
+    padding: 6px 3px;
+  }
+  
+  .schedule-section .schedule-table th:first-child, 
+  .schedule-section .schedule-table td:first-child {
+    padding-left: 6px;
+    min-width: 80px;
+  }
+  
+  .schedule-section .schedule-table th:nth-child(2), 
+  .schedule-section .schedule-table td:nth-child(2) {
+    left: 80px;
+    min-width: 100px;
+  }
+  
+  .schedule-section .team-logo {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedule-section .schedule-table {
+    min-width: 400px;
+    font-size: 0.7rem;
+  }
+  
+  .schedule-section .schedule-table th, 
+  .schedule-section .schedule-table td {
+    padding: 4px 2px;
+  }
+  
+  .schedule-section .schedule-table th:first-child, 
+  .schedule-section .schedule-table td:first-child {
+    padding-left: 4px;
+    min-width: 70px;
+  }
+  
+  .schedule-section .schedule-table th:nth-child(2), 
+  .schedule-section .schedule-table td:nth-child(2) {
+    left: 70px;
+    min-width: 90px;
+  }
+  
+  .schedule-section .team-logo {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .schedule-section .schedule-table {
+    min-width: 350px;
+    font-size: 0.65rem;
+  }
+  
+  .schedule-section .schedule-table th, 
+  .schedule-section .schedule-table td {
+    padding: 3px 1px;
+  }
+  
+  .schedule-section .schedule-table th:first-child, 
+  .schedule-section .schedule-table td:first-child {
+    padding-left: 3px;
+    min-width: 60px;
+  }
+  
+  .schedule-section .schedule-table th:nth-child(2), 
+  .schedule-section .schedule-table td:nth-child(2) {
+    left: 60px;
+    min-width: 80px;
+  }
+  
+  .schedule-section .team-logo {
+    width: 14px;
+    height: 14px;
+  }
+}

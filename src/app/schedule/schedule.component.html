@@ -17,14 +17,14 @@
     </div>
     
           <div class="filter-group">
-        <label for="teamFilter">Filter by Team:</label>
+        <label for="teamFilter">Filter by Club:</label>
         <select 
           id="teamFilter" 
           [(ngModel)]="filterTeam" 
           (change)="onFilterChange()" 
           class="filter-select"
         >
-          <option value="">All Teams</option>
+          <option value="">All Clubs</option>
           <option *ngFor="let team of teamOptions" [value]="team">{{ team }}</option>
         </select>
       </div>
@@ -55,14 +55,14 @@
           </th>
           <th></th>
           <th (click)="onSortChange('homeTeam')" [class.sort-asc]="sortCriteria === 'homeTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'homeTeam' && sortDirection === 'desc'">
-            <span class="header-full">Home Team</span>
+            <span class="header-full">Home Club</span>
             <span class="header-mobile">Home</span>
           </th>
           <th></th>
           <th>Score</th>
           <th></th>
           <th (click)="onSortChange('awayTeam')" [class.sort-asc]="sortCriteria === 'awayTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'awayTeam' && sortDirection === 'desc'">
-            <span class="header-full">Away Team</span>
+            <span class="header-full">Away Club</span>
             <span class="header-mobile">Away</span>
           </th>
           <th></th>

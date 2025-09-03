@@ -25,13 +25,14 @@
        [style.background-color]="club.colour" 
        [style.color]="getContrastingTextColor(club.colour)"
        *ngIf="club && club.stats">
-    <!-- Left: Logo -->
+    <!-- Left: Logo (hidden on small screens) -->
     <div class="header-left">
-      <img [src]="club.image" [alt]="club.clubName" class="club-logo">
+      <img [src]="club.image" [alt]="club.clubName" class="club-logo desktop-logo">
     </div>
 
-    <!-- Center: Team Name and Record -->
+    <!-- Center: Logo, Team Name and Record -->
     <div class="header-center">
+      <img [src]="club.image" [alt]="club.clubName" class="club-logo mobile-logo">
       <h1>{{club.clubName}}</h1>
       
       <div class="record-box">
@@ -111,75 +112,124 @@
   <!-- Signed Players Roster Table -->
   <div class="roster-section" *ngIf="selectedSeasonId !== null">
     <h4>Signed Players</h4>
-    <table class="roster-table signed-roster-table">
-      <thead>
-        <tr>
-          <th>Discord Username</th>
-          <th>Gamertag</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let player of signedPlayers">
-          <td>{{ player.discordUsername || player.discordId }}</td>
-          <td>
-            <span *ngIf="player.platform === 'PS5'">
-              <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo-sm">
-            </span>
-            <span *ngIf="player.platform === 'Xbox'">
-              <img src="assets/images/xbox-logo.svg" alt="Xbox" class="platform-logo-sm">
-            </span>
-            {{ player.gamertag }}
-          </td>
-        </tr>
-        <tr *ngIf="signedPlayers.length === 0">
-          <td colspan="2" class="no-data">No signed players</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-container">
+      <table class="roster-table signed-roster-table">
+        <thead>
+          <tr>
+            <th>Discord Username</th>
+            <th>Gamertag</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let player of signedPlayers">
+            <td>{{ player.discordUsername || player.discordId }}</td>
+            <td>
+              <span *ngIf="player.platform === 'PS5'">
+                <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo-sm">
+              </span>
+              <span *ngIf="player.platform === 'Xbox'">
+                <img src="assets/images/xbox-logo.svg" alt="Xbox" class="platform-logo-sm">
+              </span>
+              {{ player.gamertag }}
+            </td>
+          </tr>
+          <tr *ngIf="signedPlayers.length === 0">
+            <td colspan="2" class="no-data">No signed players</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Statistics Section (was Team Roster) -->
   <div class="roster-section">
     <h4>Statistics</h4>
     <!-- Skaters Table -->
-    <table class="roster-table skaters-table">
+    <div class="table-container">
+      <table class="roster-table skaters-table">
       <thead>
         <tr>
           <th>#</th>
           <th>Gamertag</th>
           <th>Position</th>
           <th>GP</th>
+          <th>W</th>
+          <th>L</th>
+          <th>OTL</th>
           <th>G</th>
           <th>A</th>
           <th>PTS</th>
           <th>+/-</th>
+          <th>S</th>
+          <th>S%</th>
+          <th>H</th>
+          <th>BS</th>
+          <th>PIM</th>
+          <th>PPG</th>
+          <th>SHG</th>
+          <th>GWG</th>
+          <th>TK</th>
+          <th>GV</th>
+          <th>P</th>
+          <th>PA</th>
+          <th>P%</th>
+          <th>FOW</th>
+          <th>FO%</th>
+          <th>PKCZ</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let skater of skaterStats">
           <td>{{ skater.number }}</td>
           <td>{{ skater.name }}</td>
-          <td>{{ skater.position }}</td>
+          <td><app-position-pill [position]="skater.position"></app-position-pill></td>
           <td>{{ skater.gamesPlayed }}</td>
+          <td>{{ skater.wins || 0 }}</td>
+          <td>{{ skater.losses || 0 }}</td>
+          <td>{{ skater.otLosses || 0 }}</td>
           <td>{{ skater.goals }}</td>
           <td>{{ skater.assists }}</td>
           <td>{{ skater.points }}</td>
           <td>{{ skater.plusMinus > 0 ? '+' + skater.plusMinus : skater.plusMinus }}</td>
+          <td>{{ skater.shots || 0 }}</td>
+          <td>{{ skater.shotPercentage || 0 | number:'1.1-1' }}%</td>
+          <td>{{ skater.hits || 0 }}</td>
+          <td>{{ skater.blockedShots || 0 }}</td>
+          <td>{{ skater.pim || 0 }}</td>
+          <td>{{ skater.ppg || 0 }}</td>
+          <td>{{ skater.shg || 0 }}</td>
+          <td>{{ skater.gwg || 0 }}</td>
+          <td>{{ skater.takeaways || 0 }}</td>
+          <td>{{ skater.giveaways || 0 }}</td>
+          <td>{{ skater.passes || 0 }}</td>
+          <td>{{ skater.passAttempts || 0 }}</td>
+          <td>{{ skater.passPercentage || 0 | number:'1.1-1' }}%</td>
+          <td>{{ skater.faceoffsWon || 0 }}</td>
+          <td>{{ skater.faceoffPercentage || 0 | number:'1.1-1' }}%</td>
+          <td>{{ skater.penaltyKillCorsiZone || 0 }}</td>
         </tr>
         <tr *ngIf="skaterStats.length === 0">
-          <td colspan="8" class="no-data">No skater statistics available</td>
+          <td colspan="27" class="no-data">No skater statistics available</td>
         </tr>
       </tbody>
     </table>
+    </div>
     
     <!-- Goalies Table -->
     <h4>Goalies</h4>
-    <table class="roster-table goalies-table">
+    <div class="table-container">
+      <table class="roster-table goalies-table">
       <thead>
         <tr>
           <th>#</th>
           <th>Gamertag</th>
+          <th>Position</th>
           <th>GP</th>
+          <th>W</th>
+          <th>L</th>
+          <th>OTL</th>
+          <th>SV</th>
+          <th>SA</th>
           <th>SV%</th>
           <th>GAA</th>
           <th>SO</th>
@@ -189,18 +239,61 @@
         <tr *ngFor="let goalie of goalieStats">
           <td>{{ goalie.number }}</td>
           <td>{{ goalie.name }}</td>
+          <td><app-position-pill [position]="goalie.position"></app-position-pill></td>
           <td>{{ goalie.gamesPlayed }}</td>
+          <td>{{ goalie.wins || 0 }}</td>
+          <td>{{ goalie.losses || 0 }}</td>
+          <td>{{ goalie.otl || 0 }}</td>
+          <td>{{ goalie.saves || 0 }}</td>
+          <td>{{ goalie.shotsAgainst || 0 }}</td>
           <td>{{ goalie.savePercentage | number:'1.3-3' }}</td>
           <td>{{ goalie.goalsAgainstAverage | number:'1.2-2' }}</td>
           <td>{{ goalie.shutouts }}</td>
         </tr>
         <tr *ngIf="goalieStats.length === 0">
-          <td colspan="6" class="no-data">No goalie statistics available</td>
+          <td colspan="12" class="no-data">No goalie statistics available</td>
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
   
   <!-- Match History Component -->
   <app-match-history [matches]="matches" [teamName]="club.clubName"></app-match-history>
+  
+  <!-- Stat Legend -->
+  <div class="stat-legend">
+    <h4>Stat Legend</h4>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-abbr">GP</span> Games Played</span>
+      <span class="legend-item"><span class="legend-abbr">W</span> Wins</span>
+      <span class="legend-item"><span class="legend-abbr">L</span> Losses</span>
+      <span class="legend-item"><span class="legend-abbr">OTL</span> Overtime Losses</span>
+      <span class="legend-item"><span class="legend-abbr">G</span> Goals</span>
+      <span class="legend-item"><span class="legend-abbr">A</span> Assists</span>
+      <span class="legend-item"><span class="legend-abbr">PTS</span> Points</span>
+      <span class="legend-item"><span class="legend-abbr">+/-</span> Plus/Minus</span>
+      <span class="legend-item"><span class="legend-abbr">S</span> Shots</span>
+      <span class="legend-item"><span class="legend-abbr">S%</span> Shot Percentage</span>
+      <span class="legend-item"><span class="legend-abbr">PPG</span> Power Play Goals</span>
+      <span class="legend-item"><span class="legend-abbr">SHG</span> Short Handed Goals</span>
+      <span class="legend-item"><span class="legend-abbr">GWG</span> Game Winning Goals</span>
+      <span class="legend-item"><span class="legend-abbr">H</span> Hits</span>
+      <span class="legend-item"><span class="legend-abbr">BS</span> Blocked Shots</span>
+      <span class="legend-item"><span class="legend-abbr">PIM</span> Penalty Minutes</span>
+      <span class="legend-item"><span class="legend-abbr">TK</span> Takeaways</span>
+      <span class="legend-item"><span class="legend-abbr">GV</span> Giveaways</span>
+      <span class="legend-item"><span class="legend-abbr">P</span> Passes</span>
+      <span class="legend-item"><span class="legend-abbr">PA</span> Pass Attempts</span>
+      <span class="legend-item"><span class="legend-abbr">P%</span> Pass Percentage</span>
+      <span class="legend-item"><span class="legend-abbr">FOW</span> Faceoffs Won</span>
+      <span class="legend-item"><span class="legend-abbr">FO%</span> Faceoff Percentage</span>
+      <span class="legend-item"><span class="legend-abbr">PKCZ</span> Penalty Kill Corsi Zone</span>
+      <span class="legend-item"><span class="legend-abbr">SV</span> Saves</span>
+      <span class="legend-item"><span class="legend-abbr">SA</span> Shots Against</span>
+      <span class="legend-item"><span class="legend-abbr">SV%</span> Save Percentage</span>
+      <span class="legend-item"><span class="legend-abbr">GAA</span> Goals Against Average</span>
+      <span class="legend-item"><span class="legend-abbr">SO</span> Shutouts</span>
+    </div>
+  </div>
 </div>

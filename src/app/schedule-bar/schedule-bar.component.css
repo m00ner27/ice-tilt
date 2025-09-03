@@ -51,7 +51,7 @@
   margin-bottom: 6px;
 }
 
-.teams {
+.clubs {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -59,17 +59,17 @@
   justify-content: center;
 }
 
-.team-logo {
+.club-logo {
   width: 28px;
   height: 28px;
   object-fit: contain;
 }
 
-.team:first-child .team-logo {
+.club:first-child .club-logo {
   margin-right: -2px;
 }
 
-.team:last-child .team-logo {
+.club:last-child .club-logo {
   margin-left: -2px;
 }
 

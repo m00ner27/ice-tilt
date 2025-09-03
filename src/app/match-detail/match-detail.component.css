@@ -39,26 +39,26 @@
   margin-bottom: 15px;
 }
 
-.match-teams {
+.match-clubs {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 20px;
 }
 
-.team {
+.club {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.team-name {
+.club-name {
   font-size: 1.2em;
   font-weight: 600;
 }
 
-.team-score {
+.club-score {
   font-size: 2em;
   font-weight: bold;
   color: #3498db;
@@ -70,7 +70,7 @@
   color: #ccc;
 }
 
-.team.winner .team-score {
+.club.winner .club-score {
   color: #27ae60;
 }
 
@@ -105,7 +105,7 @@
 }
 
 /* Team Stats */
-.team-stats {
+.club-stats {
   background-color: #1a252f;
   border-radius: 8px;
   border: 1px solid #34495e;
@@ -116,7 +116,7 @@
   overflow-x: auto; /* Allow horizontal scrolling */
 }
 
-.team-stats h3 {
+.club-stats h3 {
   color: #3498db;
   margin-bottom: 15px;
   display: flex;
@@ -124,14 +124,14 @@
   gap: 10px;
 }
 
-.team-logo-sm {
+.club-logo-sm {
   width: 24px;
   height: 24px;
   object-fit: contain;
 }
 
 /* Team Summary Stats */
-.team-summary-stats {
+.club-summary-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
@@ -309,7 +309,7 @@
     flex-direction: column;
   }
   
-  .team-stats {
+  .club-stats {
     overflow-x: auto !important;
     width: 100%;
   }
@@ -320,17 +320,17 @@
     padding: 10px;
   }
 
-  .match-teams {
+  .match-clubs {
     flex-direction: column;
     gap: 10px;
   }
 
-  .team-summary-stats {
+  .club-summary-stats {
     flex-direction: column;
     gap: 10px;
   }
 
-  .team-stats {
+  .club-stats {
     overflow-x: auto !important;
     width: 100%;
   }
@@ -364,7 +364,7 @@
     padding: 5px;
   }
 
-  .team-stats {
+  .club-stats {
     padding: 10px;
     overflow-x: auto !important;
     width: 100%;

@@ -3,15 +3,15 @@
   
   <div class="match-header">
     <div class="match-date">{{ formatDate(match.date) }}</div>
-    <div class="match-teams">
-      <div class="team home-team" [class.winner]="isTeamWinner(match.homeTeam)">
-        <span class="team-name">{{ match.homeTeam }}</span>
-        <span class="team-score">{{ match.homeScore }}</span>
+    <div class="match-clubs">
+      <div class="club home-club" [class.winner]="isTeamWinner(match.homeTeam)">
+        <span class="club-name">{{ match.homeTeam }}</span>
+        <span class="club-score">{{ match.homeScore }}</span>
       </div>
       <div class="vs-label">VS</div>
-      <div class="team away-team" [class.winner]="isTeamWinner(match.awayTeam)">
-        <span class="team-name">{{ match.awayTeam }}</span>
-        <span class="team-score">{{ match.awayScore }}</span>
+      <div class="club away-club" [class.winner]="isTeamWinner(match.awayTeam)">
+        <span class="club-name">{{ match.awayTeam }}</span>
+        <span class="club-score">{{ match.awayScore }}</span>
       </div>
     </div>
   </div>
@@ -29,12 +29,12 @@
   </div>
   
   <div class="match-content" *ngIf="!noStatsMessage">
-    <!-- Home Team Statistics -->
-    <div class="team-stats">
-      <h3><img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} Logo" class="team-logo-sm"> {{ match.homeTeam }} Stats</h3>
+    <!-- Home Club Statistics -->
+    <div class="club-stats">
+      <h3><img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} Logo" class="club-logo-sm"> {{ match.homeTeam }} Stats</h3>
       
-      <!-- Team Summary Stats -->
-      <div class="team-summary-stats" *ngIf="homeTeamPlayers.length > 0 || homeTeamGoalies.length > 0">
+      <!-- Club Summary Stats -->
+      <div class="club-summary-stats" *ngIf="homeTeamPlayers.length > 0 || homeTeamGoalies.length > 0">
         <div class="summary-stat">
           <span class="stat-label">TOTAL GOALS:</span>
           <span class="stat-value">{{ getTeamTotalGoals('home') }}</span>
@@ -146,12 +146,12 @@
       </div>
     </div>
     
-    <!-- Away Team Statistics -->
-    <div class="team-stats">
-      <h3><img [src]="getImageUrl(match.awayClub?.logoUrl)" alt="{{ match.awayTeam }} Logo" class="team-logo-sm"> {{ match.awayTeam }} Stats</h3>
+    <!-- Away Club Statistics -->
+    <div class="club-stats">
+      <h3><img [src]="getImageUrl(match.awayClub?.logoUrl)" alt="{{ match.awayTeam }} Logo" class="club-logo-sm"> {{ match.awayTeam }} Stats</h3>
       
-      <!-- Team Summary Stats -->
-      <div class="team-summary-stats" *ngIf="awayTeamPlayers.length > 0 || awayTeamGoalies.length > 0">
+      <!-- Club Summary Stats -->
+      <div class="club-summary-stats" *ngIf="awayTeamPlayers.length > 0 || awayTeamGoalies.length > 0">
         <div class="summary-stat">
           <span class="stat-label">TOTAL GOALS:</span>
           <span class="stat-value">{{ getTeamTotalGoals('away') }}</span>

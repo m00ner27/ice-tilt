@@ -7,6 +7,9 @@ import { Player } from '../store/models/models/player.interface';
 import { ApiService } from '../store/services/api.service';
 import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
+import { PlayerStatsService } from '../store/services/player-stats.service';
+import { MatchService } from '../store/services/match.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-players',
@@ -60,7 +63,11 @@ export class PlayersComponent implements OnInit {
     'Switzerland': 'Europe', 'Ukraine': 'Europe', 'United Kingdom': 'Europe'
   };
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private playerStatsService: PlayerStatsService,
+    private matchService: MatchService
+  ) {}
 
   ngOnInit() {
     this.buildCountryEmojiMap();
@@ -209,9 +216,14 @@ export class PlayersComponent implements OnInit {
             status: status,
             lastActive: user.lastActive || '',
             stats: profile.stats || {},
-            clubLogo: logo
+            clubLogo: logo,
+            userId: user._id,
+            userGamertag: user.gamertag
           };
         });
+        
+        // Load club logos based on most games played
+        this.loadClubLogosByGamesPlayed();
         this.applyFilters();
       },
       error: (error) => {
@@ -219,6 +231,93 @@ export class PlayersComponent implements OnInit {
         this.error = `Error loading players data: ${error.message}`;
       }
     });
+  }
+
+  loadClubLogosByGamesPlayed() {
+    // Load all matches to calculate games played per club
+    this.matchService.getMatches().subscribe({
+      next: (matches) => {
+        this.players.forEach(player => {
+          if ((player as any).userId && (player as any).userGamertag) {
+            this.getClubWithMostGamesPlayed(player, matches);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error loading matches for club logos:', error);
+      }
+    });
+  }
+
+  getClubWithMostGamesPlayed(player: any, matches: any[]) {
+    const clubGamesPlayed: { [clubId: string]: number } = {};
+    
+    // Count games played for each club
+    matches.forEach(match => {
+      if (match.eashlData && match.eashlData.players) {
+        Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
+          if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+            const playerFound = Object.values(clubPlayers).some((playerData: any) => {
+              return playerData && playerData.playername === (player as any).userGamertag;
+            });
+            
+            if (playerFound) {
+              clubGamesPlayed[clubId] = (clubGamesPlayed[clubId] || 0) + 1;
+            }
+          }
+        });
+      }
+    });
+    
+    // Find the club with the most games played
+    let mostGamesClubId = '';
+    let maxGames = 0;
+    
+    Object.entries(clubGamesPlayed).forEach(([clubId, games]) => {
+      if (games > maxGames) {
+        maxGames = games;
+        mostGamesClubId = clubId;
+      }
+    });
+    
+    // Update player's club logo if we found a club with games played
+    if (mostGamesClubId && maxGames > 0) {
+      const club = this.clubs.find(c => c.eashlClubId === mostGamesClubId);
+      if (club) {
+        player.clubLogo = this.getImageUrl(club.logoUrl);
+        player.currentClubName = club.name;
+        console.log(`Updated ${player.discordUsername} logo to ${club.name} (${maxGames} games)`);
+      }
+    }
+  }
+
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) {
+      return 'assets/images/1ithlwords.png';
+    }
+    
+    // If it's already a full URL, return as is
+    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
+      return logoUrl;
+    }
+    
+    // If it starts with /uploads/, prepend the API URL
+    if (logoUrl.startsWith('/uploads/')) {
+      return `${environment.apiUrl}${logoUrl}`;
+    }
+    
+    // If it matches the timestamp pattern (e.g., "1754503785707-306812067-HCPurijat.png")
+    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
+      return `${environment.apiUrl}/uploads/${logoUrl}`;
+    }
+    
+    // If it starts with uploads/, prepend the API URL
+    if (logoUrl.startsWith('uploads/')) {
+      return `${environment.apiUrl}/${logoUrl}`;
+    }
+    
+    // For any other case, return as is (might be a relative path or filename)
+    return logoUrl;
   }
 
   applyFilters() {

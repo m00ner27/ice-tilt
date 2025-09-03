@@ -21,25 +21,7 @@
         </div>
 
         <div class="filter-buttons">
-          <!-- Status Filters -->
-          <div class="status-filters">
-            <button 
-              [class.active]="statusFilter === 'All'"
-              (click)="onStatusFilterChange('All')"
-            >All</button>
-            <button 
-              [class.active]="statusFilter === 'Free Agent'"
-              (click)="onStatusFilterChange('Free Agent')"
-            >Free Agents</button>
-            <button 
-              [class.active]="statusFilter === 'Signed'"
-              (click)="onStatusFilterChange('Signed')"
-            >Signed</button>
-            <button 
-              [class.active]="statusFilter === 'Pending'"
-              (click)="onStatusFilterChange('Pending')"
-            >Pending</button>
-          </div>
+
 
           <!-- Position Filters -->
           <div class="position-filters">
@@ -107,12 +89,12 @@
               </div>
               <div class="secondary-positions" *ngIf="player.secondaryPositions && player.secondaryPositions.length > 0">
                 <div class="secondary-label">SECONDARY POSITIONS</div>
-                <span class="bracket">[</span>
-                <app-position-pill *ngFor="let pos of player.secondaryPositions" [position]="pos"></app-position-pill>
-                <span class="bracket">]</span>
+                <div class="position-pills">
+                  <app-position-pill *ngFor="let pos of player.secondaryPositions" [position]="pos"></app-position-pill>
+                </div>
               </div>
             </div>
-            <p class="status" [ngClass]="player.status.toLowerCase().replace(' ', '-')">{{player.status}}</p>
+
             <p class="details">
               <span *ngIf="player.country">{{ countryEmojiMap[player.country] }} {{player.country}} • </span>
               <span>{{player.handedness}} Shot</span>

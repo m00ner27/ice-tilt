@@ -12,6 +12,7 @@ import { Player } from '../store/models/models/player.interface';
 import { PlayerStats } from '../store/models/models/player-stats.interface';
 import { environment } from '../../environments/environment';
 import { Subscription } from 'rxjs';
+import { PositionPillComponent } from '../components/position-pill/position-pill.component';
 
 // Updated interface to match backend Club model
 interface BackendClub {
@@ -47,17 +48,43 @@ interface SkaterStats {
   number: number;
   position: string;
   gamesPlayed: number;
+  wins?: number;
+  losses?: number;
+  otLosses?: number;
   goals: number;
   assists: number;
   points: number;
   plusMinus: number;
+  shots?: number;
+  shotPercentage?: number;
+  hits?: number;
+  blockedShots?: number;
+  pim?: number;
+  ppg?: number;
+  shg?: number;
+  gwg?: number;
+  takeaways?: number;
+  giveaways?: number;
+  passes?: number;
+  passAttempts?: number;
+  passPercentage?: number;
+  faceoffsWon?: number;
+  faceoffPercentage?: number;
+  playerScore?: number;
+  penaltyKillCorsiZone?: number;
 }
 
 interface GoalieStats {
   playerId: number;
   name: string;
   number: number;
+  position: string;
   gamesPlayed: number;
+  wins?: number;
+  losses?: number;
+  otl?: number;
+  saves?: number;
+  shotsAgainst?: number;
   savePercentage: number;
   goalsAgainstAverage: number;
   shutouts: number;
@@ -124,17 +151,43 @@ const DEFAULT_SKATER_STATS: SkaterStats = {
   number: 0,
   position: '',
   gamesPlayed: 0,
+  wins: 0,
+  losses: 0,
+  otLosses: 0,
   goals: 0,
   assists: 0,
   points: 0,
-  plusMinus: 0
+  plusMinus: 0,
+  shots: 0,
+  shotPercentage: 0,
+  hits: 0,
+  blockedShots: 0,
+  pim: 0,
+  ppg: 0,
+  shg: 0,
+  gwg: 0,
+  takeaways: 0,
+  giveaways: 0,
+  passes: 0,
+  passAttempts: 0,
+  passPercentage: 0,
+  faceoffsWon: 0,
+  faceoffPercentage: 0,
+  playerScore: 0,
+  penaltyKillCorsiZone: 0
 };
 
 const DEFAULT_GOALIE_STATS: GoalieStats = {
   playerId: 0,
   name: '',
   number: 0,
+  position: 'G',
   gamesPlayed: 0,
+  wins: 0,
+  losses: 0,
+  otl: 0,
+  saves: 0,
+  shotsAgainst: 0,
   savePercentage: 0,
   goalsAgainstAverage: 0,
   shutouts: 0
@@ -143,7 +196,7 @@ const DEFAULT_GOALIE_STATS: GoalieStats = {
 @Component({
   selector: 'app-club-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatchHistoryComponent],
+  imports: [CommonModule, RouterModule, MatchHistoryComponent, PositionPillComponent],
   templateUrl: './club-detail.component.html',
   styleUrls: ['./club-detail.component.css']
 })
@@ -704,10 +757,33 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               number: 0, // Manual stats don't have jersey numbers
               position: this.normalizePosition(playerData.position || 'Unknown'),
               gamesPlayed: 0,
+              wins: 0,
+              losses: 0,
+              otLosses: 0,
               goals: 0,
               assists: 0,
               points: 0,
               plusMinus: 0,
+              shots: 0,
+              shotPercentage: 0,
+              hits: 0,
+              blockedShots: 0,
+              pim: 0,
+              ppg: 0,
+              shg: 0,
+              gwg: 0,
+              takeaways: 0,
+              giveaways: 0,
+              passes: 0,
+              passAttempts: 0,
+              passPercentage: 0,
+              faceoffsWon: 0,
+              faceoffPercentage: 0,
+              playerScore: 0,
+              penaltyKillCorsiZone: 0,
+              saves: 0,
+              shotsAgainst: 0,
+              goalsAgainst: 0,
               savePercentage: 0,
               goalsAgainstAverage: 0,
               shutouts: 0
@@ -724,23 +800,122 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
 
           
           if (this.isGoalie(playerData.position)) {
+
+            // Calculate win/loss based on match result
+            const playerTeamScore = parseInt(playerData.score) || 0;
+            const opponentScore = parseInt(playerData.opponentScore) || 0;
+            
+            // If we have valid scores, use them for win/loss calculation
+            if (playerTeamScore > 0 || opponentScore > 0) {
+              if (playerTeamScore > opponentScore) {
+                stats.wins = (stats.wins || 0) + 1;
+              } else if (playerTeamScore < opponentScore) {
+                // Check if this was an overtime/shootout loss
+
+                if (match.isOvertime) {
+                  stats.otl = (stats.otl || 0) + 1;
+
+                } else {
+                  stats.losses = (stats.losses || 0) + 1;
+
+                }
+              }
+            } else {
+              // Fallback: if no valid scores, try to determine from match data
+              const isHomeTeam = match.homeTeam === pageClubName;
+              const homeScore = match.homeScore || 0;
+              const awayScore = match.awayScore || 0;
+              
+              if (isHomeTeam) {
+                if (homeScore > awayScore) {
+                  stats.wins = (stats.wins || 0) + 1;
+                } else if (homeScore < awayScore) {
+                  if (match.isOvertime) {
+                    stats.otl = (stats.otl || 0) + 1;
+                  } else {
+                    stats.losses = (stats.losses || 0) + 1;
+                  }
+                }
+              } else {
+                if (awayScore > homeScore) {
+                  stats.wins = (stats.wins || 0) + 1;
+                } else if (awayScore < homeScore) {
+                  if (match.isOvertime) {
+                    stats.otl = (stats.otl || 0) + 1;
+                  } else {
+                    stats.losses = (stats.losses || 0) + 1;
+                  }
+                }
+              }
+            }
+            
             stats.saves = (stats.saves || 0) + (parseInt(playerData.glsaves) || 0);
             stats.shotsAgainst = (stats.shotsAgainst || 0) + (parseInt(playerData.glshots) || 0);
             stats.goalsAgainst = (stats.goalsAgainst || 0) + (parseInt(playerData.glga) || 0);
             stats.shutouts = (stats.shutouts || 0) + (parseInt(playerData.glso) || 0);
-            // Calculate save percentage
-            if (stats.shotsAgainst > 0) {
-              stats.savePercentage = (stats.saves / stats.shotsAgainst) * 100;
-            }
-            // Calculate GAA (goals against average)
-            if (stats.gamesPlayed > 0) {
-              stats.goalsAgainstAverage = stats.goalsAgainst / stats.gamesPlayed;
-            }
           } else {
+            // Calculate win/loss based on match result
+            const playerTeamScore = parseInt(playerData.score) || 0;
+            const opponentScore = parseInt(playerData.opponentScore) || 0;
+            
+            // If we have valid scores, use them for win/loss calculation
+            if (playerTeamScore > 0 || opponentScore > 0) {
+              if (playerTeamScore > opponentScore) {
+                stats.wins = (stats.wins || 0) + 1;
+              } else if (playerTeamScore < opponentScore) {
+                // Check if this was an overtime/shootout loss
+                if (match.isOvertime) {
+                  stats.otl = (stats.otl || 0) + 1;
+                } else {
+                  stats.losses = (stats.losses || 0) + 1;
+                }
+              }
+            } else {
+              // Fallback: if no valid scores, try to determine from match data
+              const isHomeTeam = match.homeTeam === pageClubName;
+              const homeScore = match.homeScore || 0;
+              const awayScore = match.awayScore || 0;
+              
+              if (isHomeTeam) {
+                if (homeScore > awayScore) {
+                  stats.wins = (stats.wins || 0) + 1;
+                } else if (homeScore < awayScore) {
+                  if (match.isOvertime) {
+                    stats.otl = (stats.otl || 0) + 1;
+                  } else {
+                    stats.losses = (stats.losses || 0) + 1;
+                  }
+                }
+              } else {
+                if (awayScore > homeScore) {
+                  stats.wins = (stats.wins || 0) + 1;
+                } else if (awayScore < homeScore) {
+                  if (match.isOvertime) {
+                    stats.otl = (stats.otl || 0) + 1;
+                  } else {
+                    stats.losses = (stats.losses || 0) + 1;
+                  }
+                }
+              }
+            }
             stats.goals += parseInt(playerData.skgoals) || 0;
             stats.assists += parseInt(playerData.skassists) || 0;
             stats.points = stats.goals + stats.assists;
             stats.plusMinus += parseInt(playerData.skplusmin) || 0;
+            stats.shots = (stats.shots || 0) + (parseInt(playerData.skshots) || 0);
+            stats.hits = (stats.hits || 0) + (parseInt(playerData.skhits) || 0);
+            stats.blockedShots = (stats.blockedShots || 0) + (parseInt(playerData.skblocks) || 0);
+            stats.pim = (stats.pim || 0) + (parseInt(playerData.skpim) || 0);
+            stats.ppg = (stats.ppg || 0) + (parseInt(playerData.skppg) || 0);
+            stats.shg = (stats.shg || 0) + (parseInt(playerData.skshg) || 0);
+            stats.gwg = (stats.gwg || 0) + (parseInt(playerData.skgwg) || 0);
+            stats.takeaways = (stats.takeaways || 0) + (parseInt(playerData.sktakeaways) || 0);
+            stats.giveaways = (stats.giveaways || 0) + (parseInt(playerData.skgiveaways) || 0);
+            stats.passes = (stats.passes || 0) + (parseInt(playerData.skpasses) || 0);
+            stats.passAttempts = (stats.passAttempts || 0) + (parseInt(playerData.skpassattempts) || 0);
+            stats.faceoffsWon = (stats.faceoffsWon || 0) + (parseInt(playerData.skfaceoffswon) || 0);
+            stats.playerScore = (stats.playerScore || 0) + (parseInt(playerData.skplayerscore) || 0);
+            stats.penaltyKillCorsiZone = (stats.penaltyKillCorsiZone || 0) + (parseInt(playerData.skpkcorsi) || 0);
           }
         });
       } else {
@@ -773,10 +948,33 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
                 number: 0, // Jersey number not available in this part of the API
                 position: this.normalizePosition(playerData.position || 'Unknown'),
                 gamesPlayed: 0,
+                wins: 0,
+                losses: 0,
+                otLosses: 0,
                 goals: 0,
                 assists: 0,
                 points: 0,
                 plusMinus: 0,
+                shots: 0,
+                shotPercentage: 0,
+                hits: 0,
+                blockedShots: 0,
+                pim: 0,
+                ppg: 0,
+                shg: 0,
+                gwg: 0,
+                takeaways: 0,
+                giveaways: 0,
+                passes: 0,
+                passAttempts: 0,
+                passPercentage: 0,
+                faceoffsWon: 0,
+                faceoffPercentage: 0,
+                playerScore: 0,
+                penaltyKillCorsiZone: 0,
+                saves: 0,
+                shotsAgainst: 0,
+                goalsAgainst: 0,
                 savePercentage: 0,
                 goalsAgainstAverage: 0,
                 shutouts: 0
@@ -791,29 +989,150 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
             stats.gamesPlayed++;
             
             if (this.isGoalie(playerData.position)) {
-              stats.savePercentage += parseFloat(playerData.glsavepct) || 0;
-              stats.goalsAgainstAverage += parseFloat(playerData.glgaa) || 0;
-              // Shutout data not available
+              // Calculate win/loss based on match result
+              const playerTeamScore = parseInt(playerData.score) || 0;
+              const opponentScore = parseInt(playerData.opponentScore) || 0;
+              
+              // If we have valid scores, use them for win/loss calculation
+              if (playerTeamScore > 0 || opponentScore > 0) {
+                if (playerTeamScore > opponentScore) {
+                  stats.wins = (stats.wins || 0) + 1;
+                } else if (playerTeamScore < opponentScore) {
+                  // Check if this was an overtime/shootout loss
+                  if (match.isOvertime) {
+                    stats.otl = (stats.otl || 0) + 1;
+                  } else {
+                    stats.losses = (stats.losses || 0) + 1;
+                  }
+                }
+              } else {
+                // Fallback: if no valid scores, try to determine from match data
+                const isHomeTeam = match.homeTeam === pageClubName;
+                const homeScore = match.homeScore || 0;
+                const awayScore = match.awayScore || 0;
+                
+                if (isHomeTeam) {
+                  if (homeScore > awayScore) {
+                    stats.wins = (stats.wins || 0) + 1;
+                  } else if (homeScore < awayScore) {
+                    if (match.isOvertime) {
+                      stats.otl = (stats.otl || 0) + 1;
+                    } else {
+                      stats.losses = (stats.losses || 0) + 1;
+                    }
+                  }
+                } else {
+                  if (awayScore > homeScore) {
+                    stats.wins = (stats.wins || 0) + 1;
+                  } else if (awayScore < homeScore) {
+                    if (match.isOvertime) {
+                      stats.otl = (stats.otl || 0) + 1;
+                    } else {
+                      stats.losses = (stats.losses || 0) + 1;
+                    }
+                  }
+                }
+              }
+              
+              stats.saves = (stats.saves || 0) + (parseInt(playerData.glsaves) || 0);
+              stats.shotsAgainst = (stats.shotsAgainst || 0) + (parseInt(playerData.glshots) || 0);
+              stats.goalsAgainst = (stats.goalsAgainst || 0) + (parseInt(playerData.glga) || 0);
+              stats.shutouts = (stats.shutouts || 0) + (parseInt(playerData.glso) || 0);
             } else {
+              // Calculate win/loss based on match result
+              const playerTeamScore = parseInt(playerData.score) || 0;
+              const opponentScore = parseInt(playerData.opponentScore) || 0;
+              
+              // If we have valid scores, use them for win/loss calculation
+              if (playerTeamScore > 0 || opponentScore > 0) {
+                if (playerTeamScore > opponentScore) {
+                  stats.wins = (stats.wins || 0) + 1;
+                } else if (playerTeamScore < opponentScore) {
+                  // Check if this was an overtime/shootout loss
+                  if (match.isOvertime) {
+                    stats.otl = (stats.otl || 0) + 1;
+                  } else {
+                    stats.losses = (stats.losses || 0) + 1;
+                  }
+                }
+              } else {
+                // Fallback: if no valid scores, try to determine from match data
+                const isHomeTeam = match.homeTeam === pageClubName;
+                const homeScore = match.homeScore || 0;
+                const awayScore = match.awayScore || 0;
+                
+                if (isHomeTeam) {
+                  if (homeScore > awayScore) {
+                    stats.wins = (stats.wins || 0) + 1;
+                  } else if (homeScore < awayScore) {
+                    if (match.isOvertime) {
+                      stats.otl = (stats.otl || 0) + 1;
+                    } else {
+                      stats.losses = (stats.losses || 0) + 1;
+                    }
+                  }
+                } else {
+                  if (awayScore > homeScore) {
+                    stats.wins = (stats.wins || 0) + 1;
+                  } else if (awayScore < homeScore) {
+                    if (match.isOvertime) {
+                      stats.otl = (stats.otl || 0) + 1;
+                    } else {
+                      stats.losses = (stats.losses || 0) + 1;
+                    }
+                  }
+                }
+              }
               stats.goals += parseInt(playerData.skgoals) || 0;
               stats.assists += parseInt(playerData.skassists) || 0;
               stats.points = stats.goals + stats.assists;
               stats.plusMinus += parseInt(playerData.skplusmin) || 0;
+              stats.shots = (stats.shots || 0) + (parseInt(playerData.skshots) || 0);
+              stats.hits = (stats.hits || 0) + (parseInt(playerData.skhits) || 0);
+              stats.blockedShots = (stats.blockedShots || 0) + (parseInt(playerData.skblocks) || 0);
+              stats.pim = (stats.pim || 0) + (parseInt(playerData.skpim) || 0);
+              stats.ppg = (stats.ppg || 0) + (parseInt(playerData.skppg) || 0);
+              stats.shg = (stats.shg || 0) + (parseInt(playerData.skshg) || 0);
+              stats.gwg = (stats.gwg || 0) + (parseInt(playerData.skgwg) || 0);
+              stats.takeaways = (stats.takeaways || 0) + (parseInt(playerData.sktakeaways) || 0);
+              stats.giveaways = (stats.giveaways || 0) + (parseInt(playerData.skgiveaways) || 0);
+              stats.passes = (stats.passes || 0) + (parseInt(playerData.skpasses) || 0);
+              stats.passAttempts = (stats.passAttempts || 0) + (parseInt(playerData.skpassattempts) || 0);
+              stats.faceoffsWon = (stats.faceoffsWon || 0) + (parseInt(playerData.skfaceoffswon) || 0);
+              stats.playerScore = (stats.playerScore || 0) + (parseInt(playerData.skplayerscore) || 0);
+              stats.penaltyKillCorsiZone = (stats.penaltyKillCorsiZone || 0) + (parseInt(playerData.skpkcorsi) || 0);
             }
           });
         }
       }
     });
     
-    // Post-process goalie stats for averages (only for EASHL data)
+    // Post-process stats for percentages and averages
     playerStatsMap.forEach(stats => {
-      if (this.isGoalie(stats.position) && stats.gamesPlayed > 0) {
-        // For manual stats, we already calculated these above
-        // For EASHL stats, we need to average them
-        if (!stats.saves && !stats.shotsAgainst) { // EASHL stats
-          stats.savePercentage = stats.savePercentage / stats.gamesPlayed;
-          stats.goalsAgainstAverage = stats.goalsAgainstAverage / stats.gamesPlayed;
+      // Calculate final percentages after all stats are aggregated
+      if (stats.shots > 0) {
+        stats.shotPercentage = (stats.goals / stats.shots) * 100;
+      }
+      if (stats.passAttempts > 0) {
+        stats.passPercentage = (stats.passes / stats.passAttempts) * 100;
+      }
+      if (stats.faceoffsWon > 0) {
+        // For faceoff percentage, we need to calculate from total faceoffs
+        // This is a bit tricky since we don't store faceoffsLost separately
+        // We'll use the existing calculation if available
+        if (!stats.faceoffPercentage) {
+          stats.faceoffPercentage = 0; // Default if we can't calculate
         }
+      }
+      
+      // Post-process goalie stats for percentages and averages
+      if (this.isGoalie(stats.position) && stats.gamesPlayed > 0) {
+        // Calculate save percentage from total saves and shots against
+        if (stats.shotsAgainst > 0) {
+          stats.savePercentage = stats.saves / stats.shotsAgainst;
+        }
+        // Calculate GAA (goals against average) from total goals against and games played
+        stats.goalsAgainstAverage = stats.goalsAgainst / stats.gamesPlayed;
       }
     });
 
@@ -837,15 +1156,21 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
   private normalizePosition(position: string): string {
     const lowerPos = position.toLowerCase().replace(/\s/g, '');
     const positionMap: { [key: string]: string } = {
-      'c': 'CENTER',
-      'center': 'CENTER',
-      'lw': 'LEFTWING',
-      'leftwing': 'LEFTWING',
-      'rw': 'RIGHTWING',
-      'rightwing': 'RIGHTWING',
-      'd': 'DEFENSEMEN',
-      'defenseman': 'DEFENSEMEN',
-      'defensemen': 'DEFENSEMEN',
+      'c': 'C',
+      'center': 'C',
+      'lw': 'LW',
+      'leftwing': 'LW',
+      'rw': 'RW',
+      'rightwing': 'RW',
+      'ld': 'LD',
+      'leftdefense': 'LD',
+      'leftdefenseman': 'LD',
+      'rd': 'RD',
+      'rightdefense': 'RD',
+      'rightdefenseman': 'RD',
+      'd': 'D',
+      'defenseman': 'D',
+      'defensemen': 'D',
       'g': 'G',
       'goalie': 'G',
       'goaltender': 'G'
