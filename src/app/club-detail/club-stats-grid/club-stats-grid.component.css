@@ -1,0 +1,107 @@
+.club-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 1200px;
+  margin: 0.5rem auto 0;
+}
+
+/* Style for the record section */
+.record-section {
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+/* Grid for other stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-item {
+  background-color: #1e2a38;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #8795a5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #3498db;
+  line-height: 1.2;
+}
+
+.stat-item.record .stat-value {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.stat-value.positive {
+  color: #2ecc71;
+}
+
+.stat-value.negative {
+  color: #e74c3c;
+}
+
+.last-ten-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.2rem;
+  margin-top: 0.25rem;
+  width: 100%;
+}
+
+.last-ten-grid span {
+  font-size: 0.7rem;
+  padding: 0.2rem;
+  border-radius: 3px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.last-ten-grid .W {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.last-ten-grid .L {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.last-ten-grid .OTL {
+  background-color: #f39c12;
+  color: white;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

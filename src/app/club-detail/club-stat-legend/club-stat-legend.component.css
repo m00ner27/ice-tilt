@@ -1,0 +1,45 @@
+/* Stat Legend */
+.stat-legend {
+  background-color: #1a252f;
+  border: 1px solid #34495e;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-top: 20px;
+}
+
+.stat-legend h4 {
+  color: #3498db;
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #bdc3c7;
+  white-space: nowrap;
+}
+
+.legend-abbr {
+  background-color: #3498db;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: bold;
+  font-size: 0.7rem;
+  margin-right: 4px;
+  min-width: 20px;
+  text-align: center;
+}

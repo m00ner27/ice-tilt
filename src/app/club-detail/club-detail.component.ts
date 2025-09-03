@@ -7,12 +7,15 @@ import { ApiService } from '../store/services/api.service';
 import { RosterUpdateService } from '../store/services/roster-update.service';
 import { forkJoin } from 'rxjs';
 import { MatchHistoryComponent } from './match-history/match-history.component';
+import { ClubHeaderComponent } from './club-header/club-header.component';
+import { ClubStatsGridComponent } from './club-stats-grid/club-stats-grid.component';
+import { ClubRosterTablesComponent } from './club-roster-tables/club-roster-tables.component';
+import { ClubStatLegendComponent } from './club-stat-legend/club-stat-legend.component';
 import { Club, ClubStats } from '../store/models/models/club.interface';
 import { Player } from '../store/models/models/player.interface';
 import { PlayerStats } from '../store/models/models/player-stats.interface';
 import { environment } from '../../environments/environment';
 import { Subscription } from 'rxjs';
-import { PositionPillComponent } from '../components/position-pill/position-pill.component';
 
 // Updated interface to match backend Club model
 interface BackendClub {
@@ -196,7 +199,7 @@ const DEFAULT_GOALIE_STATS: GoalieStats = {
 @Component({
   selector: 'app-club-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatchHistoryComponent, PositionPillComponent],
+  imports: [CommonModule, RouterModule, MatchHistoryComponent, ClubHeaderComponent, ClubStatsGridComponent, ClubRosterTablesComponent, ClubStatLegendComponent],
   templateUrl: './club-detail.component.html',
   styleUrls: ['./club-detail.component.css']
 })
@@ -1185,31 +1188,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     return this.club.roster.filter(player => player.status === 'Signed');
   }
 
-  getContrastingTextColor(hexColor: string | undefined): string {
-    if (!hexColor) {
-      return '#FFFFFF'; // Default to white text if no color is provided
-    }
 
-    // Remove '#' if present
-    const cleanHex = hexColor.replace('#', '');
-
-    // Convert 3-digit hex to 6-digit
-    const fullHex = cleanHex.length === 3 ? cleanHex.split('').map(char => char + char).join('') : cleanHex;
-
-    if (fullHex.length !== 6) {
-      return '#FFFFFF'; // Return default for invalid hex
-    }
-
-    const r = parseInt(fullHex.substring(0, 2), 16);
-    const g = parseInt(fullHex.substring(2, 4), 16);
-    const b = parseInt(fullHex.substring(4, 6), 16);
-
-    // Calculate luminance using the WCAG formula
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-    // Return black for light backgrounds, white for dark backgrounds
-    return luminance > 0.5 ? '#000000' : '#FFFFFF';
-  }
   
   ngOnDestroy(): void {
     if (this.rosterUpdateSubscription) {
