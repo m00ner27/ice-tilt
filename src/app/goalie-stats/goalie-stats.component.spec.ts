@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { GoalieStatsComponent } from './goalie-stats.component';
+import { TestUtils } from '../testing/test-utils';
 
 describe('GoalieStatsComponent', () => {
   let component: GoalieStatsComponent;
@@ -8,7 +9,10 @@ describe('GoalieStatsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GoalieStatsComponent]
+      imports: [GoalieStatsComponent],
+      providers: [
+        ...TestUtils.getCommonMockProviders()
+      ]
     })
     .compileComponents();
 

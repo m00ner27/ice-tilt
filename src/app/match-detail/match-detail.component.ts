@@ -2,39 +2,49 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
-import { Match, PlayerMatchStats, MatchService } from '../store/services/match.service';
-import { environment } from '../../environments/environment';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { take } from 'rxjs/operators';
+import { AppState } from '../store';
+import { NgRxApiService } from '../store/services/ngrx-api.service';
+
+// Import selectors
+import * as MatchesSelectors from '../store/matches.selectors';
 
 interface PlayerStatDisplay {
+  playerId: number;
   name: string;
   number: number;
   position: string;
-  goals?: number;
-  assists?: number;
-  points?: number;
-  plusMinus?: number;
+  gamesPlayed: number;
+  goals: number;
+  assists: number;
+  points: number;
+  plusMinus: number;
   shots?: number;
   shotPercentage?: number;
   hits?: number;
   blockedShots?: number;
-  penaltyMinutes?: number;
-  powerPlayGoals?: number;
-  shortHandedGoals?: number;
-  gameWinningGoals?: number;
+  pim?: number;
+  ppg?: number;
+  shg?: number;
+  gwg?: number;
   takeaways?: number;
   giveaways?: number;
   passes?: number;
+  passAttempts?: number;
   passPercentage?: number;
   faceoffsWon?: number;
-  faceoffsLost?: number;
   faceoffPercentage?: number;
   playerScore?: number;
   penaltyKillCorsiZone?: number;
+  wins?: number;
+  losses?: number;
+  otLosses?: number;
   saves?: number;
   shotsAgainst?: number;
   savePercentage?: number;
   goalsAgainst?: number;
-
 }
 
 @Component({
@@ -45,7 +55,14 @@ interface PlayerStatDisplay {
   styleUrls: ['./match-detail.component.css']
 })
 export class MatchDetailComponent implements OnInit {
-  match: Match | null = null;
+  // Observable selectors
+  selectedMatch$: Observable<any>;
+  matchEashlData$: Observable<any>;
+  matchesLoading$: Observable<boolean>;
+  matchesError$: Observable<any>;
+  
+  // Local state
+  match: any | null = null;
   viewingTeam: string | null = null;
   homeTeamPlayers: PlayerStatDisplay[] = [];
   awayTeamPlayers: PlayerStatDisplay[] = [];
@@ -58,34 +75,45 @@ export class MatchDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private location: Location,
-    private matchService: MatchService
+    private store: Store<AppState>,
+    private ngrxApiService: NgRxApiService
   ) {
+    // Initialize selectors
+    this.selectedMatch$ = this.store.select(MatchesSelectors.selectSelectedMatch);
+    this.matchEashlData$ = this.store.select(MatchesSelectors.selectMatchEashlData(''));
+    this.matchesLoading$ = this.store.select(MatchesSelectors.selectMatchesLoading);
+    this.matchesError$ = this.store.select(MatchesSelectors.selectMatchesError);
+  }
+  
+  ngOnInit(): void {
     // Try to get the match from the router state first (when coming from match-history)
     const navigation = this.router.getCurrentNavigation();
     if (navigation?.extras.state) {
-      this.match = navigation.extras.state['match'] as Match;
-      this.viewingTeam = navigation.extras.state['teamName'] as string;
+      this.match = navigation.extras.state['match'];
+      this.viewingTeam = navigation.extras.state['teamName'];
       if (this.match) {
         this.processMatchData();
       }
     }
-  }
-  
-  ngOnInit(): void {
+    
     if (!this.match) {
-      this.route.paramMap.subscribe(params => {
-        const id = params.get('id');
-        if (id) {
-          this.loadMatch(id);
+      // Get match ID from route and load match
+      this.route.params.pipe(take(1)).subscribe(params => {
+        const matchId = params['id'];
+        if (matchId) {
+          this.loadMatch(matchId);
         }
       });
     }
   }
   
   loadMatch(id: string): void {
-    this.matchService.getMatch(id).subscribe(match => {
-      this.match = match;
-      if (this.match) {
+    this.ngrxApiService.loadMatch(id);
+    
+    // Subscribe to match changes
+    this.selectedMatch$.pipe(take(1)).subscribe(match => {
+      if (match) {
+        this.match = match;
         this.processMatchData();
       } else {
         console.error('Match not found with ID:', id);
@@ -135,294 +163,121 @@ export class MatchDetailComponent implements OnInit {
     console.log('=== PROCESSING PLAYER STATS ===');
     console.log('Raw player stats:', this.match.playerStats);
     
-    this.match.playerStats.forEach(player => {
-      console.log('Processing player:', player.name, 'Stats:', {
-        goals: player.goals,
-        assists: player.assists,
-        shots: player.shots,
-        hits: player.hits,
-        blockedShots: player.blockedShots,
-        penaltyMinutes: player.penaltyMinutes,
-        powerPlayGoals: player.powerPlayGoals,
-        shortHandedGoals: player.shortHandedGoals,
-        gameWinningGoals: player.gameWinningGoals,
-        takeaways: player.takeaways,
-        giveaways: player.giveaways,
-        passes: player.passes,
-        passPercentage: player.passPercentage,
-        faceoffsWon: player.faceoffsWon,
-        faceoffsLost: player.faceoffsLost,
-        faceoffPercentage: player.faceoffPercentage,
-        playerScore: player.playerScore,
-        penaltyKillCorsiZone: player.penaltyKillCorsiZone
-      });
-      
-      const playerDisplay = this.convertToPlayerDisplay(player);
-      console.log('Converted player display:', playerDisplay);
-      
-      if (player.team === this.match?.homeTeam) {
-        if (this.isGoalie(player.position)) {
-          this.homeTeamGoalies.push(playerDisplay);
+    this.match.playerStats.forEach((playerStat: any) => {
+      const statDisplay: PlayerStatDisplay = {
+        playerId: playerStat.playerId || 0,
+        name: playerStat.name || 'Unknown Player',
+        number: playerStat.number || 0,
+        position: playerStat.position || 'Unknown',
+        gamesPlayed: playerStat.gamesPlayed || 0,
+        goals: playerStat.goals || 0,
+        assists: playerStat.assists || 0,
+        points: (playerStat.goals || 0) + (playerStat.assists || 0),
+        plusMinus: playerStat.plusMinus || 0,
+        shots: playerStat.shots || 0,
+        shotPercentage: playerStat.shotPercentage || 0,
+        hits: playerStat.hits || 0,
+        blockedShots: playerStat.blockedShots || 0,
+        pim: playerStat.pim || 0,
+        ppg: playerStat.ppg || 0,
+        shg: playerStat.shg || 0,
+        gwg: playerStat.gwg || 0,
+        takeaways: playerStat.takeaways || 0,
+        giveaways: playerStat.giveaways || 0,
+        passes: playerStat.passes || 0,
+        passAttempts: playerStat.passAttempts || 0,
+        passPercentage: playerStat.passPercentage || 0,
+        faceoffsWon: playerStat.faceoffsWon || 0,
+        faceoffPercentage: playerStat.faceoffPercentage || 0,
+        playerScore: playerStat.playerScore || 0,
+        penaltyKillCorsiZone: playerStat.penaltyKillCorsiZone || 0,
+        wins: playerStat.wins || 0,
+        losses: playerStat.losses || 0,
+        otLosses: playerStat.otLosses || 0,
+        saves: playerStat.saves || 0,
+        shotsAgainst: playerStat.shotsAgainst || 0,
+        savePercentage: playerStat.savePercentage || 0,
+        goalsAgainst: playerStat.goalsAgainst || 0
+      };
+
+      // Determine which team the player belongs to
+      if (playerStat.team === this.match.homeTeam) {
+        if (playerStat.position === 'G') {
+          this.homeTeamGoalies.push(statDisplay);
         } else {
-          this.homeTeamPlayers.push(playerDisplay);
+          this.homeTeamPlayers.push(statDisplay);
         }
-      } else {
-        if (this.isGoalie(player.position)) {
-          this.awayTeamGoalies.push(playerDisplay);
+      } else if (playerStat.team === this.match.awayTeam) {
+        if (playerStat.position === 'G') {
+          this.awayTeamGoalies.push(statDisplay);
         } else {
-          this.awayTeamPlayers.push(playerDisplay);
+          this.awayTeamPlayers.push(statDisplay);
         }
       }
     });
-    
-    // Sort skaters by points
-    this.homeTeamPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
-    this.awayTeamPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
+
+    console.log('=== PROCESSED STATS ===');
+    console.log('Home team players:', this.homeTeamPlayers);
+    console.log('Away team players:', this.awayTeamPlayers);
+    console.log('Home team goalies:', this.homeTeamGoalies);
+    console.log('Away team goalies:', this.awayTeamGoalies);
   }
-  
-  convertToPlayerDisplay(player: PlayerMatchStats): PlayerStatDisplay {
-    const basePlayer: PlayerStatDisplay = {
-      name: player.name,
-      number: player.number,
-      position: this.formatPosition(player.position)
-    };
-    
-    if (this.isGoalie(player.position)) {
-      // Goalie stats
-      return {
-        ...basePlayer,
-        saves: player.saves,
-        shotsAgainst: player.shotsAgainst,
-        savePercentage: player.shotsAgainst ? 
-          player.saves! / player.shotsAgainst : 0,
-        goalsAgainst: player.goalsAgainst
-      };
-    } else {
-      // Skater stats
-      return {
-        ...basePlayer,
-        goals: player.goals || 0,
-        assists: player.assists || 0,
-        points: (player.goals || 0) + (player.assists || 0),
-        plusMinus: player.plusMinus || 0,
-        shots: player.shots || 0,
-        shotPercentage: player.shots ? (player.goals || 0) / player.shots * 100 : 0,
-        hits: player.hits || 0,
-        blockedShots: player.blockedShots || 0,
-        penaltyMinutes: player.penaltyMinutes || 0,
-        powerPlayGoals: player.powerPlayGoals || 0,
-        shortHandedGoals: player.shortHandedGoals || 0,
-        gameWinningGoals: player.gameWinningGoals || 0,
-        takeaways: player.takeaways || 0,
-        giveaways: player.giveaways || 0,
-        passes: player.passes || 0,
-        passPercentage: player.passPercentage || 0,
-        faceoffsWon: player.faceoffsWon || 0,
-        faceoffsLost: player.faceoffsLost || 0,
-        faceoffPercentage: (player.faceoffsWon && player.faceoffsLost) ? 
-          (player.faceoffsWon / (player.faceoffsWon + player.faceoffsLost) * 100) : 0,
-        playerScore: player.playerScore || 0,
-        penaltyKillCorsiZone: player.penaltyKillCorsiZone || 0
-      };
+
+  processManualStats(): void {
+    // Process manual stats if available
+    if (this.match.eashlData && this.match.eashlData.manualEntry) {
+      // Implementation for manual stats processing
+      console.log('Processing manual stats for game:', this.match.id);
     }
   }
-  
-  formatDate(dateString: string | undefined): string {
-    if (!dateString) return 'Unknown date';
-    
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long', 
-      day: 'numeric' 
-    });
-  }
-  
-  isTeamWinner(teamName: string | undefined): boolean {
-    if (!this.match || !this.match.eashlData || !teamName) {
-      return false;
-    }
-    
-    if (this.match.homeScore > this.match.awayScore) {
-      return teamName === this.match.homeTeam;
-    } else if (this.match.awayScore > this.match.homeScore) {
-      return teamName === this.match.awayTeam;
-    }
-    
-    return false;
-  }
-  
+
   goBack(): void {
     this.location.back();
   }
 
-  getTeamTotalGoals(team: 'home' | 'away'): number {
-    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
-    return players.reduce((total, player) => total + (player.goals || 0), 0);
+  getTeamName(team: string): string {
+    return team || 'Unknown Team';
   }
 
-  getTeamTotalAssists(team: 'home' | 'away'): number {
-    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
-    return players.reduce((total, player) => total + (player.assists || 0), 0);
-  }
-
-  getTeamTotalShots(team: 'home' | 'away'): number {
-    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
-    return players.reduce((total, player) => total + (player.shots || 0), 0);
-  }
-
-  getTeamTotalHits(team: 'home' | 'away'): number {
-    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
-    return players.reduce((total, player) => total + (player.hits || 0), 0);
-  }
-
-  getTeamTotalBlocks(team: 'home' | 'away'): number {
-    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
-    return players.reduce((total, player) => total + (player.blockedShots || 0), 0);
-  }
-
-  private processManualStats(): void {
-    if (!this.match?.eashlData?.players) {
-      this.noStatsMessage = 'Manual stats were entered but player data is incomplete.';
-      return;
-    }
-
-    // For manual stats, we need to determine team based on the data structure
-    // Since manual stats store players by their database ID, we need to check
-    // which team they were assigned to during entry
+  getScoreDisplay(): string {
+    if (!this.match) return '0 - 0';
     
-    // Get the home and away club IDs from the match
-    const homeClubId = (this.match as any).homeClubId?._id || (this.match as any).homeClubId;
-    const awayClubId = (this.match as any).awayClubId?._id || (this.match as any).awayClubId;
+    const homeScore = this.match.homeScore || this.match.score?.home || 0;
+    const awayScore = this.match.awayScore || this.match.score?.away || 0;
+    
+    return `${homeScore} - ${awayScore}`;
+  }
 
-    // Process manual stats from eashlData.players
-    Object.entries(this.match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
-      const playerDisplay: PlayerStatDisplay = {
-        name: playerData.playername || playerData.name || 'Unknown Player',
-        number: 0, // Manual stats don't have jersey numbers
-        position: this.formatPosition(playerData.position || 'Unknown')
-      };
-
-      // Check if this is a goalie
-      if (this.isGoalie(playerData.position)) {
-        // Goalie stats
-        Object.assign(playerDisplay, {
-          saves: playerData.glsaves || 0,
-          shotsAgainst: playerData.glshots || 0,
-          savePercentage: playerData.glshots ? (playerData.glsaves || 0) / playerData.glshots : 0,
-          goalsAgainst: playerData.glga || 0,
-          shutout: playerData.glso || 0
-        });
-      } else {
-        // Skater stats
-        Object.assign(playerDisplay, {
-          goals: playerData.skgoals || 0,
-          assists: playerData.skassists || 0,
-          points: (playerData.skgoals || 0) + (playerData.skassists || 0),
-          plusMinus: playerData.skplusmin || 0
-        });
-      }
-
-      // For manual stats, determine team based on the stored team field
-      if (playerData.team === 'home') {
-        if (this.isGoalie(playerData.position)) {
-          this.homeTeamGoalies.push(playerDisplay);
-        } else {
-          this.homeTeamPlayers.push(playerDisplay);
-        }
-      } else if (playerData.team === 'away') {
-        if (this.isGoalie(playerData.position)) {
-          this.awayTeamGoalies.push(playerDisplay);
-        } else {
-          this.awayTeamPlayers.push(playerDisplay);
-        }
-      } else {
-        // Fallback: add to both teams if team is unknown
-        if (this.isGoalie(playerData.position)) {
-          this.homeTeamGoalies.push(playerDisplay);
-          this.awayTeamGoalies.push(playerDisplay);
-        } else {
-          this.homeTeamPlayers.push(playerDisplay);
-          this.awayTeamPlayers.push(playerDisplay);
-        }
-      }
+  getDateDisplay(): string {
+    if (!this.match || !this.match.date) return 'Unknown Date';
+    
+    return new Date(this.match.date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
     });
-
-    // Sort skaters by points
-    this.homeTeamPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
-    this.awayTeamPlayers.sort((a, b) => (b.points || 0) - (a.points || 0));
-
-    this.noStatsMessage = ''; // Clear the message since we have stats
   }
 
-  private isGoalie(position: string): boolean {
-    const lowerPos = position.toLowerCase().replace(/\s/g, '');
-    return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
-  }
-
-  formatPosition(position: string): string {
-    const positionMap: { [key: string]: string } = {
-      'center': 'C',
-      'leftwing': 'LW',
-      'rightwing': 'RW',
-      'defenseman': 'D',
-      'defensemen': 'D',
-      'goaltender': 'G',
-      'goalie': 'G'
-    };
-    const key = position.toLowerCase().replace(/\s/g, '');
-    return positionMap[key] || position;
-  }
-
-  calculateSavePercentage(saves?: number, shotsAgainst?: number): string {
-    if (shotsAgainst === 0 || saves === undefined || shotsAgainst === undefined) {
-      return '.000';
-    }
-    const percentage = saves / shotsAgainst;
-    return percentage.toFixed(3).toString();
-  }
-
-  getTeamLogo(team: string | undefined): string {
-    if (!team) return 'assets/images/square-default.png';
-    const teamMap: { [key: string]: string } = {
-      'roosters': 'square-iserlohnroosters.png',
-      // Add more mappings as needed
-    };
-    const key = team.replace(/\s+/g, '').toLowerCase().replace(/^[^a-z0-9]+/, '');
-    if (teamMap[key]) {
-      return 'assets/images/' + teamMap[key];
-    }
-    return 'assets/images/square-' + key + '.png';
-  }
-
-  // Method to get the full image URL
-  getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
+  getResultClass(teamName: string): string {
+    if (!this.match) return '';
+    
+    const homeScore = this.match.homeScore || this.match.score?.home || 0;
+    const awayScore = this.match.awayScore || this.match.score?.away || 0;
+    
+    if (teamName === this.match.homeTeam) {
+      return homeScore > awayScore ? 'win' : homeScore < awayScore ? 'loss' : '';
+    } else if (teamName === this.match.awayTeam) {
+      return awayScore > homeScore ? 'win' : awayScore < homeScore ? 'loss' : '';
     }
     
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // If it's a filename that looks like an upload (has timestamp pattern), add /uploads/ prefix
-    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
-      return `${environment.apiUrl}/uploads/${logoUrl}`;
-    }
-    
-    // If it starts with 'uploads/' (no leading slash), add the API URL
-    if (logoUrl.startsWith('uploads/')) {
-      return `${environment.apiUrl}/${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return '';
   }
-} 
+
+  hasStats(): boolean {
+    return this.homeTeamPlayers.length > 0 || this.awayTeamPlayers.length > 0 || 
+           this.homeTeamGoalies.length > 0 || this.awayTeamGoalies.length > 0;
+  }
+}

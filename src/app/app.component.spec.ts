@@ -1,10 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import { TestUtils } from './testing/test-utils';
+import { NgRxApiService } from './store/services/ngrx-api.service';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
+    const ngrxApiServiceSpy = jasmine.createSpyObj('NgRxApiService', ['auth0Sync']);
+
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [
+        ...TestUtils.getCommonMockProviders(),
+        TestUtils.createMockStore(),
+        { provide: NgRxApiService, useValue: ngrxApiServiceSpy }
+      ]
     }).compileComponents();
   });
 
@@ -14,16 +23,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'ice-tilt' title`, () => {
+  it(`should have loading state`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('ice-tilt');
+    expect(app.isLoading).toBeDefined();
   });
 
-  it('should render title', () => {
+  it('should render navigation', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, ice-tilt');
+    expect(compiled.querySelector('app-navigation')).toBeTruthy();
   });
 });

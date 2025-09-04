@@ -271,6 +271,18 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/api/users/profile/${id}`);
   }
 
+  auth0Sync(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/users/auth0-sync`, {});
+  }
+
+  getCurrentUser(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/users/me`);
+  }
+
+  updateCurrentUser(userData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/users/${userData._id}`, userData);
+  }
+
   getClubEashlGames(clubId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/eashl-games`);
   }

@@ -5,10 +5,11 @@ import { NavigationComponent } from './navigation/navigation.component';
 import { ScheduleBarComponent } from './schedule-bar/schedule-bar.component';
 import { Store } from '@ngrx/store';
 import { loginWithDiscordProfile } from './store/players.actions';
+import { NgRxApiService } from './store/services/ngrx-api.service';
 import { selectCurrentProfile } from './store/players.selectors';
 import { PlayerProfile } from './store/models/models/player-profile.model';
 import { Observable, combineLatest, filter } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+
 import { environment } from '../environments/environment';
 
 @Component({
@@ -31,7 +32,7 @@ export class AppComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private store: Store,
-    private http: HttpClient
+    private ngrxApiService: NgRxApiService
   ) {}
 
   ngOnInit(): void {
@@ -59,25 +60,9 @@ export class AppComponent implements OnInit {
           return;
         }
 
-        // Sync user with MongoDB
-        this.auth.getAccessTokenSilently({
-          authorizationParams: { audience: environment.apiAudience }
-        }).subscribe(token => {
-          this.http.post(
-            `${environment.apiUrl}/api/users/auth0-sync`,
-            {}, // empty body
-            { headers: { Authorization: `Bearer ${token}` } }
-          ).subscribe({
-            next: (dbUser) => {
-              console.log('User synced with database:', dbUser);
-              this.store.dispatch(loginWithDiscordProfile({ discordProfile: user }));
-            },
-            error: (error) => {
-              console.error('Failed to sync user:', error);
-              // You might want to show an error message to the user here
-            }
-          });
-        });
+        // Sync user with MongoDB using NgRx
+        this.ngrxApiService.auth0Sync();
+        this.store.dispatch(loginWithDiscordProfile({ discordProfile: user }));
       },
       error: (error) => {
         console.error('Auth error:', error);

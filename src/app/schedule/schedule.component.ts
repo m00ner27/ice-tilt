@@ -1,10 +1,21 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Match, MatchService } from '../store/services/match.service';
-import { ApiService } from '../store/services/api.service';
+import { Store } from '@ngrx/store';
+import { Observable, Subject, combineLatest } from 'rxjs';
+import { takeUntil, map } from 'rxjs/operators';
+import { AppState } from '../store';
+import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { environment } from '../../environments/environment';
+
+// Import selectors
+import * as MatchesSelectors from '../store/matches.selectors';
+import * as ClubsSelectors from '../store/clubs.selectors';
+import * as SeasonsSelectors from '../store/seasons.selectors';
+
+// Import interfaces
+import { Match } from '../store/services/match.service';
 
 @Component({
   selector: 'app-schedule',
@@ -13,13 +24,20 @@ import { environment } from '../../environments/environment';
   templateUrl: './schedule.component.html',
   styleUrls: ['./schedule.component.css']
 })
-export class ScheduleComponent implements OnInit {
+export class ScheduleComponent implements OnInit, OnDestroy {
   @Input() isPreview: boolean = false;
-  matches: Match[] = [];
-  filteredMatches: Match[] = [];
-  isLoading: boolean = true;
   
-  // Filtering/sorting options
+  private destroy$ = new Subject<void>();
+  
+  // Observable selectors
+  matches$: Observable<any[]>;
+  clubs$: Observable<any[]>;
+  seasons$: Observable<any[]>;
+  matchesLoading$: Observable<boolean>;
+  matchesError$: Observable<any>;
+  
+  // Local state for filtering/sorting
+  filteredMatches: any[] = [];
   filterTeam: string = '';
   filterSeason: string = '';
   sortCriteria: 'date' | 'homeTeam' | 'awayTeam' = 'date';
@@ -31,217 +49,182 @@ export class ScheduleComponent implements OnInit {
   allClubs: any[] = [];
 
   constructor(
-    private matchService: MatchService,
-    private apiService: ApiService
-  ) { }
+    private store: Store<AppState>,
+    private ngrxApiService: NgRxApiService
+  ) {
+    // Initialize selectors
+    this.matches$ = this.store.select(MatchesSelectors.selectAllMatches);
+    this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
+    this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
+    this.matchesLoading$ = this.store.select(MatchesSelectors.selectMatchesLoading);
+    this.matchesError$ = this.store.select(MatchesSelectors.selectMatchesError);
+  }
 
   ngOnInit(): void {
-    this.loadSchedule();
+    // Load data using NgRx
+    this.ngrxApiService.loadMatches();
+    this.ngrxApiService.loadClubs();
+    this.ngrxApiService.loadSeasons();
+    
+    // Subscribe to data changes
+    this.setupDataSubscriptions();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupDataSubscriptions() {
+    // Combine matches, clubs, and seasons to update team options and apply filters
+    combineLatest([
+      this.matches$,
+      this.clubs$,
+      this.seasons$
+    ]).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(([matches, clubs, seasons]) => {
+      this.allClubs = clubs;
+      this.seasons = seasons.sort((a: any, b: any) => {
+        const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
+        const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
+        return dateB - dateA; // Most recent first
+      });
+      
+      this.updateTeamOptions();
+      this.applyFiltersAndSort();
+    });
   }
 
   loadSchedule(): void {
-    this.isLoading = true;
-    
-    // Load matches, seasons, and clubs
-    this.matchService.getMatches().subscribe({
-      next: (matches) => {
-        this.matches = matches;
-        this.updateTeamOptions();
-        this.applyFiltersAndSort();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading matches:', error);
-        this.isLoading = false;
-      }
-    });
-    
-    // Load seasons
-    this.apiService.getSeasons().subscribe({
-      next: (seasons) => {
-        this.seasons = seasons.sort((a: any, b: any) => {
-          const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
-          const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
-          return dateB - dateA; // Most recent first
-        });
-        this.updateTeamOptions(); // Update team options when seasons load
-      },
-      error: (error) => {
-        console.error('Error loading seasons:', error);
-      }
-    });
-    
-    // Load clubs
-    this.apiService.getClubs().subscribe({
-      next: (clubs) => {
-        this.allClubs = clubs;
-        this.updateTeamOptions(); // Update team options when clubs load
-      },
-      error: (error) => {
-        console.error('Error loading clubs:', error);
-      }
-    });
+    this.ngrxApiService.loadMatches();
+    this.ngrxApiService.loadClubs();
+    this.ngrxApiService.loadSeasons();
   }
 
   updateTeamOptions(): void {
     if (!this.seasons.length || !this.allClubs.length) {
-      return; // Wait for both to load
+      this.teamOptions = [];
+      return;
     }
-    
-    if (this.filterSeason) {
-      // If a season is selected, only show teams that participate in that season
-      const seasonTeams = new Set<string>();
-      
-      this.allClubs.forEach(club => {
-        const seasonInfo = club.seasons?.find((s: any) => {
-          if (typeof s.seasonId === 'object' && s.seasonId._id) {
-            return s.seasonId._id === this.filterSeason;
-          } else if (typeof s.seasonId === 'string') {
-            return s.seasonId === this.filterSeason;
-          }
-          return false;
-        });
-        
-        if (seasonInfo) {
-          seasonTeams.add(club.name);
-        }
-      });
-      
-      this.teamOptions = Array.from(seasonTeams).sort();
-    } else {
-      // If no season is selected, show all teams that have played games
-      const teams = new Set<string>();
-      this.matches.forEach(match => {
-        if (match.homeTeam) teams.add(match.homeTeam);
-        if (match.awayTeam) teams.add(match.awayTeam);
-      });
-      this.teamOptions = Array.from(teams).sort();
+
+    const selectedSeason = this.seasons.find(s => s._id === this.filterSeason);
+    if (!selectedSeason) {
+      this.teamOptions = [];
+      return;
     }
+
+    // Get clubs that are in the selected season
+    const clubsInSeason = this.allClubs.filter(club => 
+      club.seasons && club.seasons.some((s: any) => {
+        const seasonId = typeof s.seasonId === 'object' ? s.seasonId._id : s.seasonId;
+        return seasonId === this.filterSeason;
+      })
+    );
+
+    this.teamOptions = clubsInSeason.map(club => club.name).sort();
   }
 
   applyFiltersAndSort(): void {
-    // Apply team filter if selected
-    let filtered = this.matches.filter(match => {
-      if (!this.filterTeam) return true;
-      return match.homeTeam === this.filterTeam || match.awayTeam === this.filterTeam;
-    });
+    this.matches$.pipe(takeUntil(this.destroy$)).subscribe((matches: any[]) => {
+      let filtered = [...matches];
 
-    // Apply season filter if selected
-    filtered = filtered.filter(match => {
-      if (!this.filterSeason) return true;
-      return match.seasonId === this.filterSeason;
-    });
-
-    this.filteredMatches = filtered;
-
-    // Apply sorting
-    this.filteredMatches.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (this.sortCriteria) {
-        case 'date':
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
-          break;
-        case 'homeTeam':
-          comparison = a.homeTeam.localeCompare(b.homeTeam);
-          break;
-        case 'awayTeam':
-          comparison = a.awayTeam.localeCompare(b.awayTeam);
-          break;
+      // Apply team filter
+      if (this.filterTeam) {
+        filtered = filtered.filter(match => 
+          match.homeTeam === this.filterTeam || match.awayTeam === this.filterTeam
+        );
       }
-      
-      return this.sortDirection === 'asc' ? comparison : -comparison;
+
+      // Apply season filter
+      if (this.filterSeason) {
+        filtered = filtered.filter(match => match.seasonId === this.filterSeason);
+      }
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        let comparison = 0;
+        switch (this.sortCriteria) {
+          case 'date':
+            comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+            break;
+          case 'homeTeam':
+            comparison = a.homeTeam.localeCompare(b.homeTeam);
+            break;
+          case 'awayTeam':
+            comparison = a.awayTeam.localeCompare(b.awayTeam);
+            break;
+        }
+        return this.sortDirection === 'asc' ? comparison : -comparison;
+      });
+
+      this.filteredMatches = filtered;
     });
-    
-    // Limit to 10 games if in preview mode
-    if (this.isPreview) {
-      this.filteredMatches = this.filteredMatches.slice(0, 10);
-    }
   }
 
-  onFilterChange(): void {
+  onTeamFilterChange(team: string): void {
+    this.filterTeam = team;
     this.applyFiltersAndSort();
   }
 
-  onSeasonFilterChange(): void {
-    // Clear team filter when season changes to avoid invalid combinations
-    this.filterTeam = '';
-    this.updateTeamOptions();
-    this.applyFiltersAndSort();
-  }
-
-  clearAllFilters(): void {
-    this.filterTeam = '';
-    this.filterSeason = '';
+  onSeasonFilterChange(seasonId: string): void {
+    this.filterSeason = seasonId;
     this.updateTeamOptions();
     this.applyFiltersAndSort();
   }
 
   onSortChange(criteria: 'date' | 'homeTeam' | 'awayTeam'): void {
     if (this.sortCriteria === criteria) {
-      // Toggle direction if clicking the same column
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-      // Set new criteria and default to descending for date, ascending for others
       this.sortCriteria = criteria;
-      this.sortDirection = criteria === 'date' ? 'desc' : 'asc';
+      this.sortDirection = 'asc';
     }
     this.applyFiltersAndSort();
   }
 
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+  formatDate(date: string): string {
+    return new Date(date).toLocaleDateString('en-US', {
+      weekday: 'short',
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      hour: 'numeric',
+      minute: '2-digit'
     });
   }
 
-  formatDateMobile(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: '2-digit'
+  formatDateMobile(date: string): string {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
     });
   }
 
-  getMatchResult(match: Match, team: string): string {
-    const isHome = match.homeTeam === team;
-    const teamScore = isHome ? match.homeScore : match.awayScore;
-    const opponentScore = isHome ? match.awayScore : match.homeScore;
+  getResultClass(match: any, teamName: string): string {
+    if (!match.homeScore && !match.awayScore) return '';
     
-    if (teamScore > opponentScore) return 'W';
-    if (teamScore < opponentScore) return 'L';
-    return 'T'; // Tie
-  }
-
-  getResultClass(match: Match, team: string): string {
-    if (!match.eashlData) return '';
-    const result = this.getMatchResult(match, team);
-    if (result === 'W') return 'win';
-    if (result === 'L') return 'loss';
+    const isHomeTeam = match.homeTeam === teamName;
+    const teamScore = isHomeTeam ? match.homeScore : match.awayScore;
+    const opponentScore = isHomeTeam ? match.awayScore : match.homeScore;
+    
+    if (teamScore > opponentScore) return 'win';
+    if (teamScore < opponentScore) return 'loss';
     return '';
   }
 
-  // Method to get the full image URL
   getImageUrl(logoUrl: string | undefined): string {
     if (!logoUrl) {
-      return 'assets/images/1ithlwords.png';
+      return 'assets/images/default-team.png';
     }
     
-    // If it's already a full URL, return as is
     if (logoUrl.startsWith('http')) {
       return logoUrl;
     }
     
-    // If it's a relative path starting with /uploads, prepend the API URL
     if (logoUrl.startsWith('/uploads/')) {
       return `${environment.apiUrl}${logoUrl}`;
     }
     
-    // Otherwise, assume it's a local asset
     return logoUrl;
   }
 }

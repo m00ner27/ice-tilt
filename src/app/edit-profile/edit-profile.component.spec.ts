@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { EditProfileComponent } from './edit-profile.component';
+import { TestUtils } from '../testing/test-utils';
 
 describe('EditProfileComponent', () => {
   let component: EditProfileComponent;
@@ -8,7 +8,11 @@ describe('EditProfileComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EditProfileComponent]
+      imports: [EditProfileComponent],
+      providers: [
+        ...TestUtils.getCommonMockProviders(),
+        TestUtils.createMockStore()
+      ]
     })
     .compileComponents();
 

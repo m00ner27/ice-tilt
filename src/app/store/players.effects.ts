@@ -3,6 +3,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { PlayerProfileService } from './services/player-profile.service';
+import { PlayerStatsService } from './services/player-stats.service';
 import * as PlayersActions from './players.actions';
 import { PlayerProfile } from './models/models/player-profile.model';
 
@@ -68,8 +69,21 @@ export class PlayersEffects {
     )
   );
 
+  loadPlayerStats$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(PlayersActions.loadPlayerStats),
+      mergeMap(({ userId, gamertag }) =>
+        this.playerStatsService.getPlayerStats(userId, gamertag).pipe(
+          map(stats => PlayersActions.loadPlayerStatsSuccess({ stats })),
+          catchError(error => of(PlayersActions.loadPlayerStatsFailure({ error })))
+        )
+      )
+    )
+  );
+
   constructor(
     private actions$: Actions,
-    private playerProfileService: PlayerProfileService
+    private playerProfileService: PlayerProfileService,
+    private playerStatsService: PlayerStatsService
   ) {}
 }

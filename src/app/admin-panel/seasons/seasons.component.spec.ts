@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SeasonsComponent } from './seasons.component';
+import { TestUtils } from '../../testing/test-utils';
 
 describe('SeasonsComponent', () => {
   let component: SeasonsComponent;
@@ -10,6 +11,9 @@ describe('SeasonsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SeasonsComponent, CommonModule, FormsModule, ReactiveFormsModule],
+      providers: [
+        ...TestUtils.getCommonMockProviders()
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SeasonsComponent);

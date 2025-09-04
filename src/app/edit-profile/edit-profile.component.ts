@@ -1,10 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpHeaders } from '@angular/common/http';
 import { AuthService } from '@auth0/auth0-angular';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { NgRxApiService } from '../store/services/ngrx-api.service';
+import { Store } from '@ngrx/store';
+import { AppState } from '../store';
+import * as UsersSelectors from '../store/users.selectors';
 
 @Component({
   selector: 'app-edit-profile',
@@ -55,7 +60,12 @@ export class EditProfileComponent implements OnInit {
   error = '';
   success = '';
 
-  constructor(private http: HttpClient, private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService, 
+    private router: Router,
+    private ngrxApiService: NgRxApiService,
+    private store: Store<AppState>
+  ) {}
 
   ngOnInit() {
     this.loadUser();
@@ -67,8 +77,11 @@ export class EditProfileComponent implements OnInit {
       authorizationParams: { audience: environment.apiAudience }
     }).subscribe({
       next: (token) => {
-        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-        this.http.get(`${environment.apiUrl}/api/users/me`, { headers }).subscribe({
+        // Use NgRx to load current user
+        this.ngrxApiService.loadCurrentUser();
+        
+        // Subscribe to current user from the store
+        this.store.select(UsersSelectors.selectCurrentUser).subscribe({
           next: (user: any) => {
             if (!user) {
               this.error = 'Failed to load user profile (user not found).';
@@ -156,7 +169,11 @@ export class EditProfileComponent implements OnInit {
             status: this.user.playerProfile?.status || 'Free Agent',
           }
         };
-        this.http.put(`${environment.apiUrl}/api/users/${this.user._id}`, update, { headers }).subscribe({
+        // Use NgRx to update current user
+        this.ngrxApiService.updateCurrentUser(update);
+        
+        // Subscribe to update success from the store
+        this.store.select(UsersSelectors.selectCurrentUser).subscribe({
           next: (updated: any) => {
             this.success = 'Profile updated!';
             this.loading = false;

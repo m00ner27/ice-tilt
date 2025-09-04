@@ -1,9 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../store/services/api.service';
+import { Store } from '@ngrx/store';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppState } from '../store';
+import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { environment } from '../../environments/environment';
+
+// Import selectors
+import * as ClubsSelectors from '../store/clubs.selectors';
 
 // Updated interface to match backend Club model
 interface Club {
@@ -23,55 +30,71 @@ interface Club {
   templateUrl: './club-list.component.html',
   styleUrls: ['./club-list.component.css']
 })
-export class ClubListComponent implements OnInit {
-  clubs: Club[] = [];
+export class ClubListComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
+  // Observable selectors
+  clubs$: Observable<Club[]>;
+  loading$: Observable<boolean>;
+  error$: Observable<any>;
+  
+  // Local state for filtering
   filteredClubs: Club[] = [];
   searchText: string = '';
-  loading: boolean = false;
-  error: string | null = null;
 
-  constructor(private apiService: ApiService) {}
-
-  ngOnInit() {
-    this.loadClubs();
+  constructor(
+    private store: Store<AppState>,
+    private ngrxApiService: NgRxApiService
+  ) {
+    // Initialize selectors
+    this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
+    this.loading$ = this.store.select(ClubsSelectors.selectClubsLoading);
+    this.error$ = this.store.select(ClubsSelectors.selectClubsError);
   }
 
-  loadClubs() {
-    this.loading = true;
-    this.error = null;
+  ngOnInit() {
+    // Load clubs using NgRx
+    this.ngrxApiService.loadClubs();
     
-    this.apiService.getClubs().subscribe({
-      next: (clubs) => {
-        this.clubs = clubs;
-        this.sortClubs();
-        this.filteredClubs = this.clubs;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading clubs:', error);
-        this.error = 'Failed to load clubs. Please try again.';
-        this.loading = false;
-      }
+    // Subscribe to clubs changes for filtering
+    this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+      this.sortAndFilterClubs(clubs);
     });
   }
 
-  sortClubs() {
-    this.clubs.sort((a, b) => 
-      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-    );
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  filterClubs() {
+  loadClubs() {
+    this.ngrxApiService.loadClubs();
+  }
+
+  sortAndFilterClubs(clubs: Club[]) {
+    // Sort clubs alphabetically
+    const sortedClubs = [...clubs].sort((a, b) => 
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    );
+    
+    // Apply search filter
     if (!this.searchText) {
-      this.filteredClubs = this.clubs;
+      this.filteredClubs = sortedClubs;
       return;
     }
 
     const searchTerm = this.searchText.toLowerCase();
-    this.filteredClubs = this.clubs.filter(club => 
+    this.filteredClubs = sortedClubs.filter(club => 
       club.name.toLowerCase().includes(searchTerm) ||
       club.manager.toLowerCase().includes(searchTerm)
     );
+  }
+
+  filterClubs() {
+    // Get current clubs from store and apply filter
+    this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+      this.sortAndFilterClubs(clubs);
+    });
   }
 
   // Method to get the full image URL

@@ -12,3 +12,8 @@ export const loadPlayerProfileSuccess = createAction('[Player] Load Player Profi
 export const upsertPlayerProfile = createAction('[Player] Upsert Player Profile', props<{ profile: PlayerProfile }>());
 export const upsertPlayerProfileSuccess = createAction('[Player] Upsert Player Profile Success', props<{ profile: PlayerProfile }>());
 export const playerProfileFailure = createAction('[Player] Player Profile Failure', props<{ error: any }>());
+
+// Player Stats actions
+export const loadPlayerStats = createAction('[Player] Load Player Stats', props<{ userId: string; gamertag: string }>());
+export const loadPlayerStatsSuccess = createAction('[Player] Load Player Stats Success', props<{ stats: any[] }>());
+export const loadPlayerStatsFailure = createAction('[Player] Load Player Stats Failure', props<{ error: any }>());

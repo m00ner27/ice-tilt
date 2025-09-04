@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { RecentTransactionsComponent } from './recent-transactions.component';
+import { TestUtils } from '../testing/test-utils';
 
 describe('RecentTransactionsComponent', () => {
   let component: RecentTransactionsComponent;
@@ -8,7 +9,10 @@ describe('RecentTransactionsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RecentTransactionsComponent]
+      imports: [RecentTransactionsComponent],
+      providers: [
+        ...TestUtils.getCommonMockProviders()
+      ]
     })
     .compileComponents();
 

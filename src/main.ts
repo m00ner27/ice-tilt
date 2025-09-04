@@ -7,9 +7,20 @@ import { provideAuth0 } from '@auth0/auth0-angular';
 
 // Import the NgRx providers
 import { provideStore } from '@ngrx/store';
-import { counterReducer } from './app/store/counter.reducer';
+import { provideEffects } from '@ngrx/effects';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { environment } from './environments/environment';
+
+// Import store configuration
+import { reducers, metaReducers } from './app/store';
+
+// Import effects
+import { PlayersEffects } from './app/store/players.effects';
+import { ClubsEffects } from './app/store/clubs.effects';
+import { MatchesEffects } from './app/store/matches.effects';
+import { SeasonsEffects } from './app/store/seasons.effects';
+import { UsersEffects } from './app/store/users.effects';
+import { DivisionsEffects } from './app/store/divisions.effects';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -29,11 +40,24 @@ bootstrapApplication(AppComponent, {
         allowedList: environment.apiAllowedList, // Uses environment variable
       },
     }),
-    // Set up NgRx store with the "counter" state slice
-    provideStore({ counter: counterReducer }),
+    
+    // Set up NgRx store with all feature modules
+    provideStore(reducers, { metaReducers }),
+    
+    // Set up NgRx effects
+    provideEffects([
+      PlayersEffects,
+      ClubsEffects,
+      MatchesEffects,
+      SeasonsEffects,
+      UsersEffects,
+      DivisionsEffects
+    ]),
+    
+    // Set up NgRx DevTools
     provideStoreDevtools({
       maxAge: 25, // Retain last 25 states
-      logOnly: false, // Change to true in production mode
+      logOnly: environment.production, // Only log in development
     }),
   ],
 });

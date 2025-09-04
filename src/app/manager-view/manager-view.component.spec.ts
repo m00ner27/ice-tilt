@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ManagerViewComponent } from './manager-view.component';
+import { TestUtils } from '../testing/test-utils';
 
 describe('ManagerViewComponent', () => {
   let component: ManagerViewComponent;
@@ -8,7 +8,11 @@ describe('ManagerViewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ManagerViewComponent]
+      imports: [ManagerViewComponent],
+      providers: [
+        ...TestUtils.getCommonMockProviders(),
+        TestUtils.createMockStore()
+      ]
     })
     .compileComponents();
 

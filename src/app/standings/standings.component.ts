@@ -1,9 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ApiService } from '../store/services/api.service';
+import { Store } from '@ngrx/store';
+import { Observable, Subject, combineLatest } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppState } from '../store';
+import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { environment } from '../../environments/environment';
+
+// Import selectors
+import * as SeasonsSelectors from '../store/seasons.selectors';
+import * as ClubsSelectors from '../store/clubs.selectors';
+import * as MatchesSelectors from '../store/matches.selectors';
+import * as DivisionsSelectors from '../store/divisions.selectors';
 
 interface Season {
   _id: string;
@@ -78,43 +88,81 @@ interface DivisionStandings {
   templateUrl: './standings.component.html',
   styleUrls: ['./standings.component.css']
 })
-export class StandingsComponent implements OnInit {
-  seasons: Season[] = [];
+export class StandingsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
+  // Observable selectors
+  seasons$: Observable<any[]>;
+  clubs$: Observable<any[]>;
+  matches$: Observable<any[]>;
+  divisions$: Observable<any[]>;
+  seasonsLoading$: Observable<boolean>;
+  seasonsError$: Observable<any>;
+  
+  // Local state
   selectedSeasonId: string = '';
-  divisions: Division[] = [];
-  clubs: Club[] = [];
-  games: Game[] = [];
-  divisionStandings: DivisionStandings[] = [];
-  isLoading: boolean = true;
-  error: string | null = null;
+  divisions: any[] = [];
+  clubs: any[] = [];
+  games: any[] = [];
+  divisionStandings: any[] = [];
   sortColumn: string = 'points';
   sortDirection: 'asc' | 'desc' = 'desc';
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private store: Store<AppState>,
+    private ngrxApiService: NgRxApiService
+  ) {
+    // Initialize selectors
+    this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
+    this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
+    this.matches$ = this.store.select(MatchesSelectors.selectAllMatches);
+    this.divisions$ = this.store.select(DivisionsSelectors.selectAllDivisions);
+    this.seasonsLoading$ = this.store.select(SeasonsSelectors.selectSeasonsLoading);
+    this.seasonsError$ = this.store.select(SeasonsSelectors.selectSeasonsError);
+  }
 
   ngOnInit(): void {
-    this.loadSeasons();
+    // Load data using NgRx
+    this.ngrxApiService.loadSeasons();
+    this.ngrxApiService.loadClubs();
+    this.ngrxApiService.loadMatches();
+    this.ngrxApiService.loadDivisions();
+    
+    // Subscribe to data changes
+    this.setupDataSubscriptions();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupDataSubscriptions() {
+    // Subscribe to seasons
+    this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+      if (seasons.length > 0 && !this.selectedSeasonId) {
+        this.selectedSeasonId = seasons[0]._id;
+        this.loadSeasonData();
+      }
+    });
+
+    // Subscribe to clubs, matches, and divisions for season data
+    combineLatest([
+      this.clubs$,
+      this.matches$,
+      this.divisions$
+    ]).pipe(takeUntil(this.destroy$)).subscribe(([clubs, matches, divisions]) => {
+      this.clubs = clubs;
+      this.games = matches;
+      this.divisions = divisions;
+      if (this.selectedSeasonId) {
+        this.loadSeasonData();
+      }
+    });
   }
 
   loadSeasons(): void {
-    this.isLoading = true;
-    this.apiService.getSeasons().subscribe({
-      next: (seasons) => {
-        this.seasons = seasons;
-        if (seasons.length > 0) {
-          this.selectedSeasonId = seasons[0]._id;
-          this.loadSeasonData();
-        } else {
-          this.isLoading = false;
-          this.error = 'No seasons found';
-        }
-      },
-      error: (error) => {
-        console.error('Error loading seasons:', error);
-        this.isLoading = false;
-        this.error = 'Error loading seasons';
-      }
-    });
+    this.ngrxApiService.loadSeasons();
   }
 
   onSeasonChange(): void {
@@ -122,28 +170,12 @@ export class StandingsComponent implements OnInit {
   }
 
   loadSeasonData(): void {
-    this.isLoading = true;
-    this.error = null;
+    if (!this.selectedSeasonId) return;
 
-    // Load divisions, clubs, and games for the selected season
-    Promise.all([
-      this.apiService.getDivisionsBySeason(this.selectedSeasonId).toPromise(),
-      this.apiService.getClubsBySeason(this.selectedSeasonId).toPromise(),
-      this.apiService.getGamesBySeason(this.selectedSeasonId).toPromise()
-    ]).then(([divisions, clubs, games]) => {
-      this.divisions = divisions || [];
-      this.clubs = clubs || [];
-      this.games = games || [];
-      
-
-      
-      this.calculateStandings();
-      this.isLoading = false;
-    }).catch((error) => {
-      console.error('Error loading season data:', error);
-      this.isLoading = false;
-      this.error = 'Error loading season data';
-    });
+    // Load divisions for the selected season
+    this.ngrxApiService.loadDivisionsBySeason(this.selectedSeasonId);
+    
+    this.calculateStandings();
   }
 
   calculateStandings(): void {
@@ -152,10 +184,12 @@ export class StandingsComponent implements OnInit {
     // Group games by division
     const gamesByDivision = new Map<string, Game[]>();
     this.games.forEach(game => {
-      if (!gamesByDivision.has(game.divisionId)) {
-        gamesByDivision.set(game.divisionId, []);
+      if (game.seasonId === this.selectedSeasonId) {
+        if (!gamesByDivision.has(game.divisionId)) {
+          gamesByDivision.set(game.divisionId, []);
+        }
+        gamesByDivision.get(game.divisionId)!.push(game);
       }
-      gamesByDivision.get(game.divisionId)!.push(game);
     });
 
     // Calculate standings for each division
@@ -177,7 +211,7 @@ export class StandingsComponent implements OnInit {
 
     // Filter clubs that belong to the current division for the selected season
     const clubsInDivision = this.clubs.filter(club =>
-      club.seasons.some(s =>
+      club.seasons.some((s: any) =>
         s.seasonId === this.selectedSeasonId && s.divisionIds.includes(division._id)
       )
     );
@@ -207,8 +241,6 @@ export class StandingsComponent implements OnInit {
 
     // Calculate stats from games
     games.forEach(game => {
-
-      
       // Use game.score if available, as it's now the single source of truth for scores,
       // populated by both manual entry and the EASHL data linking.
       if (!game.score || typeof game.score.home === 'undefined' || typeof game.score.away === 'undefined') {
@@ -261,8 +293,6 @@ export class StandingsComponent implements OnInit {
           homeTeam.points += 1;
           awayTeam.points += 1;
         }
-        
-
       }
     });
 
@@ -326,11 +356,18 @@ export class StandingsComponent implements OnInit {
   }
 
   onSortColumn(column: string): void {
-    const direction = this.sortColumn === column && this.sortDirection === 'desc' ? 'asc' : 'desc';
+    if (this.sortColumn === column) {
+      // Toggle direction for same column
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Reset to ascending for different column
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
     
     // Apply sorting to all divisions
     this.divisionStandings.forEach(divisionStanding => {
-      this.sortStandings(divisionStanding.standings, column, direction);
+      this.sortStandings(divisionStanding.standings, this.sortColumn, this.sortDirection);
     });
   }
 
@@ -342,8 +379,12 @@ export class StandingsComponent implements OnInit {
   }
 
   getSelectedSeasonName(): string {
-    const season = this.seasons.find(s => s._id === this.selectedSeasonId);
-    return season ? season.name : '';
+    let selectedSeasonName = '';
+    this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+      const season = seasons.find(s => s._id === this.selectedSeasonId);
+      selectedSeasonName = season ? season.name : '';
+    });
+    return selectedSeasonName;
   }
 
   // Helper method to get the full image URL
@@ -375,4 +416,4 @@ export class StandingsComponent implements OnInit {
     // Otherwise, assume it's a local asset
     return logoUrl;
   }
-} 
+}

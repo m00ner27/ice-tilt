@@ -1,9 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppState } from '../store';
+import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { Player } from '../store/models/models/player.interface';
-import { ApiService } from '../store/services/api.service';
+
+// Import selectors
+import * as UsersSelectors from '../store/users.selectors';
 
 @Component({
   selector: 'app-free-agents',
@@ -16,57 +23,75 @@ import { ApiService } from '../store/services/api.service';
   templateUrl: './free-agents.component.html',
   styleUrls: ['./free-agents.component.css']
 })
-export class FreeAgentsComponent implements OnInit {
-  freeAgents: Player[] = [];
+export class FreeAgentsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
+  // Observable selectors
+  freeAgents$: Observable<any[]>;
+  loading$: Observable<boolean>;
+  error$: Observable<any>;
+  
+  // Local state for filtering
   filteredAgents: Player[] = [];
   positionFilter: string = 'All';
   searchTerm: string = '';
-  error: string | null = null;
-  isLoading: boolean = true;
 
-  constructor(private apiService: ApiService) {}
-
-  ngOnInit() {
-    this.loadFreeAgents();
+  constructor(
+    private store: Store<AppState>,
+    private ngrxApiService: NgRxApiService
+  ) {
+    // Initialize selectors
+    this.freeAgents$ = this.store.select(UsersSelectors.selectFreeAgents);
+    this.loading$ = this.store.select(UsersSelectors.selectUsersLoading);
+    this.error$ = this.store.select(UsersSelectors.selectUsersError);
   }
 
-  loadFreeAgents() {
-    this.isLoading = true;
-    this.apiService.getFreeAgents().subscribe({
-      next: (agents) => {
-        // This assumes getFreeAgents returns a structure that needs to be mapped to Player
-        this.freeAgents = agents.map((agent: any) => {
-          const profile = agent.playerProfile || {};
-          return {
-            id: agent._id,
-            discordUsername: agent.discordUsername,
-            position: profile.position || 'C',
-            status: profile.status || 'Free Agent',
-            number: profile.number || '',
-            psnId: agent.platform === 'PS5' ? agent.gamertag : '',
-            xboxGamertag: agent.platform === 'Xbox' ? agent.gamertag : '',
-            gamertag: agent.gamertag || '',
-            stats: agent.stats || {},
-            handedness: profile.handedness || 'Left',
-            country: profile.country || '',
-            currentClubId: agent.currentClubId || '',
-            currentClubName: agent.currentClubName || '',
-            secondaryPositions: profile.secondaryPositions || [],
-          };
-        });
-        this.applyFilters();
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading free agents:', err);
-        this.error = 'Failed to load free agents.';
-        this.isLoading = false;
-      }
+  ngOnInit() {
+    // Load free agents using NgRx
+    this.ngrxApiService.loadFreeAgents();
+    
+    // Subscribe to free agents changes for filtering
+    this.freeAgents$.pipe(takeUntil(this.destroy$)).subscribe(agents => {
+      this.mapAndFilterAgents(agents);
     });
   }
 
-  applyFilters() {
-    this.filteredAgents = this.freeAgents.filter(player => {
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadFreeAgents() {
+    this.ngrxApiService.loadFreeAgents();
+  }
+
+  mapAndFilterAgents(agents: any[]) {
+    // Map backend structure to Player interface
+    const mappedAgents: Player[] = agents.map((agent: any) => {
+      const profile = agent.playerProfile || {};
+      return {
+        id: agent._id,
+        discordUsername: agent.discordUsername,
+        position: profile.position || 'C',
+        status: profile.status || 'Free Agent',
+        number: profile.number || '',
+        psnId: agent.platform === 'PS5' ? agent.gamertag : '',
+        xboxGamertag: agent.platform === 'Xbox' ? agent.gamertag : '',
+        gamertag: agent.gamertag || '',
+        stats: agent.stats || {},
+        handedness: profile.handedness || 'Left',
+        country: profile.country || '',
+        currentClubId: agent.currentClubId || '',
+        currentClubName: agent.currentClubName || '',
+        secondaryPositions: profile.secondaryPositions || [],
+      };
+    });
+    
+    this.applyFilters(mappedAgents);
+  }
+
+  applyFilters(agents: Player[]) {
+    this.filteredAgents = agents.filter(player => {
       const matchesPosition = this.positionFilter === 'All' || player.position === this.positionFilter;
       const matchesSearch = (player.discordUsername?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
                           (player.psnId?.toLowerCase().includes(this.searchTerm.toLowerCase()) ?? false) ||
@@ -78,13 +103,17 @@ export class FreeAgentsComponent implements OnInit {
 
   onPositionFilterChange(position: string) {
     this.positionFilter = position;
-    this.applyFilters();
+    this.freeAgents$.pipe(takeUntil(this.destroy$)).subscribe(agents => {
+      this.mapAndFilterAgents(agents);
+    });
   }
 
   onSearchChange(event: Event) {
     const target = event.target as HTMLInputElement;
     this.searchTerm = target.value;
-    this.applyFilters();
+    this.freeAgents$.pipe(takeUntil(this.destroy$)).subscribe(agents => {
+      this.mapAndFilterAgents(agents);
+    });
   }
 
   refreshData() {

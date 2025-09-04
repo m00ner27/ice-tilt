@@ -25,15 +25,20 @@ export interface TeamScore {
 
 export interface Match {
   id: string;
+  _id?: string; // MongoDB ID for compatibility
   season: string;
+  seasonId?: string; // Alternative season reference
   date: string;
   homeTeam: TeamScore;
   awayTeam: TeamScore;
+  homeTeamId?: string; // Alternative team reference
+  awayTeamId?: string; // Alternative team reference
   status: string;
   isOvertime?: boolean;
   isShootout?: boolean;
   playerStats: PlayerMatchStats[];
   goalieStats?: PlayerMatchStats[];
+  hasStats?: boolean; // Flag to indicate if stats are available
 }
 
 export interface TeamInfo {

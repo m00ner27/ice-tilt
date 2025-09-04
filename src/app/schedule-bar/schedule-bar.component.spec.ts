@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ScheduleBarComponent } from './schedule-bar.component';
+import { TestUtils } from '../testing/test-utils';
 
 describe('ScheduleBarComponent', () => {
   let component: ScheduleBarComponent;
@@ -8,7 +9,10 @@ describe('ScheduleBarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ScheduleBarComponent]
+      imports: [ScheduleBarComponent],
+      providers: [
+        ...TestUtils.getCommonMockProviders()
+      ]
     })
     .compileComponents();
 

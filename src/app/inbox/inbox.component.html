@@ -3,28 +3,28 @@
   <p>View and respond to contract offers from clubs.</p>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading">
+  <div *ngIf="isLoading || (offersLoading$ | async)" class="loading">
     <p>Loading your offers...</p>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error" class="error">
-    <p>{{ error }}</p>
+  <div *ngIf="error || (offersError$ | async)" class="error">
+    <p>{{ error || (offersError$ | async) }}</p>
   </div>
 
   <!-- Offers List -->
-  <div *ngIf="!isLoading && !error" class="offers-list">
-    <div *ngIf="offers.length > 0; else noOffers">
-      <div *ngFor="let offer of offers" class="offer-item">
+  <div *ngIf="!isLoading && !error && !(offersLoading$ | async) && !(offersError$ | async)" class="offers-list">
+    <div *ngIf="(inboxOffers$ | async)?.length; else noOffers">
+      <div *ngFor="let offer of inboxOffers$ | async" class="offer-item">
         <div class="offer-details">
           <img 
-            [src]="getImageUrl(offer.clubId.logoUrl)" 
-            [alt]="offer.clubId.name" 
+            [src]="getImageUrl(offer.clubLogoUrl)" 
+            [alt]="offer.clubName" 
             class="club-logo"
           />
           <div class="offer-info">
             <span class="offer-text">
-              You have received a contract offer from <strong>{{ offer.clubId.name }}</strong>.
+              You have received a contract offer from <strong>{{ offer.clubName }}</strong>.
             </span>
             <span *ngIf="offer.seasonName" class="season-info">
               Season: {{ offer.seasonName }}

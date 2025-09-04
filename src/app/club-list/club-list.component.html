@@ -13,17 +13,17 @@
   </div>
 
   <!-- Loading state -->
-  <div *ngIf="loading" class="loading">
+  <div *ngIf="loading$ | async" class="loading">
     Loading clubs...
   </div>
 
   <!-- Error state -->
-  <div *ngIf="error" class="error">
-    {{ error }}
+  <div *ngIf="error$ | async" class="error">
+    {{ error$ | async }}
   </div>
 
   <!-- Club cards -->
-  <div *ngIf="!loading && !error" class="clubs">
+  <div *ngIf="!(loading$ | async) && !(error$ | async)" class="clubs">
     <div *ngFor="let club of filteredClubs" 
          class="club-card" 
          [style.border-color]="club.primaryColour || '#666'"
@@ -43,7 +43,7 @@
   </div>
 
   <!-- No results message -->
-  <div *ngIf="!loading && !error && filteredClubs.length === 0" class="no-results">
+  <div *ngIf="!(loading$ | async) && !(error$ | async) && filteredClubs.length === 0" class="no-results">
     No clubs found
   </div>
 </div>

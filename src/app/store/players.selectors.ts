@@ -22,3 +22,18 @@ export const selectPlayersError = createSelector(
   selectPlayersState,
   (state: PlayersState) => state.error
 );
+
+export const selectPlayerStats = createSelector(
+  selectPlayersState,
+  (state: PlayersState) => state.playerStats
+);
+
+export const selectPlayerStatsLoading = createSelector(
+  selectPlayersState,
+  (state: PlayersState) => state.statsLoading
+);
+
+export const selectPlayerStatsError = createSelector(
+  selectPlayersState,
+  (state: PlayersState) => state.statsError
+);

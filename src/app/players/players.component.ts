@@ -1,15 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Observable, Subject, combineLatest } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppState } from '../store';
+import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { Player } from '../store/models/models/player.interface';
-import { ApiService } from '../store/services/api.service';
 import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
-import { PlayerStatsService } from '../store/services/player-stats.service';
-import { MatchService } from '../store/services/match.service';
 import { environment } from '../../environments/environment';
+
+// Import selectors
+import * as UsersSelectors from '../store/users.selectors';
+import * as ClubsSelectors from '../store/clubs.selectors';
+import * as SeasonsSelectors from '../store/seasons.selectors';
+import * as MatchesSelectors from '../store/matches.selectors';
 
 @Component({
   selector: 'app-players',
@@ -23,12 +31,19 @@ import { environment } from '../../environments/environment';
   templateUrl: './players.component.html',
   styleUrls: ['./players.component.css']
 })
-export class PlayersComponent implements OnInit {
-  // TEST COMMENT TO FORCE RECOMPILE
-  players: Player[] = [];
+export class PlayersComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
+  // Observable selectors
+  users$: Observable<any[]>;
+  clubs$: Observable<Club[]>;
+  seasons$: Observable<any[]>;
+  matches$: Observable<any[]>;
+  usersLoading$: Observable<boolean>;
+  usersError$: Observable<any>;
+  
+  // Local state for filtering
   filteredPlayers: Player[] = [];
-  clubs: Club[] = [];
-  seasons: any[] = [];
   clubLogoMap: { [key: string]: string } = {};
   countryEmojiMap: { [key: string]: string } = {};
   statusFilter: 'All' | 'Free Agent' | 'Signed' | 'Pending' = 'All';
@@ -37,7 +52,7 @@ export class PlayersComponent implements OnInit {
   regionFilter: 'All' | 'North America' | 'Europe' = 'All';
   seasonFilter: string = '';
   searchTerm: string = '';
-  error: string | null = null;
+  
   positionGroupMap: { [key: string]: string } = {
     'C': 'Forward', 'LW': 'Forward', 'RW': 'Forward',
     'LD': 'Defense', 'RD': 'Defense',
@@ -64,15 +79,61 @@ export class PlayersComponent implements OnInit {
   };
 
   constructor(
-    private apiService: ApiService,
-    private playerStatsService: PlayerStatsService,
-    private matchService: MatchService
-  ) {}
+    private store: Store<AppState>,
+    private ngrxApiService: NgRxApiService
+  ) {
+    // Initialize selectors
+    this.users$ = this.store.select(UsersSelectors.selectAllUsers);
+    this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
+    this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
+    this.matches$ = this.store.select(MatchesSelectors.selectAllMatches);
+    this.usersLoading$ = this.store.select(UsersSelectors.selectUsersLoading);
+    this.usersError$ = this.store.select(UsersSelectors.selectUsersError);
+  }
 
   ngOnInit() {
     this.buildCountryEmojiMap();
-    this.loadSeasons();
-    this.loadClubsAndPlayers();
+    
+    // Load data using NgRx
+    this.ngrxApiService.loadSeasons();
+    this.ngrxApiService.loadClubs();
+    this.ngrxApiService.loadUsers();
+    this.ngrxApiService.loadMatches();
+    
+    // Subscribe to data changes
+    this.setupDataSubscriptions();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupDataSubscriptions() {
+    // Subscribe to seasons to set default filter
+    this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+      if (seasons.length > 0 && !this.seasonFilter) {
+        this.seasonFilter = seasons[0].name;
+      }
+    });
+
+    // Subscribe to clubs to build logo map
+    this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+      clubs.forEach(club => {
+        if (club.name && club.logoUrl) {
+          this.clubLogoMap[club.name.toLowerCase()] = club.logoUrl;
+        }
+      });
+    });
+
+    // Combine users, clubs, and seasons to process player data
+    combineLatest([
+      this.users$,
+      this.clubs$,
+      this.seasons$
+    ]).pipe(takeUntil(this.destroy$)).subscribe(([users, clubs, seasons]) => {
+      this.processPlayerData(users, clubs, seasons);
+    });
   }
 
   buildCountryEmojiMap() {
@@ -83,7 +144,7 @@ export class PlayersComponent implements OnInit {
       { name: 'Bulgaria', emoji: '🇧🇬' }, { name: 'Croatia', emoji: '🇭🇷' }, { name: 'Czechia', emoji: '🇨🇿' },
       { name: 'Denmark', emoji: '🇩🇰' }, { name: 'Estonia', emoji: '🇪🇪' }, { name: 'Finland', emoji: '🇫🇮' },
       { name: 'France', emoji: '🇫🇷' }, { name: 'Germany', emoji: '🇩🇪' }, { name: 'Greece', emoji: '🇬🇷' },
-      { name: 'Hungary', emoji: '🇭🇺' }, { name: 'Iceland', emoji: '🇮🇸' }, { name: 'Ireland', 'emoji': '🇮🇪' },
+      { name: 'Hungary', emoji: '🇭🇺' }, { name: 'Iceland', emoji: '🇮🇸' }, { name: 'Ireland', emoji: '🇮🇪' },
       { name: 'Italy', emoji: '🇮🇹' }, { name: 'Latvia', emoji: '🇱🇻' }, { name: 'Liechtenstein', emoji: '🇱🇮' },
       { name: 'Lithuania', emoji: '🇱🇹' }, { name: 'Luxembourg', emoji: '🇱🇺' }, { name: 'Malta', emoji: '🇲🇹' },
       { name: 'Moldova', emoji: '🇲🇩' }, { name: 'Monaco', emoji: '🇲🇨' }, { name: 'Montenegro', emoji: '🇲🇪' },
@@ -96,156 +157,95 @@ export class PlayersComponent implements OnInit {
     countries.forEach(c => this.countryEmojiMap[c.name] = c.emoji);
   }
 
-  loadSeasons() {
-    this.apiService.getSeasons().subscribe({
-      next: (seasons) => {
-        this.seasons = seasons;
-        if (this.seasons.length > 0) {
-          this.seasonFilter = this.seasons[0].name;
-        }
-      },
-      error: (error) => {
-        console.error('Error loading seasons:', error);
-      }
-    });
-  }
-
-  getSeasonIdByName(seasonName: string): string {
-    const season = this.seasons.find(s => s.name === seasonName);
+  getSeasonIdByName(seasonName: string, seasons: any[]): string {
+    const season = seasons.find(s => s.name === seasonName);
     return season ? season._id : '';
   }
 
-  loadClubsAndPlayers() {
-    this.apiService.getClubs().subscribe({
-      next: (clubs) => {
-        this.clubs = clubs;
-        clubs.forEach(club => {
-          if (club.name && club.logoUrl) {
-            this.clubLogoMap[club.name.toLowerCase()] = club.logoUrl;
-          }
-        });
-        this.loadPlayers(); // Load players after clubs are loaded
-      },
-      error: (error) => {
-        console.error('Error loading clubs:', error);
-        // still load players even if clubs fail
-        this.loadPlayers();
-      }
-    });
-  }
-
-  loadPlayers() {
-    this.apiService.getUsers().subscribe({
-      next: (users) => {
-        // Map backend user structure to Player interface
-        this.players = users.map((user: any) => {
-          const profile = user.playerProfile || {};
-          
-          // Determine player's status and club for the selected season
-          let clubName = '';
-          let clubId = '';
-          let status: 'Free Agent' | 'Signed' | 'Pending' = 'Free Agent';
-          let logo = undefined;
-          
-          if (this.seasonFilter) {
-            // Use season-specific data if available
-            const seasonId = this.getSeasonIdByName(this.seasonFilter);
-            console.log(`Checking player ${user.discordUsername || user.gamertag} for season: ${this.seasonFilter} (ID: ${seasonId})`);
-            
-            if (seasonId) {
-              // Check if user is on any club's roster for this season
-              const club = this.clubs.find(c => {
-                if (c.seasons && Array.isArray(c.seasons)) {
-                  console.log(`Club ${c.name} has seasons:`, c.seasons);
-                  
-                  return c.seasons.some((s: any) => {
-                    // Handle both string and object seasonId formats
-                    let currentSeasonId = s.seasonId;
-                    if (typeof s.seasonId === 'object' && s.seasonId._id) {
-                      currentSeasonId = s.seasonId._id;
-                    }
-                    
-                    console.log(`Comparing season ${currentSeasonId} with ${seasonId}`);
-                    
-                    if (currentSeasonId && currentSeasonId.toString() === seasonId.toString()) {
-                      console.log(`Season match found for ${c.name}!`);
-                      console.log(`Roster data:`, s.roster);
-                      
-                      if (s.roster && Array.isArray(s.roster)) {
-                        const isOnRoster = s.roster.some((rosterUserId: any) => {
-                          console.log(`Checking roster user ${rosterUserId} against player ${user._id}`);
-                          return rosterUserId.toString() === user._id.toString();
-                        });
-                        console.log(`Player ${user.discordUsername || user.gamertag} on roster: ${isOnRoster}`);
-                        return isOnRoster;
-                      }
-                    }
-                    return false;
-                  });
+  processPlayerData(users: any[], clubs: Club[], seasons: any[]) {
+    // Map backend user structure to Player interface
+    const players: Player[] = users.map((user: any) => {
+      const profile = user.playerProfile || {};
+      
+      // Determine player's status and club for the selected season
+      let clubName = '';
+      let clubId = '';
+      let status: 'Free Agent' | 'Signed' | 'Pending' = 'Free Agent';
+      let logo = undefined;
+      
+      if (this.seasonFilter) {
+        // Use season-specific data if available
+        const seasonId = this.getSeasonIdByName(this.seasonFilter, seasons);
+        
+        if (seasonId) {
+          // Check if user is on any club's roster for this season
+          const club = clubs.find(c => {
+            if (c.seasons && Array.isArray(c.seasons)) {
+              return c.seasons.some((s: any) => {
+                // Handle both string and object seasonId formats
+                let currentSeasonId = s.seasonId;
+                if (typeof s.seasonId === 'object' && s.seasonId._id) {
+                  currentSeasonId = s.seasonId._id;
+                }
+                
+                if (currentSeasonId && currentSeasonId.toString() === seasonId.toString()) {
+                  if (s.roster && Array.isArray(s.roster)) {
+                    const isOnRoster = s.roster.some((rosterUserId: any) => {
+                      return rosterUserId.toString() === user._id.toString();
+                    });
+                    return isOnRoster;
+                  }
                 }
                 return false;
               });
-              
-              if (club) {
-                console.log(`Found club for ${user.discordUsername || user.gamertag}: ${club.name}`);
-                clubName = club.name;
-                clubId = club._id;
-                status = 'Signed';
-                logo = club.logoUrl;
-              } else {
-                console.log(`No club found for ${user.discordUsername || user.gamertag}`);
-                
-
-              }
             }
-          }
+            return false;
+          });
           
-          return {
-            id: user._id || user.id,
-            discordUsername: user.discordUsername || '',
-            position: profile.position || 'C',
-            secondaryPositions: profile.secondaryPositions || [],
-            number: profile.number || '',
-            psnId: user.platform === 'PS5' ? user.gamertag : '',
-            xboxGamertag: user.platform === 'Xbox' ? user.gamertag : '',
-            gamertag: user.gamertag || '',
-            country: profile.country || '',
-            handedness: profile.handedness || 'Left',
-            currentClubId: clubId,
-            currentClubName: clubName,
-            status: status,
-            lastActive: user.lastActive || '',
-            stats: profile.stats || {},
-            clubLogo: logo,
-            userId: user._id,
-            userGamertag: user.gamertag
-          };
-        });
-        
-        // Load club logos based on most games played
-        this.loadClubLogosByGamesPlayed();
-        this.applyFilters();
-      },
-      error: (error) => {
-        console.error('Error loading players:', error);
-        this.error = `Error loading players data: ${error.message}`;
+          if (club) {
+            clubName = club.name;
+            clubId = club._id;
+            status = 'Signed';
+            logo = club.logoUrl;
+          }
+        }
       }
+      
+      return {
+        id: user._id || user.id,
+        discordUsername: user.discordUsername || '',
+        position: profile.position || 'C',
+        secondaryPositions: profile.secondaryPositions || [],
+        number: profile.number || '',
+        psnId: user.psnId || (user.platform === 'PS5' ? user.gamertag : ''),
+        xboxGamertag: user.xboxGamertag || (user.platform === 'Xbox' ? user.gamertag : ''),
+        gamertag: user.gamertag || '',
+        country: profile.country || '',
+        handedness: profile.handedness || 'Left',
+        currentClubId: clubId,
+        currentClubName: clubName,
+        status: status,
+        lastActive: user.lastActive || '',
+        stats: profile.stats || {},
+        clubLogo: logo,
+        userId: user._id,
+        userGamertag: user.gamertag
+      };
     });
+    
+    // Load club logos based on most games played
+    this.loadClubLogosByGamesPlayed(players);
+    this.applyFilters(players);
   }
 
-  loadClubLogosByGamesPlayed() {
+  loadClubLogosByGamesPlayed(players: Player[]) {
     // Load all matches to calculate games played per club
-    this.matchService.getMatches().subscribe({
-      next: (matches) => {
-        this.players.forEach(player => {
-          if ((player as any).userId && (player as any).userGamertag) {
-            this.getClubWithMostGamesPlayed(player, matches);
-          }
-        });
-      },
-      error: (error) => {
-        console.error('Error loading matches for club logos:', error);
-      }
+    this.matches$.pipe(takeUntil(this.destroy$)).subscribe(matches => {
+      players.forEach(player => {
+        if ((player as any).userId && (player as any).userGamertag) {
+          this.getClubWithMostGamesPlayed(player, matches);
+        }
+      });
     });
   }
 
@@ -282,12 +282,13 @@ export class PlayersComponent implements OnInit {
     
     // Update player's club logo if we found a club with games played
     if (mostGamesClubId && maxGames > 0) {
-      const club = this.clubs.find(c => c.eashlClubId === mostGamesClubId);
-      if (club) {
-        player.clubLogo = this.getImageUrl(club.logoUrl);
-        player.currentClubName = club.name;
-        console.log(`Updated ${player.discordUsername} logo to ${club.name} (${maxGames} games)`);
-      }
+      this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+        const club = clubs.find(c => c.eashlClubId === mostGamesClubId);
+        if (club) {
+          player.clubLogo = this.getImageUrl(club.logoUrl);
+          player.currentClubName = club.name;
+        }
+      });
     }
   }
 
@@ -320,8 +321,8 @@ export class PlayersComponent implements OnInit {
     return logoUrl;
   }
 
-  applyFilters() {
-    this.filteredPlayers = this.players.filter(player => {
+  applyFilters(players: Player[]) {
+    this.filteredPlayers = players.filter(player => {
       const matchesStatus = this.statusFilter === 'All' || player.status === this.statusFilter;
       
       const positionGroup = this.positionGroupMap[player.position] || 'Unknown';
@@ -349,33 +350,69 @@ export class PlayersComponent implements OnInit {
 
   onStatusFilterChange(status: 'All' | 'Free Agent' | 'Signed' | 'Pending') {
     this.statusFilter = status;
-    this.applyFilters();
+    this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
+      this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+        this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+          this.processPlayerData(users, clubs, seasons);
+        });
+      });
+    });
   }
 
   onPositionFilterChange(position: 'All' | 'Forward' | 'Defense' | 'Goalie') {
     this.positionFilter = position;
-    this.applyFilters();
+    this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
+      this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+        this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+          this.processPlayerData(users, clubs, seasons);
+        });
+      });
+    });
   }
 
   onSecondaryPositionFilterChange(position: 'All' | 'Forward' | 'Defense' | 'Goalie') {
     this.secondaryPositionFilter = position;
-    this.applyFilters();
+    this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
+      this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+        this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+          this.processPlayerData(users, clubs, seasons);
+        });
+      });
+    });
   }
 
   onRegionFilterChange(region: 'All' | 'North America' | 'Europe') {
     this.regionFilter = region;
-    this.applyFilters();
+    this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
+      this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+        this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+          this.processPlayerData(users, clubs, seasons);
+        });
+      });
+    });
   }
 
   onSeasonFilterChange(season: string) {
     this.seasonFilter = season;
-    this.loadPlayers(); // Reload players with new season filter
+    this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
+      this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+        this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+          this.processPlayerData(users, clubs, seasons);
+        });
+      });
+    });
   }
 
   onSearchChange(event: Event) {
     const target = event.target as HTMLInputElement;
     this.searchTerm = target.value;
-    this.applyFilters();
+    this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
+      this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
+        this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+          this.processPlayerData(users, clubs, seasons);
+        });
+      });
+    });
   }
 
   getTeamLogo(team: string): string {
@@ -388,6 +425,6 @@ export class PlayersComponent implements OnInit {
     if (teamMap[key]) {
       return 'assets/images/' + teamMap[key];
     }
-    return 'assets/images/square-' + key + '.png';
+    return 'assets/images/square-default.png';
   }
-} 
+}

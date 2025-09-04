@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { AuthButtonComponent } from './auth-button.component';
+import { TestUtils } from '../../testing/test-utils';
 
 describe('AuthButtonComponent', () => {
   let component: AuthButtonComponent;
@@ -8,7 +8,10 @@ describe('AuthButtonComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AuthButtonComponent]
+      imports: [AuthButtonComponent],
+      providers: [
+        ...TestUtils.getCommonMockProviders()
+      ]
     })
     .compileComponents();
 
