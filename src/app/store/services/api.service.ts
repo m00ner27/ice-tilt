@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { tap, catchError } from 'rxjs/operators';
+import { Match } from '../models/models/match.interface';
+import { User } from '../users.actions';
 
 @Injectable({
   providedIn: 'root'
@@ -81,7 +83,23 @@ export class ApiService {
 
   // Season data methods
   getSeasons(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/seasons`);
+    console.log('=== API SERVICE: getSeasons ===');
+    console.log('URL:', `${this.apiUrl}/api/seasons`);
+    
+    return this.http.get<any[]>(`${this.apiUrl}/api/seasons`).pipe(
+      tap(response => {
+        console.log('=== API SERVICE: getSeasons Response ===');
+        console.log('Response:', response);
+        console.log('Response length:', response?.length || 0);
+      }),
+      catchError(error => {
+        console.error('=== API SERVICE: getSeasons Error ===');
+        console.error('Error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      })
+    );
   }
 
   addSeason(seasonData: any): Observable<any> {
@@ -123,7 +141,24 @@ export class ApiService {
   }
 
   getClubById(clubId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/api/clubs/${clubId}`);
+    console.log('=== API SERVICE: getClubById ===');
+    console.log('clubId:', clubId);
+    console.log('URL:', `${this.apiUrl}/api/clubs/${clubId}`);
+    
+    return this.http.get<any>(`${this.apiUrl}/api/clubs/${clubId}`).pipe(
+      tap(response => {
+        console.log('=== API SERVICE: getClubById Response ===');
+        console.log('Response:', response);
+        console.log('Response type:', typeof response);
+      }),
+      catchError(error => {
+        console.error('=== API SERVICE: getClubById Error ===');
+        console.error('Error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      })
+    );
   }
 
   addClub(clubData: any): Observable<any> {
@@ -149,12 +184,28 @@ export class ApiService {
     return this.http.post<any>(`${this.apiUrl}/api/upload`, formData);
   }
 
-  addGame(game: any) {
-    return this.http.post(`${this.apiUrl}/api/games`, game);
+  addGame(game: any): Observable<Match> {
+    return this.http.post<Match>(`${this.apiUrl}/api/games`, game);
   }
 
   getGames(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/games`);
+    console.log('=== API SERVICE: getGames ===');
+    console.log('URL:', `${this.apiUrl}/api/games`);
+    
+    return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
+      tap(response => {
+        console.log('=== API SERVICE: getGames Response ===');
+        console.log('Response:', response);
+        console.log('Response length:', response?.length || 0);
+      }),
+      catchError(error => {
+        console.error('=== API SERVICE: getGames Error ===');
+        console.error('Error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      })
+    );
   }
 
   getGamesBySeason(seasonId: string): Observable<any[]> {
@@ -176,8 +227,8 @@ export class ApiService {
     });
   }
 
-  getGame(gameId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/games/${gameId}`);
+  getGame(gameId: string): Observable<Match> {
+    return this.http.get<Match>(`${this.apiUrl}/api/games/${gameId}`);
   }
 
   getTeamPlayers(teamId: string): Observable<any[]> {
@@ -267,8 +318,8 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/api/users`);
   }
 
-  getUser(id: string) {
-    return this.http.get(`${this.apiUrl}/api/users/profile/${id}`);
+  getUser(id: string): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/api/users/profile/${id}`);
   }
 
   auth0Sync(): Observable<any> {
@@ -281,6 +332,10 @@ export class ApiService {
 
   updateCurrentUser(userData: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/api/users/${userData._id}`, userData);
+  }
+
+  updateUser(user: User): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/api/users/${user._id}`, user);
   }
 
   getClubEashlGames(clubId: string): Observable<any[]> {

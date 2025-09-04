@@ -85,7 +85,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(([matches, clubs, seasons]) => {
       this.allClubs = clubs;
-      this.seasons = seasons.sort((a: any, b: any) => {
+      this.seasons = [...seasons].sort((a: any, b: any) => {
         const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
         const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
         return dateB - dateA; // Most recent first
@@ -214,7 +214,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   getImageUrl(logoUrl: string | undefined): string {
     if (!logoUrl) {
-      return 'assets/images/default-team.png';
+      return 'assets/images/square-default.png';
     }
     
     if (logoUrl.startsWith('http')) {

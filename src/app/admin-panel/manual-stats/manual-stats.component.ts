@@ -785,8 +785,8 @@ export class ManualStatsComponent implements OnInit {
         
         // Populate form with game data
         this.statsForm.patchValue({
-          homeTeam: game.homeClubId?.name || game.homeTeam || '',
-          awayTeam: game.awayClubId?.name || game.awayTeam || '',
+          homeTeam: (game as any).homeClubId?.name || game.homeTeam?.name || game.homeTeam || '',
+          awayTeam: (game as any).awayClubId?.name || game.awayTeam?.name || game.awayTeam || '',
           date: game.date ? new Date(game.date).toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',

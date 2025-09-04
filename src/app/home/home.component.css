@@ -348,11 +348,12 @@ h2 {
 
 .player-link {
   color: #fff;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
 }
 .player-link:hover {
   color: #3498db;
+  text-decoration: none;
 }
 
 /* Schedule Section Responsive Styles */

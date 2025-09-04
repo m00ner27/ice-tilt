@@ -9,7 +9,7 @@ import { EditProfileComponent } from './edit-profile/edit-profile.component';
 import { LoginComponent } from './login/login.component';
 import { TestComponent } from './test-component/test-component';
 import { ClubListComponent } from './club-list/club-list.component';
-import { ClubDetailComponent } from './club-detail/club-detail.component';
+import { ClubDetailSimpleComponent } from './club-detail/club-detail.component';
 import { MatchDetailComponent } from './match-detail/match-detail.component';
 import { StandingsComponent } from './standings/standings.component';
 import { ArticleComponent } from './article/article.component';
@@ -42,7 +42,7 @@ export const routes: Routes = [
   { path: 'goalie-stats', component: GoalieStatsComponent },
   { path: 'manager-view', component: ManagerViewComponent },
   { path: 'clubs', component: ClubListComponent },
-  { path: 'clubs/:id', component: ClubDetailComponent },
+  { path: 'clubs/:id', component: ClubDetailSimpleComponent },
   { path: 'match/:id', component: MatchDetailComponent },
   { path: 'standings', component: StandingsComponent },
   { path: 'article/:slug', component: ArticleComponent },

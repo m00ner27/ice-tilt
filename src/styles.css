@@ -340,8 +340,8 @@ a.team-link:hover, a.transaction-link:hover {
 
 /* Optional: Add a hover effect */
 .player-link:hover {
-    text-decoration: underline; /* Add underline on hover if desired */
-    color: #000; /* Change color on hover if desired */
+    text-decoration: none; /* Keep no underline on hover */
+    color: #ccc; /* Change color on hover for visual feedback */
 }
 
 

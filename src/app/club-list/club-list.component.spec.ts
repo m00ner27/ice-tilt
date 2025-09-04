@@ -229,7 +229,7 @@ describe('ClubListComponent', () => {
   describe('Image URL Handling', () => {
     it('should return default image for undefined logoUrl', () => {
       const result = component.getImageUrl(undefined);
-      expect(result).toBe('assets/images/default-team.png');
+      expect(result).toBe('assets/images/square-default.png');
     });
 
     it('should return full URL for HTTP URLs', () => {

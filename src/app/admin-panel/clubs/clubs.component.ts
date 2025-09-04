@@ -631,7 +631,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   // Method to get the full image URL
   getImageUrl(logoUrl: string | undefined): string {
     if (!logoUrl) {
-      return 'assets/images/default-team.png';
+      return 'assets/images/square-default.png';
     }
     
     // If it's already a full URL, return as is

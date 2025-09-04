@@ -321,7 +321,7 @@ export class PlayerStatsComponent implements OnInit {
               
               // Try to find existing player by name first, then by ID
               let existingKey = null;
-              for (const [key, stats] of statsMap.entries()) {
+              for (const [key, stats] of Array.from(statsMap.entries())) {
                 if (stats.name === playerName) {
                   existingKey = key;
                   break;
@@ -567,7 +567,7 @@ export class PlayerStatsComponent implements OnInit {
             
             // Try to find existing player by name first, then by ID
             let existingKey = null;
-            for (const [key, stats] of statsMap.entries()) {
+            for (const [key, stats] of Array.from(statsMap.entries())) {
               if (stats.name === playerName) {
                 existingKey = key;
                 break;
@@ -806,6 +806,9 @@ export class PlayerStatsComponent implements OnInit {
         case 'giveaways':
           comparison = a.giveaways - b.giveaways;
           break;
+        case 'passAttempts':
+          comparison = a.passAttempts - b.passAttempts;
+          break;
         case 'passes':
           comparison = a.passes - b.passes;
           break;
@@ -820,9 +823,6 @@ export class PlayerStatsComponent implements OnInit {
           break;
         case 'faceoffPercentage':
           comparison = a.faceoffPercentage - b.faceoffPercentage;
-          break;
-        case 'playerScore':
-          comparison = a.playerScore - b.playerScore;
           break;
         default:
           comparison = a.points - b.points;

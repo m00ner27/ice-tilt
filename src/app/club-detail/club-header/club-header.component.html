@@ -1,18 +1,18 @@
   <div class="club-header" 
-       [style.background-color]="club.colour" 
-       [style.color]="getContrastingTextColor(club.colour)"
-       *ngIf="club && club.stats">
+       [style.background-color]="club?.colour" 
+       [style.color]="getContrastingTextColor(club?.colour)"
+       *ngIf="club">
   <!-- Left: Logo (hidden on small screens) -->
   <div class="header-left">
-    <img [src]="club.image" [alt]="club.clubName" class="club-logo desktop-logo">
+    <img [src]="club?.image" [alt]="club?.clubName" class="club-logo desktop-logo">
   </div>
 
   <!-- Center: Logo, Team Name and Record -->
   <div class="header-center">
-    <img [src]="club.image" [alt]="club.clubName" class="club-logo mobile-logo">
-    <h1>{{club.clubName}}</h1>
+    <img [src]="club?.image" [alt]="club?.clubName" class="club-logo mobile-logo">
+    <h1>{{club?.clubName}}</h1>
     
-    <div class="record-box">
+    <div class="record-box" *ngIf="club?.stats">
       <span class="stat-label">Record</span>
       <span class="stat-value">{{club.stats.wins}}-{{club.stats.losses}}-{{club.stats.otLosses}}</span>
     </div>
@@ -20,7 +20,7 @@
 
   <!-- Right: Manager and Division -->
   <div class="header-right">
-    <p class="manager">Manager: {{club.manager}}</p>
+    <p class="manager">Manager: {{club?.manager}}</p>
     <p class="division" *ngIf="selectedSeasonDivision">
       Division: {{selectedSeasonDivision}}
     </p>

@@ -145,7 +145,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
   getImageUrl(logoUrl: string | undefined): string {
     if (!logoUrl) {
-      return 'assets/images/default-team.png';
+      return 'assets/images/square-default.png';
     }
     
     if (logoUrl.startsWith('http')) {

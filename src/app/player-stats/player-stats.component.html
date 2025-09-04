@@ -51,11 +51,11 @@
               <th [className]="getColumnSortClass('gameWinningGoals')" (click)="onSortColumn('gameWinningGoals')">GWG</th>
               <th [className]="getColumnSortClass('takeaways')" (click)="onSortColumn('takeaways')">TK</th>
               <th [className]="getColumnSortClass('giveaways')" (click)="onSortColumn('giveaways')">GV</th>
+              <th [className]="getColumnSortClass('passAttempts')" (click)="onSortColumn('passAttempts')">PA</th>
               <th [className]="getColumnSortClass('passes')" (click)="onSortColumn('passes')">P</th>
               <th [className]="getColumnSortClass('passPercentage')" (click)="onSortColumn('passPercentage')">P%</th>
               <th [className]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
               <th [className]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
-              <th [className]="getColumnSortClass('playerScore')" (click)="onSortColumn('playerScore')">PS</th>
               <th [className]="getColumnSortClass('penaltyKillCorsiZone')" (click)="onSortColumn('penaltyKillCorsiZone')">PKCZ</th>
             </tr>
           </thead>
@@ -88,11 +88,11 @@
               <td>{{ player.gameWinningGoals }}</td>
               <td>{{ player.takeaways }}</td>
               <td>{{ player.giveaways }}</td>
+              <td>{{ player.passAttempts }}</td>
               <td>{{ player.passes }}</td>
               <td>{{ player.passPercentage }}%</td>
               <td>{{ player.faceoffsWon }}</td>
               <td>{{ player.faceoffPercentage }}%</td>
-              <td>{{ player.playerScore }}</td>
               <td>{{ player.penaltyKillCorsiZone }}</td>
             </tr>
           </tbody>
@@ -131,11 +131,11 @@
         <span class="legend-abbr">PKCZ</span> - Penalty Kill Corsi Zone
       </div>
       <div class="legend-item">
+        <span class="legend-abbr">PA</span> - Pass Attempts
         <span class="legend-abbr">P</span> - Passes
         <span class="legend-abbr">P%</span> - Pass Percentage
         <span class="legend-abbr">FOW</span> - Faceoffs Won
         <span class="legend-abbr">FO%</span> - Faceoff Percentage
-        <span class="legend-abbr">PS</span> - Player Score
       </div>
     </div>
   </div>
