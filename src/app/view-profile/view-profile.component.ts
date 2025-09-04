@@ -35,6 +35,7 @@ export class ViewProfileComponent implements OnInit, OnDestroy {
       gamesPlayed: 0,
       wins: 0,
       losses: 0,
+      overtimeLosses: 0,
       goals: 0,
       assists: 0,
       points: 0,

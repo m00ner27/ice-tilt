@@ -75,6 +75,7 @@ export interface PlayerSeasonStats {
   gamesPlayed: number;
   wins: number;
   losses: number;
+  overtimeLosses: number;
   goals: number;
   assists: number;
   points: number;

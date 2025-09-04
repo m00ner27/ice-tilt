@@ -26,15 +26,20 @@ interface PlayerStatDisplay {
   hits?: number;
   blockedShots?: number;
   pim?: number;
+  penaltyMinutes?: number;
   ppg?: number;
+  powerPlayGoals?: number;
   shg?: number;
+  shortHandedGoals?: number;
   gwg?: number;
+  gameWinningGoals?: number;
   takeaways?: number;
   giveaways?: number;
   passes?: number;
   passAttempts?: number;
   passPercentage?: number;
   faceoffsWon?: number;
+  faceoffsLost?: number;
   faceoffPercentage?: number;
   playerScore?: number;
   penaltyKillCorsiZone?: number;
@@ -99,20 +104,32 @@ export class MatchDetailComponent implements OnInit {
     if (!this.match) {
       // Get match ID from route and load match
       this.route.params.pipe(take(1)).subscribe(params => {
+        console.log('=== MATCH DETAIL ROUTE PARAMS ===');
+        console.log('Route params:', params);
         const matchId = params['id'];
-        if (matchId) {
+        console.log('Match ID from params:', matchId);
+        console.log('Match ID type:', typeof matchId);
+        
+        if (matchId && matchId !== 'undefined') {
           this.loadMatch(matchId);
+        } else {
+          console.error('Invalid match ID provided:', matchId);
         }
       });
     }
   }
   
   loadMatch(id: string): void {
+    console.log('=== LOADING MATCH ===');
+    console.log('Match ID to load:', id);
+    console.log('Match ID type:', typeof id);
+    
     this.ngrxApiService.loadMatch(id);
     
     // Subscribe to match changes
     this.selectedMatch$.pipe(take(1)).subscribe(match => {
       if (match) {
+        console.log('Match loaded successfully:', match);
         this.match = match;
         this.processMatchData();
       } else {
@@ -279,5 +296,80 @@ export class MatchDetailComponent implements OnInit {
   hasStats(): boolean {
     return this.homeTeamPlayers.length > 0 || this.awayTeamPlayers.length > 0 || 
            this.homeTeamGoalies.length > 0 || this.awayTeamGoalies.length > 0;
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
+  isTeamWinner(teamName: string): boolean {
+    if (!this.match) return false;
+    
+    const homeScore = this.match.homeScore || this.match.score?.home || 0;
+    const awayScore = this.match.awayScore || this.match.score?.away || 0;
+    
+    if (teamName === this.match.homeTeam) {
+      return homeScore > awayScore;
+    } else if (teamName === this.match.awayTeam) {
+      return awayScore > homeScore;
+    }
+    
+    return false;
+  }
+
+  getImageUrl(logoUrl: string | undefined): string {
+    if (!logoUrl) return '/assets/images/default-logo.png';
+    
+    // If it's a full URL, return as is
+    if (logoUrl.startsWith('http')) {
+      return logoUrl;
+    }
+    
+    // Otherwise, assume it's a local asset
+    return logoUrl;
+  }
+
+  getTeamTotalGoals(team: 'home' | 'away'): number {
+    if (!this.match) return 0;
+    
+    if (team === 'home') {
+      return this.match.homeScore || this.match.score?.home || 0;
+    } else {
+      return this.match.awayScore || this.match.score?.away || 0;
+    }
+  }
+
+  getTeamTotalAssists(team: 'home' | 'away'): number {
+    if (!this.match) return 0;
+    
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.assists || 0), 0);
+  }
+
+  getTeamTotalShots(team: 'home' | 'away'): number {
+    if (!this.match) return 0;
+    
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.shots || 0), 0);
+  }
+
+  getTeamTotalHits(team: 'home' | 'away'): number {
+    if (!this.match) return 0;
+    
+    const players = team === 'home' ? this.homeTeamPlayers : this.awayTeamPlayers;
+    return players.reduce((total, player) => total + (player.hits || 0), 0);
+  }
+
+  calculateSavePercentage(saves: number | undefined, shotsAgainst: number | undefined): string {
+    if (!saves || !shotsAgainst || shotsAgainst === 0) return '0.000';
+    const percentage = (saves / shotsAgainst) * 100;
+    return percentage.toFixed(3);
   }
 }

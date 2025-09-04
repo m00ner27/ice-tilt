@@ -23,7 +23,7 @@ export interface TeamScore {
   score: number;
 }
 
-export interface Match {
+export interface Game {
   id: string;
   _id?: string; // MongoDB ID for compatibility
   season: string;

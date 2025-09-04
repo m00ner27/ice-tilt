@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Match, MatchService } from '../store/services/match.service';
+import { EashlMatch, MatchService } from '../store/services/match.service';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -12,8 +12,8 @@ import { environment } from '../../environments/environment';
   imports: [CommonModule, RouterModule]
 })
 export class ScheduleBarComponent implements OnInit {
-  matches: Match[] = [];
-  upcomingMatches: Match[] = [];
+  matches: EashlMatch[] = [];
+  upcomingMatches: EashlMatch[] = [];
 
   constructor(private matchService: MatchService) {}
 
@@ -80,7 +80,7 @@ export class ScheduleBarComponent implements OnInit {
     return logoUrl;
   }
 
-  isFinal(match: Match): boolean {
+  isFinal(match: EashlMatch): boolean {
     // A game is final if it has EASHL data OR if it's a merged game with scores
     return !!match.eashlData || (!!match.eashlMatchId && match.eashlMatchId.includes('+') && match.homeScore !== undefined && match.awayScore !== undefined);
   }

@@ -40,7 +40,7 @@ export const routes: Routes = [
   { path: 'players/:id', component: PlayerProfileComponent },
   { path: 'player-stats', component: PlayerStatsComponent },
   { path: 'goalie-stats', component: GoalieStatsComponent },
-  { path: 'manager-view', component: ManagerViewComponent },
+  { path: 'manager-view', component: ManagerViewComponent, canActivate: [authGuard] },
   { path: 'clubs', component: ClubListComponent },
   { path: 'clubs/:id', component: ClubDetailSimpleComponent },
   { path: 'match/:id', component: MatchDetailComponent },

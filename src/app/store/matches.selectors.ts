@@ -49,13 +49,13 @@ export const selectMatchEashlData = (matchId: string) => createSelector(
 // Computed selectors
 export const selectMatchesBySeason = (seasonId: string) => createSelector(
   selectAllMatches,
-  (matches) => matches.filter(match => match.season === seasonId)
+  (matches) => matches.filter(match => match.seasonId === seasonId)
 );
 
 export const selectMatchesByClub = (clubId: string) => createSelector(
   selectAllMatches,
   (matches) => matches.filter(match => 
-    match.homeTeam.id === clubId || match.awayTeam.id === clubId
+    match.homeTeam === clubId || match.awayTeam === clubId
   )
 );
 
@@ -74,18 +74,18 @@ export const selectUpcomingMatches = createSelector(
 export const selectCompletedMatches = createSelector(
   selectAllMatches,
   (matches) => matches.filter(match => 
-    new Date(match.date) <= new Date() && match.status === 'completed'
+    new Date(match.date) <= new Date()
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 );
 
 export const selectMatchesWithStats = createSelector(
   selectAllMatches,
-  (matches) => matches.filter(match => match.hasStats)
+  (matches) => matches.filter(match => match.playerStats && match.playerStats.length > 0)
 );
 
 export const selectMatchesWithoutStats = createSelector(
   selectAllMatches,
-  (matches) => matches.filter(match => !match.hasStats)
+  (matches) => matches.filter(match => !match.playerStats || match.playerStats.length === 0)
 );
 
 // Loading states

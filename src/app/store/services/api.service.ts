@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { tap, catchError } from 'rxjs/operators';
-import { Match } from '../models/models/match.interface';
+import { Game } from '../models/models/match.interface';
 import { User } from '../users.actions';
 
 @Injectable({
@@ -184,8 +184,8 @@ export class ApiService {
     return this.http.post<any>(`${this.apiUrl}/api/upload`, formData);
   }
 
-  addGame(game: any): Observable<Match> {
-    return this.http.post<Match>(`${this.apiUrl}/api/games`, game);
+  addGame(game: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/api/games`, game);
   }
 
   getGames(): Observable<any[]> {
@@ -227,8 +227,8 @@ export class ApiService {
     });
   }
 
-  getGame(gameId: string): Observable<Match> {
-    return this.http.get<Match>(`${this.apiUrl}/api/games/${gameId}`);
+  getGame(gameId: string): Observable<Game> {
+    return this.http.get<Game>(`${this.apiUrl}/api/games/${gameId}`);
   }
 
   getTeamPlayers(teamId: string): Observable<any[]> {

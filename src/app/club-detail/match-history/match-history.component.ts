@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Match, ClubInfo } from '../../store/services/match.service';
+import { EashlMatch, ClubInfo } from '../../store/services/match.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -12,7 +12,7 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['./match-history.component.css']
 })
 export class MatchHistoryComponent {
-  @Input() matches: Match[] = [];
+  @Input() matches: EashlMatch[] = [];
   @Input() teamName: string = '';
   
   constructor(private router: Router) { }
@@ -38,7 +38,7 @@ export class MatchHistoryComponent {
   }
   
   // Navigate to match detail page
-  navigateToMatchDetail(match: Match): void {
+  navigateToMatchDetail(match: EashlMatch): void {
     this.router.navigate(['/match', match.id], { 
       state: { 
         match: match,
@@ -58,7 +58,7 @@ export class MatchHistoryComponent {
   }
   
   // Determine if the team won the match
-  didTeamWin(match: Match): boolean {
+  didTeamWin(match: EashlMatch): boolean {
     const isHomeTeam = match.homeTeam === this.teamName;
     return isHomeTeam ? 
       match.homeScore > match.awayScore : 
@@ -66,28 +66,28 @@ export class MatchHistoryComponent {
   }
   
   // Get opponent name for a match
-  getOpponent(match: Match): string {
+  getOpponent(match: EashlMatch): string {
     return match.homeTeam === this.teamName ? match.awayTeam : match.homeTeam;
   }
 
-  getOurClub(match: Match): ClubInfo | undefined {
+  getOurClub(match: EashlMatch): ClubInfo | undefined {
     return match.homeTeam === this.teamName ? match.homeClub : match.awayClub;
   }
 
-  getOpponentClub(match: Match): ClubInfo | undefined {
+  getOpponentClub(match: EashlMatch): ClubInfo | undefined {
     return match.homeTeam === this.teamName ? match.awayClub : match.homeClub;
   }
 
-  getOurScore(match: Match): number {
+  getOurScore(match: EashlMatch): number {
     return match.homeTeam === this.teamName ? match.homeScore : match.awayScore;
   }
 
-  getOpponentScore(match: Match): number {
+  getOpponentScore(match: EashlMatch): number {
     return match.homeTeam === this.teamName ? match.awayScore : match.homeScore;
   }
   
   // Get home/away label
-  getLocationLabel(match: Match): string {
+  getLocationLabel(match: EashlMatch): string {
     return match.homeTeam === this.teamName ? 'Home' : 'Away';
   }
 } 

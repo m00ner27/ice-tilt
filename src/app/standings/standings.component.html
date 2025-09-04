@@ -10,24 +10,24 @@
       (change)="onSeasonChange()"
       class="season-select"
     >
-      <option *ngFor="let season of seasons" [value]="season._id">
+      <option *ngFor="let season of (seasons$ | async)" [value]="season._id">
         {{ season.name }}
       </option>
     </select>
   </div>
 
   <!-- Loading state -->
-  <div *ngIf="isLoading" class="loading-container">
+  <div *ngIf="seasonsLoading$ | async" class="loading-container">
     <p>Loading standings...</p>
   </div>
 
   <!-- Error state -->
-  <div *ngIf="error" class="error-container">
+  <div *ngIf="seasonsError$ | async as error" class="error-container">
     <p>{{ error }}</p>
   </div>
 
   <!-- Standings by Division -->
-  <div *ngIf="!isLoading && !error && divisionStandings.length > 0" class="standings-content">
+  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length > 0" class="standings-content">
     <div *ngFor="let divisionStanding of divisionStandings" class="division-section">
       <h2 class="division-title">
         <img *ngIf="divisionStanding.division.logoUrl" [src]="getImageUrl(divisionStanding.division.logoUrl)" [alt]="divisionStanding.division.name + ' logo'" class="division-logo">
@@ -83,7 +83,7 @@
   </div>
   
   <!-- No standings data message -->
-  <div *ngIf="!isLoading && !error && divisionStandings.length === 0" class="no-data-container">
+  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length === 0" class="no-data-container">
     <p>No standings data available for {{ getSelectedSeasonName() }}.</p>
   </div>
   

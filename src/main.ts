@@ -33,12 +33,15 @@ bootstrapApplication(AppComponent, {
       clientId: environment.auth0.clientId, // Auth0 Client ID
       authorizationParams: {
         redirect_uri: window.location.origin, // Use your application's base URL
-        audience: environment.apiAudience, // Uses environment variable
-        scope: 'openid profile email', // Add the required scopes
+        audience: environment.apiAudience, // Include audience for API calls
+        scope: 'openid profile email offline_access', // Add offline_access for refresh tokens
       },
       httpInterceptor: {
         allowedList: environment.apiAllowedList, // Uses environment variable
       },
+      cacheLocation: 'localstorage',
+      useRefreshTokens: true,
+      useRefreshTokensFallback: true
     }),
     
     // Set up NgRx store with all feature modules

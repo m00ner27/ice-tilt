@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Match, MatchService } from '../store/services/match.service';
+import { EashlMatch, MatchService } from '../store/services/match.service';
 import { RecentTransactionsComponent } from '../recent-transactions/recent-transactions.component';
 import { ScheduleComponent } from '../schedule/schedule.component';
 import { environment } from '../../environments/environment';

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { MatchService, Match, PlayerMatchStats } from './match.service';
+import { MatchService, EashlMatch, PlayerMatchStats } from './match.service';
 import { PlayerStats } from '../models/models/player-stats.interface';
 
 @Injectable({
@@ -19,7 +19,7 @@ export class PlayerStatsService {
     );
   }
 
-  private calculatePlayerStats(matches: Match[], playerId: string, gamertag?: string): PlayerStats {
+  private calculatePlayerStats(matches: EashlMatch[], playerId: string, gamertag?: string): PlayerStats {
     // Initialize stats object
     const stats: PlayerStats = {
       playerId: playerId,

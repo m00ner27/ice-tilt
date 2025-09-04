@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatchService, Match } from '../store/services/match.service';
+import { MatchService, EashlMatch } from '../store/services/match.service';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
 import { forkJoin } from 'rxjs';
@@ -62,7 +62,7 @@ interface GroupedGoalieStats {
   styleUrl: './goalie-stats.component.css'
 })
 export class GoalieStatsComponent implements OnInit {
-  allMatches: Match[] = [];
+  allMatches: EashlMatch[] = [];
   allClubs: Club[] = [];
   groupedStats: GroupedGoalieStats[] = [];
   seasons: Season[] = [];
@@ -277,7 +277,7 @@ export class GoalieStatsComponent implements OnInit {
     this.aggregateGoalieStats(filteredMatches, teamDivisionMap);
   }
   
-  aggregateGoalieStats(matches: Match[], teamDivisionMap: Map<string, string>): void {
+  aggregateGoalieStats(matches: EashlMatch[], teamDivisionMap: Map<string, string>): void {
     const statsMap = new Map<number, GoalieStats>();
     const teamLogoMap = new Map<string, string | undefined>();
 

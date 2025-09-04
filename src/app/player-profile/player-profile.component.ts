@@ -7,7 +7,7 @@ import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
 import { environment } from '../../environments/environment';
 import { PlayerStatsService } from '../store/services/player-stats.service';
-import { MatchService, Match } from '../store/services/match.service';
+import { MatchService, EashlMatch } from '../store/services/match.service';
 
 @Component({
   selector: 'app-player-profile',

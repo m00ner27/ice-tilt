@@ -1,10 +1,10 @@
 import { createReducer, on } from '@ngrx/store';
-import { Match } from './models/models/match.interface';
+import { EashlMatch } from './services/match.service';
 import * as MatchesActions from './matches.actions';
 
 export interface MatchesState {
-  matches: Match[];
-  selectedMatch: Match | null;
+  matches: EashlMatch[];
+  selectedMatch: EashlMatch | null;
   eashlData: { [matchId: string]: any };
   loading: boolean;
   error: any;

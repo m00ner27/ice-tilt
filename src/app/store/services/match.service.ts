@@ -45,7 +45,7 @@ export interface ClubInfo {
   eashlClubId?: string;
 }
 
-export interface Match {
+export interface EashlMatch {
   id: any;
   date: string;
   homeTeam: string;
@@ -71,7 +71,7 @@ export class MatchService {
 
   constructor(private http: HttpClient) { }
 
-  private transformGameData(game: any): Match {
+  private transformGameData(game: any): EashlMatch {
     const playerStats: PlayerMatchStats[] = [];
 
     // Check if this is a merged game (has eashlMatchId with +)
@@ -231,26 +231,26 @@ export class MatchService {
     };
   }
   
-    getMatch(id: string): Observable<Match> {
+    getMatch(id: string): Observable<EashlMatch> {
     return this.http.get<any>(`${this.apiUrl}/api/games/${id}`).pipe(
       map(this.transformGameData)
     );
   }
 
-  getMatches(): Observable<Match[]> {
+  getMatches(): Observable<EashlMatch[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
       map(games => games.map(this.transformGameData))
     );
   }
 
   // Method to force refresh matches (useful after data changes)
-  refreshMatches(): Observable<Match[]> {
+  refreshMatches(): Observable<EashlMatch[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
       map(games => games.map(this.transformGameData))
     );
   }
   
-  getMatchesByTeam(teamName: string): Observable<Match[]> {
+  getMatchesByTeam(teamName: string): Observable<EashlMatch[]> {
     return this.getMatches().pipe(
       map(matches => matches.filter(match => 
         match.homeTeam === teamName || match.awayTeam === teamName

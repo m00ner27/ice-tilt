@@ -3,7 +3,7 @@
     <h2 class="text-center mb-4">Players Directory</h2>
     
     <!-- Error message -->
-    <div *ngIf="error" class="alert alert-danger">
+    <div *ngIf="usersError$ | async as error" class="alert alert-danger">
       {{ error }}
     </div>
 
@@ -68,7 +68,7 @@
               (change)="onSeasonFilterChange(seasonFilter)"
               class="season-select"
             >
-              <option *ngFor="let season of seasons" [value]="season.name">{{ season.name }}</option>
+              <option *ngFor="let season of (seasons$ | async)" [value]="season.name">{{ season.name }}</option>
             </select>
           </div>
         </div>

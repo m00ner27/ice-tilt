@@ -3,6 +3,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { ApiService } from './services/api.service';
+import { MatchService, EashlMatch } from './services/match.service';
 import * as MatchesActions from './matches.actions';
 
 @Injectable()
@@ -21,14 +22,15 @@ export class MatchesEffects {
 
   constructor(
     private actions$: Actions,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private matchService: MatchService
   ) {
     // Load Matches Effect
     this.loadMatches$ = createEffect(() =>
       this.actions$.pipe(
         ofType(MatchesActions.loadMatches),
         mergeMap(() =>
-          this.apiService.getGames().pipe(
+          this.matchService.getMatches().pipe(
             map(matches => MatchesActions.loadMatchesSuccess({ matches })),
             catchError(error => of(MatchesActions.loadMatchesFailure({ error })))
           )
@@ -41,7 +43,7 @@ export class MatchesEffects {
       this.actions$.pipe(
         ofType(MatchesActions.loadMatch),
         mergeMap(({ matchId }) =>
-          this.apiService.getGame(matchId).pipe(
+          this.matchService.getMatch(matchId).pipe(
             map(match => MatchesActions.loadMatchSuccess({ match })),
             catchError(error => of(MatchesActions.loadMatchFailure({ error })))
           )

@@ -8,7 +8,7 @@
       <select 
         id="seasonFilter" 
         [(ngModel)]="filterSeason" 
-        (change)="onSeasonFilterChange()" 
+        (change)="onSeasonFilterChange(filterSeason)" 
         class="filter-select"
       >
         <option value="">All Seasons</option>
@@ -21,7 +21,7 @@
         <select 
           id="teamFilter" 
           [(ngModel)]="filterTeam" 
-          (change)="onFilterChange()" 
+          (change)="onTeamFilterChange(filterTeam)" 
           class="filter-select"
         >
           <option value="">All Clubs</option>
@@ -41,12 +41,12 @@
     </div>
   
   <!-- Loading state -->
-  <div *ngIf="isLoading" class="loading-container">
+  <div *ngIf="matchesLoading$ | async" class="loading-container">
     <p>Loading schedule...</p>
   </div>
   
   <!-- Schedule table -->
-  <div *ngIf="!isLoading && filteredMatches.length > 0" class="schedule-table-container">
+  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length > 0" class="schedule-table-container">
     <table class="schedule-table">
       <thead>
         <tr>
@@ -111,7 +111,7 @@
   </div>
   
   <!-- No matches message -->
-  <div *ngIf="!isLoading && filteredMatches.length === 0" class="no-results">
+  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length === 0" class="no-results">
     <p>No matches found for the selected filters.</p>
   </div>
   

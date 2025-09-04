@@ -15,7 +15,7 @@ import * as ClubsSelectors from '../store/clubs.selectors';
 import * as SeasonsSelectors from '../store/seasons.selectors';
 
 // Import interfaces
-import { Match } from '../store/services/match.service';
+import { EashlMatch } from '../store/services/match.service';
 
 @Component({
   selector: 'app-schedule',
@@ -180,6 +180,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.sortCriteria = criteria;
       this.sortDirection = 'asc';
     }
+    this.applyFiltersAndSort();
+  }
+
+  clearAllFilters(): void {
+    this.filterTeam = '';
+    this.filterSeason = '';
     this.applyFiltersAndSort();
   }
 
