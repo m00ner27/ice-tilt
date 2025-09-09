@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PlayerProfileService {
-  private apiUrl = environment.apiPlayerProfilesUrl;
+  private apiUrl = `${environment.apiUrl}/api/player-profiles`;
 
   constructor(private http: HttpClient) {}
 

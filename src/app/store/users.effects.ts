@@ -4,12 +4,14 @@ import { of } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { ApiService } from './services/api.service';
 import * as UsersActions from './users.actions';
+import * as PlayersActions from './players.actions';
 
 @Injectable()
 export class UsersEffects {
   loadUsers$: any;
   loadUser$: any;
   auth0Sync$: any;
+  auth0SyncSuccess$: any;
   loadCurrentUser$: any;
   loadFreeAgents$: any;
   loadFreeAgentsBySeason$: any;
@@ -59,6 +61,14 @@ export class UsersEffects {
             catchError(error => of(UsersActions.auth0SyncFailure({ error })))
           )
         )
+      )
+    );
+
+    // After successful Auth0 sync, dispatch loginWithDiscordProfile using the synced user
+    this.auth0SyncSuccess$ = createEffect(() =>
+      this.actions$.pipe(
+        ofType(UsersActions.auth0SyncSuccess),
+        map(({ user }) => PlayersActions.loginWithDiscordProfile({ discordProfile: user }))
       )
     );
 

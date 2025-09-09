@@ -1,12 +1,49 @@
 export const environment = {
   production: false,
-  apiPlayerProfilesUrl: 'http://localhost:3000/api/player-profiles',
   apiUrl: 'http://localhost:3000',
   apiAudience: 'http://localhost:3000',
   apiAllowedList: [
     {
       uri: 'http://localhost:3000/api/*',
-      allowAnonymous: false
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'http://localhost:3000',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: '/api/*',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'http://localhost:3000',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3000/api/users/auth0-sync',
+      httpMethod: 'POST',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'http://localhost:3000',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3000/api/users/me',
+      httpMethod: 'GET',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'http://localhost:3000',
+          scope: 'openid profile email offline_access'
+        }
+      }
     }
   ],
   auth0: {
