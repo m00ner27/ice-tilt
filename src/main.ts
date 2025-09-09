@@ -2,8 +2,8 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideAuth0 } from '@auth0/auth0-angular';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideAuth0, authHttpInterceptorFn } from '@auth0/auth0-angular';
 
 // Import the NgRx providers
 import { provideStore } from '@ngrx/store';
@@ -24,7 +24,7 @@ import { DivisionsEffects } from './app/store/divisions.effects';
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withInterceptors([authHttpInterceptorFn])),
     provideRouter(routes),
 
     // Auth0 Configuration
