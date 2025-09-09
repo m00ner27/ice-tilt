@@ -14,16 +14,16 @@
           </div>
 
           <!-- Loading State -->
-          <div *ngIf="isLoading" class="loading">
+          <div *ngIf="loading$ | async" class="loading">
             <p>Loading manager data...</p>
           </div>
 
           <!-- Error State -->
-          <div *ngIf="error" class="error">
+          <div *ngIf="error$ | async as error" class="error">
             <p>{{ error }}</p>
           </div>
 
-          <div class="card-body" *ngIf="!isLoading && !error">
+          <div class="card-body" *ngIf="!(loading$ | async) && !(error$ | async)">
             <!-- Season and Club Selection -->
             <div class="row mb-4">
               <div class="col-md-6">
@@ -34,13 +34,13 @@
                   [(ngModel)]="selectedSeason"
                   (change)="onSeasonChange()"
                 >
-                  <option *ngFor="let season of seasons" [value]="season.name">
+                  <option *ngFor="let season of seasons$ | async" [value]="season.name">
                     {{ season.name }}
                   </option>
                 </select>
                 <small class="text-muted">
                   Selected: {{ selectedSeason }} 
-                  ({{ seasons.length }} seasons available)
+                  ({{ (seasons$ | async)?.length || 0 }} seasons available)
                 </small>
               </div>
               <div class="col-md-6">
@@ -52,13 +52,12 @@
                   (change)="onClubChange()"
                 >
                   <option value="">Select a club</option>
-                  <option *ngFor="let club of managerClubs" [value]="club._id">
+                  <option *ngFor="let club of clubs$ | async" [value]="club._id">
                     {{ club.name }}
                   </option>
                 </select>
                 <small class="text-muted">
-                  Available clubs: {{ managerClubs.length }} 
-                  ({{ getAvailableClubsText() }})
+                  Available clubs: {{ (clubs$ | async)?.length || 0 }}
                 </small>
               </div>
             </div>
@@ -69,7 +68,7 @@
                 <button 
                   class="btn btn-secondary" 
                   (click)="refreshData()"
-                  [disabled]="isLoading"
+                  [disabled]="loading$ | async"
                 >
                   <i class="fas fa-sync-alt me-2"></i>
                   Refresh Data
@@ -83,21 +82,14 @@
                 <div class="alert alert-info">
                   <strong>Debug Info:</strong><br>
                   Selected Season: <strong>{{ selectedSeason }}</strong><br>
-                  Available Clubs: <strong>{{ managerClubs.length }}</strong><br>
-                  Club Names: <strong>{{ getAvailableClubsText() }}</strong><br>
+                  Available Clubs: <strong>{{ (clubs$ | async)?.length || 0 }}</strong><br>
                   Selected Club: <strong>{{ selectedClub?.name || 'None' }}</strong>
                 </div>
-                <button class="btn btn-warning btn-sm" (click)="testSeasonFiltering()">
-                  Test Season Filtering
-                </button>
-                <button class="btn btn-danger btn-sm ms-2" (click)="testPetosenPalloEndpoint()">
-                  Test Petosen Pallo Endpoint
-                </button>
               </div>
             </div>
 
             <!-- Roster Management Section -->
-            <div *ngIf="selectedClub" class="roster-section">
+            <div *ngIf="selectedClub$ | async as selectedClub" class="roster-section">
               <h4 class="text-center mb-4">
                 <img [src]="getImageUrl(selectedClub.logoUrl)" [alt]="selectedClub.name" class="club-logo me-2" style="width: 30px; height: 30px;">
                 {{ selectedClub.name }} Roster
@@ -114,7 +106,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let player of rosterPlayers; let i = index">
+                  <tr *ngFor="let player of rosterPlayers$ | async; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ player.discordUsername }}</td>
                     <td>
@@ -136,7 +128,7 @@
                       </button>
                     </td>
                   </tr>
-                  <tr *ngIf="rosterPlayers.length === 0">
+                  <tr *ngIf="(rosterPlayers$ | async)?.length === 0">
                     <td colspan="5" class="text-center">No players on roster</td>
                   </tr>
                 </tbody>
@@ -167,7 +159,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let agent of getFilteredFreeAgents()">
+                  <tr *ngFor="let agent of freeAgents$ | async">
                     <td>
                       <input 
                         type="checkbox" 
@@ -190,14 +182,9 @@
                       <span class="badge bg-success">Free Agent</span>
                     </td>
                   </tr>
-                  <tr *ngIf="getFilteredFreeAgents().length === 0">
+                  <tr *ngIf="(freeAgents$ | async)?.length === 0">
                     <td colspan="5" class="text-center">
-                      <span *ngIf="freeAgents.length === 0; else noMatchingResults">
-                        No free agents available for this season
-                      </span>
-                      <ng-template #noMatchingResults>
-                        No free agents match your search criteria
-                      </ng-template>
+                      <span>No free agents available for this season</span>
                     </td>
                   </tr>
                 </tbody>

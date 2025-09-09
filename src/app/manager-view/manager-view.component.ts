@@ -3,19 +3,35 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '@auth0/auth0-angular';
 import { switchMap, takeUntil } from 'rxjs/operators';
-import { of, Subscription, Subject } from 'rxjs';
+import { of, Subscription, Subject, Observable } from 'rxjs';
+
+// NgRx
+import { Store } from '@ngrx/store';
+import { AppState } from '../store';
+import * as UsersActions from '../store/users.actions';
+import * as ClubsActions from '../store/clubs.actions';
+import * as SeasonsActions from '../store/seasons.actions';
+import {
+  selectAllClubs,
+  selectSelectedClub,
+  selectClubRoster
+} from '../store/clubs.selectors';
+import {
+  selectFreeAgents,
+  selectUsersLoading,
+  selectUsersError
+} from '../store/users.selectors';
+import {
+  selectAllSeasons
+} from '../store/seasons.selectors';
 
 // Services
-import { ManagerDataService } from '../shared/services/manager-data.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { RosterUpdateService } from '../store/services/roster-update.service';
 
 // Interfaces
 import { 
   ManagerState, 
-  FreeAgent, 
-  ManagerClub, 
-  RosterPlayer, 
   NotificationState 
 } from '../shared/interfaces/manager.interface';
 
@@ -30,32 +46,43 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
   private rosterUpdateSubscription: Subscription | undefined;
   private destroy$ = new Subject<void>();
 
-  // Component state
-  managerState: ManagerState = {
-    freeAgents: [],
-    rosterPlayers: [],
-    managerClubs: [],
-    allClubs: [],
+  // Local component state
+  managerState: Partial<ManagerState> = {
     selectedClub: null,
     selectedClubId: '',
     selectedSeason: '',
-    seasons: [],
     selectedFreeAgents: [],
     searchTerm: '',
-    isLoading: true,
-    error: null,
     notification: null
   };
 
   managerUserId: string | undefined;
 
+  // Store observables
+  freeAgents$: Observable<any[]>;
+  clubs$: Observable<any[]>;
+  seasons$: Observable<any[]>;
+  selectedClub$: Observable<any>;
+  loading$: Observable<boolean>;
+  error$: Observable<any>;
+  rosterPlayers$: Observable<any[]>;
+
   constructor(
     private auth: AuthService,
     private cdr: ChangeDetectorRef,
-    private managerDataService: ManagerDataService,
+    private store: Store<AppState>,
     private imageUrlService: ImageUrlService,
     private rosterUpdateService: RosterUpdateService
-  ) {}
+  ) {
+    // Initialize store observables
+    this.freeAgents$ = this.store.select(selectFreeAgents);
+    this.clubs$ = this.store.select(selectAllClubs);
+    this.seasons$ = this.store.select(selectAllSeasons);
+    this.selectedClub$ = this.store.select(selectSelectedClub);
+    this.loading$ = this.store.select(selectUsersLoading);
+    this.error$ = this.store.select(selectUsersError);
+    this.rosterPlayers$ = this.store.select(selectClubRoster(''));
+  }
 
   ngOnInit(): void {
     this.setupAuthSubscription();
@@ -79,23 +106,16 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
       switchMap(user => {
         if (user?.sub) {
           this.managerUserId = user.sub.split('|')[1];
-          return this.managerDataService.loadManagerData(this.managerUserId);
+          // Dispatch actions to load data
+          this.store.dispatch(UsersActions.loadCurrentUser());
+          this.store.dispatch(ClubsActions.loadClubs());
+          this.store.dispatch(SeasonsActions.loadSeasons());
+          this.store.dispatch(UsersActions.loadFreeAgents());
+          return of(null);
         }
         return of(null);
       })
-    ).subscribe({
-      next: (state) => {
-        if (state) {
-          this.managerState = state;
-          this.cdr.detectChanges();
-        }
-      },
-      error: (error) => {
-        console.error('Error loading manager data:', error);
-        this.managerState.isLoading = false;
-        this.managerState.error = 'Failed to load manager data.';
-      }
-    });
+    ).subscribe();
   }
 
   /**
@@ -114,44 +134,14 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Load manager data
-   */
-  private loadManagerData(): void {
-    if (!this.managerUserId) return;
-
-    this.managerDataService.loadManagerData(this.managerUserId).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (state) => {
-        this.managerState = state;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading manager data:', error);
-        this.managerState.isLoading = false;
-        this.managerState.error = 'Failed to load manager data.';
-      }
-    });
-  }
 
   /**
    * Load club data
    */
   private loadClubData(): void {
-    this.managerDataService.loadClubData(this.managerState).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (state) => {
-        this.managerState = state;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading club data:', error);
-        this.managerState.isLoading = false;
-        this.managerState.error = 'Failed to load club data.';
-      }
-    });
+    if (this.managerState.selectedClubId) {
+      this.store.dispatch(ClubsActions.loadClub({ clubId: this.managerState.selectedClubId }));
+    }
   }
 
   /**
@@ -163,29 +153,11 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
     this.managerState.selectedClub = null;
     this.managerState.selectedClubId = '';
     
-    this.managerDataService.loadManagerClubs(this.managerState).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (state) => {
-        this.managerState = state;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error during season change:', error);
-      }
-    });
+    if (this.managerState.selectedSeason) {
+      this.store.dispatch(ClubsActions.loadClubsBySeason({ seasonId: this.managerState.selectedSeason }));
+    }
   }
 
-  /**
-   * Set season
-   */
-  setSeason(seasonName: string): void {
-    console.log('Setting season to:', seasonName);
-    this.managerState.selectedSeason = seasonName;
-    this.managerState.selectedClub = null;
-    this.managerState.selectedClubId = '';
-    this.loadManagerData();
-  }
 
   /**
    * Handle club change
@@ -194,15 +166,13 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
     console.log('Club change:', this.managerState.selectedClubId);
     
     if (this.managerState.selectedClubId) {
-      this.managerState.selectedClub = this.managerState.managerClubs.find(
-        club => club._id === this.managerState.selectedClubId
-      ) || null;
-      
-      if (this.managerState.selectedClub) {
-        this.loadClubData();
-      }
+      this.store.dispatch(ClubsActions.loadClub({ clubId: this.managerState.selectedClubId }));
+      // Update roster observable for the selected club
+      this.rosterPlayers$ = this.store.select(selectClubRoster(this.managerState.selectedClubId));
     } else {
       this.managerState.selectedClub = null;
+      // Reset roster observable
+      this.rosterPlayers$ = this.store.select(selectClubRoster(''));
     }
   }
 
@@ -211,98 +181,60 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
    */
   refreshData(): void {
     console.log('Refresh data called');
-    this.managerState.isLoading = true;
-    this.loadManagerData();
-  }
-
-  /**
-   * Refresh free agents
-   */
-  refreshFreeAgents(): void {
-    if (this.managerState.selectedClub && this.managerState.selectedClub._id) {
-      this.loadClubData();
+    if (this.managerUserId) {
+      this.store.dispatch(UsersActions.loadCurrentUser());
+      this.store.dispatch(ClubsActions.loadClubs());
+      this.store.dispatch(SeasonsActions.loadSeasons());
+      this.store.dispatch(UsersActions.loadFreeAgents());
     }
   }
 
-  /**
-   * Get available clubs text
-   */
-  getAvailableClubsText(): string {
-    return this.managerDataService.getAvailableClubsText(this.managerState.managerClubs);
-  }
 
-  /**
-   * Check player offer status
-   */
-  checkPlayerOfferStatus(playerId: string): string {
-    return this.managerDataService.checkPlayerOfferStatus(playerId);
-  }
 
-  /**
-   * Test season filtering
-   */
-  testSeasonFiltering(): void {
-    console.log('=== TESTING SEASON FILTERING ===');
-    console.log('Current selectedSeason:', this.managerState.selectedSeason);
-    console.log('Available seasons:', this.managerState.seasons);
-    console.log('All clubs available:', this.managerState.allClubs.map(c => c.name));
-    
-    this.managerState.seasons.forEach(season => {
-      console.log(`\nTesting season: ${season.name}`);
-      const filteredClubs = this.managerState.allClubs?.filter(club => 
-        club.seasons?.some((s: any) => s.seasonId === season._id)
-      ) || [];
-      console.log(`Clubs for ${season.name}:`, filteredClubs.map(c => c.name));
-    });
-  }
 
-  /**
-   * Get filtered free agents
-   */
-  getFilteredFreeAgents(): FreeAgent[] {
-    return this.managerDataService.getFilteredFreeAgents(
-      this.managerState.freeAgents, 
-      this.managerState.searchTerm
-    );
-  }
+
 
   /**
    * Toggle free agent selection
    */
   toggleFreeAgentSelection(agentId: string): void {
-    this.managerState.selectedFreeAgents = this.managerDataService.toggleFreeAgentSelection(
-      this.managerState.selectedFreeAgents, 
-      agentId
-    );
+    const index = this.managerState.selectedFreeAgents?.indexOf(agentId) || -1;
+    if (index > -1) {
+      this.managerState.selectedFreeAgents?.splice(index, 1);
+    } else {
+      this.managerState.selectedFreeAgents?.push(agentId);
+    }
   }
 
   /**
    * Send signing requests
    */
   sendSigningRequests(): void {
-    if (!this.managerUserId) return;
-
-    this.managerDataService.sendContractOffers(
-      this.managerState,
-      this.managerUserId,
-      (message) => this.showNotification('success', message),
-      (message) => this.showNotification('error', message)
-    );
+    if (!this.managerUserId || !this.managerState.selectedClubId) return;
+    
+    this.store.dispatch(UsersActions.sendContractOffer({
+      clubId: this.managerState.selectedClubId!,
+      clubName: this.managerState.selectedClub?.name || '',
+      clubLogoUrl: this.managerState.selectedClub?.logoUrl,
+      userId: this.managerUserId!,
+      playerName: 'Manager',
+      seasonId: this.managerState.selectedSeason || '',
+      seasonName: this.managerState.selectedSeason || '',
+      sentBy: this.managerUserId!
+    }));
   }
 
   /**
    * Release player
    */
   releasePlayer(playerId: string): void {
-    this.managerDataService.releasePlayer(
-      this.managerState,
-      playerId,
-      (message) => {
-        this.showNotification('success', message);
-        this.loadClubData();
-      },
-      (message) => this.showNotification('error', message)
-    );
+    if (!this.managerState.selectedClubId) return;
+    
+    this.store.dispatch(ClubsActions.removePlayerFromClub({
+      clubId: this.managerState.selectedClubId!,
+      userId: playerId,
+      seasonId: this.managerState.selectedSeason || ''
+    }));
   }
 
   /**
@@ -313,36 +245,19 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Test Petosen Pallo endpoint
-   */
-  testPetosenPalloEndpoint(): void {
-    this.managerDataService.testPetosenPalloEndpoint(
-      (message) => this.showNotification('success', message),
-      (message) => this.showNotification('error', message)
-    );
-  }
-
-  /**
    * Show notification
    */
   showNotification(type: 'success' | 'error', message: string): void {
-    this.managerState.notification = this.managerDataService.showNotification(type, message);
+    this.managerState.notification = { type, message };
     setTimeout(() => this.managerState.notification = null, 5000);
   }
 
   // Getters for template access
-  get freeAgents() { return this.managerState.freeAgents; }
-  get rosterPlayers() { return this.managerState.rosterPlayers; }
-  get managerClubs() { return this.managerState.managerClubs; }
-  get allClubs() { return this.managerState.allClubs; }
   get selectedClub() { return this.managerState.selectedClub; }
-  get selectedClubId() { return this.managerState.selectedClubId; }
-  get selectedSeason() { return this.managerState.selectedSeason; }
-  get seasons() { return this.managerState.seasons; }
-  get selectedFreeAgents() { return this.managerState.selectedFreeAgents; }
-  get searchTerm() { return this.managerState.searchTerm; }
-  get isLoading() { return this.managerState.isLoading; }
-  get error() { return this.managerState.error; }
+  get selectedClubId() { return this.managerState.selectedClubId || ''; }
+  get selectedSeason() { return this.managerState.selectedSeason || ''; }
+  get selectedFreeAgents() { return this.managerState.selectedFreeAgents || []; }
+  get searchTerm() { return this.managerState.searchTerm || ''; }
   get notification() { return this.managerState.notification; }
 
   // Setters for template binding
