@@ -1,7 +1,7 @@
-<div style="font-size:12px; color:#888;">
-  isLoading: {{ auth.isLoading$ | async }}<br>
-  isAuthenticated: {{ auth.isAuthenticated$ | async }}
-</div>
-<ng-container *ngIf="!(auth.isLoading$ | async)">
-  <button *ngIf="!(auth.isAuthenticated$ | async)" (click)="login()" class="login-btn">Log in</button>
+<ng-container *ngIf="vm$ | async as vm">
+  <div style="font-size:12px; color:#888;">
+    isLoading: {{ vm.loading }}<br>
+    isAuthenticated: {{ vm.isAuth }}
+  </div>
+  <button *ngIf="vm.showLogin" (click)="login()" class="login-btn">Log in</button>
 </ng-container>

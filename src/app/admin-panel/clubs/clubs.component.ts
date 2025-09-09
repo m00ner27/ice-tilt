@@ -1,12 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
 import { ApiService } from '../../store/services/api.service';
 import { EashlService } from '../../services/eashl.service';
 import { TransactionsService } from '../../store/services/transactions.service';
 import { RosterUpdateService } from '../../store/services/roster-update.service';
 import { environment } from '../../../environments/environment';
+import { REGIONS } from '../../shared';
 import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 interface Club {
   _id?: string;
@@ -157,9 +159,32 @@ interface Season {
               <input formControlName="logo" type="text" style="display:none">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="position: relative;">
               <label>Manager</label>
-              <input formControlName="manager" type="text" placeholder="Enter manager name">
+              <input 
+                formControlName="manager" 
+                type="text" 
+                placeholder="Start typing a registered username"
+                (focus)="onManagerFocus()"
+                (blur)="onManagerBlur()"
+                (keydown.arrowDown)="moveManagerHighlight(1)"
+                (keydown.arrowUp)="moveManagerHighlight(-1)"
+                (keydown.enter)="onManagerEnter()"
+              >
+              <div *ngIf="clubForm.get('manager')?.touched && clubForm.get('manager')?.errors?.['managerNotFound']" style="color:#e74c3c; margin-top:6px; font-size: 12px;">
+                Manager must be a registered user.
+              </div>
+              <ul *ngIf="showManagerSuggestions" class="suggestions" style="position:absolute; z-index: 10; left:0; right:0; background:#2c3446; border:1px solid #394867; border-radius: 6px; margin-top: 4px; list-style:none; padding:4px 0; max-height: 200px; overflow-y:auto;">
+                <li 
+                  *ngFor="let u of managerSuggestions; let i = index"
+                  (mousedown)="selectManager(u)"
+                  [style.background]="i === highlightedSuggestionIndex ? '#394867' : 'transparent'"
+                  style="padding:8px 12px; cursor:pointer; display:flex; justify-content: space-between; align-items: center; color: #e3eafc;"
+                >
+                  <span>{{ managerDisplay(u) }}</span>
+                  <span *ngIf="u.playerProfile?.position" style="color:#90caf9; font-size: 12px;">{{ u.playerProfile?.position }}</span>
+                </li>
+              </ul>
             </div>
 
             <div class="form-group">
@@ -193,7 +218,10 @@ interface Season {
 
             <div class="form-group">
               <label>Region</label>
-              <input formControlName="region" type="text" placeholder="Enter region">
+              <select formControlName="region">
+                <option value="" disabled selected>Select region</option>
+                <option *ngFor="let reg of regionOptions" [value]="reg">{{ reg | titlecase }}</option>
+              </select>
             </div>
 
             <div class="form-group">
@@ -594,6 +622,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
   uploadingLogo = false;
   selectedSeasonId: string | null = null;
   private rosterUpdateSubscription: Subscription | undefined;
+  private managerValueSub: Subscription | undefined;
+  allUsers: User[] = [];
+  managerSuggestions: User[] = [];
+  showManagerSuggestions = false;
+  highlightedSuggestionIndex = -1;
+  regions: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -607,9 +641,35 @@ export class ClubsComponent implements OnInit, OnDestroy {
       logo: [''],
       manager: ['', Validators.required],
       color: ['#ffffff', Validators.required],
-      region: [''],
+      region: ['', Validators.required],
       eashlClubId: ['']
     });
+
+    // Add validator to ensure manager matches a registered user
+    this.clubForm.get('manager')?.addValidators(this.managerExistsValidator());
+
+    // Typeahead subscription for manager input
+    const managerCtrl = this.clubForm.get('manager');
+    if (managerCtrl) {
+      this.managerValueSub = managerCtrl.valueChanges.pipe(
+        debounceTime(200),
+        distinctUntilChanged()
+      ).subscribe((term: string) => {
+        const query = (term || '').toLowerCase().trim();
+        if (!query) {
+          this.managerSuggestions = [];
+          this.showManagerSuggestions = false;
+          this.highlightedSuggestionIndex = -1;
+          return;
+        }
+        const getName = (u: User) => (u.discordUsername || u.discordId || '').toLowerCase();
+        this.managerSuggestions = this.allUsers
+          .filter(u => getName(u).includes(query))
+          .slice(0, 8);
+        this.showManagerSuggestions = this.managerSuggestions.length > 0;
+        this.highlightedSuggestionIndex = -1;
+      });
+    }
   }
 
   get divisionsForSelectedSeason(): Division[] {
@@ -650,6 +710,18 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadData();
+
+    // Load all users for manager suggestions
+    this.api.getUsers().subscribe(users => {
+      this.allUsers = users || [];
+      // Revalidate manager after users load
+      this.clubForm.get('manager')?.updateValueAndValidity({ onlySelf: true });
+    });
+
+    // Load regions from API
+    this.api.getRegions().subscribe(list => {
+      this.regions = (list || []).map((r: any) => r.name || r.key);
+    });
     
     // Subscribe to roster updates to refresh data when needed
     this.rosterUpdateSubscription = this.rosterUpdateService.rosterUpdates$.subscribe(event => {
@@ -898,6 +970,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.editingClub = null;
     this.isAddingClub = false;
     this.logoPreview = null;
+    this.managerSuggestions = [];
+    this.showManagerSuggestions = false;
+    this.highlightedSuggestionIndex = -1;
   }
 
   addSeasonControls(): void {
@@ -1120,5 +1195,62 @@ export class ClubsComponent implements OnInit, OnDestroy {
     if (this.rosterUpdateSubscription) {
       this.rosterUpdateSubscription.unsubscribe();
     }
+    if (this.managerValueSub) {
+      this.managerValueSub.unsubscribe();
+    }
+  }
+
+  // ---------- Manager typeahead helpers ----------
+  managerExistsValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value: string = (control.value || '').toString().trim().toLowerCase();
+      if (!value) return null;
+      if (!this.allUsers || this.allUsers.length === 0) return null; // don't block before users load
+      const exists = this.allUsers.some(u => this.managerDisplay(u).toLowerCase() === value);
+      return exists ? null : { managerNotFound: true };
+    };
+  }
+
+  managerDisplay(u: User): string {
+    return u.discordUsername || u.discordId || '';
+  }
+
+  onManagerFocus(): void {
+    this.showManagerSuggestions = (this.managerSuggestions && this.managerSuggestions.length > 0);
+  }
+
+  onManagerBlur(): void {
+    // Delay hiding so click can register on suggestions
+    setTimeout(() => {
+      this.showManagerSuggestions = false;
+    }, 150);
+  }
+
+  selectManager(u: User): void {
+    this.clubForm.get('manager')?.setValue(this.managerDisplay(u));
+    this.showManagerSuggestions = false;
+    this.highlightedSuggestionIndex = -1;
+  }
+
+  moveManagerHighlight(direction: number): void {
+    if (!this.managerSuggestions || this.managerSuggestions.length === 0) return;
+    const max = this.managerSuggestions.length - 1;
+    this.highlightedSuggestionIndex = Math.max(0, Math.min(max, this.highlightedSuggestionIndex + direction));
+  }
+
+  onManagerEnter(): void {
+    if (this.highlightedSuggestionIndex >= 0 && this.highlightedSuggestionIndex < this.managerSuggestions.length) {
+      this.selectManager(this.managerSuggestions[this.highlightedSuggestionIndex]);
+    }
+  }
+
+  // ---------- Region helpers ----------
+  get regionOptions(): string[] {
+    const current = (this.clubForm.get('region')?.value || '').toString();
+    const base = [...this.regions];
+    if (current && !base.includes(current)) {
+      base.unshift(current);
+    }
+    return base;
   }
 } 

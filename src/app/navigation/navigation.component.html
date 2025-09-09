@@ -21,8 +21,13 @@
 
             <!-- Right Aligned Links -->
             <div class="navbar-nav ms-auto d-flex align-items-center">
-                <app-auth-button></app-auth-button>
-                <app-user-profile></app-user-profile>
+                <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
+                    <app-user-profile></app-user-profile>
+                    <app-auth-button></app-auth-button>
+                </ng-container>
+                <ng-template #authLoading>
+                    <!-- Optional: placeholder/spinner -->
+                </ng-template>
             </div>
 
         </div>

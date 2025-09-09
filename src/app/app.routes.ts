@@ -6,7 +6,6 @@ import { PlayerStatsComponent } from './player-stats/player-stats.component';
 import { GoalieStatsComponent } from './goalie-stats/goalie-stats.component';
 import { ManagerViewComponent } from './manager-view/manager-view.component';
 import { EditProfileComponent } from './edit-profile/edit-profile.component';
-import { LoginComponent } from './login/login.component';
 import { TestComponent } from './test-component/test-component';
 import { ClubListComponent } from './club-list/club-list.component';
 import { ClubDetailSimpleComponent } from './club-detail/club-detail.component';
@@ -50,7 +49,6 @@ export const routes: Routes = [
   { path: 'inbox', component: InboxComponent, canActivate: [authGuard] },
   { path: 'profile', component: ViewProfileComponent, canActivate: [authGuard] },
   { path: 'edit-profile', component: EditProfileComponent, canActivate: [authGuard] },
-  { path: 'login', component: LoginComponent },
   { path: 'test', component: TestComponent },
   { path: 'real-data', component: RealDataComponent },
   { path: 'eashl-stats', component: EashlStatsComponent, canActivate: [authGuard] },

@@ -95,8 +95,7 @@ export class AppComponent implements OnInit {
             console.log('Invalid state error detected - clearing all Auth0 data and redirecting to login...');
             // Clear all Auth0 related data
             this.clearAllAuth0Data();
-            // Redirect to login page
-            window.location.href = '/login';
+            // No redirect; user can click Login to retry
           }
         }
       });

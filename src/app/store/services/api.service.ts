@@ -318,6 +318,11 @@ export class ApiService {
     return this.http.get<any[]>(`${this.apiUrl}/api/users`);
   }
 
+  // Regions
+  getRegions(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/regions`);
+  }
+
   getUser(id: string): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/api/users/profile/${id}`);
   }

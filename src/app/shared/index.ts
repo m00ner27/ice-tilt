@@ -8,3 +8,4 @@ export * from './services/country-emoji.service';
 export * from './services/stats-calculation.service';
 export * from './services/profile-data.service';
 export * from './services/manager-data.service';
+export const REGIONS = ['north', 'south', 'east', 'west'] as const;

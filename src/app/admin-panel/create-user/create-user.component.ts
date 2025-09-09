@@ -2,9 +2,9 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgRxApiService } from '../../store/services/ngrx-api.service';
+import { ApiService } from '../../store/services/api.service';
 
 const POSITIONS = ['C', 'LW', 'RW', 'LD', 'RD', 'G'];
-const REGIONS = ['north', 'south', 'east', 'west'];
 
 @Component({
   selector: 'app-create-user',
@@ -19,11 +19,12 @@ export class CreateUserComponent {
   success = false;
   error: string | null = null;
   positions = POSITIONS;
-  regions = REGIONS;
+  regions: string[] = [];
 
   constructor(
     private fb: FormBuilder,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private api: ApiService
   ) {
     this.userForm = this.fb.group({
       auth0Id: ['dev-' + Date.now(), Validators.required],
@@ -37,6 +38,9 @@ export class CreateUserComponent {
       location: ['NA', Validators.required],
       region: ['north', Validators.required],
       status: ['Free Agent', Validators.required],
+    });
+    this.api.getRegions().subscribe(list => {
+      this.regions = (list || []).map((r: any) => r.name || r.key);
     });
   }
 
