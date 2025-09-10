@@ -72,10 +72,19 @@ export class PlayersEffects {
             status: profile?.status ?? 'Signed',
             currentClubId: profile?.currentClubId ?? null,
           };
-          return this.playerProfileService.upsertPlayerProfile(mergedProfile).pipe(
-            map(saved => PlayersActions.upsertPlayerProfileSuccess({ profile: saved })),
-            catchError(error => of(PlayersActions.playerProfileFailure({ error })))
-          );
+          
+          // Only upsert if there are actual changes or if it's a new profile
+          const hasChanges = !profile || this.hasProfileChanges(profile, mergedProfile);
+          
+          if (hasChanges) {
+            return this.playerProfileService.upsertPlayerProfile(mergedProfile).pipe(
+              map(saved => PlayersActions.upsertPlayerProfileSuccess({ profile: saved })),
+              catchError(error => of(PlayersActions.playerProfileFailure({ error })))
+            );
+          } else {
+            // No changes needed, just return the existing profile
+            return of(PlayersActions.upsertPlayerProfileSuccess({ profile: mergedProfile }));
+          }
         })
       );
     });
@@ -91,5 +100,24 @@ export class PlayersEffects {
         )
       );
     });
+  }
+
+  private hasProfileChanges(existing: PlayerProfile | null, updated: PlayerProfile): boolean {
+    if (!existing) return true; // New profile
+    
+    // Compare key fields that would indicate changes
+    return (
+      existing.name !== updated.name ||
+      existing.handedness !== updated.handedness ||
+      existing.position !== updated.position ||
+      JSON.stringify(existing.secondaryPositions) !== JSON.stringify(updated.secondaryPositions) ||
+      existing.location !== updated.location ||
+      existing.region !== updated.region ||
+      existing.psnId !== updated.psnId ||
+      existing.xboxGamertag !== updated.xboxGamertag ||
+      existing.bio !== updated.bio ||
+      existing.status !== updated.status ||
+      existing.currentClubId !== updated.currentClubId
+    );
   }
 }

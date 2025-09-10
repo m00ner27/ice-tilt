@@ -21,6 +21,7 @@ import { MatchesEffects } from './app/store/matches.effects';
 import { SeasonsEffects } from './app/store/seasons.effects';
 import { UsersEffects } from './app/store/users.effects';
 import { DivisionsEffects } from './app/store/divisions.effects';
+import { ManagersEffects } from './app/store/managers.effects';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -54,7 +55,8 @@ bootstrapApplication(AppComponent, {
       MatchesEffects,
       SeasonsEffects,
       UsersEffects,
-      DivisionsEffects
+      DivisionsEffects,
+      ManagersEffects
     ]),
     
     // Set up NgRx DevTools

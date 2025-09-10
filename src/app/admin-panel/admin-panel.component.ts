@@ -37,6 +37,10 @@ import { RouterModule } from '@angular/router';
             <i class="fas fa-user-cog"></i>
             Users
           </a>
+          <a routerLink="admins" routerLinkActive="active">
+            <i class="fas fa-user-shield"></i>
+            Admins
+          </a>
           <a routerLink="statistics" routerLinkActive="active">
             <i class="fas fa-chart-bar"></i>
             Statistics

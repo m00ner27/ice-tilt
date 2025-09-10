@@ -1,0 +1,36 @@
+.suggestions {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  background: #2c3446;
+  border: 1px solid #394867;
+  border-radius: 6px;
+  margin-top: 4px;
+  list-style: none;
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #e3eafc;
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+  background: #394867;
+}
+
+.position-badge {
+  color: #90caf9;
+  font-size: 12px;
+  background: #394867;
+  padding: 2px 6px;
+  border-radius: 3px;
+}

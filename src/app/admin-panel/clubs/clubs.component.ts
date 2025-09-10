@@ -628,6 +628,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   showManagerSuggestions = false;
   highlightedSuggestionIndex = -1;
   regions: string[] = [];
+  private isSelectingManager = false; // Flag to prevent suggestions from showing during selection
 
   constructor(
     private fb: FormBuilder,
@@ -655,6 +656,11 @@ export class ClubsComponent implements OnInit, OnDestroy {
         debounceTime(200),
         distinctUntilChanged()
       ).subscribe((term: string) => {
+        // Don't show suggestions if we're programmatically selecting a manager
+        if (this.isSelectingManager) {
+          return;
+        }
+
         const query = (term || '').toLowerCase().trim();
         if (!query) {
           this.managerSuggestions = [];
@@ -886,75 +892,112 @@ export class ClubsComponent implements OnInit, OnDestroy {
     // Ensure season controls are added
     this.addSeasonControls();
     
+    // Reset form first to clear any previous state
+    this.clubForm.reset();
+    
     // Set basic form values
     this.clubForm.patchValue({
       name: club.name,
       logo: club.logoUrl,
       manager: club.manager,
-      color: club.primaryColour,
+      color: club.primaryColour || '#ffffff',
       region: club.region,
       eashlClubId: club.eashlClubId
     });
     
     // Set season and division values
-    club.seasons?.forEach(seasonInfo => {
-      let seasonId = seasonInfo.seasonId;
-      if (typeof seasonId === 'object' && seasonId._id) {
-        seasonId = seasonId._id;
-      }
-      
-      if (seasonId) {
-        const seasonControlName = `season_${seasonId}`;
-        const divisionControlName = `division_${seasonId}`;
+    if (club.seasons && club.seasons.length > 0) {
+      club.seasons.forEach(seasonInfo => {
+        let seasonId = seasonInfo.seasonId;
+        if (typeof seasonId === 'object' && seasonId._id) {
+          seasonId = seasonId._id;
+        }
         
-        this.clubForm.get(seasonControlName)?.setValue(true);
-        this.clubForm.get(divisionControlName)?.setValue(seasonInfo.divisionIds?.[0] || '');
-        
-        // No need to load divisions - they're already loaded globally
-      }
-    });
-  }
-
-  updateClub(): void {
-    if (this.clubForm.valid && this.editingClub) {
-      const form = this.clubForm.value;
-      
-      // Build seasons array from form data
-      const seasons: any[] = [];
-      this.seasons.forEach(season => {
-        const seasonControlName = `season_${season._id}`;
-        const divisionControlName = `division_${season._id}`;
-        
-        if (this.clubForm.get(seasonControlName)?.value) {
-          const divisionId = this.clubForm.get(divisionControlName)?.value;
-          if (divisionId) {
-            seasons.push({
-              seasonId: season._id,
-              divisionIds: [divisionId]
-            });
+        if (seasonId) {
+          const seasonControlName = `season_${seasonId}`;
+          const divisionControlName = `division_${seasonId}`;
+          
+          // Check if controls exist before setting values
+          if (this.clubForm.contains(seasonControlName)) {
+            this.clubForm.get(seasonControlName)?.setValue(true);
+          }
+          if (this.clubForm.contains(divisionControlName)) {
+            this.clubForm.get(divisionControlName)?.setValue(seasonInfo.divisionIds?.[0] || '');
           }
         }
       });
+    }
+    
+    // Mark form as touched to trigger validation
+    this.clubForm.markAllAsTouched();
+    
+    console.log('Form validity after edit setup:', this.clubForm.valid);
+    console.log('Form errors:', this.getFormErrors());
+  }
+
+  updateClub(): void {
+    console.log('Update club called');
+    console.log('Form valid:', this.clubForm.valid);
+    console.log('Form errors:', this.getFormErrors());
+    
+    if (!this.editingClub) {
+      console.error('No club selected for editing');
+      return;
+    }
+    
+    if (!this.clubForm.valid) {
+      console.error('Form is not valid');
+      this.clubForm.markAllAsTouched();
+      return;
+    }
+    
+    const form = this.clubForm.value;
+    
+    // Build seasons array from form data
+    const seasons: any[] = [];
+    this.seasons.forEach(season => {
+      const seasonControlName = `season_${season._id}`;
+      const divisionControlName = `division_${season._id}`;
       
-      console.log('Updated seasons for club:', seasons);
-      
-      const updated = {
-        ...this.editingClub,
-        name: form.name,
-        logoUrl: form.logo,
-        manager: form.manager,
-        primaryColour: form.color,
-        seasons: seasons,
-        region: form.region,
-        eashlClubId: form.eashlClubId
-      };
-      
-      this.api.updateClub(updated).subscribe(updatedClub => {
+      if (this.clubForm.get(seasonControlName)?.value) {
+        const divisionId = this.clubForm.get(divisionControlName)?.value;
+        if (divisionId) {
+          seasons.push({
+            seasonId: season._id,
+            divisionIds: [divisionId]
+          });
+        }
+      }
+    });
+    
+    console.log('Updated seasons for club:', seasons);
+    
+    // Create a clean update object with only the fields that should be updated
+    const updated = {
+      _id: this.editingClub._id, // Include the club ID for the API call
+      name: form.name,
+      logoUrl: form.logo,
+      manager: form.manager,
+      primaryColour: form.color,
+      seasons: seasons,
+      region: form.region,
+      eashlClubId: form.eashlClubId
+    };
+    
+    console.log('Sending update:', updated);
+    
+    this.api.updateClub(updated).subscribe({
+      next: (updatedClub) => {
+        console.log('Club updated successfully:', updatedClub);
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
         if (idx > -1) this.clubs[idx] = updatedClub;
         this.cancelClubForm();
-      });
-    }
+      },
+      error: (error) => {
+        console.error('Error updating club:', error);
+        alert('Failed to update club. Please try again.');
+      }
+    });
   }
 
   deleteClub(club: Club): void {
@@ -991,6 +1034,11 @@ export class ClubsComponent implements OnInit, OnDestroy {
     
     // Add custom validator for seasons
     this.clubForm.setValidators(this.validateSeasons());
+    
+    // Update validation status
+    this.clubForm.updateValueAndValidity();
+    
+    console.log('Season controls added. Form controls:', Object.keys(this.clubForm.controls));
   }
 
   validateSeasons(): any {
@@ -1206,7 +1254,13 @@ export class ClubsComponent implements OnInit, OnDestroy {
       const value: string = (control.value || '').toString().trim().toLowerCase();
       if (!value) return null;
       if (!this.allUsers || this.allUsers.length === 0) return null; // don't block before users load
-      const exists = this.allUsers.some(u => this.managerDisplay(u).toLowerCase() === value);
+      
+      // Check if the manager value matches any user
+      const exists = this.allUsers.some(u => {
+        const displayName = this.managerDisplay(u).toLowerCase();
+        return displayName === value || displayName.includes(value);
+      });
+      
       return exists ? null : { managerNotFound: true };
     };
   }
@@ -1216,20 +1270,32 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   onManagerFocus(): void {
-    this.showManagerSuggestions = (this.managerSuggestions && this.managerSuggestions.length > 0);
+    // Only show suggestions if we have them and we're not in the middle of selecting
+    if (!this.isSelectingManager) {
+      this.showManagerSuggestions = (this.managerSuggestions && this.managerSuggestions.length > 0);
+    }
   }
 
   onManagerBlur(): void {
     // Delay hiding so click can register on suggestions
     setTimeout(() => {
-      this.showManagerSuggestions = false;
+      // Only hide if we're not in the middle of selecting a manager
+      if (!this.isSelectingManager) {
+        this.showManagerSuggestions = false;
+      }
     }, 150);
   }
 
   selectManager(u: User): void {
+    this.isSelectingManager = true;
     this.clubForm.get('manager')?.setValue(this.managerDisplay(u));
     this.showManagerSuggestions = false;
     this.highlightedSuggestionIndex = -1;
+    
+    // Reset the flag after a short delay to allow the value change to complete
+    setTimeout(() => {
+      this.isSelectingManager = false;
+    }, 100);
   }
 
   moveManagerHighlight(direction: number): void {
@@ -1252,5 +1318,17 @@ export class ClubsComponent implements OnInit, OnDestroy {
       base.unshift(current);
     }
     return base;
+  }
+
+  // ---------- Debug helpers ----------
+  getFormErrors(): any {
+    const errors: any = {};
+    Object.keys(this.clubForm.controls).forEach(key => {
+      const control = this.clubForm.get(key);
+      if (control && control.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
   }
 } 

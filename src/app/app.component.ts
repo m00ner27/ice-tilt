@@ -5,9 +5,7 @@ import { NavigationComponent } from './navigation/navigation.component';
 import { ScheduleBarComponent } from './schedule-bar/schedule-bar.component';
 import { Store } from '@ngrx/store';
 import * as UsersActions from './store/users.actions';
-import { selectCurrentProfile } from './store/players.selectors';
-import { PlayerProfile } from './store/models/models/player-profile.model';
-import { Observable, combineLatest, filter } from 'rxjs';
+import { combineLatest, filter } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 @Component({
@@ -25,7 +23,6 @@ export class AppComponent implements OnInit {
   isLoading = true;
   isLoggedIn = false;
   userProfile: User | undefined | null = null;
-  currentProfile$!: Observable<PlayerProfile | undefined | null>;
 
   constructor(
     private auth: AuthService,

@@ -18,7 +18,8 @@ import { RealDataComponent } from './real-data/real-data.component';
 import { RecentTransactionsComponent } from './recent-transactions/recent-transactions.component';
 import { InboxComponent } from './inbox/inbox.component';
 import { ViewProfileComponent } from './view-profile/view-profile.component';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, adminGuard, superAdminGuard } from './core/guards/auth.guard';
+import { ManagerGuard } from './core/guards/manager.guard';
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
 import { SeasonsComponent } from './admin-panel/seasons/seasons.component';
@@ -29,6 +30,7 @@ import { EashlStatsComponent } from './components/eashl-stats/eashl-stats.compon
 import { UsersComponent } from './admin-panel/users/users.component';
 import { ManualStatsComponent } from './admin-panel/manual-stats/manual-stats.component';
 import { CreateUserComponent } from './admin-panel/create-user/create-user.component';
+import { AdminsComponent } from './admin-panel/admins/admins.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -39,7 +41,7 @@ export const routes: Routes = [
   { path: 'players/:id', component: PlayerProfileComponent },
   { path: 'player-stats', component: PlayerStatsComponent },
   { path: 'goalie-stats', component: GoalieStatsComponent },
-  { path: 'manager-view', component: ManagerViewComponent, canActivate: [authGuard] },
+  { path: 'manager-view', component: ManagerViewComponent, canActivate: [authGuard, ManagerGuard] },
   { path: 'clubs', component: ClubListComponent },
   { path: 'clubs/:id', component: ClubDetailSimpleComponent },
   { path: 'match/:id', component: MatchDetailComponent },
@@ -52,7 +54,7 @@ export const routes: Routes = [
   { path: 'test', component: TestComponent },
   { path: 'real-data', component: RealDataComponent },
   { path: 'eashl-stats', component: EashlStatsComponent, canActivate: [authGuard] },
-  { path: 'admin', component: AdminPanelComponent, children: [
+  { path: 'admin', component: AdminPanelComponent, canActivate: [adminGuard], children: [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     { path: 'dashboard', component: AdminDashboardComponent },
     { path: 'seasons', component: SeasonsComponent },
@@ -61,6 +63,7 @@ export const routes: Routes = [
     { path: 'schedule', component: AdminScheduleComponent },
     { path: 'users', component: UsersComponent },
     { path: 'create-user', component: CreateUserComponent },
+    { path: 'admins', component: AdminsComponent, canActivate: [superAdminGuard] },
   ]},
   {
     path: 'admin/manual-stats/:gameId',

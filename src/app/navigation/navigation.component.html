@@ -16,14 +16,15 @@
                 <li class="nav-item"><a class="nav-link" routerLink="/goalie-stats">Goalie Stats</a></li>
                 <li class="nav-item"><a class="nav-link" routerLink="/clubs">Clubs</a></li>
                 <li class="nav-item"><a class="nav-link" routerLink="/transactions">Transactions</a></li>
-                <li class="nav-item"><a class="nav-link" routerLink="/admin">Admin Panel</a></li>
+                <li class="nav-item" *ngIf="(isManager$ | async) || (isAdmin$ | async)"><a class="nav-link" routerLink="/manager-view">Manager View</a></li>
+                <li class="nav-item" *ngIf="isAdmin$ | async"><a class="nav-link" routerLink="/admin">Admin Panel</a></li>
             </ul>
 
             <!-- Right Aligned Links -->
             <div class="navbar-nav ms-auto d-flex align-items-center">
                 <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
-                    <app-user-profile></app-user-profile>
-                    <app-auth-button></app-auth-button>
+                    <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
+                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
                 </ng-container>
                 <ng-template #authLoading>
                     <!-- Optional: placeholder/spinner -->

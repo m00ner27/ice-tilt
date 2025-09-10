@@ -358,4 +358,25 @@ export class ApiService {
   getClub(id: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/api/clubs/${id}`);
   }
+
+  // Admin management methods
+  getMyAdminRecord(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/admins/me`);
+  }
+
+  listAdmins(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/admins`);
+  }
+
+  addAdmin(payload: { username: string; note?: string; superAdmin?: boolean }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/admins`, payload);
+  }
+
+  removeAdmin(auth0Id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/admins/${encodeURIComponent(auth0Id)}`);
+  }
+
+  setSuperAdmin(auth0Id: string, superAdmin: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/api/admins/${encodeURIComponent(auth0Id)}/super`, { superAdmin });
+  }
 }

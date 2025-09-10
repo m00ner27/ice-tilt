@@ -11,7 +11,6 @@ export class UsersEffects {
   loadUsers$: any;
   loadUser$: any;
   auth0Sync$: any;
-  auth0SyncSuccess$: any;
   loadCurrentUser$: any;
   loadFreeAgents$: any;
   loadFreeAgentsBySeason$: any;
@@ -64,13 +63,9 @@ export class UsersEffects {
       )
     );
 
-    // After successful Auth0 sync, dispatch loginWithDiscordProfile using the synced user
-    this.auth0SyncSuccess$ = createEffect(() =>
-      this.actions$.pipe(
-        ofType(UsersActions.auth0SyncSuccess),
-        map(({ user }) => PlayersActions.loginWithDiscordProfile({ discordProfile: user }))
-      )
-    );
+    // Note: Removed automatic player profile loading from auth0SyncSuccess
+    // Player profiles should only be loaded when needed by specific components
+    // This eliminates unnecessary API calls on every login
 
     // Load Current User Effect
     this.loadCurrentUser$ = createEffect(() =>
