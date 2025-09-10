@@ -1,0 +1,166 @@
+<div class="max-w-7xl mx-auto my-5 bg-admin-card rounded-xl p-6 shadow-lg text-white">
+  <h2 class="text-admin-primary mb-6 text-2xl font-bold">Manual Stats Entry</h2>
+  
+  <div class="mb-6">
+    <label class="block text-admin-text mb-2 font-medium">Select Game:</label>
+      <select [(ngModel)]="selectedGame" (change)="onGameChange()" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <option value="">Choose a game...</option>
+        <option *ngFor="let game of games$ | async" [value]="game._id">
+          {{ game.homeTeam?.name || 'TBD' }} vs {{ game.awayTeam?.name || 'TBD' }} - {{ game.date | date:'short' }}
+        </option>
+      </select>
+  </div>
+
+  <div *ngIf="selectedGameData" class="space-y-6">
+    <div class="bg-admin-bg rounded-lg p-4">
+      <h3 class="text-admin-primary text-lg font-semibold mb-4">Game Details</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <span class="text-admin-text font-medium">Home Team:</span>
+          <span class="text-white ml-2">{{ selectedGameData.homeTeam?.name || 'TBD' }}</span>
+        </div>
+        <div>
+          <span class="text-admin-text font-medium">Away Team:</span>
+          <span class="text-white ml-2">{{ selectedGameData.awayTeam?.name || 'TBD' }}</span>
+        </div>
+        <div>
+          <span class="text-admin-text font-medium">Date:</span>
+          <span class="text-white ml-2">{{ selectedGameData.date | date:'full' }}</span>
+        </div>
+        <div>
+          <span class="text-admin-text font-medium">Division:</span>
+          <span class="text-white ml-2">{{ selectedGameData.division?.name || 'N/A' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="statsForm" (ngSubmit)="submitStats()" class="space-y-6">
+      <!-- Home Team Stats -->
+      <div class="bg-admin-bg rounded-lg p-4">
+        <h3 class="text-admin-primary text-lg font-semibold mb-4">{{ selectedGameData.homeTeam?.name || 'Home Team' }} Stats</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Goals</label>
+            <input formControlName="homeGoals" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Shots</label>
+            <input formControlName="homeShots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Hits</label>
+            <input formControlName="homeHits" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">PIM</label>
+            <input formControlName="homePIM" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Power Play Goals</label>
+            <input formControlName="homePPG" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Power Play Opportunities</label>
+            <input formControlName="homePPO" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Faceoffs Won</label>
+            <input formControlName="homeFaceoffs" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Blocked Shots</label>
+            <input formControlName="homeBlockedShots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+        </div>
+      </div>
+
+      <!-- Away Team Stats -->
+      <div class="bg-admin-bg rounded-lg p-4">
+        <h3 class="text-admin-primary text-lg font-semibold mb-4">{{ selectedGameData.awayTeam?.name || 'Away Team' }} Stats</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Goals</label>
+            <input formControlName="awayGoals" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Shots</label>
+            <input formControlName="awayShots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Hits</label>
+            <input formControlName="awayHits" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">PIM</label>
+            <input formControlName="awayPIM" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Power Play Goals</label>
+            <input formControlName="awayPPG" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Power Play Opportunities</label>
+            <input formControlName="awayPPO" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Faceoffs Won</label>
+            <input formControlName="awayFaceoffs" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Blocked Shots</label>
+            <input formControlName="awayBlockedShots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Status -->
+      <div class="bg-admin-bg rounded-lg p-4">
+        <h3 class="text-admin-primary text-lg font-semibold mb-4">Game Status</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Status</label>
+            <select formControlName="status" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <option value="scheduled">Scheduled</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="postponed">Postponed</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Overtime</label>
+            <select formControlName="overtime" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <option value="none">No Overtime</option>
+              <option value="ot">Overtime</option>
+              <option value="so">Shootout</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Buttons -->
+      <div class="flex gap-4 justify-end">
+        <button type="submit" [disabled]="isSubmitting$ | async" class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50">
+          <span *ngIf="!(isSubmitting$ | async)">Submit Stats</span>
+          <span *ngIf="isSubmitting$ | async">Submitting...</span>
+        </button>
+        <button type="button" (click)="cancel()" class="bg-admin-accent text-white px-6 py-2 rounded hover:bg-admin-hover transition-colors">
+          Cancel
+        </button>
+      </div>
+      
+      <!-- Error Display -->
+      <div *ngIf="statsError$ | async as error" class="bg-red-600 text-white p-4 rounded-lg mt-4">
+        Error: {{ error.message || 'An error occurred while submitting stats' }}
+      </div>
+    </form>
+  </div>
+</div>

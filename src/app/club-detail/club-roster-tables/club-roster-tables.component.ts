@@ -56,8 +56,7 @@ interface GoalieStats {
   selector: 'app-club-roster-tables',
   standalone: true,
   imports: [CommonModule, PositionPillComponent],
-  templateUrl: './club-roster-tables.component.html',
-  styleUrls: ['./club-roster-tables.component.css']
+  templateUrl: './club-roster-tables.component.html'
 })
 export class ClubRosterTablesComponent {
   @Input() signedPlayers: Player[] = [];

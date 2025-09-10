@@ -3,4 +3,5 @@ export * from './club.interface';
 export * from './match.interface';
 export * from './player-profile.model';
 export * from './player-stats.interface';
-export * from './player.interface'; 
+export * from './player.interface';
+export * from './season.interface'; 

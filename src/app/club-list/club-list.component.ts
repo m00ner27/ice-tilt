@@ -27,8 +27,7 @@ interface Club {
   selector: 'app-club-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './club-list.component.html',
-  styleUrls: ['./club-list.component.css']
+  templateUrl: './club-list.component.html'
 })
 export class ClubListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

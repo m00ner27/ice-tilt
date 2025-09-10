@@ -1,0 +1,68 @@
+<div class="container">
+  <h2>API Test</h2>
+  
+  <div class="card mb-4">
+    <div class="card-header">Test Connection</div>
+    <div class="card-body">
+      <button (click)="testApiConnection()" class="btn btn-primary">Test API</button>
+      <div *ngIf="connectionMessage" class="mt-2 alert alert-info">
+        {{ connectionMessage }}
+      </div>
+    </div>
+  </div>
+  
+  <div class="card mb-4">
+    <div class="card-header">Add Test Data</div>
+    <div class="card-body">
+      <form (ngSubmit)="addData()">
+        <div class="form-group mb-2">
+          <label for="name">Name:</label>
+          <input type="text" class="form-control" id="name" [(ngModel)]="newItem.name" name="name">
+        </div>
+        <div class="form-group mb-2">
+          <label for="value">Value:</label>
+          <input type="number" class="form-control" id="value" [(ngModel)]="newItem.value" name="value">
+        </div>
+        <button type="submit" class="btn btn-success">Add Data</button>
+      </form>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">Test Data from MongoDB</div>
+    <div class="card-body">
+      <button (click)="loadTestData()" class="btn btn-primary mb-3">Load Data</button>
+      
+      <div *ngIf="loading" class="text-center">
+        <p>Loading data...</p>
+      </div>
+      
+      <div *ngIf="error" class="alert alert-danger">
+        {{ error }}
+      </div>
+      
+      <table *ngIf="testData.length > 0" class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Active</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of testData">
+            <td>{{ item.name }}</td>
+            <td>{{ item.value }}</td>
+            <td>{{ item.isActive ? 'Yes' : 'No' }}</td>
+            <td>{{ item.createdAt | date }}</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div *ngIf="!loading && testData.length === 0 && !error" class="alert alert-info">
+        No data found. Try adding some data.
+      </div>
+    </div>
+  </div>
+</div>

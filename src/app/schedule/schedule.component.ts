@@ -21,8 +21,7 @@ import { EashlMatch } from '../store/services/match.service';
   selector: 'app-schedule',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './schedule.component.html',
-  styleUrls: ['./schedule.component.css']
+  templateUrl: './schedule.component.html'
 })
 export class ScheduleComponent implements OnInit, OnDestroy {
   @Input() isPreview: boolean = false;

@@ -1,44 +1,44 @@
 <!-- News Section -->
-<section class="news-section mt-4">
-    <div class="container">
+<section class="mt-4 text-white">
+    <div class="container mx-auto px-4">
       <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-inner">
           <!-- News Item 1 -->
           <div class="carousel-item active">
-            <a [routerLink]="['/article', 'new-season-begins']" class="announcement-link">
-              <div class="carousel-image" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="carousel-caption">
-                  <h3>Exciting Announcement: New Season Begins!</h3>
+            <a [routerLink]="['/article', 'new-season-begins']" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Exciting Announcement: New Season Begins!</h3>
                 </div>
               </div>
             </a>
           </div>
           <!-- News Item 2 -->
           <div class="carousel-item">
-            <a href="/article-2">
-              <div class="carousel-image" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="carousel-caption">
-                  <h3>Top Plays of the Week</h3>
+            <a href="/article-2" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Top Plays of the Week</h3>
                 </div>
               </div>
             </a>
           </div>
           <!-- News Item 3 -->
           <div class="carousel-item">
-            <a href="/article-3">
-              <div class="carousel-image" style="background-image: url('assets/images/news3.jpg');">
-                <div class="carousel-caption">
-                  <h3>Player Spotlight: Rising Star</h3>
+            <a href="/article-3" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/news3.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Player Spotlight: Rising Star</h3>
                 </div>
               </div>
             </a>
           </div>
           <!-- News Item 4 -->
           <div class="carousel-item">
-            <a [routerLink]="['/article', 'playoff-race-heats-up']" class="announcement-link">
-              <div class="carousel-image" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="carousel-caption">
-                  <h3>Playoff Race Heats Up: Final Push Begins</h3>
+            <a [routerLink]="['/article', 'playoff-race-heats-up']" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Playoff Race Heats Up: Final Push Begins</h3>
                 </div>
               </div>
             </a>
@@ -46,11 +46,11 @@
         </div>
         <!-- Carousel Controls -->
         <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="carousel-control-prev-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
           <span class="visually-hidden">Previous</span>
         </button>
         <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="carousel-control-next-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
           <span class="visually-hidden">Next</span>
         </button>
       </div>
@@ -63,68 +63,68 @@
 
 
 <!-- Stats Leaders Section -->
-<section class="stats-leaders-section mt-4">
-  <div class="container">
-    <div class="row">
+<section class="mt-4 text-white p-5">
+  <div class="container mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Goals Top 5 -->
-      <div class="col-12 col-md-6 mb-3">
-        <div class="card stats-card">
-          <div class="card-header text-center">Goals</div>
-          <div class="card-body">
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topGoals; let i = index">
-                <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
-                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
-                <span class="ms-auto stat-value">{{ p.goals }}</span>
+      <div class="mb-3">
+        <div class="bg-admin-card border border-admin-accent rounded-lg">
+          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Goals</div>
+          <div class="p-0">
+            <ul class="divide-y divide-admin-accent">
+              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topGoals; let i = index">
+                <span class="font-bold mr-2">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
+                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
+                <span class="ml-auto text-2xl font-bold">{{ p.goals }}</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <!-- Assists Top 5 -->
-      <div class="col-12 col-md-6 mb-3">
-        <div class="card stats-card">
-          <div class="card-header text-center">Assists</div>
-          <div class="card-body">
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topAssists; let i = index">
-                <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
-                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
-                <span class="ms-auto stat-value">{{ p.assists }}</span>
+      <div class="mb-3">
+        <div class="bg-admin-card border border-admin-accent rounded-lg">
+          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Assists</div>
+          <div class="p-0">
+            <ul class="divide-y divide-admin-accent">
+              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topAssists; let i = index">
+                <span class="font-bold mr-2">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
+                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
+                <span class="ml-auto text-2xl font-bold">{{ p.assists }}</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <!-- Points Top 5 -->
-      <div class="col-12 col-md-6 mb-3">
-        <div class="card stats-card">
-          <div class="card-header text-center">Points</div>
-          <div class="card-body">
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topPoints; let i = index">
-                <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
-                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
-                <span class="ms-auto stat-value">{{ p.points }}</span>
+      <div class="mb-3">
+        <div class="bg-admin-card border border-admin-accent rounded-lg">
+          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Points</div>
+          <div class="p-0">
+            <ul class="divide-y divide-admin-accent">
+              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topPoints; let i = index">
+                <span class="font-bold mr-2">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
+                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
+                <span class="ml-auto text-2xl font-bold">{{ p.points }}</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <!-- Save % Top 5 (Goalies) -->
-      <div class="col-12 col-md-6 mb-3">
-        <div class="card stats-card">
-          <div class="card-header text-center">Save %</div>
-          <div class="card-body">
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item d-flex align-items-center" *ngFor="let p of topSavePct; let i = index">
-                <span class="fw-bold me-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="team-logo me-2" style="width:32px; height:32px;">
-                <a [routerLink]="['/players', p.playerId]" class="player-link"><strong>{{ p.name }}</strong></a>
-                <span class="ms-auto stat-value">{{ p.savePercentage }}</span>
+      <div class="mb-3">
+        <div class="bg-admin-card border border-admin-accent rounded-lg">
+          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Save %</div>
+          <div class="p-0">
+            <ul class="divide-y divide-admin-accent">
+              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topSavePct; let i = index">
+                <span class="font-bold mr-2">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
+                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
+                <span class="ml-auto text-2xl font-bold">{{ p.savePercentage }}</span>
               </li>
             </ul>
           </div>

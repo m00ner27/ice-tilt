@@ -1,11 +1,11 @@
-<div class="club-list-container">
-  <h2>Clubs</h2>
+<div class="p-5 max-w-6xl mx-auto text-white">
+  <h2 class="text-white mb-5 text-center text-4xl font-bold text-shadow-lg">Clubs</h2>
   
   <!-- Search bar -->
-  <div class="search-container">
+  <div class="mb-5 flex justify-center">
     <input 
       type="text" 
-      class="search-input" 
+      class="w-full max-w-md px-4 py-3 border border-admin-accent rounded-full text-base outline-none transition-all duration-200 bg-admin-card text-white focus:border-admin-primary focus:shadow-lg focus:shadow-admin-primary/25" 
       placeholder="Search clubs or managers..."
       [(ngModel)]="searchText"
       (input)="filterClubs()"
@@ -13,37 +13,36 @@
   </div>
 
   <!-- Loading state -->
-  <div *ngIf="loading$ | async" class="loading">
+  <div *ngIf="loading$ | async" class="text-center text-white py-10 text-xl">
     Loading clubs...
   </div>
 
   <!-- Error state -->
-  <div *ngIf="error$ | async" class="error">
+  <div *ngIf="error$ | async" class="text-center text-red-500 py-5 text-lg bg-red-500/10 border border-red-500 rounded-lg my-5">
     {{ error$ | async }}
   </div>
 
   <!-- Club cards -->
-  <div *ngIf="!(loading$ | async) && !(error$ | async)" class="clubs">
+  <div *ngIf="!(loading$ | async) && !(error$ | async)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 p-3">
     <div *ngFor="let club of filteredClubs" 
-         class="club-card" 
-         [style.border-color]="club.primaryColour || '#666'"
-         [routerLink]="['/clubs', club._id]"
-         style="cursor: pointer;">
-      <div class="club-content">
+         class="bg-admin-card rounded-lg border border-admin-accent p-5 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 flex flex-col items-center cursor-pointer"
+         [style.border-color]="club.primaryColour || '#394867'"
+         [routerLink]="['/clubs', club._id]">
+      <div class="text-center w-full flex flex-col items-center">
         <img 
           [src]="getImageUrl(club.logoUrl)" 
           [alt]="club.name" 
-          class="club-image"
+          class="w-30 h-30 rounded-none mb-4 object-contain p-1 bg-transparent"
           (error)="club.logoUrl = 'assets/images/square-default.png'"
         >
-        <h3>{{club.name}}</h3>
-        <p class="manager-name">Manager: {{club.manager}}</p>
+        <h3 class="my-3 text-white text-xl font-semibold">{{club.name}}</h3>
+        <p class="text-gray-300 text-sm my-1">Manager: {{club.manager}}</p>
       </div>
     </div>
   </div>
 
   <!-- No results message -->
-  <div *ngIf="!(loading$ | async) && !(error$ | async) && filteredClubs.length === 0" class="no-results">
+  <div *ngIf="!(loading$ | async) && !(error$ | async) && filteredClubs.length === 0" class="text-center text-white py-5 text-lg">
     No clubs found
   </div>
 </div>

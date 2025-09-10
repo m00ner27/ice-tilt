@@ -1,108 +1,113 @@
-<div class="schedule-container">
-  <h1 *ngIf="!isPreview" class="schedule-title">Game Schedule</h1>
+<div class="p-5 max-w-7xl mx-auto text-white">
+  <h1 *ngIf="!isPreview" class="text-center mb-5 text-4xl font-bold">Game Schedule</h1>
   
   <!-- Filter options -->
-  <div *ngIf="!isPreview" class="filter-container">
-    <div class="filter-group">
-      <label for="seasonFilter">Filter by Season:</label>
+  <div *ngIf="!isPreview" class="mb-5 flex flex-wrap justify-start gap-4">
+    <div class="flex items-center gap-2">
+      <label for="seasonFilter" class="font-medium whitespace-nowrap">Filter by Season:</label>
       <select 
         id="seasonFilter" 
         [(ngModel)]="filterSeason" 
         (change)="onSeasonFilterChange(filterSeason)" 
-        class="filter-select"
+        class="px-3 py-2 rounded-md bg-admin-card border border-admin-accent text-white min-w-36 appearance-none cursor-pointer bg-no-repeat bg-right-2 bg-center pr-8"
+        style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'white\'%3e%3cpath d=\'M7 10l5 5 5-5z\'/%3e%3c/svg%3e');"
       >
         <option value="">All Seasons</option>
         <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
       </select>
     </div>
     
-          <div class="filter-group">
-        <label for="teamFilter">Filter by Club:</label>
-        <select 
-          id="teamFilter" 
-          [(ngModel)]="filterTeam" 
-          (change)="onTeamFilterChange(filterTeam)" 
-          class="filter-select"
-        >
-          <option value="">All Clubs</option>
-          <option *ngFor="let team of teamOptions" [value]="team">{{ team }}</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <button 
-          (click)="clearAllFilters()" 
-          class="clear-filters-btn"
-          type="button"
-        >
-          Clear All Filters
-        </button>
-      </div>
+    <div class="flex items-center gap-2">
+      <label for="teamFilter" class="font-medium whitespace-nowrap">Filter by Club:</label>
+      <select 
+        id="teamFilter" 
+        [(ngModel)]="filterTeam" 
+        (change)="onTeamFilterChange(filterTeam)" 
+        class="px-3 py-2 rounded-md bg-admin-card border border-admin-accent text-white min-w-36 appearance-none cursor-pointer bg-no-repeat bg-right-2 bg-center pr-8"
+        style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'white\'%3e%3cpath d=\'M7 10l5 5 5-5z\'/%3e%3c/svg%3e');"
+      >
+        <option value="">All Clubs</option>
+        <option *ngFor="let team of teamOptions" [value]="team">{{ team }}</option>
+      </select>
     </div>
+    
+    <div class="flex items-center">
+      <button 
+        (click)="clearAllFilters()" 
+        class="px-4 py-2 rounded-md bg-red-600 border border-red-700 text-white cursor-pointer font-medium transition-all duration-300 hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md"
+        type="button"
+      >
+        Clear All Filters
+      </button>
+    </div>
+  </div>
   
   <!-- Loading state -->
-  <div *ngIf="matchesLoading$ | async" class="loading-container">
+  <div *ngIf="matchesLoading$ | async" class="text-center text-white py-10 text-xl">
     <p>Loading schedule...</p>
   </div>
   
   <!-- Schedule table -->
-  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length > 0" class="schedule-table-container">
-    <table class="schedule-table">
-      <thead>
+  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length > 0" class="overflow-x-auto rounded-lg border border-admin-accent bg-admin-card">
+    <table class="w-full border-collapse bg-admin-card text-white text-sm min-w-96">
+      <thead class="bg-admin-accent sticky top-0 z-10">
         <tr>
-          <th (click)="onSortChange('date')" [class.sort-asc]="sortCriteria === 'date' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'date' && sortDirection === 'desc'">
+          <th (click)="onSortChange('date')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
             Date
           </th>
           <th></th>
-          <th (click)="onSortChange('homeTeam')" [class.sort-asc]="sortCriteria === 'homeTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'homeTeam' && sortDirection === 'desc'">
-            <span class="header-full">Home Club</span>
-            <span class="header-mobile">Home</span>
+          <th (click)="onSortChange('homeTeam')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
+            <span class="hidden md:inline">Home Club</span>
+            <span class="md:hidden">Home</span>
           </th>
           <th></th>
-          <th>Score</th>
+          <th class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap">Score</th>
           <th></th>
-          <th (click)="onSortChange('awayTeam')" [class.sort-asc]="sortCriteria === 'awayTeam' && sortDirection === 'asc'" [class.sort-desc]="sortCriteria === 'awayTeam' && sortDirection === 'desc'">
-            <span class="header-full">Away Club</span>
-            <span class="header-mobile">Away</span>
+          <th (click)="onSortChange('awayTeam')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
+            <span class="hidden md:inline">Away Club</span>
+            <span class="md:hidden">Away</span>
           </th>
           <th></th>
-          <th><span class="header-full">Details</span><span class="header-mobile">View</span></th>
+          <th class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap">
+            <span class="hidden md:inline">Details</span>
+            <span class="md:hidden">View</span>
+          </th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let match of filteredMatches">
-          <td class="date-cell">
-            <span class="date-full">{{ formatDate(match.date) }}</span>
-            <span class="date-mobile">{{ formatDateMobile(match.date) }}</span>
+        <tr *ngFor="let match of filteredMatches" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
+          <td class="px-3 py-3 text-left font-semibold text-admin-primary whitespace-nowrap">
+            <span class="hidden md:inline">{{ formatDate(match.date) }}</span>
+            <span class="md:hidden">{{ formatDateMobile(match.date) }}</span>
           </td>
-          <td class="team-cell text-right">
-            <a [routerLink]="['/clubs', match.homeClub?._id]" class="team-link team-name">{{ match.homeTeam }}</a>
+          <td class="px-3 py-3 text-right">
+            <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.homeTeam }}</a>
           </td>
-          <td class="team-logo-cell">
-            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="team-logo">
+          <td class="px-3 py-3 text-center">
+            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
           </td>
-          <td class="wl-cell">
-            <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="win-indicator">W</span>
-            <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="loss-indicator">L</span>
+          <td class="px-3 py-3 text-center">
+            <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-sm">W</span>
+            <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-sm">L</span>
           </td>
-          <td class="score-cell">
-            <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="vs-text">VS</span>
-            <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="score">{{ match.homeScore }} - {{ match.awayScore }}</span>
+          <td class="px-3 py-3 text-center">
+            <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="text-gray-400 font-semibold">VS</span>
+            <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="font-semibold text-lg">{{ match.homeScore }} - {{ match.awayScore }}</span>
           </td>
-          <td class="wl-cell">
-            <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="win-indicator">W</span>
-            <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="loss-indicator">L</span>
+          <td class="px-3 py-3 text-center">
+            <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-sm">W</span>
+            <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-sm">L</span>
           </td>
-          <td class="team-logo-cell">
-            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="team-logo">
+          <td class="px-3 py-3 text-center">
+            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
           </td>
-          <td class="team-cell text-left">
-            <a [routerLink]="['/clubs', match.awayClub?._id]" class="team-link team-name">{{ match.awayTeam }}</a>
+          <td class="px-3 py-3 text-left">
+            <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.awayTeam }}</a>
           </td>
-          <td class="action-cell">
-            <a [routerLink]="['/match', match.id]" class="view-button">
-              <span class="button-full">View Details</span>
-              <span class="button-mobile">View</span>
+          <td class="px-3 py-3 text-center">
+            <a [routerLink]="['/match', match.id]" class="inline-block px-3 py-1.5 bg-gradient-to-r from-admin-secondary to-blue-700 text-white text-xs font-medium rounded-md transition-all duration-300 border border-blue-700 shadow-md hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md">
+              <span class="hidden md:inline">View Details</span>
+              <span class="md:hidden">View</span>
             </a>
           </td>
         </tr>
@@ -111,22 +116,22 @@
   </div>
   
   <!-- No matches message -->
-  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length === 0" class="no-results">
+  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length === 0" class="text-center text-gray-300 py-10 text-lg">
     <p>No matches found for the selected filters.</p>
   </div>
   
   <!-- View Full Schedule Link (Preview Mode) -->
-  <div *ngIf="isPreview && filteredMatches.length > 0" class="view-full-schedule">
-    <a routerLink="/schedule" class="view-full-btn">View Full Schedule</a>
+  <div *ngIf="isPreview && filteredMatches.length > 0" class="text-center mt-6">
+    <a routerLink="/schedule" class="inline-block px-6 py-3 bg-admin-secondary text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">View Full Schedule</a>
   </div>
   
   <!-- Legend -->
-  <div *ngIf="!isPreview" class="schedule-legend">
-    <div class="legend-item">
-      <span class="win-indicator">W</span> - Win
-      <span class="loss-indicator">L</span> - Loss
+  <div *ngIf="!isPreview" class="bg-admin-card border border-admin-accent rounded-lg p-4 mt-5 text-sm">
+    <div class="mb-2">
+      <span class="text-green-500 font-bold">W</span> - Win
+      <span class="text-red-500 font-bold ml-4">L</span> - Loss
     </div>
-    <div class="legend-note">
+    <div class="text-gray-300 text-xs space-y-1">
       <p>* Use the filters above to view games by season and/or team</p>
       <p>* Click on column headers to sort</p>
       <p>* Click "View Details" to see match statistics</p>

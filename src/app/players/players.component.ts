@@ -28,8 +28,7 @@ import * as MatchesSelectors from '../store/matches.selectors';
     RouterModule,
     PositionPillComponent
   ],
-  templateUrl: './players.component.html',
-  styleUrls: ['./players.component.css']
+  templateUrl: './players.component.html'
 })
 export class PlayersComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

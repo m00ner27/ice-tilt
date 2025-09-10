@@ -10,8 +10,7 @@ const POSITIONS = ['C', 'LW', 'RW', 'LD', 'RD', 'G'];
   selector: 'app-create-user',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './create-user.component.html',
-  styleUrls: ['./create-user.component.css']
+  templateUrl: './create-user.component.html'
 })
 export class CreateUserComponent {
   userForm: FormGroup;

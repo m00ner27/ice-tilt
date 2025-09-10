@@ -11,7 +11,6 @@ import { take } from 'rxjs/operators';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'],
   imports: [
     RouterModule,
     RouterOutlet,

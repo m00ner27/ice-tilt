@@ -85,8 +85,7 @@ interface DivisionStandings {
   selector: 'app-standings',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './standings.component.html',
-  styleUrls: ['./standings.component.css']
+  templateUrl: './standings.component.html'
 })
 export class StandingsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

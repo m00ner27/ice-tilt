@@ -1,13 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-
-export interface Season {
-  _id: string;
-  name: string;
-  startDate: Date;
-  endDate: Date;
-  isActive: boolean;
-  divisions?: string[];
-}
+import { Season } from './models/models';
 
 // Load Seasons Actions
 export const loadSeasons = createAction('[Seasons] Load Seasons');

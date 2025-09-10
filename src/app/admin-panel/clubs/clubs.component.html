@@ -1,79 +1,196 @@
-<app-admin-nav></app-admin-nav>
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-admin-primary">Clubs Management</h2>
+    <button class="bg-admin-secondary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors" (click)="isAddingClub = true">
+      <i class="fas fa-plus"></i>
+      Add Club
+    </button>
+  </div>
 
-<div class="clubs-container">
-  <h2>Admin: Clubs Management</h2>
-
-  <!-- Add/Edit Club Form -->
-  <div class="form-section">
-    <h3>{{ editingClub ? 'Edit Club' : 'Add Club' }}</h3>
-    <form [formGroup]="clubForm" (ngSubmit)="editingClub ? updateClub() : addClub()">
-      <input formControlName="name" type="text" placeholder="Club Name" required />
-      <input type="file" accept="image/*" (change)="onLogoFileChange($event)" />
-      <input formControlName="logo" type="text" placeholder="Logo URL" style="display:none" />
-      <div *ngIf="logoPreview" style="margin-bottom:8px;">
-        <img [src]="logoPreview" alt="Logo Preview" class="club-logo" style="max-width: 64px; max-height: 64px; border: 1px solid #394867; border-radius: 6px; background: #23293a;" />
-        <span *ngIf="uploadingLogo" style="color:#90caf9; margin-left:8px;">Uploading...</span>
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <!-- Season Selector -->
+    <div class="bg-admin-card rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">Season Selection</h3>
+      <div class="mb-5 border-2 border-red-500 p-4 bg-slate-700 rounded-lg">
+        <label for="viewSeason" class="block mb-2 text-slate-100 font-medium">View Clubs for Season:</label>
+        <select id="viewSeason" [(ngModel)]="selectedSeasonId" (change)="onSeasonChange($event)" class="px-3 py-2 border border-slate-600 rounded bg-slate-700 text-slate-100 text-sm min-w-[200px]">
+          <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+        </select>
+        <span *ngIf="clubs.length > 0" class="ml-2 text-admin-primary">
+          Showing {{ clubs.length }} clubs in {{ getSelectedSeasonName() }}
+        </span>
       </div>
-      <input formControlName="manager" type="text" placeholder="Manager" required />
-      <input formControlName="color" type="color" required />
-      <input formControlName="region" type="text" placeholder="Region" required />
-      <input formControlName="eashlClubId" type="text" placeholder="EASHL Club ID" />
-      <select formControlName="season" required>
-        <option value="" disabled selected>Select Season</option>
-        <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
-      </select>
-      <select formControlName="division" required>
-        <option value="" disabled selected>Select Division</option>
-        <option *ngFor="let division of divisions" [value]="division._id">{{ division.name }}</option>
-      </select>
-      <button type="submit" [disabled]="!clubForm.valid">{{ editingClub ? 'Update' : 'Add' }}</button>
-      <button type="button" (click)="clubForm.reset(); editingClub = null; isAddingClub = false;">Cancel</button>
-    </form>
-  </div>
-
-  <!-- Clubs List -->
-  <div class="list-section">
-    <h3>Clubs</h3>
-    
-    <!-- Debug Info -->
-    <div style="background: #34495e; padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #ecf0f1;">
-      <strong>Debug Info:</strong> Seasons count: {{ seasons?.length || 0 }} | 
-      Selected season: {{ clubForm.get('season')?.value || 'None' }}
+      
+      <!-- Debug Info -->
+      <div class="bg-slate-700 p-3 mb-4 rounded text-slate-100">
+        <strong>Debug Info:</strong> Seasons count: {{ seasons ? seasons.length : 0 }} | 
+        Selected season: {{ selectedSeasonId || 'None' }}
+      </div>
     </div>
     
-    <!-- Season Selector for Viewing Clubs -->
-    <div class="season-selector" style="margin-bottom: 20px; border: 2px solid #e74c3c;">
-      <label for="viewSeason">View Clubs for Season:</label>
-      <select id="viewSeason" [formControl]="clubForm.get('season')" (change)="onSeasonChange($event)">
-        <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
-      </select>
-      <span *ngIf="clubs.length > 0" style="margin-left: 10px; color: #90caf9;">
-        Showing {{ clubs.length }} clubs in this season
-      </span>
+    <!-- Clubs List -->
+    <div class="bg-admin-card rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">All Clubs</h3>
+      <div class="flex flex-col gap-3">
+        <div class="bg-admin-hover rounded-lg p-4 flex justify-between items-center hover:bg-admin-accent transition-colors" *ngFor="let club of clubs">
+          <div class="flex items-center gap-3">
+            <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="w-10 h-10 object-contain rounded bg-admin-card">
+            <div>
+              <h4 class="text-white font-medium mb-1">{{ club.name }}</h4>
+              <p class="text-admin-primary text-sm">{{ club.manager }}</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="p-1 text-admin-primary hover:bg-admin-hover hover:text-white rounded transition-colors" (click)="viewClubDetails(club)">
+              <i class="fas fa-users"></i>
+            </button>
+            <button class="p-1 text-admin-primary hover:bg-admin-hover hover:text-white rounded transition-colors" (click)="editClub(club)">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="p-1 text-admin-primary hover:bg-red-600 hover:text-white rounded transition-colors" (click)="deleteClub(club)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <ul class="club-list">
-      <li *ngFor="let club of clubs">
-        <span>
-          <img [src]="club.logoUrl" alt="Logo" class="club-logo" />
-          {{ club.name }} ({{ club.manager }})
-        </span>
-        <button (click)="editClub(club)">Edit</button>
-        <button (click)="deleteClub(club)">Delete</button>
-      </li>
-    </ul>
+
+    <!-- Club Details -->
+    <div class="bg-admin-card rounded-xl p-6" *ngIf="selectedClub">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">{{ selectedClub.name }} - Roster</h3>
+      
+      <div class="mt-6">
+        <h4 class="text-admin-primary mb-3">Current Roster</h4>
+        <div class="flex flex-col gap-2">
+          <div class="bg-admin-hover rounded-md p-3 flex items-center justify-between gap-3" *ngFor="let player of filteredRoster">
+            <span class="text-white font-medium">{{ player.discordUsername }}</span>
+            <span class="text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">{{ player.playerProfile?.position }}</span>
+            <button class="p-1 text-admin-primary hover:bg-red-600 hover:text-white rounded transition-colors" (click)="removePlayer(selectedClub, player)">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h4 class="text-admin-primary mb-3">Free Agents</h4>
+        <div class="flex flex-col gap-2">
+          <div class="bg-admin-hover rounded-md p-3 flex items-center justify-between gap-3" *ngFor="let agent of freeAgents">
+            <span class="text-white">{{ agent.discordUsername || agent.discordId }}</span>
+            <span class="text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">{{ agent.playerProfile?.position }}</span>
+            <button class="p-1 text-admin-primary hover:bg-admin-hover hover:text-white rounded transition-colors" (click)="addPlayer(selectedClub, agent)">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Free Agents List -->
-  <div class="list-section">
-    <h3>Free Agents</h3>
-    <ul class="free-agent-list">
-      <li *ngFor="let agent of freeAgents">
-        <span>
-          {{ agent.discordUsername }} ({{ agent.playerProfile?.primaryPosition || 'N/A' }})
-        </span>
-        <button (click)="addPlayer(editingClub, agent)" [disabled]="!editingClub">Add to {{ editingClub?.name }}</button>
-      </li>
-    </ul>
+  <!-- Club Form Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isAddingClub">
+    <div class="bg-admin-card rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-admin-primary mb-6">{{ editingClub ? 'Edit Club' : 'Add Club' }}</h3>
+      <form [formGroup]="clubForm" (ngSubmit)="editingClub ? updateClub() : addClub()">
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Club Name</label>
+          <input formControlName="name" type="text" placeholder="Enter club name" class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white">
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Logo</label>
+          <div class="flex flex-col gap-2">
+            <input type="file" accept="image/*" (change)="onLogoFileChange($event)" class="text-white">
+            <div *ngIf="logoPreview" class="flex items-center gap-2">
+              <img [src]="logoPreview" alt="Logo Preview" class="w-10 h-10 object-contain rounded bg-admin-card">
+              <span *ngIf="uploadingLogo" class="text-admin-primary text-sm">Uploading...</span>
+            </div>
+          </div>
+          <input formControlName="logo" type="text" class="hidden">
+        </div>
+
+        <div class="mb-4 relative">
+          <label class="block text-admin-text mb-2">Manager</label>
+          <input 
+            formControlName="manager" 
+            type="text" 
+            placeholder="Start typing a registered username"
+            (focus)="onManagerFocus()"
+            (blur)="onManagerBlur()"
+            (keydown.arrowDown)="moveManagerHighlight(1)"
+            (keydown.arrowUp)="moveManagerHighlight(-1)"
+            (keydown.enter)="onManagerEnter()"
+            class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white"
+          >
+          <div *ngIf="clubForm.get('manager')?.touched && clubForm.get('manager')?.errors?.['managerNotFound']" class="text-red-500 mt-1 text-xs">
+            Manager must be a registered user.
+          </div>
+          <ul *ngIf="showManagerSuggestions" class="absolute z-10 left-0 right-0 bg-admin-hover border border-admin-accent rounded-md mt-1 list-none p-1 max-h-48 overflow-y-auto">
+            <li 
+              *ngFor="let u of managerSuggestions; let i = index"
+              (mousedown)="selectManager(u)"
+              [class]="i === highlightedSuggestionIndex ? 'bg-admin-accent' : 'bg-transparent'"
+              class="px-3 py-2 cursor-pointer flex justify-between items-center text-admin-text hover:bg-admin-accent"
+            >
+              <span>{{ managerDisplay(u) }}</span>
+              <span *ngIf="u.playerProfile?.position" class="text-admin-primary text-xs">{{ u.playerProfile?.position }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Primary Color</label>
+          <input formControlName="color" type="color" class="w-full h-10 rounded">
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Seasons & Divisions</label>
+          <div class="max-h-72 overflow-y-auto border border-admin-accent rounded-md p-3 bg-admin-bg">
+            <div *ngFor="let season of seasons" class="mb-4 p-3 border border-admin-accent rounded-md bg-admin-card">
+              <div class="mb-2">
+                <label class="flex items-center cursor-pointer text-admin-primary font-medium">
+                  <input type="checkbox" 
+                         [checked]="isSeasonSelected(season._id)"
+                         (change)="onSeasonToggle(season._id, $event)"
+                         class="mr-2 accent-admin-secondary">
+                  <span class="text-base">{{ season.name }}</span>
+                </label>
+              </div>
+              <div *ngIf="isSeasonSelected(season._id)" class="ml-6">
+                <select [formControlName]="'division_' + season._id" 
+                        (change)="onDivisionChange(season._id, $event)"
+                        class="w-full px-2 py-1 border border-admin-accent rounded bg-admin-hover text-white text-sm focus:outline-none focus:border-admin-secondary">
+                  <option value="">Select Division</option>
+                  <option *ngFor="let division of getDivisionsForSeason(season._id)" 
+                          [value]="division._id">{{ division.name }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Region</label>
+          <select formControlName="region" class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white">
+            <option value="" disabled selected>Select region</option>
+            <option *ngFor="let reg of regionOptions" [value]="reg">{{ reg | titlecase }}</option>
+          </select>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-admin-text mb-2">Eashl Club ID</label>
+          <input formControlName="eashlClubId" type="text" placeholder="Enter Eashl Club ID" class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white">
+        </div>
+
+        <div class="flex gap-3">
+          <button type="submit" class="bg-admin-secondary text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50" [disabled]="!clubForm.valid">
+            {{ editingClub ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="bg-admin-accent text-white px-4 py-2 rounded-md hover:bg-admin-hover transition-colors" (click)="cancelClubForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-</div> 
+</div>

@@ -1,5 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
-import { Season } from './seasons.actions';
+import { Season } from './models/models';
 import * as SeasonsActions from './seasons.actions';
 
 export interface SeasonsState {

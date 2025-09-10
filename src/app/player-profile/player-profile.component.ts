@@ -13,8 +13,7 @@ import { MatchService, EashlMatch } from '../store/services/match.service';
   selector: 'app-player-profile',
   standalone: true,
   imports: [CommonModule, RouterModule, PositionPillComponent],
-  templateUrl: './player-profile.component.html',
-  styleUrls: ['./player-profile.component.css']
+  templateUrl: './player-profile.component.html'
 })
 export class PlayerProfileComponent implements OnInit {
   player: Player | null = null;

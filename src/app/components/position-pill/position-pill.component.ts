@@ -5,9 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-position-pill',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <span class="position-pill" [ngClass]="positionClass">{{ position }}</span>
-  `,
+  templateUrl: './position-pill.component.html',
   styleUrls: ['./position-pill.component.css']
 })
 export class PositionPillComponent {

@@ -25,7 +25,6 @@ interface AggregatedPlayer {
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrl: './home.component.css',
   imports: [CommonModule, RouterModule, RecentTransactionsComponent, ScheduleComponent]
 })
 export class HomeComponent implements OnInit {

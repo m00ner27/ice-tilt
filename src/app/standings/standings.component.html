@@ -1,14 +1,14 @@
-<div class="standings-container">
-  <h1 class="standings-title">League Standings</h1>
+<div class="p-5 max-w-7xl mx-auto text-white">
+  <h1 class="text-center mb-5 text-4xl font-bold">League Standings</h1>
   
   <!-- Season Filter -->
-  <div class="season-filter">
-    <label for="seasonSelect">Season:</label>
+  <div class="flex items-center gap-2 mb-5 p-4 bg-admin-card border border-admin-accent rounded-lg">
+    <label for="seasonSelect" class="font-medium text-white">Season:</label>
     <select 
       id="seasonSelect" 
       [(ngModel)]="selectedSeasonId" 
       (change)="onSeasonChange()"
-      class="season-select"
+      class="px-3 py-2 bg-admin-hover text-white border border-admin-accent rounded text-sm cursor-pointer focus:outline-none focus:border-admin-primary"
     >
       <option *ngFor="let season of (seasons$ | async)" [value]="season._id">
         {{ season.name }}
@@ -17,64 +17,64 @@
   </div>
 
   <!-- Loading state -->
-  <div *ngIf="seasonsLoading$ | async" class="loading-container">
+  <div *ngIf="seasonsLoading$ | async" class="text-center text-white py-10 text-xl">
     <p>Loading standings...</p>
   </div>
 
   <!-- Error state -->
-  <div *ngIf="seasonsError$ | async as error" class="error-container">
+  <div *ngIf="seasonsError$ | async as error" class="text-center text-red-500 py-8 bg-red-500/10 border border-red-500 rounded-lg my-5">
     <p>{{ error }}</p>
   </div>
 
   <!-- Standings by Division -->
-  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length > 0" class="standings-content">
-    <div *ngFor="let divisionStanding of divisionStandings" class="division-section">
-      <h2 class="division-title">
-        <img *ngIf="divisionStanding.division.logoUrl" [src]="getImageUrl(divisionStanding.division.logoUrl)" [alt]="divisionStanding.division.name + ' logo'" class="division-logo">
+  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length > 0" class="mb-8">
+    <div *ngFor="let divisionStanding of divisionStandings" class="mb-8">
+      <h2 class="text-white text-2xl mb-4 p-3 bg-admin-accent rounded-lg border-l-4 border-admin-primary flex items-center gap-3">
+        <img *ngIf="divisionStanding.division.logoUrl" [src]="getImageUrl(divisionStanding.division.logoUrl)" [alt]="divisionStanding.division.name + ' logo'" class="w-8 h-8 object-contain rounded">
         {{ divisionStanding.division.name }}
       </h2>
       
-      <div class="standings-table-container">
-        <table class="standings-table">
-          <thead>
+      <div class="w-full overflow-x-auto">
+        <table class="w-full bg-admin-card text-white border-collapse border border-admin-accent rounded-lg overflow-hidden mb-5">
+          <thead class="bg-admin-accent">
             <tr>
-              <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')">Team</th>
-              <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')">GP</th>
-              <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')">W</th>
-              <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')">L</th>
-              <th (click)="onSortColumn('otLosses')" [ngClass]="getColumnSortClass('otLosses')">OTL</th>
-              <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')">PTS</th>
-              <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')">GF</th>
-              <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')">GA</th>
-              <th (click)="onSortColumn('goalDifferential')" [ngClass]="getColumnSortClass('goalDifferential')">DIFF</th>
-              <th (click)="onSortColumn('winPercentage')" [ngClass]="getColumnSortClass('winPercentage')">WIN%</th>
+              <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">Team</th>
+              <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">GP</th>
+              <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">W</th>
+              <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">L</th>
+              <th (click)="onSortColumn('otLosses')" [ngClass]="getColumnSortClass('otLosses')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">OTL</th>
+              <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">PTS</th>
+              <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">GF</th>
+              <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">GA</th>
+              <th (click)="onSortColumn('goalDifferential')" [ngClass]="getColumnSortClass('goalDifferential')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">DIFF</th>
+              <th (click)="onSortColumn('winPercentage')" [ngClass]="getColumnSortClass('winPercentage')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">WIN%</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let team of divisionStanding.standings">
-              <td class="team-name-cell">
-                <div class="team-info">
+            <tr *ngFor="let team of divisionStanding.standings" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+              <td class="text-left p-2">
+                <div class="flex items-center gap-2">
                   <img 
-                    class="team-logo" 
+                    class="w-8 h-8 object-contain rounded-full" 
                     [src]="team.logo || 'assets/images/square-default.png'" 
                     [alt]="team.teamName + ' logo'" 
                   />
-                  <span class="team-name">
-                    <a [routerLink]="['/clubs', team.teamId]" class="team-link">{{ team.teamName }}</a>
+                  <span class="font-medium">
+                    <a [routerLink]="['/clubs', team.teamId]" class="text-white hover:text-admin-primary transition-colors">{{ team.teamName }}</a>
                   </span>
                 </div>
               </td>
-              <td>{{ team.gamesPlayed }}</td>
-              <td>{{ team.wins }}</td>
-              <td>{{ team.losses }}</td>
-              <td>{{ team.otLosses }}</td>
-              <td class="points-column">{{ team.points }}</td>
-              <td>{{ team.goalsFor }}</td>
-              <td>{{ team.goalsAgainst }}</td>
-              <td [ngClass]="{'positive': team.goalDifferential > 0, 'negative': team.goalDifferential < 0}">
+              <td class="text-center p-2">{{ team.gamesPlayed }}</td>
+              <td class="text-center p-2">{{ team.wins }}</td>
+              <td class="text-center p-2">{{ team.losses }}</td>
+              <td class="text-center p-2">{{ team.otLosses }}</td>
+              <td class="text-center p-2 font-semibold">{{ team.points }}</td>
+              <td class="text-center p-2">{{ team.goalsFor }}</td>
+              <td class="text-center p-2">{{ team.goalsAgainst }}</td>
+              <td class="text-center p-2" [ngClass]="{'text-green-500': team.goalDifferential > 0, 'text-red-500': team.goalDifferential < 0}">
                 {{ team.goalDifferential > 0 ? '+' + team.goalDifferential : team.goalDifferential }}
               </td>
-              <td>{{ team.winPercentage | percent:'1.0-3' }}</td>
+              <td class="text-center p-2">{{ team.winPercentage | percent:'1.0-3' }}</td>
             </tr>
           </tbody>
         </table>
@@ -83,13 +83,13 @@
   </div>
   
   <!-- No standings data message -->
-  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length === 0" class="no-data-container">
+  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length === 0" class="text-center text-white py-10 text-lg">
     <p>No standings data available for {{ getSelectedSeasonName() }}.</p>
   </div>
   
   <!-- Legend -->
-  <div class="standings-legend">
-    <div class="legend-item">
+  <div class="mt-8 p-4 bg-admin-card border border-admin-accent rounded-lg text-white">
+    <div class="flex flex-wrap gap-4 mb-3">
       <span>GP: Games Played</span>
       <span>W: Wins</span>
       <span>L: Losses</span>
@@ -100,7 +100,7 @@
       <span>DIFF: Goal Differential</span>
       <span>WIN%: Win Percentage</span>
     </div>
-    <div class="legend-note">
+    <div class="text-sm opacity-80 space-y-1">
       <p>* Click on column headers to sort</p>
       <p>* 2 points for a win, 1 point for an overtime loss, 0 for a regulation loss</p>
     </div>

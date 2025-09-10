@@ -1,1 +1,46 @@
-<p>add-games works!</p>
+<div class="max-w-lg mx-auto my-10 bg-admin-card rounded-xl p-8 shadow-lg">
+  <h2 class="text-2xl font-bold text-admin-primary mb-6 text-center">Add Game</h2>
+  <form [formGroup]="gameForm" (ngSubmit)="submitGame()" class="space-y-4">
+    <div>
+      <label class="block text-admin-text mb-2 font-medium">Season</label>
+      <select formControlName="season" (change)="onSeasonChange()" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <option value="" disabled selected>Select Season</option>
+        <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-admin-text mb-2 font-medium">Division</label>
+      <select formControlName="division" (change)="onDivisionChange()" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <option value="" disabled selected>Select Division</option>
+        <option *ngFor="let division of filteredDivisions" [value]="division._id">{{ division.name }}</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-admin-text mb-2 font-medium">Home Team</label>
+      <select formControlName="team1" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <option value="" disabled selected>Select Home Team</option>
+        <option *ngFor="let club of filteredClubs" [value]="club._id">{{ club.name }}</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-admin-text mb-2 font-medium">Away Team</label>
+      <select formControlName="team2" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <option value="" disabled selected>Select Away Team</option>
+        <option *ngFor="let club of filteredClubs" [value]="club._id">{{ club.name }}</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-admin-text mb-2 font-medium">Date</label>
+      <input type="date" formControlName="date" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+    </div>
+    <div>
+      <label class="block text-admin-text mb-2 font-medium">Time</label>
+      <input type="time" formControlName="time" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+    </div>
+    <div class="pt-4">
+      <button type="submit" [disabled]="!gameForm.valid" class="w-full bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50">
+        Add Game
+      </button>
+    </div>
+  </form>
+</div>

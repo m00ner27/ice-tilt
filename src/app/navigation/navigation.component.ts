@@ -16,7 +16,6 @@ import { selectIsUserAnyManager } from '../store/managers.selectors';
   standalone: true,
   imports: [RouterModule, CommonModule, AuthButtonComponent, UserProfileComponent],
   templateUrl: './navigation.component.html',
-  styleUrls: ['./navigation.component.css'],
 })
 export class NavigationComponent {
   isMenuCollapsed = true;
