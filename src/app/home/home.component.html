@@ -7,7 +7,7 @@
           <div class="carousel-item active">
             <a [routerLink]="['/article', 'new-season-begins']" class="block transition-transform duration-200 hover:scale-105">
               <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
                   <h3 class="text-white text-2xl m-0">Exciting Announcement: New Season Begins!</h3>
                 </div>
               </div>
@@ -17,7 +17,7 @@
           <div class="carousel-item">
             <a href="/article-2" class="block transition-transform duration-200 hover:scale-105">
               <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
                   <h3 class="text-white text-2xl m-0">Top Plays of the Week</h3>
                 </div>
               </div>
@@ -27,7 +27,7 @@
           <div class="carousel-item">
             <a href="/article-3" class="block transition-transform duration-200 hover:scale-105">
               <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/news3.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
                   <h3 class="text-white text-2xl m-0">Player Spotlight: Rising Star</h3>
                 </div>
               </div>
@@ -37,7 +37,7 @@
           <div class="carousel-item">
             <a [routerLink]="['/article', 'playoff-race-heats-up']" class="block transition-transform duration-200 hover:scale-105">
               <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-black bg-opacity-60 p-3 rounded">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
                   <h3 class="text-white text-2xl m-0">Playoff Race Heats Up: Final Push Begins</h3>
                 </div>
               </div>
@@ -68,11 +68,11 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Goals Top 5 -->
       <div class="mb-3">
-        <div class="bg-admin-card border border-admin-accent rounded-lg">
+        <div class="bg-admin-card rounded-lg">
           <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Goals</div>
-          <div class="p-0">
+          <div class="p-0 rounded-b-lg overflow-hidden">
             <ul class="divide-y divide-admin-accent">
-              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topGoals; let i = index">
+              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topGoals; let i = index">
                 <span class="font-bold mr-2">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
                 <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
@@ -84,11 +84,11 @@
       </div>
       <!-- Assists Top 5 -->
       <div class="mb-3">
-        <div class="bg-admin-card border border-admin-accent rounded-lg">
+        <div class="bg-admin-card rounded-lg">
           <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Assists</div>
-          <div class="p-0">
+          <div class="p-0 rounded-b-lg overflow-hidden">
             <ul class="divide-y divide-admin-accent">
-              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topAssists; let i = index">
+              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topAssists; let i = index">
                 <span class="font-bold mr-2">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
                 <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
@@ -100,11 +100,11 @@
       </div>
       <!-- Points Top 5 -->
       <div class="mb-3">
-        <div class="bg-admin-card border border-admin-accent rounded-lg">
+        <div class="bg-admin-card rounded-lg">
           <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Points</div>
-          <div class="p-0">
+          <div class="p-0 rounded-b-lg overflow-hidden">
             <ul class="divide-y divide-admin-accent">
-              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topPoints; let i = index">
+              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topPoints; let i = index">
                 <span class="font-bold mr-2">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
                 <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
@@ -116,11 +116,11 @@
       </div>
       <!-- Save % Top 5 (Goalies) -->
       <div class="mb-3">
-        <div class="bg-admin-card border border-admin-accent rounded-lg">
+        <div class="bg-admin-card rounded-lg">
           <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Save %</div>
-          <div class="p-0">
+          <div class="p-0 rounded-b-lg overflow-hidden">
             <ul class="divide-y divide-admin-accent">
-              <li class="flex items-center p-3 bg-admin-card" *ngFor="let p of topSavePct; let i = index">
+              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topSavePct; let i = index">
                 <span class="font-bold mr-2">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
                 <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>

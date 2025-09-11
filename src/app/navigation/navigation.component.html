@@ -2,27 +2,27 @@
 <nav class="bg-gray-800 shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
-            <div class="flex items-center">
+            <div class="flex items-center flex-shrink-0">
                 <a class="flex items-center font-bold" routerLink="/home">
-                    <img src="assets/images/1ithlwords.png" alt="League Logo" class="h-8 w-auto mr-2">
+                    <img src="assets/images/1ithlwords.png" alt="League Logo" class="h-8 w-auto mr-2 min-w-0">
                 </a>
             </div>
             
             <!-- Desktop Navigation -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/schedule">Schedule</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/standings">Standings</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/players">Players List</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/player-stats">Player Stats</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/clubs">Clubs</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/transactions">Transactions</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a>
-                <a class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
+            <div class="hidden xl:flex items-center space-x-6">
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/schedule">Schedule</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/standings">Standings</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/players">Players List</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/player-stats">Player Stats</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/clubs">Clubs</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/transactions">Transactions</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
             </div>
 
             <!-- Right Aligned Auth Section -->
-            <div class="hidden md:flex items-center">
+            <div class="flex items-center">
                 <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
                     <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
                     <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
@@ -33,7 +33,7 @@
             </div>
 
             <!-- Mobile menu button -->
-            <div class="md:hidden flex items-center">
+            <div class="xl:hidden flex items-center ml-2">
                 <button type="button" (click)="toggleMenu()" class="text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white p-2 rounded-md" [attr.aria-expanded]="!isMenuCollapsed" aria-label="Toggle navigation">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -43,19 +43,8 @@
         </div>
 
         <!-- Mobile Navigation Menu -->
-        <div class="md:hidden" [class.hidden]="isMenuCollapsed">
+        <div class="xl:hidden" [class.hidden]="isMenuCollapsed">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-800">
-                <!-- Mobile Auth Section -->
-                <div class="flex flex-col items-end space-y-2 mb-4">
-                    <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
-                        <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
-                        <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
-                    </ng-container>
-                    <ng-template #authLoading>
-                        <!-- Optional: placeholder/spinner -->
-                    </ng-template>
-                </div>
-                
                 <!-- Mobile Navigation Links -->
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/schedule">Schedule</a>
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/standings">Standings</a>

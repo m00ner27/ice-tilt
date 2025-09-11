@@ -43,8 +43,10 @@
             <tr *ngFor="let goalie of group.stats; let i = index">
               <td class="sticky-column rank-column">{{ i + 1 }}</td>
               <td class="sticky-column goalie-name">
-                <img [src]="goalie.teamLogo" class="goalie-logo" [alt]="goalie.team + ' logo'">
-                {{ goalie.name }}
+                <div class="goalie-name-container">
+                  <img [src]="goalie.teamLogo" class="goalie-logo" [alt]="goalie.team + ' logo'">
+                  <span class="goalie-name-text">{{ goalie.name }}</span>
+                </div>
               </td>
               <td class="team-cell">
                 <span class="team-name">{{ goalie.team }}</span>

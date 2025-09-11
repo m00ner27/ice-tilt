@@ -24,6 +24,8 @@
   overflow-x: auto;
   position: relative;
   background-color: #1a252f;
+  border-radius: 8px;
+  border: 1px solid #34495e;
 }
 
 .player-stats-table {
@@ -32,10 +34,12 @@
   color: white;
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid #34495e;
+  border: none;
   border-radius: 8px;
   margin-bottom: 20px;
   min-width: 1400px; /* Ensure table is wide enough for all columns */
+  overflow: visible;
+  position: relative;
 }
 
 .player-stats-table th {
@@ -50,6 +54,14 @@
   white-space: nowrap;
   min-width: 50px;
   z-index: 1;
+}
+
+.player-stats-table th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.player-stats-table th:last-child {
+  border-top-right-radius: 8px;
 }
 
 .player-stats-table th:hover {
@@ -90,14 +102,28 @@
   opacity: 0.7;
 }
 
+/* Player name container */
+.player-name-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Player logo styling */
 .player-logo {
   width: 20px;
   height: 20px;
   object-fit: contain;
   border-radius: 0;
-  margin-right: 8px;
-  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Player name text */
+.player-name-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 /* Team column - simple, non-sticky */
@@ -131,7 +157,7 @@
 .sticky-column {
   position: sticky !important;
   background-color: #1a252f !important;
-  z-index: 999 !important;
+  z-index: 10 !important;
   border-right: 2px solid #34495e !important;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
 }
@@ -146,7 +172,7 @@ td.rank-column {
   max-width: 50px !important;
   text-align: center !important;
   font-weight: 600 !important;
-  z-index: 1000 !important;
+  z-index: 11 !important;
 }
 
 /* Ensure rank header has same styling as other headers */
@@ -157,6 +183,11 @@ th.rank-column {
   padding: 8px 4px !important;
 }
 
+/* Ensure rank body cells have proper background */
+td.rank-column {
+  background-color: #1a252f !important;
+}
+
 /* Player name column - sticky after rank */
 .player-name.sticky-column,
 th.player-name.sticky-column {
@@ -164,7 +195,7 @@ th.player-name.sticky-column {
   width: 180px !important;
   min-width: 180px !important;
   max-width: 180px !important;
-  z-index: 999 !important;
+  z-index: 10 !important;
   text-align: left !important;
 }
 
@@ -174,6 +205,11 @@ th.player-name.sticky-column {
   color: white !important;
   text-align: center !important;
   padding: 8px 12px !important;
+}
+
+/* Ensure player name body cells have proper background */
+td.player-name.sticky-column {
+  background-color: #1a252f !important;
 }
 
 .negative {

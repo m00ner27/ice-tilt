@@ -1,11 +1,11 @@
-<div class="p-5 max-w-6xl mx-auto text-white">
+<div class="p-5 text-white">
   <h2 class="text-white mb-5 text-center text-4xl font-bold text-shadow-lg">Clubs</h2>
   
   <!-- Search bar -->
   <div class="mb-5 flex justify-center">
     <input 
       type="text" 
-      class="w-full max-w-md px-4 py-3 border border-admin-accent rounded-full text-base outline-none transition-all duration-200 bg-admin-card text-white focus:border-admin-primary focus:shadow-lg focus:shadow-admin-primary/25" 
+      class="w-full max-w-md px-4 py-3 rounded-full text-base outline-none transition-all duration-200 bg-admin-card text-white focus:border-admin-primary focus:shadow-lg focus:shadow-admin-primary/25" 
       placeholder="Search clubs or managers..."
       [(ngModel)]="searchText"
       (input)="filterClubs()"
@@ -23,9 +23,9 @@
   </div>
 
   <!-- Club cards -->
-  <div *ngIf="!(loading$ | async) && !(error$ | async)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 p-3">
+  <div *ngIf="!(loading$ | async) && !(error$ | async)" class="grid gap-3 p-3 justify-center" style="grid-template-columns: repeat(auto-fit, minmax(280px, 280px)); max-width: 1400px; margin: 0 auto;">
     <div *ngFor="let club of filteredClubs" 
-         class="bg-admin-card rounded-lg border border-admin-accent p-5 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 flex flex-col items-center cursor-pointer"
+         class="bg-admin-card rounded-lg border-2 p-5 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 flex flex-col items-center cursor-pointer"
          [style.border-color]="club.primaryColour || '#394867'"
          [routerLink]="['/clubs', club._id]">
       <div class="text-center w-full flex flex-col items-center">

@@ -2,13 +2,13 @@
   <h1 class="text-center mb-5 text-4xl font-bold">League Standings</h1>
   
   <!-- Season Filter -->
-  <div class="flex items-center gap-2 mb-5 p-4 bg-admin-card border border-admin-accent rounded-lg">
+  <div class="flex items-center gap-2 mb-5 p-4 bg-admin-card rounded-lg">
     <label for="seasonSelect" class="font-medium text-white">Season:</label>
     <select 
       id="seasonSelect" 
       [(ngModel)]="selectedSeasonId" 
       (change)="onSeasonChange()"
-      class="px-3 py-2 bg-admin-hover text-white border border-admin-accent rounded text-sm cursor-pointer focus:outline-none focus:border-admin-primary"
+      class="px-3 py-2 bg-admin-hover text-white rounded text-sm cursor-pointer focus:outline-none focus:border-admin-primary"
     >
       <option *ngFor="let season of (seasons$ | async)" [value]="season._id">
         {{ season.name }}
@@ -22,7 +22,7 @@
   </div>
 
   <!-- Error state -->
-  <div *ngIf="seasonsError$ | async as error" class="text-center text-red-500 py-8 bg-red-500/10 border border-red-500 rounded-lg my-5">
+  <div *ngIf="seasonsError$ | async as error" class="text-center text-red-500 py-8 bg-red-500/10 rounded-lg my-5">
     <p>{{ error }}</p>
   </div>
 
@@ -35,7 +35,7 @@
       </h2>
       
       <div class="w-full overflow-x-auto">
-        <table class="w-full bg-admin-card text-white border-collapse border border-admin-accent rounded-lg overflow-hidden mb-5">
+        <table class="w-full bg-admin-card text-white border-collapse rounded-lg overflow-hidden mb-5">
           <thead class="bg-admin-accent">
             <tr>
               <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">Team</th>
@@ -88,7 +88,7 @@
   </div>
   
   <!-- Legend -->
-  <div class="mt-8 p-4 bg-admin-card border border-admin-accent rounded-lg text-white">
+  <div class="mt-8 p-4 bg-admin-card rounded-lg text-white">
     <div class="flex flex-wrap gap-4 mb-3">
       <span>GP: Games Played</span>
       <span>W: Wins</span>

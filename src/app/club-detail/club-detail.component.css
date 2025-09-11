@@ -28,7 +28,7 @@
   border: 2px solid #34495e;
   color: #90caf9;
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 20px;
@@ -62,7 +62,7 @@
 .season-selector select {
   background: #1a1f2e;
   border: 1px solid #394867;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 12px;
   color: #fff;
   font-size: 14px;

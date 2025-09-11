@@ -343,7 +343,7 @@ export class AdminScheduleComponent implements OnInit {
         
         <div style="margin-bottom: 20px;">
           ${eashlGames.map((game, i) => `
-            <label style="display: block; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+            <label style="display: block; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">
               <input type="checkbox" name="mergeGame" value="${game.matchId}" style="margin-right: 10px;">
               <strong>${this.formatEashlGameLabel(game, primaryGame)}</strong>
             </label>
@@ -352,7 +352,7 @@ export class AdminScheduleComponent implements OnInit {
         
         <div style="text-align: right;">
           <button onclick="window.mergeCancel()" style="margin-right: 10px; padding: 8px 16px; border: 1px solid #ccc; background: #f5f5f5; cursor: pointer;">Cancel</button>
-          <button onclick="window.mergeEashlGames()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Merge Selected Games</button>
+          <button onclick="window.mergeEashlGames()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer;">Merge Selected Games</button>
         </div>
       </div>
     `;

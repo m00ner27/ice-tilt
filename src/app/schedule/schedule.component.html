@@ -9,8 +9,8 @@
         id="seasonFilter" 
         [(ngModel)]="filterSeason" 
         (change)="onSeasonFilterChange(filterSeason)" 
-        class="px-3 py-2 rounded-md bg-admin-card border border-admin-accent text-white min-w-36 appearance-none cursor-pointer bg-no-repeat bg-right-2 bg-center pr-8"
-        style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'white\'%3e%3cpath d=\'M7 10l5 5 5-5z\'/%3e%3c/svg%3e');"
+        class="px-3 py-2 rounded-md bg-admin-card text-white min-w-40 appearance-none cursor-pointer"
+        style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'white\'%3e%3cpath d=\'M7 10l5 5 5-5z\'/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 40px;"
       >
         <option value="">All Seasons</option>
         <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
@@ -23,8 +23,8 @@
         id="teamFilter" 
         [(ngModel)]="filterTeam" 
         (change)="onTeamFilterChange(filterTeam)" 
-        class="px-3 py-2 rounded-md bg-admin-card border border-admin-accent text-white min-w-36 appearance-none cursor-pointer bg-no-repeat bg-right-2 bg-center pr-8"
-        style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'white\'%3e%3cpath d=\'M7 10l5 5 5-5z\'/%3e%3c/svg%3e');"
+        class="px-3 py-2 rounded-md bg-admin-card text-white min-w-40 appearance-none cursor-pointer"
+        style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'white\'%3e%3cpath d=\'M7 10l5 5 5-5z\'/%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; padding-right: 40px;"
       >
         <option value="">All Clubs</option>
         <option *ngFor="let team of teamOptions" [value]="team">{{ team }}</option>
@@ -34,7 +34,7 @@
     <div class="flex items-center">
       <button 
         (click)="clearAllFilters()" 
-        class="px-4 py-2 rounded-md bg-red-600 border border-red-700 text-white cursor-pointer font-medium transition-all duration-300 hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md"
+        class="px-4 py-2 rounded-md bg-red-600 text-white cursor-pointer font-medium transition-all duration-300 hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md"
         type="button"
       >
         Clear All Filters
@@ -48,71 +48,166 @@
   </div>
   
   <!-- Schedule table -->
-  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length > 0" class="overflow-x-auto rounded-lg border border-admin-accent bg-admin-card">
-    <table class="w-full border-collapse bg-admin-card text-white text-sm min-w-96">
-      <thead class="bg-admin-accent sticky top-0 z-10">
-        <tr>
-          <th (click)="onSortChange('date')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
-            Date
-          </th>
-          <th></th>
-          <th (click)="onSortChange('homeTeam')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
-            <span class="hidden md:inline">Home Club</span>
-            <span class="md:hidden">Home</span>
-          </th>
-          <th></th>
-          <th class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap">Score</th>
-          <th></th>
-          <th (click)="onSortChange('awayTeam')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
-            <span class="hidden md:inline">Away Club</span>
-            <span class="md:hidden">Away</span>
-          </th>
-          <th></th>
-          <th class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide border-b-2 border-admin-primary whitespace-nowrap">
-            <span class="hidden md:inline">Details</span>
-            <span class="md:hidden">View</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let match of filteredMatches" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
-          <td class="px-3 py-3 text-left font-semibold text-admin-primary whitespace-nowrap">
-            <span class="hidden md:inline">{{ formatDate(match.date) }}</span>
-            <span class="md:hidden">{{ formatDateMobile(match.date) }}</span>
-          </td>
-          <td class="px-3 py-3 text-right">
-            <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.homeTeam }}</a>
-          </td>
-          <td class="px-3 py-3 text-center">
-            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
-          </td>
-          <td class="px-3 py-3 text-center">
-            <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-sm">W</span>
-            <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-sm">L</span>
-          </td>
-          <td class="px-3 py-3 text-center">
-            <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="text-gray-400 font-semibold">VS</span>
+  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length > 0" class="rounded-lg bg-admin-card">
+    <!-- Desktop Table View (lg and larger) -->
+    <div class="hidden lg:block overflow-x-auto rounded-lg">
+      <table class="w-full border-collapse bg-admin-card text-white text-sm rounded-lg overflow-hidden">
+        <thead class="bg-admin-accent sticky top-0 z-10">
+          <tr>
+            <th (click)="onSortChange('date')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
+              Date
+            </th>
+            <th></th>
+            <th (click)="onSortChange('homeTeam')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
+              Home Club
+            </th>
+            <th></th>
+            <th class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap">Score</th>
+            <th></th>
+            <th (click)="onSortChange('awayTeam')" class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
+              Away Club
+            </th>
+            <th></th>
+            <th class="px-3 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap">
+              Details
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let match of filteredMatches" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
+            <td class="px-3 py-3 text-left font-semibold text-admin-primary whitespace-nowrap">
+              {{ formatDate(match.date) }}
+            </td>
+            <td class="px-3 py-3 text-right">
+              <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.homeTeam }}</a>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
+            </td>
+            <td class="px-3 py-3 text-center">
+              <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-sm">W</span>
+              <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-sm">L</span>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="text-gray-400 font-semibold">VS</span>
+              <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="font-semibold text-lg">{{ match.homeScore }} - {{ match.awayScore }}</span>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-sm">W</span>
+              <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-sm">L</span>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
+            </td>
+            <td class="px-3 py-3 text-left">
+              <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.awayTeam }}</a>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <a [routerLink]="['/match', match.id]" class="inline-block px-3 py-1.5 bg-gradient-to-r from-admin-secondary to-blue-700 text-white text-xs font-medium rounded-md transition-all duration-300 border border-blue-700 shadow-md hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md">
+                View Details
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Medium Screen Table View (md to lg) -->
+    <div class="hidden md:block lg:hidden overflow-x-auto rounded-lg">
+      <table class="w-full border-collapse bg-admin-card text-white text-sm min-w-0 rounded-lg overflow-hidden">
+        <thead class="bg-admin-accent sticky top-0 z-10">
+          <tr>
+            <th (click)="onSortChange('date')" class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors w-24">
+              Date
+            </th>
+            <th (click)="onSortChange('homeTeam')" class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
+              Home
+            </th>
+            <th class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap w-16">Score</th>
+            <th (click)="onSortChange('awayTeam')" class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap cursor-pointer hover:bg-admin-hover transition-colors">
+              Away
+            </th>
+            <th class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide  whitespace-nowrap w-20">
+              Details
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let match of filteredMatches" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
+            <td class="px-2 py-3 text-center font-semibold text-admin-primary text-xs">
+              <div class="whitespace-nowrap">{{ formatDateMobile(match.date) }}</div>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <div class="flex items-center justify-center space-x-1">
+                <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-xs truncate max-w-28">{{ match.homeTeam }}</a>
+                <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-5 h-5 object-contain rounded">
+                <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
+                <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
+              </div>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="text-gray-400 font-semibold text-sm">VS</span>
+              <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="font-semibold text-sm">{{ match.homeScore }}-{{ match.awayScore }}</span>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <div class="flex items-center justify-center space-x-1">
+                <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
+                <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
+                <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-5 h-5 object-contain rounded">
+                <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-xs truncate max-w-28">{{ match.awayTeam }}</a>
+              </div>
+            </td>
+            <td class="px-2 py-3 text-center">
+              <a [routerLink]="['/match', match.id]" class="inline-block px-2 py-1 bg-gradient-to-r from-admin-secondary to-blue-700 text-white text-xs font-medium rounded transition-all duration-300 border border-blue-700 shadow-md hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md">
+                View
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="md:hidden space-y-3 p-4">
+      <div *ngFor="let match of filteredMatches" class="bg-admin-hover rounded-lg p-4">
+        <!-- Date Row -->
+        <div class="text-center mb-3">
+          <span class="text-admin-primary font-semibold text-sm">{{ formatDate(match.date) }}</span>
+        </div>
+        
+        <!-- Teams and Score Row -->
+        <div class="flex items-center justify-between mb-3">
+          <!-- Home Team -->
+          <div class="flex items-center space-x-2 flex-1 justify-end">
+            <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-sm">{{ match.homeTeam }}</a>
+            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain rounded">
+            <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
+            <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
+          </div>
+          
+          <!-- Score -->
+          <div class="mx-4 text-center">
+            <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="text-gray-400 font-semibold text-sm">VS</span>
             <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="font-semibold text-lg">{{ match.homeScore }} - {{ match.awayScore }}</span>
-          </td>
-          <td class="px-3 py-3 text-center">
-            <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-sm">W</span>
-            <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-sm">L</span>
-          </td>
-          <td class="px-3 py-3 text-center">
-            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
-          </td>
-          <td class="px-3 py-3 text-left">
-            <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.awayTeam }}</a>
-          </td>
-          <td class="px-3 py-3 text-center">
-            <a [routerLink]="['/match', match.id]" class="inline-block px-3 py-1.5 bg-gradient-to-r from-admin-secondary to-blue-700 text-white text-xs font-medium rounded-md transition-all duration-300 border border-blue-700 shadow-md hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md">
-              <span class="hidden md:inline">View Details</span>
-              <span class="md:hidden">View</span>
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          </div>
+          
+          <!-- Away Team -->
+          <div class="flex items-center space-x-2 flex-1 justify-start">
+            <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
+            <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
+            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain rounded">
+            <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-sm">{{ match.awayTeam }}</a>
+          </div>
+        </div>
+        
+        <!-- Details Button -->
+        <div class="text-center">
+          <a [routerLink]="['/match', match.id]" class="inline-block px-4 py-2 bg-gradient-to-r from-admin-secondary to-blue-700 text-white text-xs font-medium rounded-md transition-all duration-300 border border-blue-700 shadow-md hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md">
+            View Details
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
   
   <!-- No matches message -->
@@ -126,7 +221,7 @@
   </div>
   
   <!-- Legend -->
-  <div *ngIf="!isPreview" class="bg-admin-card border border-admin-accent rounded-lg p-4 mt-5 text-sm">
+  <div *ngIf="!isPreview" class="bg-admin-card rounded-lg p-4 mt-5 text-sm">
     <div class="mb-2">
       <span class="text-green-500 font-bold">W</span> - Win
       <span class="text-red-500 font-bold ml-4">L</span> - Loss

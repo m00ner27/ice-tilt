@@ -10,7 +10,7 @@
 .header-left{display:flex;align-items:center;gap:1rem}
 .header-left h1{margin:0;font-size:2rem;color:#fff}
 .player-number{color:#3498db}
-.player-status,.status-badge{padding:.5rem 1rem;border-radius:20px;font-weight:500;font-size:.9rem;margin-left:.75rem;display:inline-block;text-transform:uppercase;letter-spacing:.5px}
+.player-status,.status-badge{padding:.5rem 1rem;border-radius:8px;font-weight:500;font-size:.9rem;margin-left:.75rem;display:inline-block;text-transform:uppercase;letter-spacing:.5px}
 .player-status.free.agent,.status-badge.free-agent{background:linear-gradient(135deg,#e67e22,#f39c12);color:#fff}
 .player-status.signed,.status-badge.signed{background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff}
 .player-status.pending,.status-badge.pending{background:linear-gradient(135deg,#f1c40f,#f39c12);color:#2c3e50}
@@ -23,7 +23,7 @@
 .list-icon,.detail-icon{font-size:1rem;color:#3498db;min-width:20px}
 .list-label,.detail-label{color:#3498db;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.2px;min-width:80px}
 .list-value,.detail-value{color:#ecf0f1;font-weight:500;font-size:.9rem}
-.secondary-label{color:#3498db;font-size:.7rem;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.2px;text-align:center;padding:2px 6px;background:#3498db1a;border-radius:3px;border:1px solid #3498db4d}
+.secondary-label{color:#3498db;font-size:.7rem;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.2px;text-align:center;padding:2px 6px;background:#3498db1a;border-radius:4px;border:1px solid #3498db4d}
 .career-clubs-section{margin-top:1rem;text-align:left;background:linear-gradient(135deg,#34495e99,#2c3e50b3);border-radius:8px;padding:16px;border:1px solid #3498db33}
 .career-clubs-logos{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:.5rem;justify-content:flex-start;align-items:center}
 .career-clubs-section .detail-item{display:flex;align-items:center;justify-content:flex-start;gap:1rem}

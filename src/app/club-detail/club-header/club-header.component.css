@@ -48,7 +48,7 @@
 .record-box {
   background-color: #1e2a38;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 5px 12px;
   display: flex;
   flex-direction: column;

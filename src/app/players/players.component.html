@@ -16,7 +16,7 @@
             [(ngModel)]="searchTerm"
             (input)="onSearchChange($event)"
             placeholder="Search by name or gamertag..."
-            class="px-3 py-2 rounded border border-admin-accent bg-admin-card text-white w-full max-w-md placeholder-gray-400 focus:outline-none focus:border-admin-primary"
+            class="px-3 py-2 rounded bg-admin-card text-white w-full max-w-md placeholder-gray-400 focus:outline-none focus:border-admin-primary"
           >
         </div>
 
@@ -24,19 +24,19 @@
           <!-- Position Filters -->
           <div class="flex gap-2 flex-wrap">
             <button 
-              [class]="positionFilter === 'All' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded border border-admin-accent bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              [class]="positionFilter === 'All' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
               (click)="onPositionFilterChange('All')"
             >All Positions</button>
             <button 
-              [class]="positionFilter === 'Forward' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded border border-admin-accent bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              [class]="positionFilter === 'Forward' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
               (click)="onPositionFilterChange('Forward')"
             >Forwards</button>
             <button 
-              [class]="positionFilter === 'Defense' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded border border-admin-accent bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              [class]="positionFilter === 'Defense' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
               (click)="onPositionFilterChange('Defense')"
             >Defense</button>
             <button 
-              [class]="positionFilter === 'Goalie' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded border border-admin-accent bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              [class]="positionFilter === 'Goalie' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
               (click)="onPositionFilterChange('Goalie')"
             >Goalies</button>
           </div>
@@ -44,15 +44,15 @@
           <!-- Region Filters -->
           <div class="flex gap-2 flex-wrap">
             <button 
-              [class]="regionFilter === 'All' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded border border-admin-accent bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              [class]="regionFilter === 'All' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
               (click)="onRegionFilterChange('All')"
             >All Regions</button>
             <button 
-              [class]="regionFilter === 'North America' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded border border-admin-accent bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              [class]="regionFilter === 'North America' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
               (click)="onRegionFilterChange('North America')"
             >North America</button>
             <button 
-              [class]="regionFilter === 'Europe' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded border border-admin-accent bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              [class]="regionFilter === 'Europe' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
               (click)="onRegionFilterChange('Europe')"
             >Europe</button>
           </div>
@@ -64,7 +64,7 @@
               id="seasonSelect" 
               [(ngModel)]="seasonFilter" 
               (change)="onSeasonFilterChange(seasonFilter)"
-              class="px-3 py-2 rounded border border-admin-accent bg-admin-card text-white cursor-pointer focus:outline-none focus:border-admin-primary"
+              class="px-3 py-2 rounded bg-admin-card text-white cursor-pointer focus:outline-none focus:border-admin-primary"
             >
               <option *ngFor="let season of (seasons$ | async)" [value]="season.name">{{ season.name }}</option>
             </select>
@@ -73,8 +73,8 @@
       </div>
 
       <!-- Players List -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        <div class="bg-admin-card border border-admin-accent rounded-lg p-4 flex flex-col gap-2" *ngFor="let player of filteredPlayers">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="bg-admin-card rounded-lg p-4 flex flex-col gap-2" *ngFor="let player of filteredPlayers">
           <div class="flex-1">
             <h3 class="text-white m-0 mb-1 text-xl font-semibold flex items-center">
               <img *ngIf="player.clubLogo" [src]="player.clubLogo" [alt]="player.currentClubName" class="w-6 h-6 object-contain mr-2">
