@@ -10,13 +10,15 @@ import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store';
 import * as UsersSelectors from '../store/users.selectors';
+import { ApiService } from '../store/services/api.service';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './edit-profile.component.html',
-  styleUrls: ['./edit-profile.component.css'],
 })
 export class EditProfileComponent implements OnInit {
   availablePositions = ['C', 'RW', 'LW', 'RD', 'LD', 'G'];
@@ -59,16 +61,34 @@ export class EditProfileComponent implements OnInit {
   loading = false;
   error = '';
   success = '';
+  isAdmin$: Observable<boolean>;
 
   constructor(
     private auth: AuthService, 
     private router: Router,
     private ngrxApiService: NgRxApiService,
-    private store: Store<AppState>
-  ) {}
+    private store: Store<AppState>,
+    private apiService: ApiService
+  ) {
+    // Check if current user is admin
+    this.isAdmin$ = this.auth.isAuthenticated$.pipe(
+      map(isAuth => {
+        if (!isAuth) return false;
+        return true; // Will be checked in template
+      })
+    );
+  }
 
   ngOnInit() {
     this.loadUser();
+  }
+
+  // Method to check if current user is admin
+  checkAdminStatus(): Observable<boolean> {
+    return this.apiService.getMyAdminRecord().pipe(
+      map((admin: any) => !!admin),
+      catchError(() => of(false))
+    );
   }
 
   loadUser() {
@@ -144,50 +164,67 @@ export class EditProfileComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.success = '';
-    if (!this.form.gamertag) {
-      this.error = 'Gamertag is required.';
-      this.loading = false;
-      return;
-    }
-    this.auth.getAccessTokenSilently({
-      authorizationParams: { audience: environment.apiAudience }
-    }).subscribe({
-      next: (token) => {
-        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-        const update = {
-          email: this.user.email,
-          name: this.user.name,
-          auth0Id: this.user.auth0Id,
-          platform: this.form.platform,
-          gamertag: this.form.gamertag || '',
-          playerProfile: {
-            position: this.form.primaryPosition,
-            secondaryPositions: this.form.secondaryPositions,
-            handedness: this.form.handedness,
-            country: this.form.country,
-            region: this.form.region,
-            status: this.user.playerProfile?.status || 'Free Agent',
-          }
-        };
-        // Use NgRx to update current user
-        this.ngrxApiService.updateCurrentUser(update);
-        
-        // Subscribe to update success from the store
-        this.store.select(UsersSelectors.selectCurrentUser).subscribe({
-          next: (updated: any) => {
-            this.success = 'Profile updated!';
-            this.loading = false;
-          },
-          error: (err) => {
-            this.error = 'Failed to update profile.';
-            this.loading = false;
-          }
-        });
-      },
-      error: (err) => {
-        this.error = 'Failed to get access token.';
+    
+    // Check if user is admin before validating gamertag
+    this.checkAdminStatus().subscribe(isAdmin => {
+      // Only validate gamertag if user is admin
+      if (isAdmin && !this.form.gamertag) {
+        this.error = 'Gamertag is required.';
         this.loading = false;
+        return;
       }
+      
+      this.performUpdate();
+    });
+  }
+
+  private performUpdate() {
+    this.checkAdminStatus().subscribe(isAdmin => {
+      this.auth.getAccessTokenSilently({
+        authorizationParams: { audience: environment.apiAudience }
+      }).subscribe({
+        next: (token) => {
+          const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+          const update: any = {
+            email: this.user.email,
+            name: this.user.name,
+            auth0Id: this.user.auth0Id,
+            platform: this.form.platform,
+            playerProfile: {
+              position: this.form.primaryPosition,
+              secondaryPositions: this.form.secondaryPositions,
+              handedness: this.form.handedness,
+              country: this.form.country,
+              region: this.form.region,
+              status: this.user.playerProfile?.status || 'Free Agent',
+            }
+          };
+          
+          // Only include gamertag if user is admin
+          if (isAdmin) {
+            update.gamertag = this.form.gamertag || '';
+          }
+          
+          // Use NgRx to update current user
+          this.ngrxApiService.updateCurrentUser(update);
+          
+          // Subscribe to update success from the store
+          this.store.select(UsersSelectors.selectCurrentUser).subscribe({
+            next: (updated: any) => {
+              this.success = 'Profile updated!';
+              this.loading = false;
+            },
+            error: (err) => {
+              this.error = 'Failed to update profile.';
+              this.loading = false;
+            }
+          });
+        },
+        error: (err) => {
+          this.error = 'Failed to get access token.';
+          this.loading = false;
+        }
+      });
     });
   }
 }

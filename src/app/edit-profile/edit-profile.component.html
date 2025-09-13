@@ -1,71 +1,168 @@
-<div class="edit-profile-container">
-  <h2 class="title">Edit Profile</h2>
+<div class="max-w-md mx-auto mt-10 bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl">
+  <h2 class="text-center text-2xl font-bold text-cyan-400 mb-6">Edit Profile</h2>
 
-  <div *ngIf="user" class="discord-username">
+  <div *ngIf="user" class="text-center text-lg text-white mb-4 font-medium">
     Discord: {{ user.nickname || user.name || form.discordId }}
   </div>
 
-  <form (ngSubmit)="submit()" *ngIf="!loading; else loadingTpl">
-    <div class="form-group">
-      <label for="discordId">Discord ID</label>
-      <input id="discordId" type="text" class="form-control" [value]="form.discordId" readonly />
+  <form (ngSubmit)="submit()" *ngIf="!loading; else loadingTpl" class="space-y-6">
+    <!-- Discord ID -->
+    <div>
+      <label for="discordId" class="block text-sm font-medium text-white mb-2">Discord ID</label>
+      <input 
+        id="discordId" 
+        type="text" 
+        class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" 
+        [value]="form.discordId" 
+        readonly />
     </div>
 
-    <div class="form-group">
-      <label>Platform</label>
-      <label><input type="radio" name="platform" value="PS5" [(ngModel)]="form.platform" /> PS5</label>
-      <label><input type="radio" name="platform" value="Xbox" [(ngModel)]="form.platform" /> Xbox</label>
-    </div>
-
-    <div class="form-group">
-      <label for="gamertag">Gamertag</label>
-      <input id="gamertag" type="text" class="form-control" [(ngModel)]="form.gamertag" name="gamertag" required />
-    </div>
-
-    <div class="form-group">
-      <label for="primaryPosition">Primary Position</label>
-      <select id="primaryPosition" class="form-control" [(ngModel)]="form.primaryPosition" name="primaryPosition">
-        <option *ngFor="let pos of availablePositions" [value]="pos">{{ pos }}</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Secondary Positions</label>
-      <div class="checkbox-group">
-        <label *ngFor="let pos of availablePositions">
-          <input type="checkbox" [checked]="form.secondaryPositions.includes(pos)" (change)="toggleSecondaryPosition(pos)" /> {{ pos }}
+    <!-- Platform -->
+    <div>
+      <label class="block text-sm font-medium text-white mb-3">Platform</label>
+      <div class="flex space-x-4">
+        <label class="flex items-center text-white">
+          <input 
+            type="radio" 
+            name="platform" 
+            value="PS5" 
+            [(ngModel)]="form.platform" 
+            class="mr-2 text-cyan-500 focus:ring-cyan-500" />
+          PS5
+        </label>
+        <label class="flex items-center text-white">
+          <input 
+            type="radio" 
+            name="platform" 
+            value="Xbox" 
+            [(ngModel)]="form.platform" 
+            class="mr-2 text-cyan-500 focus:ring-cyan-500" />
+          Xbox
         </label>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Handedness</label>
-      <label><input type="radio" name="handedness" value="Left" [(ngModel)]="form.handedness" /> Left</label>
-      <label><input type="radio" name="handedness" value="Right" [(ngModel)]="form.handedness" /> Right</label>
+    <!-- Gamertag -->
+    <div>
+      <label for="gamertag" class="block text-sm font-medium text-white mb-2">Gamertag</label>
+      
+      <!-- Admin view: editable input -->
+      <div *ngIf="isAdmin$ | async">
+        <input 
+          id="gamertag" 
+          type="text" 
+          class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" 
+          [(ngModel)]="form.gamertag" 
+          name="gamertag" 
+          required
+          placeholder="Enter gamertag" />
+      </div>
+      
+      <!-- Non-admin view: read-only label -->
+      <div *ngIf="!(isAdmin$ | async)">
+        <div class="flex items-center px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-300 font-mono">
+          <span class="mr-2 text-slate-500">🔒</span>
+          <span class="text-white">{{ form.gamertag || 'No gamertag set' }}</span>
+        </div>
+        <div class="flex items-center mt-2 text-xs text-slate-400">
+          <span class="mr-1">🔒</span>
+          <span>Only administrators can change gamertags. Contact an admin if you need to update your gamertag.</span>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="region">Region</label>
-      <select id="region" class="form-control" [(ngModel)]="form.region" name="region" (change)="onRegionChange()">
+    <!-- Primary Position -->
+    <div>
+      <label for="primaryPosition" class="block text-sm font-medium text-white mb-2">Primary Position</label>
+      <select 
+        id="primaryPosition" 
+        class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" 
+        [(ngModel)]="form.primaryPosition" 
+        name="primaryPosition">
+        <option *ngFor="let pos of availablePositions" [value]="pos">{{ pos }}</option>
+      </select>
+    </div>
+
+    <!-- Secondary Positions -->
+    <div>
+      <label class="block text-sm font-medium text-white mb-3">Secondary Positions</label>
+      <div class="flex flex-wrap gap-3">
+        <label *ngFor="let pos of availablePositions" class="flex items-center text-white">
+          <input 
+            type="checkbox" 
+            [checked]="form.secondaryPositions.includes(pos)" 
+            (change)="toggleSecondaryPosition(pos)" 
+            class="mr-2 text-cyan-500 focus:ring-cyan-500 rounded" />
+          {{ pos }}
+        </label>
+      </div>
+    </div>
+
+    <!-- Handedness -->
+    <div>
+      <label class="block text-sm font-medium text-white mb-3">Handedness</label>
+      <div class="flex space-x-4">
+        <label class="flex items-center text-white">
+          <input 
+            type="radio" 
+            name="handedness" 
+            value="Left" 
+            [(ngModel)]="form.handedness" 
+            class="mr-2 text-cyan-500 focus:ring-cyan-500" />
+          Left
+        </label>
+        <label class="flex items-center text-white">
+          <input 
+            type="radio" 
+            name="handedness" 
+            value="Right" 
+            [(ngModel)]="form.handedness" 
+            class="mr-2 text-cyan-500 focus:ring-cyan-500" />
+          Right
+        </label>
+      </div>
+    </div>
+
+    <!-- Region -->
+    <div>
+      <label for="region" class="block text-sm font-medium text-white mb-2">Region</label>
+      <select 
+        id="region" 
+        class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" 
+        [(ngModel)]="form.region" 
+        name="region" 
+        (change)="onRegionChange()">
         <option *ngFor="let reg of availableRegions" [value]="reg">{{ reg }}</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label for="country">Country</label>
-      <select id="country" class="form-control" [(ngModel)]="form.country" name="country">
+    <!-- Country -->
+    <div>
+      <label for="country" class="block text-sm font-medium text-white mb-2">Country</label>
+      <select 
+        id="country" 
+        class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" 
+        [(ngModel)]="form.country" 
+        name="country">
         <option *ngFor="let c of filteredCountries" [value]="c.name">{{ c.emoji }} {{ c.name }}</option>
       </select>
     </div>
 
-    <button type="submit" class="submit-btn" [disabled]="loading">Update Profile</button>
+    <!-- Submit Button -->
+    <button 
+      type="submit" 
+      class="w-full py-3 px-4 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-slate-800 font-bold rounded-md transition-colors duration-200" 
+      [disabled]="loading">
+      {{ loading ? 'Updating...' : 'Update Profile' }}
+    </button>
 
-    <div *ngIf="error" class="error-message">{{ error }}</div>
-    <div *ngIf="success" class="success-message">{{ success }}</div>
+    <!-- Messages -->
+    <div *ngIf="error" class="text-center text-red-400 text-sm mt-4">{{ error }}</div>
+    <div *ngIf="success" class="text-center text-cyan-400 text-sm mt-4">{{ success }}</div>
   </form>
 
   <ng-template #loadingTpl>
-    <div class="loading-message">Loading profile...</div>
+    <div class="text-center text-slate-400">Loading profile...</div>
   </ng-template>
 </div>
   
