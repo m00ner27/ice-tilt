@@ -186,7 +186,6 @@ export class EditProfileComponent implements OnInit {
         next: (token) => {
           const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
           const update: any = {
-            email: this.user.email,
             name: this.user.name,
             auth0Id: this.user.auth0Id,
             platform: this.form.platform,

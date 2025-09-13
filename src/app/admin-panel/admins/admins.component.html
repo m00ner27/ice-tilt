@@ -55,7 +55,7 @@
       <thead>
         <tr>
           <th>Username</th>
-          <th>Email</th>
+          <th>Discord Username</th>
           <th>Super Admin</th>
           <th>Note</th>
           <th>Created</th>
@@ -65,7 +65,7 @@
       <tbody>
         <tr *ngFor="let a of admins">
           <td class="text-break">{{ a.username || 'Unknown' }}</td>
-          <td>{{ a.email || 'Unknown' }}</td>
+          <td>{{ a.discordUsername || 'Unknown' }}</td>
           <td>
             <span class="badge" [ngClass]="a.superAdmin ? 'bg-success' : 'bg-secondary'">{{ a.superAdmin ? 'Yes' : 'No' }}</span>
           </td>
