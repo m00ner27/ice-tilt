@@ -12,7 +12,10 @@
     <img [src]="club?.image" [alt]="club?.clubName" class="club-logo mobile-logo">
     <h1>{{club?.clubName}}</h1>
     
-    <div class="record-box" *ngIf="club?.stats">
+    <div class="record-box" 
+         [style.background-color]="club?.colour"
+         [style.color]="getContrastingTextColor(club?.colour)"
+         *ngIf="club?.stats">
       <span class="stat-label">Record</span>
       <span class="stat-value">{{club.stats.wins}}-{{club.stats.losses}}-{{club.stats.otLosses}}</span>
     </div>

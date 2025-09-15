@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, filter } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { MatchHistoryComponent } from './match-history/match-history.component';
@@ -109,29 +109,18 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   private setupDataSubscriptions() {
     // Subscribe to selected club changes
     this.selectedClub$.pipe(takeUntil(this.destroy$)).subscribe(club => {
-      console.log('=== CLUB SUBSCRIPTION ===');
-      console.log('Club received:', club);
-      console.log('Club type:', typeof club);
-      console.log('Club keys:', club ? Object.keys(club) : 'null');
-      
       if (club) {
         this.backendClub = club as any;
-        console.log('Backend club set:', this.backendClub);
-        console.log('Backend club _id:', this.backendClub?._id);
-        console.log('Backend club name:', this.backendClub?.name);
         this.club = this.mapBackendClubToFrontend(club);
         // Filter matches for the new club
         this.clubMatches = this.matches.filter(match => 
           match.homeClubId?.name === club.name || match.awayClubId?.name === club.name
         );
-        console.log('Filtered club matches after club change:', this.clubMatches);
         // Update club roster selector for the new club
         this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(club._id));
         
         // Trigger season selection now that we have the club data
         this.selectSeasonForClub();
-      } else {
-        console.log('No club received, backendClub remains:', this.backendClub);
       }
     });
 
@@ -142,29 +131,22 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
     // Subscribe to seasons
     this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
-      console.log('=== SEASONS SUBSCRIPTION ===');
-      console.log('Seasons received:', seasons);
-      console.log('Seasons length:', seasons?.length || 0);
-      
       this.seasons = seasons;
       
-      // Try to select a season for the current club
-      this.selectSeasonForClub();
+      // Only try to select a season if we don't have one selected yet
+      if (!this.selectedSeasonId) {
+        this.selectSeasonForClub();
+      }
     });
 
     // Subscribe to matches and recalculate stats when they change
     this.matches$.pipe(takeUntil(this.destroy$)).subscribe(matches => {
-      console.log('=== MATCHES SUBSCRIPTION ===');
-      console.log('Matches received:', matches);
-      console.log('Matches length:', matches?.length || 0);
-      
       this.matches = matches;
       // Filter matches for current club
       if (this.backendClub) {
         this.clubMatches = matches.filter(match => 
           match.homeClubId?.name === this.backendClub?.name || match.awayClubId?.name === this.backendClub?.name
         );
-        console.log('Filtered club matches:', this.clubMatches);
         this.club = this.mapBackendClubToFrontend(this.backendClub);
       }
     });
@@ -178,8 +160,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       this.error = error;
     });
 
-    // Subscribe to club roster data
-    this.clubRoster$.pipe(takeUntil(this.destroy$)).subscribe(roster => {
+    // Subscribe to club roster data - only if we have a club selected
+    this.clubRoster$.pipe(
+      takeUntil(this.destroy$),
+      filter(roster => roster !== undefined)
+    ).subscribe(roster => {
       this.processRosterData(roster);
     });
   }
@@ -200,54 +185,44 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   selectSeasonForClub() {
-    if (this.seasons && this.seasons.length > 0 && !this.selectedSeasonId && this.backendClub) {
+    // Only auto-select if we don't have a season selected yet
+    if (this.selectedSeasonId) {
+      return;
+    }
+    
+    if (this.seasons && this.seasons.length > 0 && this.backendClub) {
       const clubSeasons = this.backendClub.seasons || [];
-      console.log('Club seasons for season selection:', clubSeasons);
       
       if (clubSeasons.length > 0) {
         // Find the first season that the club is active in
         const firstClubSeason = clubSeasons[0];
-        const seasonId = firstClubSeason.seasonId;
-        console.log('Auto-selecting club season:', seasonId);
+        // Handle both object and string seasonId formats
+        const seasonId = typeof firstClubSeason.seasonId === 'object' && firstClubSeason.seasonId._id 
+          ? firstClubSeason.seasonId._id 
+          : firstClubSeason.seasonId;
         this.onSeasonChange(seasonId);
       } else {
         // Fallback to first available season
         const firstSeason = this.seasons[0];
-        console.log('No club seasons found, auto-selecting first available season:', firstSeason);
         this.onSeasonChange(firstSeason._id);
       }
-    } else if (this.selectedSeasonId && this.backendClub) {
-      // Load roster data if we have a season selected
-      console.log('Loading roster for club:', this.backendClub._id, 'season:', this.selectedSeasonId);
-      this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
-    } else {
-      console.log('No season selected or no club available, not loading roster');
     }
   }
 
   onSeasonChange(seasonId: string) {
-    console.log('=== SEASON CHANGE ===');
-    console.log('Selected season ID:', seasonId);
-    console.log('Backend club:', this.backendClub);
-    console.log('Available seasons:', this.seasons);
+    // Only load roster if the season actually changed
+    if (this.selectedSeasonId === seasonId) {
+      return;
+    }
     
     this.selectedSeasonId = seasonId;
     if (this.backendClub) {
-      console.log('Loading club roster for club:', this.backendClub._id, 'season:', seasonId);
-      console.log('API call will be made to:', `http://localhost:3001/api/clubs/${this.backendClub._id}/roster?seasonId=${seasonId}`);
       this.ngrxApiService.loadClubRoster(this.backendClub._id, seasonId);
-    } else {
-      console.log('No backend club available for roster loading');
     }
   }
 
   private processRosterData(roster: any[]) {
-    console.log('=== PROCESSING ROSTER DATA ===');
-    console.log('Roster data:', roster);
-    console.log('Roster length:', roster?.length || 0);
-    
     if (!roster || roster.length === 0) {
-      console.log('No roster data available');
       this.signedPlayers = [];
       this.skaterStats = [];
       this.goalieStats = [];
@@ -256,16 +231,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
     // Process signed players
     this.signedPlayers = roster.filter(player => player && player.discordUsername);
-    console.log('Signed players:', this.signedPlayers);
 
     // Process skater and goalie stats from matches
     this.processPlayerStatsFromMatches(roster);
   }
 
   private processPlayerStatsFromMatches(roster: any[]) {
-    console.log('=== PROCESSING PLAYER STATS FROM MATCHES ===');
-    console.log('Club matches:', this.clubMatches);
-    console.log('Club matches length:', this.clubMatches?.length || 0);
     
     const skaterStatsMap = new Map<string, any>();
     const goalieStatsMap = new Map<string, any>();
@@ -396,9 +367,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Convert maps to arrays
     this.skaterStats = Array.from(skaterStatsMap.values());
     this.goalieStats = Array.from(goalieStatsMap.values());
-    
-    console.log('Final skater stats:', this.skaterStats);
-    console.log('Final goalie stats:', this.goalieStats);
   }
 
   getImageUrl(logoUrl: string | undefined): string {
@@ -445,22 +413,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   private calculateClubStats(clubId: string): any {
-    console.log('=== CALCULATING CLUB STATS ===');
-    console.log('Club ID:', clubId);
-    console.log('Backend club name:', this.backendClub?.name);
-    console.log('All matches:', this.matches);
-    console.log('All matches length:', this.matches?.length || 0);
-    
     // Filter matches for this club
     const clubMatches = this.matches.filter(match => 
       match.homeTeam === this.backendClub?.name || match.awayTeam === this.backendClub?.name
     );
 
-    console.log('Filtered club matches:', clubMatches);
-    console.log('Club matches length:', clubMatches.length);
-
     if (clubMatches.length === 0) {
-      console.log('No matches found for club, returning default stats');
       return {
         wins: 0,
         losses: 0,
@@ -493,16 +451,30 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       goalsFor += ourScore;
       goalsAgainst += opponentScore;
 
-      // Determine result
-      if (ourScore > opponentScore) {
-        wins++;
-        lastTenResults.push('W');
-      } else if (ourScore < opponentScore) {
-        losses++;
-        lastTenResults.push('L');
-      } else {
-        otLosses++;
-        lastTenResults.push('OTL');
+      // Only count games that have been played (have EASHL data or actual scores > 0)
+      const hasBeenPlayed = match.eashlData && match.eashlData.matchId || 
+                           (ourScore > 0 || opponentScore > 0) ||
+                           (match.isOvertime || match.isShootout);
+
+      if (hasBeenPlayed) {
+        // Determine result
+        if (ourScore > opponentScore) {
+          wins++;
+          lastTenResults.push('W');
+        } else if (ourScore < opponentScore) {
+          losses++;
+          lastTenResults.push('L');
+        } else {
+          // Only count as OTL if it was actually an overtime/shootout game
+          if (match.isOvertime || match.isShootout) {
+            otLosses++;
+            lastTenResults.push('OTL');
+          } else {
+            // Regular tie - count as loss
+            losses++;
+            lastTenResults.push('L');
+          }
+        }
       }
     });
 

@@ -185,10 +185,22 @@ export class StandingsComponent implements OnInit, OnDestroy {
     const gamesByDivision = new Map<string, Game[]>();
     this.games.forEach(game => {
       if (game.seasonId === this.selectedSeasonId) {
-        if (!gamesByDivision.has(game.divisionId)) {
-          gamesByDivision.set(game.divisionId, []);
+        // Handle games with undefined divisionId by assigning them to the first division for this season
+        let divisionId = game.divisionId;
+        if (!divisionId && this.divisions.length > 0) {
+          const firstDivision = this.divisions.find(d => d.seasonId === this.selectedSeasonId);
+          if (firstDivision) {
+            divisionId = firstDivision._id;
+            console.log(`Assigning game ${game.id} to division ${firstDivision.name} (${divisionId})`);
+          }
         }
-        gamesByDivision.get(game.divisionId)!.push(game);
+        
+        if (divisionId) {
+          if (!gamesByDivision.has(divisionId)) {
+            gamesByDivision.set(divisionId, []);
+          }
+          gamesByDivision.get(divisionId)!.push(game);
+        }
       }
     });
 
@@ -207,14 +219,36 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   calculateDivisionStandings(games: Game[], division: Division): TeamStanding[] {
+    console.log(`=== CALCULATING STANDINGS FOR DIVISION: ${division.name} ===`);
+    console.log('Division ID:', division._id);
+    console.log('Games for this division:', games.length);
+    console.log('All clubs:', this.clubs.length);
+    
     const standingsMap = new Map<string, TeamStanding>();
 
     // Filter clubs that belong to the current division for the selected season
-    const clubsInDivision = this.clubs.filter(club =>
-      club.seasons.some((s: any) =>
-        s.seasonId === this.selectedSeasonId && s.divisionIds.includes(division._id)
-      )
-    );
+    const clubsInDivision = this.clubs.filter(club => {
+      console.log(`\n--- Checking Club: ${club.name} ---`);
+      console.log('Club seasons:', JSON.stringify(club.seasons, null, 2));
+      
+      const isInDivision = club.seasons.some((s: any) => {
+        const seasonId = s.seasonId._id || s.seasonId; // Handle both object and string formats
+        console.log(`Checking season:`, {
+          seasonId: s.seasonId,
+          seasonIdString: seasonId,
+          divisionIds: s.divisionIds,
+          matchesSelectedSeason: seasonId === this.selectedSeasonId,
+          includesDivision: s.divisionIds && s.divisionIds.includes(division._id)
+        });
+        return seasonId === this.selectedSeasonId && s.divisionIds && s.divisionIds.includes(division._id);
+      });
+      
+      console.log(`Club ${club.name} isInDivision:`, isInDivision);
+      return isInDivision;
+    });
+    
+    console.log('Clubs in division:', clubsInDivision.length);
+    console.log('Clubs in division names:', clubsInDivision.map(c => c.name));
 
     // Initialize standings for the clubs in this division
     clubsInDivision.forEach(club => {

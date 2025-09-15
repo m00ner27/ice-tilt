@@ -245,23 +245,9 @@ export class ApiService {
 
   // Club roster methods
   getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
-    console.log('=== API SERVICE: getClubRoster ===');
-    console.log('clubId:', clubId);
-    console.log('seasonId:', seasonId);
-    console.log('URL:', `${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`);
-    
     return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`).pipe(
-      tap(response => {
-        console.log('=== API SERVICE: Response received ===');
-        console.log('Response:', response);
-        console.log('Response type:', typeof response);
-        console.log('Response length:', response?.length || 0);
-      }),
       catchError(error => {
-        console.error('=== API SERVICE: Error in getClubRoster ===');
-        console.error('Error:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        console.error('Error loading club roster:', error);
         throw error;
       })
     );
