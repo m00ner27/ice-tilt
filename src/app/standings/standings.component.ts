@@ -154,8 +154,9 @@ export class StandingsComponent implements OnInit, OnDestroy {
       this.clubs = clubs;
       this.games = matches;
       this.divisions = divisions;
+      // Only recalculate standings when data changes, don't reload season data
       if (this.selectedSeasonId) {
-        this.loadSeasonData();
+        this.calculateStandings();
       }
     });
   }

@@ -67,7 +67,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
   managerSuggestions: User[] = [];
   showManagerSuggestions = false;
   highlightedSuggestionIndex = -1;
-  regions: string[] = [];
+  regions: any[] = []; // Change from string[] to any[] to store full region objects
+  regionOptions: string[] = []; // Keep this for the dropdown display
   private isSelectingManager = false; // Flag to prevent suggestions from showing during selection
 
   constructor(
@@ -166,7 +167,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
     // Load regions from API
     this.api.getRegions().subscribe(list => {
-      this.regions = (list || []).map((r: any) => r.name || r.key);
+      this.regions = list || [];
+      this.regionOptions = this.regions.map((r: any) => r.name || r.key);
     });
     
     // Subscribe to roster updates to refresh data when needed
@@ -302,6 +304,13 @@ export class ClubsComponent implements OnInit, OnDestroy {
         }
       });
       
+      // Find the regionId from the selected region name
+      const selectedRegion = this.regions.find(r => (r.name || r.key) === form.region);
+      if (!selectedRegion) {
+        console.error('Selected region not found:', form.region);
+        return;
+      }
+      
       console.log('Adding club with seasons:', seasons);
       
       const clubData = {
@@ -310,13 +319,18 @@ export class ClubsComponent implements OnInit, OnDestroy {
         manager: form.manager,
         primaryColour: form.color,
         seasons: seasons,
-        region: form.region,
+        regionId: selectedRegion._id, // Use regionId instead of region
         eashlClubId: form.eashlClubId
       };
       
-      this.api.addClub(clubData).subscribe(newClub => {
-        this.clubs.push(newClub);
-        this.cancelClubForm();
+      this.api.addClub(clubData).subscribe({
+        next: (newClub) => {
+          this.clubs.push(newClub);
+          this.cancelClubForm();
+        },
+        error: (error) => {
+          console.error('Error creating club:', error);
+        }
       });
     }
   }
@@ -751,9 +765,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   // ---------- Region helpers ----------
-  get regionOptions(): string[] {
+  get availableRegionOptions(): string[] {
     const current = (this.clubForm.get('region')?.value || '').toString();
-    const base = [...this.regions];
+    const base = [...this.regionOptions];
     if (current && !base.includes(current)) {
       base.unshift(current);
     }

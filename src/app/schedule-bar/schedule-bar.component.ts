@@ -81,7 +81,18 @@ export class ScheduleBarComponent implements OnInit {
   }
 
   isFinal(match: EashlMatch): boolean {
-    // A game is final if it has EASHL data OR if it's a merged game with scores
-    return !!match.eashlData || (!!match.eashlMatchId && match.eashlMatchId.includes('+') && match.homeScore !== undefined && match.awayScore !== undefined);
+    // A game is final if it has actual EASHL data (not just the default object)
+    if (match.eashlData && match.eashlData.matchId) {
+      return true;
+    }
+    
+    // A game is final if it's a merged game with EASHL match ID (indicates it was linked to EASHL data)
+    if (!!match.eashlMatchId && match.eashlMatchId.includes('+')) {
+      return true;
+    }
+    
+    // For games without EASHL data, only consider them final if they have actual scores (not just 0-0 defaults)
+    // This handles cases where scores were manually entered
+    return match.homeScore !== undefined && match.awayScore !== undefined && (match.homeScore > 0 || match.awayScore > 0);
   }
 }

@@ -173,7 +173,7 @@
           <label class="block text-admin-text mb-2">Region</label>
           <select formControlName="region" class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white">
             <option value="" disabled selected>Select region</option>
-            <option *ngFor="let reg of regionOptions" [value]="reg">{{ reg | titlecase }}</option>
+            <option *ngFor="let reg of availableRegionOptions" [value]="reg">{{ reg | titlecase }}</option>
           </select>
         </div>
 

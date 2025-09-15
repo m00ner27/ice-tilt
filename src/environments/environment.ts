@@ -25,7 +25,13 @@ export const environment = {
     },
     {
       uri: '/api/games',
-      allowAnonymous: true
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'http://localhost:3000',
+          scope: 'openid profile email offline_access'
+        }
+      }
     },
     {
       uri: '/api/divisions',
@@ -34,6 +40,20 @@ export const environment = {
     {
       uri: '/api/player-profiles',
       allowAnonymous: true
+    },
+    {
+      uri: '/api/regions',
+      allowAnonymous: true
+    },
+    {
+      uri: '/api/upload',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'http://localhost:3000',
+          scope: 'openid profile email offline_access'
+        }
+      }
     },
     // Protected endpoints that require authentication
     {
@@ -104,3 +124,4 @@ export const environment = {
     clientId: 'WgWpaLK0yww0VSuHQuvcKBAUWPCJcO4e'
   }
 };
+

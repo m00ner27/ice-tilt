@@ -10,6 +10,7 @@ import { NgRxApiService } from '../store/services/ngrx-api.service';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
+import { filter } from 'rxjs/operators';
 
 interface PlayerStatDisplay {
   playerId: number;
@@ -124,16 +125,27 @@ export class MatchDetailComponent implements OnInit {
     console.log('Match ID to load:', id);
     console.log('Match ID type:', typeof id);
     
-    this.ngrxApiService.loadMatch(id);
-    
-    // Subscribe to match changes
-    this.selectedMatch$.pipe(take(1)).subscribe(match => {
-      if (match) {
-        console.log('Match loaded successfully:', match);
-        this.match = match;
+    // First check if the match is already in the store
+    this.store.select(MatchesSelectors.selectAllMatches).pipe(take(1)).subscribe(matches => {
+      const existingMatch = matches.find(match => match.id === id);
+      if (existingMatch) {
+        console.log('Match found in store:', existingMatch);
+        this.match = existingMatch;
         this.processMatchData();
       } else {
-        console.error('Match not found with ID:', id);
+        console.log('Match not in store, loading from API...');
+        // If not in store, load from API
+        this.ngrxApiService.loadMatch(id);
+        
+        // Subscribe to match changes
+        this.selectedMatch$.pipe(
+          filter(match => match !== null && match.id === id),
+          take(1)
+        ).subscribe(match => {
+          console.log('Match loaded from API:', match);
+          this.match = match;
+          this.processMatchData();
+        });
       }
     });
   }

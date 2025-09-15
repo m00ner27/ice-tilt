@@ -119,14 +119,32 @@ export class AddGamesComponent implements OnInit {
 
   submitGame() {
     if (this.gameForm.valid) {
-      const gameData = this.gameForm.value;
+      const formData = this.gameForm.value;
+      
+      // Transform the form data to match the API expectations
+      const gameData = {
+        seasonId: formData.season,
+        divisionId: formData.division,
+        homeClubId: formData.team1,
+        awayClubId: formData.team2,
+        date: new Date(`${formData.date}T${formData.time}`), // Combine date and time
+        status: 'scheduled' // Set default status
+      };
+      
+      console.log('Sending game data:', gameData);
+      
       this.api.addGame(gameData).subscribe({
         next: (game) => {
           console.log('Game added successfully:', game);
-          this.router.navigate(['/admin/schedule']);
+          console.log('Game ID:', game._id || game.id);
+          
+          // Instead of navigating directly, go to schedule to see if the game appears
+          this.router.navigate(['/schedule']);
         },
         error: (error) => {
           console.error('Error adding game:', error);
+          console.error('Error details:', error.error);
+          console.error('Status:', error.status);
         }
       });
     }

@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import * as SeasonsActions from '../../store/seasons.actions';
 import { selectAllSeasons, selectSeasonsLoading, selectSeasonsError } from '../../store/seasons.selectors';
 import { Season, Division } from '../../store/models/models';
+import { ApiService } from '../../store/services/api.service';
 
 @Component({
   selector: 'app-seasons',
@@ -28,7 +29,8 @@ export class SeasonsComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private store: Store
+    private store: Store,
+    private apiService: ApiService
   ) {
     this.seasonForm = this.fb.group({
       name: ['', Validators.required],
@@ -49,13 +51,19 @@ export class SeasonsComponent implements OnInit {
     // Load seasons using NgRx
     this.store.dispatch(SeasonsActions.loadSeasons());
     
-    // For now, keep divisions as a simple array since we don't have NgRx for divisions yet
+    // Load divisions from API
     this.loadDivisions();
   }
 
   loadDivisions() {
-    // This would be replaced with NgRx when division actions are available
-    this.divisions = [];
+    this.apiService.getDivisions().subscribe({
+      next: (divisions) => {
+        this.divisions = divisions;
+      },
+      error: (error) => {
+        console.error('Error loading divisions:', error);
+      }
+    });
   }
 
   selectSeason(season: Season) {
@@ -95,9 +103,8 @@ export class SeasonsComponent implements OnInit {
 
   updateSeason() {
     if (this.seasonForm.valid && this.editingSeason) {
-      const seasonData = this.seasonForm.value;
-      const updatedSeason = { ...this.editingSeason, ...seasonData };
-      this.store.dispatch(SeasonsActions.updateSeason({ season: updatedSeason }));
+      const seasonData = { ...this.seasonForm.value, _id: this.editingSeason._id };
+      this.store.dispatch(SeasonsActions.updateSeason({ season: seasonData }));
       this.cancelSeasonForm();
     }
   }
@@ -105,9 +112,6 @@ export class SeasonsComponent implements OnInit {
   deleteSeason(season: Season) {
     if (confirm('Are you sure you want to delete this season?')) {
       this.store.dispatch(SeasonsActions.deleteSeason({ seasonId: season._id }));
-      if (this.selectedSeason?._id === season._id) {
-        this.selectedSeason = null;
-      }
     }
   }
 
@@ -124,9 +128,18 @@ export class SeasonsComponent implements OnInit {
         ...this.divisionForm.value,
         seasonId: this.selectedSeason._id
       };
-      // For now, just add to local array since we don't have NgRx for divisions
-      this.divisions.push({ ...divisionData, _id: Date.now().toString() });
-      this.cancelDivisionForm();
+      
+      // Save to database via API
+      this.apiService.addDivision(divisionData).subscribe({
+        next: (newDivision) => {
+          // Add to local array after successful API call
+          this.divisions.push(newDivision);
+          this.cancelDivisionForm();
+        },
+        error: (error) => {
+          console.error('Error creating division:', error);
+        }
+      });
     }
   }
 
@@ -138,18 +151,37 @@ export class SeasonsComponent implements OnInit {
 
   updateDivision() {
     if (this.divisionForm.valid && this.editingDivision) {
-      const divisionData = this.divisionForm.value;
-      const index = this.divisions.findIndex(d => d._id === this.editingDivision!._id);
-      if (index !== -1) {
-        this.divisions[index] = { ...this.divisions[index], ...divisionData };
-      }
-      this.cancelDivisionForm();
+      const divisionData = { ...this.divisionForm.value, _id: this.editingDivision._id };
+      
+      // Update via API
+      this.apiService.updateDivision(divisionData).subscribe({
+        next: (updatedDivision) => {
+          // Update local array after successful API call
+          const index = this.divisions.findIndex(d => d._id === updatedDivision._id);
+          if (index !== -1) {
+            this.divisions[index] = updatedDivision;
+          }
+          this.cancelDivisionForm();
+        },
+        error: (error) => {
+          console.error('Error updating division:', error);
+        }
+      });
     }
   }
 
   deleteDivision(division: Division) {
     if (confirm('Are you sure you want to delete this division?')) {
-      this.divisions = this.divisions.filter(d => d._id !== division._id);
+      // Delete via API
+      this.apiService.deleteDivision(division._id).subscribe({
+        next: () => {
+          // Remove from local array after successful API call
+          this.divisions = this.divisions.filter(d => d._id !== division._id);
+        },
+        error: (error) => {
+          console.error('Error deleting division:', error);
+        }
+      });
     }
   }
 
@@ -163,13 +195,11 @@ export class SeasonsComponent implements OnInit {
   onDivisionLogoFileChange(event: any) {
     const file = event.target.files[0];
     if (file) {
-      this.uploadingDivisionLogo = true;
-      // Implement file upload logic here
-      // For now, just create a preview
+      // Handle file upload logic here
+      // For now, just show a preview
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.divisionLogoPreview = e.target.result;
-        this.uploadingDivisionLogo = false;
+      reader.onload = (e) => {
+        this.divisionLogoPreview = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }

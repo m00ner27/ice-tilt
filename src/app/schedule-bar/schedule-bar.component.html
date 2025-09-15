@@ -17,8 +17,10 @@
           </div>
         </div>
         <div class="game-status">
-          <span *ngIf="isFinal(match)">FINAL</span>
-          <span *ngIf="!isFinal(match)">{{ match.date | date: 'h:mm a' }}</span>
+          <span *ngIf="isFinal(match); else timeDisplay">FINAL</span>
+          <ng-template #timeDisplay>
+            <span>{{ match.date | date: 'h:mm a' }}</span>
+          </ng-template>
         </div>
       </div>
     </a>
