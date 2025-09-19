@@ -17,7 +17,8 @@
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/clubs">Clubs</a>
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/transactions">Transactions</a>
-                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a>
+                <!-- TODO: Manager feature temporarily disabled -->
+                <!-- <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
             </div>
 
@@ -53,7 +54,8 @@
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/clubs">Clubs</a>
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/transactions">Transactions</a>
-                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a>
+                <!-- TODO: Manager feature temporarily disabled -->
+                <!-- <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
             </div>
         </div>

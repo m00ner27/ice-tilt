@@ -170,11 +170,33 @@ export class ApiService {
   }
 
   updateClub(clubData: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/api/clubs/${clubData._id}`, clubData);
+    console.log('ApiService: updateClub called for clubId:', clubData._id);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put(`${this.apiUrl}/api/clubs/${clubData._id}`, clubData, { headers });
+      })
+    );
   }
 
   deleteClub(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/api/clubs/${id}`);
+    console.log('ApiService: deleteClub called for clubId:', id);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete(`${this.apiUrl}/api/clubs/${id}`, { headers });
+      })
+    );
   }
 
   getClubsBySeason(seasonId: string): Observable<any[]> {
@@ -435,6 +457,22 @@ export class ApiService {
           'Content-Type': 'application/json'
         });
         return this.http.delete(`${this.apiUrl}/api/players/${playerId}`, { headers });
+      })
+    );
+  }
+
+  // Add current user as admin (for testing)
+  addMeAsAdmin(): Observable<any> {
+    console.log('ApiService: addMeAsAdmin called');
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/admins/add-me`, {}, { headers });
       })
     );
   }

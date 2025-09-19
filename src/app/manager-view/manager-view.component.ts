@@ -105,7 +105,7 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$),
       switchMap(user => {
         if (user?.sub) {
-          this.managerUserId = user.sub.split('|')[1];
+          this.managerUserId = user.sub.split('|')[2]; // Get the actual Discord ID, not 'discord'
           // Dispatch actions to load data
           this.store.dispatch(UsersActions.loadCurrentUser());
           this.store.dispatch(ClubsActions.loadClubs());

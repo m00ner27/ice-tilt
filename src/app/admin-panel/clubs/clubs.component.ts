@@ -69,6 +69,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
   freeAgents$: any;
   adminLoading$: any;
   adminError$: any;
+  
+  // Local state for free agents
+  freeAgents: Player[] = [];
   clubForm: FormGroup;
   logoPreview: string | ArrayBuffer | null = null;
   uploadingLogo = false;
@@ -115,6 +118,29 @@ export class ClubsComponent implements OnInit, OnDestroy {
     return filtered;
   }
 
+  get availableFreeAgents(): Player[] {
+    if (!this.selectedClub?.roster) {
+      console.log('No selected club roster, returning all free agents:', this.freeAgents?.length || 0);
+      return this.freeAgents || [];
+    }
+    
+    // Get player IDs that are already on the current club's roster
+    const rosterPlayerIds = this.selectedClub.roster
+      .filter(p => p && p._id)
+      .map(p => p._id);
+    
+    console.log('Roster player IDs:', rosterPlayerIds);
+    console.log('Total free agents:', this.freeAgents?.length || 0);
+    
+    // Filter out players who are already on the roster
+    const filtered = (this.freeAgents || []).filter(player => 
+      !rosterPlayerIds.includes(player._id)
+    );
+    
+    console.log('Available free agents after filtering:', filtered.length);
+    return filtered;
+  }
+
   // Method to get the full image URL
   getImageUrl(logoUrl: string | undefined): string {
     if (!logoUrl) {
@@ -138,6 +164,10 @@ export class ClubsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadData();
 
+    // Subscribe to free agents
+    this.freeAgents$.subscribe((agents: Player[]) => {
+      this.freeAgents = agents || [];
+    });
 
     // Load regions from API
     this.api.getRegions().subscribe(list => {
@@ -668,6 +698,24 @@ export class ClubsComponent implements OnInit, OnDestroy {
     });
   }
   
+  addMeAsAdmin(): void {
+    console.log('Adding current user as admin...');
+    this.api.addMeAsAdmin().subscribe({
+      next: (response) => {
+        console.log('Admin added successfully:', response);
+        alert('You have been added as an admin! You can now delete clubs.');
+      },
+      error: (error) => {
+        console.error('Error adding admin:', error);
+        if (error.status === 409) {
+          alert('You are already an admin!');
+        } else {
+          alert('Error adding admin: ' + (error.error?.message || error.message));
+        }
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     if (this.rosterUpdateSubscription) {
       this.rosterUpdateSubscription.unsubscribe();

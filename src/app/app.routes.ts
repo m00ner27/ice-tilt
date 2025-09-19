@@ -42,7 +42,8 @@ export const routes: Routes = [
   { path: 'players/:id', component: PlayerProfileComponent },
   { path: 'player-stats', component: PlayerStatsComponent },
   { path: 'goalie-stats', component: GoalieStatsComponent },
-  { path: 'manager-view', component: ManagerViewComponent, canActivate: [authGuard, ManagerGuard] },
+  // TODO: Manager feature temporarily disabled
+  // { path: 'manager-view', component: ManagerViewComponent, canActivate: [authGuard, ManagerGuard] },
   { path: 'clubs', component: ClubListComponent },
   { path: 'clubs/:id', component: ClubDetailSimpleComponent },
   { path: 'match/:id', component: MatchDetailComponent },

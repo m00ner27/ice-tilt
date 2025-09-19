@@ -33,12 +33,14 @@ export class UserProfileComponent implements OnInit {
       if (user?.sub) {
         // Extract user ID from Auth0 sub and load manager data
         console.log('Auth0 sub field:', user.sub);
-        const userId = user.sub.split('|')[1];
+        const userId = user.sub.split('|')[2]; // Get the actual Discord ID, not 'discord'
         console.log('Extracted userId:', userId);
         
         // Only dispatch if we have a valid userId (not 'discord')
         if (userId && userId !== 'discord') {
-          this.store.dispatch(ManagersActions.loadManagersByUser({ userId }));
+          // TODO: Manager feature temporarily disabled
+          // this.store.dispatch(ManagersActions.loadManagersByUser({ userId }));
+          console.log('Manager loading disabled - feature temporarily disabled');
         } else {
           console.log('Skipping manager load - invalid userId:', userId);
         }

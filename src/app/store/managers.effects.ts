@@ -3,7 +3,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { AuthService } from '@auth0/auth0-angular';
 
@@ -36,7 +36,16 @@ export class ManagersEffects {
       this.actions$.pipe(
         ofType(ManagersActions.loadManagers),
         switchMap(() =>
-          this.http.get<any>(`${this.apiUrl}`).pipe(
+          this.auth.getAccessTokenSilently({
+            authorizationParams: { audience: environment.apiAudience }
+          }).pipe(
+            switchMap(token => {
+              const headers = new HttpHeaders({
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              });
+              return this.http.get<any>(`${this.apiUrl}`, { headers });
+            }),
             map((response) => {
               if (response.success) {
                 return ManagersActions.loadManagersSuccess({ managers: response.data });
@@ -55,7 +64,16 @@ export class ManagersEffects {
       this.actions$.pipe(
         ofType(ManagersActions.loadManager),
         switchMap(({ managerId }) =>
-          this.http.get<any>(`${this.apiUrl}/${managerId}`).pipe(
+          this.auth.getAccessTokenSilently({
+            authorizationParams: { audience: environment.apiAudience }
+          }).pipe(
+            switchMap(token => {
+              const headers = new HttpHeaders({
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              });
+              return this.http.get<any>(`${this.apiUrl}/${managerId}`, { headers });
+            }),
             map((response) => {
               if (response.success) {
                 return ManagersActions.loadManagerSuccess({ manager: response.data });
@@ -74,7 +92,16 @@ export class ManagersEffects {
       this.actions$.pipe(
         ofType(ManagersActions.loadManagersByUser),
         switchMap(({ userId }) =>
-          this.http.get<any>(`${this.apiUrl}/user/${userId}`).pipe(
+          this.auth.getAccessTokenSilently({
+            authorizationParams: { audience: environment.apiAudience }
+          }).pipe(
+            switchMap(token => {
+              const headers = new HttpHeaders({
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              });
+              return this.http.get<any>(`${this.apiUrl}/user/${userId}`, { headers });
+            }),
             map((response) => {
               if (response.success) {
                 return ManagersActions.loadManagersByUserSuccess({ managers: response.data });
@@ -93,7 +120,16 @@ export class ManagersEffects {
       this.actions$.pipe(
         ofType(ManagersActions.loadManagersByClub),
         switchMap(({ clubId }) =>
-          this.http.get<any>(`${this.apiUrl}/club/${clubId}`).pipe(
+          this.auth.getAccessTokenSilently({
+            authorizationParams: { audience: environment.apiAudience }
+          }).pipe(
+            switchMap(token => {
+              const headers = new HttpHeaders({
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              });
+              return this.http.get<any>(`${this.apiUrl}/club/${clubId}`, { headers });
+            }),
             map((response) => {
               if (response.success) {
                 return ManagersActions.loadManagersByClubSuccess({ managers: response.data });
@@ -112,7 +148,16 @@ export class ManagersEffects {
       this.actions$.pipe(
         ofType(ManagersActions.checkManagerStatus),
         switchMap(({ userId, clubId }) =>
-          this.http.get<any>(`${this.apiUrl}/check/${userId}/${clubId}`).pipe(
+          this.auth.getAccessTokenSilently({
+            authorizationParams: { audience: environment.apiAudience }
+          }).pipe(
+            switchMap(token => {
+              const headers = new HttpHeaders({
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              });
+              return this.http.get<any>(`${this.apiUrl}/check/${userId}/${clubId}`, { headers });
+            }),
             map((response) => {
               if (response.success) {
                 return ManagersActions.checkManagerStatusSuccess({ status: response.data });

@@ -13,6 +13,9 @@ import { selectIsUserAnyManager, selectManagerStatus } from '../../store/manager
   providedIn: 'root'
 })
 export class ManagerGuard implements CanActivate {
+  // TODO: Manager feature temporarily disabled
+  private readonly MANAGER_FEATURE_DISABLED = true;
+
   constructor(
     private store: Store<AppState>,
     private auth: AuthService,
@@ -23,6 +26,11 @@ export class ManagerGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> {
+    // TODO: Manager feature temporarily disabled
+    if (this.MANAGER_FEATURE_DISABLED) {
+      return of(false);
+    }
+    
     return this.auth.user$.pipe(
       take(1),
       switchMap(user => {
@@ -32,7 +40,7 @@ export class ManagerGuard implements CanActivate {
         }
 
         // Extract user ID from Auth0 sub
-        const userId = user.sub.split('|')[1];
+        const userId = user.sub.split('|')[2]; // Get the actual Discord ID, not 'discord'
         console.log('ManagerGuard - Auth0 sub:', user.sub);
         console.log('ManagerGuard - Extracted userId:', userId);
 
@@ -54,7 +62,10 @@ export class ManagerGuard implements CanActivate {
 
                 // Only dispatch if we have a valid userId (not 'discord')
                 if (userId && userId !== 'discord') {
-                  this.store.dispatch(ManagersActions.loadManagersByUser({ userId }));
+                  // TODO: Manager feature temporarily disabled
+                  // this.store.dispatch(ManagersActions.loadManagersByUser({ userId }));
+                  console.log('ManagerGuard - Manager loading disabled - feature temporarily disabled');
+                  return of(false);
                 } else {
                   console.log('ManagerGuard - Skipping manager load - invalid userId:', userId);
                   return of(false);
@@ -88,6 +99,9 @@ export class ManagerGuard implements CanActivate {
   providedIn: 'root'
 })
 export class ClubManagerGuard implements CanActivate {
+  // TODO: Manager feature temporarily disabled
+  private readonly MANAGER_FEATURE_DISABLED = true;
+
   constructor(
     private store: Store<AppState>,
     private auth: AuthService,
@@ -98,6 +112,11 @@ export class ClubManagerGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> {
+    // TODO: Manager feature temporarily disabled
+    if (this.MANAGER_FEATURE_DISABLED) {
+      return of(false);
+    }
+    
     return this.auth.user$.pipe(
       take(1),
       switchMap(user => {
@@ -107,7 +126,7 @@ export class ClubManagerGuard implements CanActivate {
         }
 
         // Extract user ID from Auth0 sub
-        const userId = user.sub.split('|')[1];
+        const userId = user.sub.split('|')[2]; // Get the actual Discord ID, not 'discord'
         const clubId = route.params['clubId'] || route.queryParams['clubId'];
         
         if (!clubId) {
