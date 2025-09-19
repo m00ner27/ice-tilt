@@ -190,7 +190,6 @@ describe('ClubDetailComponent', () => {
       expect(component.club?._id).toBe('club-1');
       expect(component.club?.name).toBe('Test Club');
       expect(component.club?.clubName).toBe('Test Club');
-      expect(component.club?.manager).toBe('Test Manager');
       expect(component.club?.colour).toBe('#FF0000');
     });
 

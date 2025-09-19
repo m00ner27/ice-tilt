@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: '',
+  apiUrl: 'http://localhost:3000',
   apiAudience: 'http://localhost:3000',
   apiAllowedList: [
     // Public endpoints that don't require authentication
@@ -14,7 +14,7 @@ export const environment = {
       allowAnonymous: true
     },
     {
-      uri: '/api/clubs/*',
+      uri: 'http://localhost:3000/api/clubs/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -24,7 +24,7 @@ export const environment = {
       }
     },
     {
-      uri: '/api/games',
+      uri: 'http://localhost:3000/api/games',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -46,7 +46,7 @@ export const environment = {
       allowAnonymous: true
     },
     {
-      uri: '/api/upload',
+      uri: 'http://localhost:3000/api/upload',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -57,7 +57,7 @@ export const environment = {
     },
     // Protected endpoints that require authentication
     {
-      uri: '/api/users/*',
+      uri: 'http://localhost:3000/api/users/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -67,7 +67,7 @@ export const environment = {
       }
     },
     {
-      uri: '/api/offers/*',
+      uri: 'http://localhost:3000/api/offers/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -78,7 +78,7 @@ export const environment = {
     },
     // Admin endpoints - be explicit about all possible patterns
     {
-      uri: '/api/admins',
+      uri: 'http://localhost:3000/api/admins',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -88,7 +88,7 @@ export const environment = {
       }
     },
     {
-      uri: '/api/admins/*',
+      uri: 'http://localhost:3000/api/admins/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -99,7 +99,7 @@ export const environment = {
     },
     // Manager endpoints
     {
-      uri: '/api/managers',
+      uri: 'http://localhost:3000/api/managers',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
@@ -109,7 +109,7 @@ export const environment = {
       }
     },
     {
-      uri: '/api/managers/*',
+      uri: 'http://localhost:3000/api/managers/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {

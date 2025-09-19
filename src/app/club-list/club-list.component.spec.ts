@@ -177,11 +177,6 @@ describe('ClubListComponent', () => {
       expect(clubNames[1].textContent).toContain('Test Club 2');
     });
 
-    it('should display manager names', () => {
-      const managerNames = fixture.debugElement.nativeElement.querySelectorAll('.manager-name');
-      expect(managerNames[0].textContent).toContain('Manager: Test Manager');
-      expect(managerNames[1].textContent).toContain('Manager: Test Manager');
-    });
 
     it('should display club images', () => {
       const clubImages = fixture.debugElement.nativeElement.querySelectorAll('.club-image');

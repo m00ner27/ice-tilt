@@ -74,7 +74,6 @@
       <div class="space-y-2" *ngIf="(clubs$ | async)?.length">
         <div class="bg-white border border-gray-200 rounded p-3" *ngFor="let club of (clubs$ | async)?.slice(0, 5)">
           <h6 class="font-semibold mb-1">{{ club.name || club.clubName }}</h6>
-          <p class="text-gray-600 mb-1">{{ club.manager }}</p>
           <small class="text-gray-500">{{ club.division }}</small>
         </div>
       </div>

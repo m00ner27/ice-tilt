@@ -12,7 +12,7 @@ import { AppState } from './index';
 
 @Injectable()
 export class ManagersEffects {
-  private apiUrl = `${environment.apiUrl}/managers`;
+  private apiUrl = `${environment.apiUrl}/api/managers`;
   
   // Declare effects as properties
   loadManagers$: any;

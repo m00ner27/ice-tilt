@@ -38,6 +38,7 @@
         <table class="w-full bg-admin-card text-white border-collapse rounded-lg overflow-hidden mb-5">
           <thead class="bg-admin-accent">
             <tr>
+              <th class="px-4 py-3 font-bold text-center whitespace-nowrap">RANK</th>
               <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">CLUB</th>
               <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">GP</th>
               <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')" class="px-4 py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap">W</th>
@@ -51,11 +52,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let team of divisionStanding.standings" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+            <tr *ngFor="let team of divisionStanding.standings; let i = index" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+              <td class="text-center p-2 font-bold text-lg">{{ i + 1 }}</td>
               <td class="text-left p-2">
                 <div class="flex items-center gap-2">
                   <img 
-                    class="w-8 h-8 object-contain rounded-full" 
+                    class="w-8 h-8 object-contain rounded" 
                     [src]="team.logo || 'assets/images/square-default.png'" 
                     [alt]="team.teamName + ' logo'" 
                   />

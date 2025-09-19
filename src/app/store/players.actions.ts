@@ -1,6 +1,24 @@
 import { createAction, props } from '@ngrx/store';
 import { PlayerProfile } from './models/models/player-profile.model';
 
+// Player interface for the admin system
+export interface Player {
+  _id: string;
+  gamertag: string;
+  discordId?: string;
+  discordUsername?: string;
+  platform: string;
+  position: string;
+  status: string;
+  playerProfile?: {
+    position?: string;
+    status?: string;
+    handedness?: string;
+    location?: string;
+    region?: string;
+  };
+}
+
 export const loadPlayers = createAction('[Players] Load Players');
 export const loadPlayersSuccess = createAction('[Players] Load Players Success', props<{ players: PlayerProfile[] }>());
 export const loadPlayersFailure = createAction('[Players] Load Players Failure', props<{ error: any }>());
@@ -17,3 +35,16 @@ export const playerProfileFailure = createAction('[Player] Player Profile Failur
 export const loadPlayerStats = createAction('[Player] Load Player Stats', props<{ userId: string; gamertag: string }>());
 export const loadPlayerStatsSuccess = createAction('[Player] Load Player Stats Success', props<{ stats: any[] }>());
 export const loadPlayerStatsFailure = createAction('[Player] Load Player Stats Failure', props<{ error: any }>());
+
+// Admin Player Management actions
+export const createPlayer = createAction('[Players] Create Player', props<{ playerData: Partial<Player> }>());
+export const createPlayerSuccess = createAction('[Players] Create Player Success', props<{ player: Player }>());
+export const createPlayerFailure = createAction('[Players] Create Player Failure', props<{ error: any }>());
+
+export const loadFreeAgents = createAction('[Players] Load Free Agents');
+export const loadFreeAgentsSuccess = createAction('[Players] Load Free Agents Success', props<{ freeAgents: Player[] }>());
+export const loadFreeAgentsFailure = createAction('[Players] Load Free Agents Failure', props<{ error: any }>());
+
+export const deletePlayer = createAction('[Players] Delete Player', props<{ playerId: string }>());
+export const deletePlayerSuccess = createAction('[Players] Delete Player Success', props<{ playerId: string }>());
+export const deletePlayerFailure = createAction('[Players] Delete Player Failure', props<{ error: any }>());

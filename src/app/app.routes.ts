@@ -29,7 +29,8 @@ import { AdminScheduleComponent } from './admin-panel/admin-schedule/admin-sched
 import { EashlStatsComponent } from './components/eashl-stats/eashl-stats.component';
 import { UsersComponent } from './admin-panel/users/users.component';
 import { ManualStatsComponent } from './admin-panel/manual-stats/manual-stats.component';
-import { CreateUserComponent } from './admin-panel/create-user/create-user.component';
+import { CreatePlayerComponent } from './admin-panel/create-player/create-player.component';
+import { PlayersComponent as AdminPlayersComponent } from './admin-panel/players/players.component';
 import { AdminsComponent } from './admin-panel/admins/admins.component';
 
 export const routes: Routes = [
@@ -62,7 +63,8 @@ export const routes: Routes = [
     { path: 'add-games', component: AddGamesComponent },
     { path: 'schedule', component: AdminScheduleComponent },
     { path: 'users', component: UsersComponent },
-    { path: 'create-user', component: CreateUserComponent },
+    { path: 'players', component: AdminPlayersComponent },
+    { path: 'create-player', component: CreatePlayerComponent },
     { path: 'admins', component: AdminsComponent, canActivate: [superAdminGuard] },
   ]},
   {

@@ -9,15 +9,18 @@ import { environment } from '../../../environments/environment';
 import { REGIONS } from '../../shared';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { AppState } from '../../store';
+import { selectFreeAgents, selectAdminLoading, selectAdminError } from '../../store/players.selectors';
+import { loadFreeAgents } from '../../store/players.actions';
 
 interface Club {
   _id?: string;
   name: string;
   logoUrl: string;
-  manager: string;
   primaryColour: string;
   seasons: any[];
-  roster?: any[];
+  roster?: Player[];
   region: string;
   eashlClubId: string;
 }
@@ -28,13 +31,20 @@ interface Division {
   seasonId: string;
 }
 
-interface User {
+interface Player {
   _id: string;
+  gamertag: string;
   discordId?: string;
   discordUsername?: string;
+  platform: string;
+  position: string;
+  status: string;
   playerProfile?: {
     position?: string;
     status?: string;
+    handedness?: string;
+    location?: string;
+    region?: string;
   };
 }
 
@@ -56,67 +66,37 @@ export class ClubsComponent implements OnInit, OnDestroy {
   editingClub: Club | null = null;
   seasons: Season[] = [];
   divisions: Division[] = [];
-  freeAgents: User[] = [];
+  freeAgents$: any;
+  adminLoading$: any;
+  adminError$: any;
   clubForm: FormGroup;
   logoPreview: string | ArrayBuffer | null = null;
   uploadingLogo = false;
   selectedSeasonId: string | null = null;
   private rosterUpdateSubscription: Subscription | undefined;
-  private managerValueSub: Subscription | undefined;
-  allUsers: User[] = [];
-  managerSuggestions: User[] = [];
-  showManagerSuggestions = false;
-  highlightedSuggestionIndex = -1;
   regions: any[] = []; // Change from string[] to any[] to store full region objects
   regionOptions: string[] = []; // Keep this for the dropdown display
-  private isSelectingManager = false; // Flag to prevent suggestions from showing during selection
 
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
     private eashlService: EashlService,
     private transactionsService: TransactionsService,
-    private rosterUpdateService: RosterUpdateService
+    private rosterUpdateService: RosterUpdateService,
+    private store: Store<AppState>
   ) {
+    // Initialize store selectors
+    this.freeAgents$ = this.store.select(selectFreeAgents);
+    this.adminLoading$ = this.store.select(selectAdminLoading);
+    this.adminError$ = this.store.select(selectAdminError);
     this.clubForm = this.fb.group({
       name: ['', Validators.required],
       logo: [''],
-      manager: ['', Validators.required],
       color: ['#ffffff', Validators.required],
       region: ['', Validators.required],
       eashlClubId: ['']
     });
 
-    // Add validator to ensure manager matches a registered user
-    this.clubForm.get('manager')?.addValidators(this.managerExistsValidator());
-
-    // Typeahead subscription for manager input
-    const managerCtrl = this.clubForm.get('manager');
-    if (managerCtrl) {
-      this.managerValueSub = managerCtrl.valueChanges.pipe(
-        debounceTime(200),
-        distinctUntilChanged()
-      ).subscribe((term: string) => {
-        // Don't show suggestions if we're programmatically selecting a manager
-        if (this.isSelectingManager) {
-          return;
-        }
-
-        const query = (term || '').toLowerCase().trim();
-        if (!query) {
-          this.managerSuggestions = [];
-          this.showManagerSuggestions = false;
-          this.highlightedSuggestionIndex = -1;
-          return;
-        }
-        const getName = (u: User) => (u.discordUsername || u.discordId || '').toLowerCase();
-        this.managerSuggestions = this.allUsers
-          .filter(u => getName(u).includes(query))
-          .slice(0, 8);
-        this.showManagerSuggestions = this.managerSuggestions.length > 0;
-        this.highlightedSuggestionIndex = -1;
-      });
-    }
   }
 
   get divisionsForSelectedSeason(): Division[] {
@@ -130,8 +110,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
     return season ? season.name : '';
   }
 
-  get filteredRoster(): User[] {
-    const filtered = (this.selectedClub?.roster || []).filter(p => !!p && p.discordUsername);
+  get filteredRoster(): Player[] {
+    const filtered = (this.selectedClub?.roster || []).filter(p => !!p && p.gamertag);
     return filtered;
   }
 
@@ -158,12 +138,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadData();
 
-    // Load all users for manager suggestions
-    this.api.getUsers().subscribe(users => {
-      this.allUsers = users || [];
-      // Revalidate manager after users load
-      this.clubForm.get('manager')?.updateValueAndValidity({ onlySelf: true });
-    });
 
     // Load regions from API
     this.api.getRegions().subscribe(list => {
@@ -227,11 +201,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   private loadFreeAgentsForSeason(seasonId: string): void {
-    // Fetch season-specific free agents
-    this.api.getFreeAgentsForSeason(seasonId).subscribe(agents => {
-      this.freeAgents = agents;
-
-    });
+    // Load free agents using Player state
+    this.store.dispatch(loadFreeAgents());
   }
 
   private updateFreeAgentsList(): void {
@@ -316,7 +287,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
       const clubData = {
         name: form.name,
         logoUrl: form.logo,
-        manager: form.manager,
         primaryColour: form.color,
         seasons: seasons,
         regionId: selectedRegion._id, // Use regionId instead of region
@@ -353,7 +323,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.clubForm.patchValue({
       name: club.name,
       logo: club.logoUrl,
-      manager: club.manager,
       color: club.primaryColour || '#ffffff',
       region: club.region,
       eashlClubId: club.eashlClubId
@@ -431,7 +400,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
       _id: this.editingClub._id, // Include the club ID for the API call
       name: form.name,
       logoUrl: form.logo,
-      manager: form.manager,
       primaryColour: form.color,
       seasons: seasons,
       region: form.region,
@@ -467,9 +435,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.editingClub = null;
     this.isAddingClub = false;
     this.logoPreview = null;
-    this.managerSuggestions = [];
-    this.showManagerSuggestions = false;
-    this.highlightedSuggestionIndex = -1;
   }
 
   addSeasonControls(): void {
@@ -607,7 +572,17 @@ export class ClubsComponent implements OnInit, OnDestroy {
       if (selectedSeasonId) {
         this.api.getClubRoster(club._id, selectedSeasonId).subscribe({
           next: (roster) => {
-            this.selectedClub!.roster = roster;
+            // Map roster data to Player objects
+            this.selectedClub!.roster = roster.map((player: any): Player => ({
+              _id: player._id,
+              gamertag: player.gamertag || player.discordUsername || 'Unknown',
+              discordId: player.discordId,
+              discordUsername: player.discordUsername,
+              platform: player.platform || 'PS5',
+              position: player.playerProfile?.position || 'C',
+              status: player.playerProfile?.status || 'Signed',
+              playerProfile: player.playerProfile
+            }));
           },
           error: (error) => {
             console.error('Error fetching roster:', error);
@@ -617,7 +592,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     }
   }
 
-  addPlayer(club: Club, player: User): void {
+  addPlayer(club: Club, player: Player): void {
     if (!club._id || !player._id) {
       console.error('Missing club or player ID');
       return;
@@ -654,7 +629,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     });
   }
 
-  removePlayer(club: Club, player: User): void {
+  removePlayerFromRoster(club: Club, player: Player): void {
     if (!club._id || !player._id) {
       console.error('Missing club or player ID');
       return;
@@ -697,72 +672,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
     if (this.rosterUpdateSubscription) {
       this.rosterUpdateSubscription.unsubscribe();
     }
-    if (this.managerValueSub) {
-      this.managerValueSub.unsubscribe();
-    }
   }
 
-  // ---------- Manager typeahead helpers ----------
-  managerExistsValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = (control.value || '').toString().trim().toLowerCase();
-      if (!value) return null;
-      if (!this.allUsers || this.allUsers.length === 0) return null; // don't block before users load
-      
-      // Check if the manager value matches any user
-      const exists = this.allUsers.some(u => {
-        const displayName = this.managerDisplay(u).toLowerCase();
-        return displayName === value || displayName.includes(value);
-      });
-      
-      return exists ? null : { managerNotFound: true };
-    };
-  }
-
-  managerDisplay(u: User): string {
-    return u.discordUsername || u.discordId || '';
-  }
-
-  onManagerFocus(): void {
-    // Only show suggestions if we have them and we're not in the middle of selecting
-    if (!this.isSelectingManager) {
-      this.showManagerSuggestions = (this.managerSuggestions && this.managerSuggestions.length > 0);
-    }
-  }
-
-  onManagerBlur(): void {
-    // Delay hiding so click can register on suggestions
-    setTimeout(() => {
-      // Only hide if we're not in the middle of selecting a manager
-      if (!this.isSelectingManager) {
-        this.showManagerSuggestions = false;
-      }
-    }, 150);
-  }
-
-  selectManager(u: User): void {
-    this.isSelectingManager = true;
-    this.clubForm.get('manager')?.setValue(this.managerDisplay(u));
-    this.showManagerSuggestions = false;
-    this.highlightedSuggestionIndex = -1;
-    
-    // Reset the flag after a short delay to allow the value change to complete
-    setTimeout(() => {
-      this.isSelectingManager = false;
-    }, 100);
-  }
-
-  moveManagerHighlight(direction: number): void {
-    if (!this.managerSuggestions || this.managerSuggestions.length === 0) return;
-    const max = this.managerSuggestions.length - 1;
-    this.highlightedSuggestionIndex = Math.max(0, Math.min(max, this.highlightedSuggestionIndex + direction));
-  }
-
-  onManagerEnter(): void {
-    if (this.highlightedSuggestionIndex >= 0 && this.highlightedSuggestionIndex < this.managerSuggestions.length) {
-      this.selectManager(this.managerSuggestions[this.highlightedSuggestionIndex]);
-    }
-  }
 
   // ---------- Region helpers ----------
   get availableRegionOptions(): string[] {

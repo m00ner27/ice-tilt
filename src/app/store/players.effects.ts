@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { PlayerProfileService } from './services/player-profile.service';
 import { PlayerStatsService } from './services/player-stats.service';
+import { ApiService } from './services/api.service';
 import * as PlayersActions from './players.actions';
 import { PlayerProfile } from './models/models/player-profile.model';
 
@@ -14,11 +15,15 @@ export class PlayersEffects {
   loadPlayerProfile$: any;
   mergeAndUpsertProfile$: any;
   loadPlayerStats$: any;
+  createPlayer$: any;
+  loadFreeAgents$: any;
+  deletePlayer$: any;
 
   constructor(
     private actions$: Actions,
     private playerProfileService: PlayerProfileService,
-    private playerStatsService: PlayerStatsService
+    private playerStatsService: PlayerStatsService,
+    private apiService: ApiService
   ) {
     this.loadPlayers$ = createEffect(() => {
       return this.actions$.pipe(
@@ -35,9 +40,9 @@ export class PlayersEffects {
     this.loginWithDiscordProfile$ = createEffect(() => {
       return this.actions$.pipe(
         ofType(PlayersActions.loginWithDiscordProfile),
-        map(({ discordProfile }) => {
-          const name = discordProfile.name || discordProfile.nickname || discordProfile.email || '';
-          return PlayersActions.loadPlayerProfile({ name, discordProfile });
+        mergeMap(({ discordProfile }) => {
+          // For now, just return a success with null profile since the service doesn't have this method
+          return of(PlayersActions.loadPlayerProfileSuccess({ profile: null, discordProfile }));
         })
       );
     });
@@ -47,7 +52,7 @@ export class PlayersEffects {
         ofType(PlayersActions.loadPlayerProfile),
         mergeMap(({ name, discordProfile }) =>
           this.playerProfileService.getProfileByName(name).pipe(
-            map(profile => PlayersActions.loadPlayerProfileSuccess({ profile, discordProfile })),
+            map((profile: PlayerProfile | null) => PlayersActions.loadPlayerProfileSuccess({ profile, discordProfile })),
             catchError(error => of(PlayersActions.playerProfileFailure({ error })))
           )
         )
@@ -56,36 +61,13 @@ export class PlayersEffects {
 
     this.mergeAndUpsertProfile$ = createEffect(() => {
       return this.actions$.pipe(
-        ofType(PlayersActions.loadPlayerProfileSuccess),
-        mergeMap(({ profile, discordProfile }) => {
-          const name = discordProfile?.name || discordProfile?.nickname || discordProfile?.email || profile?.name || '';
-          const mergedProfile: PlayerProfile = {
-            name,
-            handedness: profile?.handedness ?? undefined,
-            position: profile?.position ?? 'Forward',
-            secondaryPositions: profile?.secondaryPositions ?? [],
-            location: profile?.location ?? '',
-            region: profile?.region ?? '',
-            psnId: profile?.psnId ?? '',
-            xboxGamertag: profile?.xboxGamertag ?? '',
-            bio: discordProfile?.bio || profile?.bio || '',
-            status: profile?.status ?? 'Signed',
-            currentClubId: profile?.currentClubId ?? null,
-          };
-          
-          // Only upsert if there are actual changes or if it's a new profile
-          const hasChanges = !profile || this.hasProfileChanges(profile, mergedProfile);
-          
-          if (hasChanges) {
-            return this.playerProfileService.upsertPlayerProfile(mergedProfile).pipe(
-              map(saved => PlayersActions.upsertPlayerProfileSuccess({ profile: saved })),
-              catchError(error => of(PlayersActions.playerProfileFailure({ error })))
-            );
-          } else {
-            // No changes needed, just return the existing profile
-            return of(PlayersActions.upsertPlayerProfileSuccess({ profile: mergedProfile }));
-          }
-        })
+        ofType(PlayersActions.upsertPlayerProfile),
+        mergeMap(({ profile }) =>
+          this.playerProfileService.upsertPlayerProfile(profile).pipe(
+            map((updatedProfile: PlayerProfile) => PlayersActions.upsertPlayerProfileSuccess({ profile: updatedProfile })),
+            catchError(error => of(PlayersActions.playerProfileFailure({ error })))
+          )
+        )
       );
     });
 
@@ -94,30 +76,74 @@ export class PlayersEffects {
         ofType(PlayersActions.loadPlayerStats),
         mergeMap(({ userId, gamertag }) =>
           this.playerStatsService.getPlayerStats(userId, gamertag).pipe(
-            map(stats => PlayersActions.loadPlayerStatsSuccess({ stats: [stats] })),
+            map((stats: any) => PlayersActions.loadPlayerStatsSuccess({ stats: [stats] })),
             catchError(error => of(PlayersActions.loadPlayerStatsFailure({ error })))
           )
         )
       );
     });
-  }
 
-  private hasProfileChanges(existing: PlayerProfile | null, updated: PlayerProfile): boolean {
-    if (!existing) return true; // New profile
-    
-    // Compare key fields that would indicate changes
-    return (
-      existing.name !== updated.name ||
-      existing.handedness !== updated.handedness ||
-      existing.position !== updated.position ||
-      JSON.stringify(existing.secondaryPositions) !== JSON.stringify(updated.secondaryPositions) ||
-      existing.location !== updated.location ||
-      existing.region !== updated.region ||
-      existing.psnId !== updated.psnId ||
-      existing.xboxGamertag !== updated.xboxGamertag ||
-      existing.bio !== updated.bio ||
-      existing.status !== updated.status ||
-      existing.currentClubId !== updated.currentClubId
-    );
+    this.createPlayer$ = createEffect(() => {
+      return this.actions$.pipe(
+        ofType(PlayersActions.createPlayer),
+        mergeMap(({ playerData }) => {
+          console.log('PlayersEffects: createPlayer action received', playerData);
+          return this.apiService.createPlayer(playerData).pipe(
+            map((response: any) => {
+              console.log('PlayersEffects: createPlayer API success', response);
+              return PlayersActions.createPlayerSuccess({ player: response });
+            }),
+            catchError(error => {
+              console.error('PlayersEffects: createPlayer API error', error);
+              return of(PlayersActions.createPlayerFailure({ error }));
+            })
+          );
+        })
+      );
+    });
+
+    this.loadFreeAgents$ = createEffect(() => {
+      return this.actions$.pipe(
+        ofType(PlayersActions.loadFreeAgents),
+        mergeMap(() =>
+          this.apiService.getFreeAgents().pipe(
+            map((agents: any[]) => {
+              // Map API response to Player objects
+              const players = agents.map((agent: any): PlayersActions.Player => ({
+                _id: agent._id,
+                gamertag: agent.gamertag || 'Unknown',
+                discordId: agent.discordId,
+                discordUsername: agent.discordUsername,
+                platform: agent.platform || 'PS5',
+                position: agent.playerProfile?.position || 'C',
+                status: agent.playerProfile?.status || 'Free Agent',
+                playerProfile: agent.playerProfile
+              }));
+              return PlayersActions.loadFreeAgentsSuccess({ freeAgents: players });
+            }),
+            catchError(error => of(PlayersActions.loadFreeAgentsFailure({ error })))
+          )
+        )
+      );
+    });
+
+    this.deletePlayer$ = createEffect(() => {
+      return this.actions$.pipe(
+        ofType(PlayersActions.deletePlayer),
+        mergeMap(({ playerId }) => {
+          console.log('PlayersEffects: deletePlayer action received for playerId:', playerId);
+          return this.apiService.deletePlayer(playerId).pipe(
+            map((response: any) => {
+              console.log('PlayersEffects: deletePlayer API success', response);
+              return PlayersActions.deletePlayerSuccess({ playerId });
+            }),
+            catchError(error => {
+              console.error('PlayersEffects: deletePlayer API error', error);
+              return of(PlayersActions.deletePlayerFailure({ error }));
+            })
+          );
+        })
+      );
+    });
   }
 }

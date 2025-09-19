@@ -33,6 +33,8 @@ export class ManagerGuard implements CanActivate {
 
         // Extract user ID from Auth0 sub
         const userId = user.sub.split('|')[1];
+        console.log('ManagerGuard - Auth0 sub:', user.sub);
+        console.log('ManagerGuard - Extracted userId:', userId);
 
         // Check if user is any manager
         return this.store.select(selectIsUserAnyManager).pipe(
@@ -50,8 +52,13 @@ export class ManagerGuard implements CanActivate {
                   return of(true);
                 }
 
-                // Dispatch action to check manager status
-                this.store.dispatch(ManagersActions.loadManagersByUser({ userId }));
+                // Only dispatch if we have a valid userId (not 'discord')
+                if (userId && userId !== 'discord') {
+                  this.store.dispatch(ManagersActions.loadManagersByUser({ userId }));
+                } else {
+                  console.log('ManagerGuard - Skipping manager load - invalid userId:', userId);
+                  return of(false);
+                }
                 
                 // Wait for the result
                 return this.store.select(selectIsUserAnyManager).pipe(

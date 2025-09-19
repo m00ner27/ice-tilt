@@ -1,0 +1,73 @@
+<div class="max-w-2xl mx-auto p-6">
+  <div class="bg-admin-card rounded-lg p-8 shadow-lg">
+    <h2 class="text-3xl font-bold text-blue-300 mb-8 text-center">Create New Player</h2>
+           <form [formGroup]="playerForm" (ngSubmit)="onSubmit()" class="space-y-6">
+             <div>
+               <label class="block text-sm font-medium text-gray-300 mb-2">Gamertag</label>
+               <input
+                 formControlName="gamertag"
+                 type="text"
+                 placeholder="Enter player's gamertag"
+                 required
+                 class="w-full px-3 py-2 bg-admin-hover border border-admin-accent rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-admin-primary"
+               />
+             </div>
+
+             <div>
+               <label class="block text-sm font-medium text-gray-300 mb-3">Console</label>
+               <div class="flex space-x-6">
+                 <label class="flex items-center text-white cursor-pointer">
+                   <input 
+                     type="radio" 
+                     formControlName="platform"
+                     value="PS5" 
+                     class="mr-3 text-blue-500 focus:ring-blue-500" />
+                   <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-6 h-6 mr-2">
+                   PlayStation
+                 </label>
+                 <label class="flex items-center text-white cursor-pointer">
+                   <input 
+                     type="radio" 
+                     formControlName="platform"
+                     value="Xbox" 
+                     class="mr-3 text-blue-500 focus:ring-blue-500" />
+                   <img src="assets/images/xbox-logo.svg" alt="Xbox" class="w-6 h-6 mr-2">
+                   Xbox
+                 </label>
+               </div>
+               <p class="text-sm text-gray-400 mt-2">
+                 This will create a new player that will appear in the Players list.
+               </p>
+             </div>
+      
+      <div class="flex justify-center pt-4">
+        <button 
+          type="submit" 
+          [disabled]="playerForm.invalid || loading"
+          (click)="onButtonClick()"
+          class="px-8 py-3 bg-admin-secondary text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          {{ loading ? 'Creating...' : 'Create Player' }}
+        </button>
+      </div>
+      
+             <!-- Debug info -->
+             <div class="mt-4 p-2 bg-gray-800 rounded text-xs text-gray-400">
+               <p>Form valid: {{ playerForm.valid }}</p>
+               <p>Form invalid: {{ playerForm.invalid }}</p>
+               <p>Loading: {{ loading }}</p>
+               <p>Gamertag value: "{{ playerForm.get('gamertag')?.value }}"</p>
+               <p>Platform value: "{{ playerForm.get('platform')?.value }}"</p>
+               <p>Gamertag errors: {{ playerForm.get('gamertag')?.errors | json }}</p>
+               <p>Platform errors: {{ playerForm.get('platform')?.errors | json }}</p>
+             </div>
+    </form>
+    
+    <div *ngIf="success" class="mt-6 p-4 bg-green-500/10 border border-green-500 rounded-md text-green-300 text-center">
+      Player created successfully! They will appear in the Players list.
+    </div>
+    <div *ngIf="error" class="mt-6 p-4 bg-red-500/10 border border-red-500 rounded-md text-red-300 text-center">
+      {{ error }}
+    </div>
+  </div>
+</div>

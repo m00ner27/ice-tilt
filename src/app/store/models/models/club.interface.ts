@@ -27,7 +27,6 @@ export interface Club {
     // Current fields (maintaining compatibility)
     clubName: string;
     image: string;
-    manager: string;
     colour: string;
     roster: Player[];
     

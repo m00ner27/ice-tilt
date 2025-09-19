@@ -5,9 +5,14 @@ export interface User {
   name: string;
   email: string;
   discordId?: string;
+  discordUsername?: string;
+  gamertag?: string;
+  platform?: string;
+  role?: string;
   currentClubId?: string;
   status: 'Signed' | 'Free Agent';
   profile?: any;
+  playerProfile?: any;
 }
 
 // Load Users Actions

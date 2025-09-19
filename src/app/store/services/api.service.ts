@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, switchMap } from 'rxjs/operators';
 import { Game } from '../models/models/match.interface';
 import { User } from '../users.actions';
+import { AuthService } from '@auth0/auth0-angular';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,10 @@ import { User } from '../users.actions';
 export class ApiService {
   private apiUrl = environment.apiUrl; // Uses environment variable
 
-  constructor(private http: HttpClient) { 
+  constructor(
+    private http: HttpClient,
+    private auth: AuthService
+  ) { 
     // Add request interceptor to track all HTTP requests
     console.log('=== API SERVICE: Constructor initialized ===');
   }
@@ -259,19 +263,15 @@ export class ApiService {
   }
 
   // Add player to club roster
-  addPlayerToClub(clubId: string, userId: string, seasonId: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/api/clubs/${clubId}/roster`, { userId, seasonId });
+  addPlayerToClub(clubId: string, playerId: string, seasonId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/api/clubs/${clubId}/roster/player`, { playerId, seasonId });
   }
 
   // Remove player from club roster
-  removePlayerFromClub(clubId: string, userId: string, seasonId: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/api/clubs/${clubId}/roster/${userId}?seasonId=${seasonId}`);
+  removePlayerFromClub(clubId: string, playerId: string, seasonId: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/api/clubs/${clubId}/roster/player/${playerId}?seasonId=${seasonId}`);
   }
 
-  // Get free agents (users not in any club)
-  getFreeAgents(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents`);
-  }
 
   // Get free agents for a specific season
   getFreeAgentsForSeason(seasonId: string): Observable<any[]> {
@@ -364,5 +364,78 @@ export class ApiService {
 
   setSuperAdmin(auth0Id: string, superAdmin: boolean): Observable<any> {
     return this.http.patch(`${this.apiUrl}/api/admins/${encodeURIComponent(auth0Id)}/super`, { superAdmin });
+  }
+
+  // Create User
+  createUser(userData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/users`, userData);
+  }
+
+  // Create Player (for admin system)
+  createPlayer(playerData: any): Observable<any> {
+    console.log('ApiService: createPlayer called with data', playerData);
+    console.log('ApiService: making POST request to', `${this.apiUrl}/api/players`);
+    
+    // Get the access token and add it to the request
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/players`, playerData, { headers });
+      })
+    );
+  }
+
+  // Get all players (for admin management)
+  getAllPlayers(): Observable<any> {
+    console.log('ApiService: getAllPlayers called');
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get(`${this.apiUrl}/api/players`, { headers });
+      })
+    );
+  }
+
+  // Get free agents (for admin management)
+  getFreeAgents(): Observable<any> {
+    console.log('ApiService: getFreeAgents called');
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get(`${this.apiUrl}/api/players/free-agents`, { headers });
+      })
+    );
+  }
+
+  // Delete player (for admin management)
+  deletePlayer(playerId: string): Observable<any> {
+    console.log('ApiService: deletePlayer called for playerId:', playerId);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete(`${this.apiUrl}/api/players/${playerId}`, { headers });
+      })
+    );
   }
 }

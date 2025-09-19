@@ -17,7 +17,6 @@ interface Club {
   _id?: string;
   name: string;
   logoUrl?: string;
-  manager: string;
   primaryColour?: string;
   seasons?: any[];
   roster?: any[];
@@ -84,8 +83,7 @@ export class ClubListComponent implements OnInit, OnDestroy {
 
     const searchTerm = this.searchText.toLowerCase();
     this.filteredClubs = sortedClubs.filter(club => 
-      club.name.toLowerCase().includes(searchTerm) ||
-      club.manager.toLowerCase().includes(searchTerm)
+      club.name.toLowerCase().includes(searchTerm)
     );
   }
 

@@ -138,7 +138,6 @@ export class ClubsComponent {
 
 <div *ngFor="let club of clubs$ | async" class="club-card">
   <h3>{{ club.name }}</h3>
-  <p>{{ club.manager }}</p>
 </div>
 ```
 

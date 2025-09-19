@@ -19,6 +19,7 @@ export class UsersEffects {
   respondToOffer$: any;
   updateUser$: any;
   updateCurrentUser$: any;
+  createUser$: any;
 
   constructor(
     private actions$: Actions,
@@ -175,6 +176,19 @@ export class UsersEffects {
           this.apiService.updateCurrentUser(userData).pipe(
             map(updatedUser => UsersActions.updateCurrentUserSuccess({ user: updatedUser })),
             catchError(error => of(UsersActions.updateCurrentUserFailure({ error })))
+          )
+        )
+      )
+    );
+
+    // Create User Effect
+    this.createUser$ = createEffect(() =>
+      this.actions$.pipe(
+        ofType(UsersActions.createUser),
+        mergeMap(({ userData }) =>
+          this.apiService.createUser(userData).pipe(
+            map(user => UsersActions.createUserSuccess({ user })),
+            catchError(error => of(UsersActions.createUserFailure({ error })))
           )
         )
       )

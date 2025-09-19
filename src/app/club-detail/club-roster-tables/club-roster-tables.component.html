@@ -5,21 +5,25 @@
     <table class="w-full bg-admin-card text-white border-collapse">
       <thead class="bg-admin-accent">
         <tr>
-          <th class="px-4 py-3 text-left font-semibold text-sm uppercase tracking-wide">Discord Username</th>
           <th class="px-4 py-3 text-left font-semibold text-sm uppercase tracking-wide">Gamertag</th>
+          <th class="px-4 py-3 text-left font-semibold text-sm uppercase tracking-wide">Console</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let player of signedPlayers" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
-          <td class="px-4 py-3 text-white">{{ player.discordUsername || player.discordId }}</td>
+          <td class="px-4 py-3 text-white">{{ player.gamertag || 'Unknown' }}</td>
           <td class="px-4 py-3 text-white flex items-center gap-2">
             <span *ngIf="player.platform === 'PS5'" class="flex items-center gap-1">
               <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
+              PlayStation
             </span>
             <span *ngIf="player.platform === 'Xbox'" class="flex items-center gap-1">
               <img src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+              Xbox
             </span>
-            {{ player.gamertag }}
+            <span *ngIf="!player.platform || (player.platform !== 'PS5' && player.platform !== 'Xbox')" class="text-gray-400">
+              {{ player.platform || 'Unknown' }}
+            </span>
           </td>
         </tr>
         <tr *ngIf="signedPlayers.length === 0" class="border-t border-admin-accent">
@@ -38,9 +42,7 @@
     <table class="w-full bg-admin-card text-white border-collapse min-w-max">
     <thead class="bg-admin-accent">
       <tr>
-        <th class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide whitespace-nowrap">#</th>
         <th class="px-2 py-3 text-left font-semibold text-xs uppercase tracking-wide whitespace-nowrap">Gamertag</th>
-        <th class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide whitespace-nowrap">Position</th>
         <th class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide whitespace-nowrap">GP</th>
         <th class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide whitespace-nowrap">W</th>
         <th class="px-2 py-3 text-center font-semibold text-xs uppercase tracking-wide whitespace-nowrap">L</th>
@@ -69,9 +71,7 @@
     </thead>
     <tbody>
       <tr *ngFor="let skater of skaterStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
-        <td class="px-2 py-3 text-center text-white font-medium">{{ skater.number }}</td>
         <td class="px-2 py-3 text-left text-white font-medium">{{ skater.name }}</td>
-        <td class="px-2 py-3 text-center"><app-position-pill [position]="skater.position"></app-position-pill></td>
         <td class="px-2 py-3 text-center text-white">{{ skater.gamesPlayed }}</td>
         <td class="px-2 py-3 text-center text-white">{{ skater.wins || 0 }}</td>
         <td class="px-2 py-3 text-center text-white">{{ skater.losses || 0 }}</td>
@@ -98,7 +98,7 @@
         <td class="px-2 py-3 text-center text-white">{{ skater.penaltyKillCorsiZone || 0 }}</td>
       </tr>
       <tr *ngIf="skaterStats.length === 0" class="border-t border-admin-accent">
-        <td colspan="27" class="px-4 py-8 text-center text-gray-400 italic">No skater statistics available</td>
+        <td colspan="25" class="px-4 py-8 text-center text-gray-400 italic">No skater statistics available</td>
       </tr>
     </tbody>
   </table>
@@ -110,9 +110,7 @@
     <table class="w-full bg-admin-card text-white border-collapse">
     <thead class="bg-admin-accent">
       <tr>
-        <th class="px-4 py-3 text-center font-semibold text-sm uppercase tracking-wide">#</th>
         <th class="px-4 py-3 text-left font-semibold text-sm uppercase tracking-wide">Gamertag</th>
-        <th class="px-4 py-3 text-center font-semibold text-sm uppercase tracking-wide">Position</th>
         <th class="px-4 py-3 text-center font-semibold text-sm uppercase tracking-wide">GP</th>
         <th class="px-4 py-3 text-center font-semibold text-sm uppercase tracking-wide">W</th>
         <th class="px-4 py-3 text-center font-semibold text-sm uppercase tracking-wide">L</th>
@@ -126,9 +124,7 @@
     </thead>
     <tbody>
       <tr *ngFor="let goalie of goalieStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
-        <td class="px-4 py-3 text-center text-white font-medium">{{ goalie.number }}</td>
         <td class="px-4 py-3 text-left text-white font-medium">{{ goalie.name }}</td>
-        <td class="px-4 py-3 text-center"><app-position-pill [position]="goalie.position"></app-position-pill></td>
         <td class="px-4 py-3 text-center text-white">{{ goalie.gamesPlayed }}</td>
         <td class="px-4 py-3 text-center text-white">{{ goalie.wins || 0 }}</td>
         <td class="px-4 py-3 text-center text-white">{{ goalie.losses || 0 }}</td>
@@ -140,7 +136,7 @@
         <td class="px-4 py-3 text-center text-white font-bold">{{ goalie.shutouts }}</td>
       </tr>
       <tr *ngIf="goalieStats.length === 0" class="border-t border-admin-accent">
-        <td colspan="12" class="px-4 py-8 text-center text-gray-400 italic">No goalie statistics available</td>
+        <td colspan="10" class="px-4 py-8 text-center text-gray-400 italic">No goalie statistics available</td>
       </tr>
     </tbody>
   </table>

@@ -71,7 +71,6 @@
             <img [src]="getImageUrl(club.logoUrl)" alt="Logo" class="w-6 h-6 object-contain rounded" />
             <div class="flex-1">
               <div class="text-white font-medium">{{ club.name }}</div>
-              <div class="text-admin-text text-sm">{{ club.manager }}</div>
             </div>
           </li>
           <li class="text-admin-text text-center py-4" *ngIf="getClubsForDivision(division._id).length === 0">No clubs in this division.</li>

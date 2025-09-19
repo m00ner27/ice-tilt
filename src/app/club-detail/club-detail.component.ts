@@ -190,22 +190,17 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       return;
     }
     
-    if (this.seasons && this.seasons.length > 0 && this.backendClub) {
-      const clubSeasons = this.backendClub.seasons || [];
-      
-      if (clubSeasons.length > 0) {
-        // Find the first season that the club is active in
-        const firstClubSeason = clubSeasons[0];
-        // Handle both object and string seasonId formats
-        const seasonId = typeof firstClubSeason.seasonId === 'object' && firstClubSeason.seasonId._id 
-          ? firstClubSeason.seasonId._id 
-          : firstClubSeason.seasonId;
-        this.onSeasonChange(seasonId);
-      } else {
-        // Fallback to first available season
-        const firstSeason = this.seasons[0];
-        this.onSeasonChange(firstSeason._id);
-      }
+    // Get the filtered seasons for this club
+    const clubSeasons = this.getClubSeasons();
+    
+    if (clubSeasons.length > 0) {
+      // Select the first season the club participates in
+      const firstClubSeason = clubSeasons[0];
+      this.onSeasonChange(firstClubSeason._id);
+    } else if (this.seasons && this.seasons.length > 0) {
+      // Fallback to first available season if club has no seasons
+      const firstSeason = this.seasons[0];
+      this.onSeasonChange(firstSeason._id);
     }
   }
 
@@ -229,8 +224,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Process signed players
-    this.signedPlayers = roster.filter(player => player && player.discordUsername);
+    // Process signed players - filter for players with gamertag (new player system)
+    this.signedPlayers = roster.filter(player => player && player.gamertag);
 
     // Process skater and goalie stats from matches
     this.processPlayerStatsFromMatches(roster);
@@ -392,9 +387,30 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   getClubSeasons(): any[] {
-    // Return seasons that this club has participated in
-    // For now, return all seasons as a placeholder
-    return this.seasons;
+    // Return only seasons that this club has participated in
+    if (!this.backendClub || !this.backendClub.seasons || !this.seasons) {
+      console.log('ClubDetail: No club, club seasons, or all seasons available');
+      return [];
+    }
+    
+    const clubSeasonIds = this.backendClub.seasons.map((clubSeason: any) => {
+      // Handle both object and string seasonId formats
+      return typeof clubSeason.seasonId === 'object' && clubSeason.seasonId._id 
+        ? clubSeason.seasonId._id 
+        : clubSeason.seasonId;
+    });
+    
+    console.log('ClubDetail: Club season IDs:', clubSeasonIds);
+    console.log('ClubDetail: All seasons:', this.seasons.map(s => ({ id: s._id, name: s.name })));
+    
+    // Filter seasons to only include those the club participates in
+    const filteredSeasons = this.seasons.filter(season => 
+      clubSeasonIds.includes(season._id)
+    );
+    
+    console.log('ClubDetail: Filtered seasons for club:', filteredSeasons.map(s => ({ id: s._id, name: s.name })));
+    
+    return filteredSeasons;
   }
 
   private mapBackendClubToFrontend(backendClub: any): any {

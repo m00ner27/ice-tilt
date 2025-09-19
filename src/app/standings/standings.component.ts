@@ -54,7 +54,6 @@ interface Club {
   _id: string;
   name: string;
   logoUrl?: string;
-  manager: string;
   seasons: {
     seasonId: string;
     divisionIds: string[];

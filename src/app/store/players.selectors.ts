@@ -37,3 +37,19 @@ export const selectPlayerStatsError = createSelector(
   selectPlayersState,
   (state: PlayersState) => state.statsError
 );
+
+// Admin Player Management selectors
+export const selectFreeAgents = createSelector(
+  selectPlayersState,
+  (state: PlayersState) => state.freeAgents
+);
+
+export const selectAdminLoading = createSelector(
+  selectPlayersState,
+  (state: PlayersState) => state.adminLoading
+);
+
+export const selectAdminError = createSelector(
+  selectPlayersState,
+  (state: PlayersState) => state.adminError
+);
