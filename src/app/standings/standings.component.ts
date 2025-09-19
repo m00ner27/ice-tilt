@@ -7,6 +7,7 @@ import { Observable, Subject, combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
+import { ApiService } from '../store/services/api.service';
 import { environment } from '../../environments/environment';
 
 // Import selectors
@@ -105,10 +106,12 @@ export class StandingsComponent implements OnInit, OnDestroy {
   divisionStandings: any[] = [];
   sortColumn: string = 'points';
   sortDirection: 'asc' | 'desc' = 'desc';
+  isLoading: boolean = true;
 
   constructor(
     private store: Store<AppState>,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private apiService: ApiService
   ) {
     // Initialize selectors
     this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
@@ -120,6 +123,8 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    console.log('=== STANDINGS COMPONENT INIT ===');
+    
     // Load data using NgRx
     this.ngrxApiService.loadSeasons();
     this.ngrxApiService.loadClubs();
@@ -128,6 +133,22 @@ export class StandingsComponent implements OnInit, OnDestroy {
     
     // Subscribe to data changes
     this.setupDataSubscriptions();
+    
+    // Also load data directly as backup immediately
+    this.loadDataDirectly();
+    
+    // Listen for storage events (when admin panel makes changes)
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'admin-data-updated') {
+        console.log('Admin data updated, refreshing standings...');
+        this.ngrxApiService.loadMatches();
+        this.ngrxApiService.loadClubs();
+        this.ngrxApiService.loadDivisions();
+        
+        // Also force a direct API call to ensure we get the latest data
+        this.loadDataDirectly();
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -150,6 +171,10 @@ export class StandingsComponent implements OnInit, OnDestroy {
       this.matches$,
       this.divisions$
     ]).pipe(takeUntil(this.destroy$)).subscribe(([clubs, matches, divisions]) => {
+      console.log('=== STANDINGS DATA UPDATE ===');
+      console.log(`Clubs: ${clubs.length}, Matches: ${matches.length}, Divisions: ${divisions.length}`);
+      console.log(`Matches with scores: ${matches.filter(m => m.score && m.score.home !== undefined && m.score.away !== undefined).length}`);
+      
       this.clubs = clubs;
       this.games = matches;
       this.divisions = divisions;
@@ -168,6 +193,36 @@ export class StandingsComponent implements OnInit, OnDestroy {
     this.loadSeasonData();
   }
 
+  // Direct API call to get fresh data (used when NgRx store isn't updated)
+  loadDataDirectly(): void {
+    console.log('Loading data directly from API...');
+    
+    // Load all data in parallel for faster loading
+    Promise.all([
+      this.apiService.getGames().toPromise(),
+      this.apiService.getClubs().toPromise(),
+      this.apiService.getDivisions().toPromise()
+    ]).then(([games, clubs, divisions]) => {
+      console.log('Direct API call - data loaded:', {
+        games: games?.length || 0,
+        clubs: clubs?.length || 0,
+        divisions: divisions?.length || 0
+      });
+      
+      
+      this.games = games || [];
+      this.clubs = clubs || [];
+      this.divisions = divisions || [];
+      this.isLoading = false;
+      
+      if (this.selectedSeasonId) {
+        this.calculateStandings();
+      }
+    }).catch(error => {
+      console.error('Error loading data directly:', error);
+    });
+  }
+
   loadSeasonData(): void {
     if (!this.selectedSeasonId) return;
 
@@ -178,6 +233,9 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   calculateStandings(): void {
+    console.log('=== CALCULATING STANDINGS ===');
+    console.log(`Games: ${this.games.length}, Season: ${this.selectedSeasonId}, Divisions: ${this.divisions.length}`);
+    
     this.divisionStandings = [];
 
     // Group games by division
@@ -190,7 +248,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
           const firstDivision = this.divisions.find(d => d.seasonId === this.selectedSeasonId);
           if (firstDivision) {
             divisionId = firstDivision._id;
-            console.log(`Assigning game ${game.id} to division ${firstDivision.name} (${divisionId})`);
           }
         }
         
@@ -202,10 +259,17 @@ export class StandingsComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
+    console.log(`Games grouped by division: ${gamesByDivision.size} divisions`);
+    gamesByDivision.forEach((games, divisionId) => {
+      const divisionName = this.divisions.find(d => d._id === divisionId)?.name || 'Unknown';
+      console.log(`${divisionName}: ${games.length} games`);
+    });
 
     // Calculate standings for each division
     this.divisions.forEach(division => {
       const divisionGames = gamesByDivision.get(division._id) || [];
+      console.log(`${division.name}: ${divisionGames.length} games`);
       const standings = this.calculateDivisionStandings(divisionGames, division);
       
       if (standings.length > 0) {
@@ -218,36 +282,22 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   calculateDivisionStandings(games: Game[], division: Division): TeamStanding[] {
-    console.log(`=== CALCULATING STANDINGS FOR DIVISION: ${division.name} ===`);
-    console.log('Division ID:', division._id);
-    console.log('Games for this division:', games.length);
-    console.log('All clubs:', this.clubs.length);
+    console.log(`=== ${division.name} Division ===`);
+    console.log(`Games: ${games.length}, Clubs: ${this.clubs.length}`);
     
     const standingsMap = new Map<string, TeamStanding>();
 
     // Filter clubs that belong to the current division for the selected season
     const clubsInDivision = this.clubs.filter(club => {
-      console.log(`\n--- Checking Club: ${club.name} ---`);
-      console.log('Club seasons:', JSON.stringify(club.seasons, null, 2));
-      
       const isInDivision = club.seasons.some((s: any) => {
         const seasonId = s.seasonId._id || s.seasonId; // Handle both object and string formats
-        console.log(`Checking season:`, {
-          seasonId: s.seasonId,
-          seasonIdString: seasonId,
-          divisionIds: s.divisionIds,
-          matchesSelectedSeason: seasonId === this.selectedSeasonId,
-          includesDivision: s.divisionIds && s.divisionIds.includes(division._id)
-        });
         return seasonId === this.selectedSeasonId && s.divisionIds && s.divisionIds.includes(division._id);
       });
-      
-      console.log(`Club ${club.name} isInDivision:`, isInDivision);
       return isInDivision;
     });
     
-    console.log('Clubs in division:', clubsInDivision.length);
-    console.log('Clubs in division names:', clubsInDivision.map(c => c.name));
+    console.log(`Clubs in division: ${clubsInDivision.length} (${clubsInDivision.map(c => c.name).join(', ')})`);
+    console.log(`Club IDs in standings map: ${clubsInDivision.map(c => c._id).join(', ')}`);
 
     // Initialize standings for the clubs in this division
     clubsInDivision.forEach(club => {
@@ -273,7 +323,10 @@ export class StandingsComponent implements OnInit, OnDestroy {
     }
 
     // Calculate stats from games
-    games.forEach(game => {
+    console.log(`Processing ${games.length} games for standings calculation`);
+    let gamesWithScores = 0;
+    
+    games.forEach((game, index) => {
       // Use game.score if available, as it's now the single source of truth for scores,
       // populated by both manual entry and the EASHL data linking.
       if (!game.score || typeof game.score.home === 'undefined' || typeof game.score.away === 'undefined') {
@@ -281,11 +334,22 @@ export class StandingsComponent implements OnInit, OnDestroy {
         return;
       }
 
+      gamesWithScores++;
       const homeScore = game.score.home;
       const awayScore = game.score.away;
+      const homeTeamName = typeof game.homeClubId === 'object' && game.homeClubId ? (game.homeClubId as any).name : 'Unknown';
+      const awayTeamName = typeof game.awayClubId === 'object' && game.awayClubId ? (game.awayClubId as any).name : 'Unknown';
+      console.log(`Game: ${homeTeamName} ${homeScore}-${awayScore} ${awayTeamName}`);
 
-      const homeTeam = standingsMap.get(game.homeClubId);
-      const awayTeam = standingsMap.get(game.awayClubId);
+      // Extract club IDs from objects if needed
+      const homeClubId = typeof game.homeClubId === 'object' ? (game.homeClubId as any)._id : game.homeClubId;
+      const awayClubId = typeof game.awayClubId === 'object' ? (game.awayClubId as any)._id : game.awayClubId;
+      
+      const homeTeam = standingsMap.get(homeClubId);
+      const awayTeam = standingsMap.get(awayClubId);
+
+      console.log(`Looking up teams: homeClubId=${homeClubId}, awayClubId=${awayClubId}`);
+      console.log(`Found teams: homeTeam=${!!homeTeam}, awayTeam=${!!awayTeam}`);
 
       if (homeTeam && awayTeam) {
         // Update games played
@@ -328,6 +392,8 @@ export class StandingsComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    console.log(`Games with scores processed: ${gamesWithScores}/${games.length}`);
 
     // Calculate derived stats
     standingsMap.forEach(team => {
@@ -418,6 +484,11 @@ export class StandingsComponent implements OnInit, OnDestroy {
       selectedSeasonName = season ? season.name : '';
     });
     return selectedSeasonName;
+  }
+
+  // Handle image loading errors
+  onImageError(event: any): void {
+    console.error('Image failed to load:', event.target.src);
   }
 
   // Helper method to get the full image URL

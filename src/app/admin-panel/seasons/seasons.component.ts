@@ -135,6 +135,9 @@ export class SeasonsComponent implements OnInit {
           // Add to local array after successful API call
           this.divisions.push(newDivision);
           this.cancelDivisionForm();
+          
+          // Trigger storage event to notify standings component
+          localStorage.setItem('admin-data-updated', Date.now().toString());
         },
         error: (error) => {
           console.error('Error creating division:', error);
@@ -162,6 +165,9 @@ export class SeasonsComponent implements OnInit {
             this.divisions[index] = updatedDivision;
           }
           this.cancelDivisionForm();
+          
+          // Trigger storage event to notify standings component
+          localStorage.setItem('admin-data-updated', Date.now().toString());
         },
         error: (error) => {
           console.error('Error updating division:', error);
@@ -177,6 +183,9 @@ export class SeasonsComponent implements OnInit {
         next: () => {
           // Remove from local array after successful API call
           this.divisions = this.divisions.filter(d => d._id !== division._id);
+          
+          // Trigger storage event to notify standings component
+          localStorage.setItem('admin-data-updated', Date.now().toString());
         },
         error: (error) => {
           console.error('Error deleting division:', error);
@@ -195,13 +204,21 @@ export class SeasonsComponent implements OnInit {
   onDivisionLogoFileChange(event: any) {
     const file = event.target.files[0];
     if (file) {
-      // Handle file upload logic here
-      // For now, just show a preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.divisionLogoPreview = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+      this.uploadingDivisionLogo = true;
+      
+      // Upload the file
+      this.apiService.uploadFile(file).subscribe({
+        next: (response: any) => {
+          console.log('Division logo uploaded:', response);
+          this.divisionLogoPreview = response.url;
+          this.divisionForm.patchValue({ logoUrl: response.url });
+          this.uploadingDivisionLogo = false;
+        },
+        error: (error) => {
+          console.error('Error uploading division logo:', error);
+          this.uploadingDivisionLogo = false;
+        }
+      });
     }
   }
 }

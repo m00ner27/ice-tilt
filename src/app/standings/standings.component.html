@@ -17,7 +17,7 @@
   </div>
 
   <!-- Loading state -->
-  <div *ngIf="seasonsLoading$ | async" class="text-center text-white py-10 text-xl">
+  <div *ngIf="isLoading" class="text-center text-white py-10 text-xl">
     <p>Loading standings...</p>
   </div>
 
@@ -30,7 +30,7 @@
   <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length > 0" class="mb-8">
     <div *ngFor="let divisionStanding of divisionStandings" class="mb-8">
       <h2 class="text-white text-2xl mb-4 p-3 bg-admin-accent rounded-lg border-l-4 border-admin-primary flex items-center gap-3">
-        <img *ngIf="divisionStanding.division.logoUrl" [src]="getImageUrl(divisionStanding.division.logoUrl)" [alt]="divisionStanding.division.name + ' logo'" class="w-8 h-8 object-contain rounded">
+        <img *ngIf="divisionStanding.division.logoUrl" [src]="getImageUrl(divisionStanding.division.logoUrl)" [alt]="divisionStanding.division.name + ' logo'" class="w-8 h-8 object-contain rounded" (error)="onImageError($event)">
         {{ divisionStanding.division.name }}
       </h2>
       

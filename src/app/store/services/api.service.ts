@@ -239,18 +239,57 @@ export class ApiService {
   }
 
   deleteGame(gameId: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/api/games/${gameId}`);
+    console.log('ApiService: deleteGame called for gameId', gameId);
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for deleteGame, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete(`${this.apiUrl}/api/games/${gameId}`, { headers });
+      })
+    );
   }
 
   bulkUpdateGames(updates: any[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/api/games/bulk-update`, updates);
+    console.log('ApiService: bulkUpdateGames called with', updates.length, 'updates');
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for bulkUpdateGames, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/games/bulk-update`, updates, { headers });
+      })
+    );
   }
 
   mergeGames(primaryGameId: string, secondaryGameId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/api/games/merge`, {
-      primaryGameId,
-      secondaryGameId
-    });
+    console.log('ApiService: mergeGames called');
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for mergeGames, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/games/merge`, {
+          primaryGameId,
+          secondaryGameId
+        }, { headers });
+      })
+    );
   }
 
   getGame(gameId: string): Observable<Game> {
@@ -356,11 +395,37 @@ export class ApiService {
   }
 
   getGameEashlData(gameId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/api/games/${gameId}/eashl-data`);
+    console.log('ApiService: getGameEashlData called for gameId', gameId);
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for getGameEashlData, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any>(`${this.apiUrl}/api/games/${gameId}/eashl-data`, { headers });
+      })
+    );
   }
 
   unlinkGameStats(gameId: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/api/games/${gameId}/eashl-data`);
+    console.log('ApiService: unlinkGameStats called for gameId', gameId);
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for unlinkGameStats, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(`${this.apiUrl}/api/games/${gameId}/eashl-data`, { headers });
+      })
+    );
   }
 
   getClub(id: string): Observable<any> {
@@ -377,15 +442,54 @@ export class ApiService {
   }
 
   addAdmin(payload: { username: string; note?: string; superAdmin?: boolean }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/api/admins`, payload);
+    console.log('ApiService: addAdmin called');
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for addAdmin, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/admins`, payload, { headers });
+      })
+    );
   }
 
   removeAdmin(auth0Id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/api/admins/${encodeURIComponent(auth0Id)}`);
+    console.log('ApiService: removeAdmin called for auth0Id', auth0Id);
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for removeAdmin, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete(`${this.apiUrl}/api/admins/${encodeURIComponent(auth0Id)}`, { headers });
+      })
+    );
   }
 
   setSuperAdmin(auth0Id: string, superAdmin: boolean): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/api/admins/${encodeURIComponent(auth0Id)}/super`, { superAdmin });
+    console.log('ApiService: setSuperAdmin called for auth0Id', auth0Id);
+    
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        console.log('ApiService: Got access token for setSuperAdmin, making authenticated request');
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.patch(`${this.apiUrl}/api/admins/${encodeURIComponent(auth0Id)}/super`, { superAdmin }, { headers });
+      })
+    );
   }
 
   // Create User

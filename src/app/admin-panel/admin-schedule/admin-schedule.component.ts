@@ -2,10 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
 import { ApiService } from '../../store/services/api.service';
 import { EashlService } from '../../services/eashl.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { AppState } from '../../store';
+import * as MatchesActions from '../../store/matches.actions';
 
 @Component({
   selector: 'app-admin-schedule',
@@ -23,7 +26,8 @@ export class AdminScheduleComponent implements OnInit {
   constructor(
     private api: ApiService,
     private eashlService: EashlService,
-    private router: Router
+    private router: Router,
+    private store: Store<AppState>
   ) {}
 
   ngOnInit(): void {
@@ -748,6 +752,10 @@ export class AdminScheduleComponent implements OnInit {
         setTimeout(() => {
           console.log('Refreshing data after merge...');
           this.loadClubsAndGames();
+          // Also reload the NgRx store so standings component gets updated
+          this.store.dispatch(MatchesActions.loadMatches());
+          // Trigger storage event to notify standings component
+          localStorage.setItem('admin-data-updated', Date.now().toString());
         }, 100);
       },
       error: (err) => {
@@ -802,6 +810,10 @@ export class AdminScheduleComponent implements OnInit {
         next: () => {
           alert('Game deleted successfully!');
           this.loadClubsAndGames(); // Reload data
+          // Also reload the NgRx store so standings component gets updated
+          this.store.dispatch(MatchesActions.loadMatches());
+          // Trigger storage event to notify standings component
+          localStorage.setItem('admin-data-updated', Date.now().toString());
         },
         error: (err) => {
           alert('Failed to delete game: ' + (err?.error?.message || err.message || 'Unknown error'));
@@ -847,10 +859,18 @@ export class AdminScheduleComponent implements OnInit {
             .then(() => {
               console.log('All EASHL data fetched and stored.');
               this.loadClubsAndGames(); // Reload all data
+              // Also reload the NgRx store so standings component gets updated
+              this.store.dispatch(MatchesActions.loadMatches());
+              // Trigger storage event to notify standings component
+              localStorage.setItem('admin-data-updated', Date.now().toString());
             })
             .catch(err => {
               console.error('Error fetching some EASHL data after bulk update:', err);
               this.loadClubsAndGames(); // Still reload
+              // Also reload the NgRx store so standings component gets updated
+              this.store.dispatch(MatchesActions.loadMatches());
+              // Trigger storage event to notify standings component
+              localStorage.setItem('admin-data-updated', Date.now().toString());
             });
         },
         error: (err) => {
