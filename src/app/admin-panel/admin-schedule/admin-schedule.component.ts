@@ -689,6 +689,12 @@ export class AdminScheduleComponent implements OnInit {
         setTimeout(() => {
           console.log('Refreshing data after EASHL merge...');
           this.loadClubsAndGames();
+          
+          // Also reload the NgRx store and trigger storage event
+          this.store.dispatch(MatchesActions.loadMatches());
+          const timestamp = Date.now().toString();
+          console.log('Triggering storage event for EASHL merge:', timestamp);
+          localStorage.setItem('admin-data-updated', timestamp);
         }, 100);
       },
       error: (err) => {
@@ -795,6 +801,12 @@ export class AdminScheduleComponent implements OnInit {
             this.games[index] = updatedGameWithAssets;
             this.applyFilter();
             this.calculateUnlinkedCount();
+            
+            // Also reload the NgRx store and trigger storage event
+            this.store.dispatch(MatchesActions.loadMatches());
+            const timestamp = Date.now().toString();
+            console.log('Triggering storage event for unlink stats:', timestamp);
+            localStorage.setItem('admin-data-updated', timestamp);
           }
         },
         error: (err) => {
@@ -862,7 +874,9 @@ export class AdminScheduleComponent implements OnInit {
               // Also reload the NgRx store so standings component gets updated
               this.store.dispatch(MatchesActions.loadMatches());
               // Trigger storage event to notify standings component
-              localStorage.setItem('admin-data-updated', Date.now().toString());
+              const timestamp = Date.now().toString();
+              console.log('Triggering storage event for standings update:', timestamp);
+              localStorage.setItem('admin-data-updated', timestamp);
             })
             .catch(err => {
               console.error('Error fetching some EASHL data after bulk update:', err);
@@ -870,7 +884,9 @@ export class AdminScheduleComponent implements OnInit {
               // Also reload the NgRx store so standings component gets updated
               this.store.dispatch(MatchesActions.loadMatches());
               // Trigger storage event to notify standings component
-              localStorage.setItem('admin-data-updated', Date.now().toString());
+              const timestamp = Date.now().toString();
+              console.log('Triggering storage event for standings update (error case):', timestamp);
+              localStorage.setItem('admin-data-updated', timestamp);
             });
         },
         error: (err) => {

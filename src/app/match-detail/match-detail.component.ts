@@ -150,6 +150,24 @@ export class MatchDetailComponent implements OnInit {
     });
   }
   
+  // Convert full position names to abbreviations
+  getPositionAbbreviation(position: string): string {
+    const positionMap: { [key: string]: string } = {
+      'leftWing': 'LW',
+      'rightWing': 'RW', 
+      'center': 'C',
+      'defenseMen': 'D',
+      'goalie': 'G',
+      'G': 'G',
+      'LW': 'LW',
+      'RW': 'RW',
+      'C': 'C',
+      'D': 'D'
+    };
+    
+    return positionMap[position] || position;
+  }
+
   processMatchData(): void {
     if (!this.match) return;
 
@@ -197,7 +215,7 @@ export class MatchDetailComponent implements OnInit {
         playerId: playerStat.playerId || 0,
         name: playerStat.name || 'Unknown Player',
         number: playerStat.number || 0,
-        position: playerStat.position || 'Unknown',
+        position: this.getPositionAbbreviation(playerStat.position || 'Unknown'),
         gamesPlayed: playerStat.gamesPlayed || 0,
         goals: playerStat.goals || 0,
         assists: playerStat.assists || 0,
@@ -231,13 +249,13 @@ export class MatchDetailComponent implements OnInit {
 
       // Determine which team the player belongs to
       if (playerStat.team === this.match.homeTeam) {
-        if (playerStat.position === 'G') {
+        if (playerStat.position === 'G' || playerStat.position === 'goalie') {
           this.homeTeamGoalies.push(statDisplay);
         } else {
           this.homeTeamPlayers.push(statDisplay);
         }
       } else if (playerStat.team === this.match.awayTeam) {
-        if (playerStat.position === 'G') {
+        if (playerStat.position === 'G' || playerStat.position === 'goalie') {
           this.awayTeamGoalies.push(statDisplay);
         } else {
           this.awayTeamPlayers.push(statDisplay);

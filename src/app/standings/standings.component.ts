@@ -141,11 +141,15 @@ export class StandingsComponent implements OnInit, OnDestroy {
     window.addEventListener('storage', (event) => {
       if (event.key === 'admin-data-updated') {
         console.log('Admin data updated, refreshing standings...');
+        console.log('Storage event timestamp:', event.newValue);
+        
+        // Force a complete refresh of all data
         this.ngrxApiService.loadMatches();
         this.ngrxApiService.loadClubs();
         this.ngrxApiService.loadDivisions();
         
-        // Also force a direct API call to ensure we get the latest data
+        // Force a direct API call immediately to get the latest data
+        console.log('Forcing direct API reload after storage event...');
         this.loadDataDirectly();
       }
     });
@@ -175,12 +179,29 @@ export class StandingsComponent implements OnInit, OnDestroy {
       console.log(`Clubs: ${clubs.length}, Matches: ${matches.length}, Divisions: ${divisions.length}`);
       console.log(`Matches with scores: ${matches.filter(m => m.score && m.score.home !== undefined && m.score.away !== undefined).length}`);
       
-      this.clubs = clubs;
-      this.games = matches;
-      this.divisions = divisions;
-      // Only recalculate standings when data changes, don't reload season data
+      // Debug: Log matches for the selected season
       if (this.selectedSeasonId) {
-        this.calculateStandings();
+        const seasonMatches = matches.filter(m => m.seasonId === this.selectedSeasonId);
+        console.log(`Matches for selected season ${this.selectedSeasonId}:`, seasonMatches.length);
+        seasonMatches.forEach(match => {
+          console.log(`Match: ${match._id}, Score: ${match.score?.home || 'N/A'}-${match.score?.away || 'N/A'}, EASHL: ${match.eashlMatchId || 'None'}`);
+        });
+      }
+      
+      // Only update if we don't have better data from direct API calls
+      // The direct API data is more reliable and complete
+      if (this.games.length === 0 || matches.some(m => m.score && m.score.home !== undefined && m.score.away !== undefined)) {
+        this.clubs = clubs;
+        this.games = matches;
+        this.divisions = divisions;
+        
+        // Only recalculate standings when data changes, don't reload season data
+        if (this.selectedSeasonId) {
+          console.log('Recalculating standings due to NgRx data update...');
+          this.calculateStandings();
+        }
+      } else {
+        console.log('Skipping NgRx update - using direct API data instead');
       }
     });
   }
@@ -209,6 +230,14 @@ export class StandingsComponent implements OnInit, OnDestroy {
         divisions: divisions?.length || 0
       });
       
+      // Debug: Log games for the selected season
+      if (this.selectedSeasonId) {
+        const seasonGames = (games || []).filter(g => g.seasonId === this.selectedSeasonId);
+        console.log(`Direct API - Games for season ${this.selectedSeasonId}:`, seasonGames.length);
+        seasonGames.forEach(game => {
+          console.log(`Direct API - Game: ${game._id}, Score: ${game.score?.home || 'N/A'}-${game.score?.away || 'N/A'}, EASHL: ${game.eashlMatchId || 'None'}`);
+        });
+      }
       
       this.games = games || [];
       this.clubs = clubs || [];
@@ -216,6 +245,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
       this.isLoading = false;
       
       if (this.selectedSeasonId) {
+        console.log('Direct API - Recalculating standings...');
         this.calculateStandings();
       }
     }).catch(error => {
@@ -235,6 +265,13 @@ export class StandingsComponent implements OnInit, OnDestroy {
   calculateStandings(): void {
     console.log('=== CALCULATING STANDINGS ===');
     console.log(`Games: ${this.games.length}, Season: ${this.selectedSeasonId}, Divisions: ${this.divisions.length}`);
+    
+    // Debug: Log all games for the selected season
+    const seasonGames = this.games.filter(game => game.seasonId === this.selectedSeasonId);
+    console.log(`Games for season ${this.selectedSeasonId}:`, seasonGames.length);
+    seasonGames.forEach(game => {
+      console.log(`Game: ${game._id}, Season: ${game.seasonId}, Score: ${game.score?.home || 'N/A'}-${game.score?.away || 'N/A'}, EASHL: ${game.eashlMatchId || 'None'}`);
+    });
     
     this.divisionStandings = [];
 

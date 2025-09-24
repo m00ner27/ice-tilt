@@ -76,7 +76,7 @@ export class AddGamesComponent implements OnInit {
   loadDivisions() {
     this.api.getDivisions().subscribe({
       next: (divisions) => {
-        this.divisions = divisions;
+        this.divisions = divisions.sort((a, b) => a.name.localeCompare(b.name));
       },
       error: (error) => {
         console.error('Error loading divisions:', error);
@@ -87,7 +87,7 @@ export class AddGamesComponent implements OnInit {
   loadClubs() {
     this.api.getClubs().subscribe({
       next: (clubs) => {
-        this.clubs = clubs;
+        this.clubs = clubs.sort((a, b) => a.name.localeCompare(b.name));
       },
       error: (error) => {
         console.error('Error loading clubs:', error);
@@ -98,18 +98,36 @@ export class AddGamesComponent implements OnInit {
   onSeasonChange() {
     const selectedSeasonId = this.gameForm.get('season')?.value;
     if (selectedSeasonId) {
-      this.filteredDivisions = this.divisions.filter(div => div.seasonId === selectedSeasonId);
+      this.filteredDivisions = this.divisions.filter(div => div.seasonId === selectedSeasonId).sort((a, b) => a.name.localeCompare(b.name));
     } else {
       this.filteredDivisions = [];
     }
-    this.gameForm.patchValue({ division: '' });
+    // Clear division and teams when season changes
+    this.filteredClubs = [];
+    this.gameForm.patchValue({ division: '', team1: '', team2: '' });
   }
 
   onDivisionChange() {
+    const selectedSeasonId = this.gameForm.get('season')?.value;
     const selectedDivisionId = this.gameForm.get('division')?.value;
-    if (selectedDivisionId) {
-      // Filter clubs by division (this would need to be implemented based on your data structure)
-      this.filteredClubs = this.clubs;
+    
+    if (selectedSeasonId && selectedDivisionId) {
+      // Filter clubs that are in the selected season and division
+      this.filteredClubs = this.clubs.filter(club => {
+        return club.seasons && club.seasons.some((season: any) => {
+          // Check if club is in the selected season
+          const isInSeason = (typeof season.seasonId === 'object' && season.seasonId._id === selectedSeasonId) ||
+                            (typeof season.seasonId === 'string' && season.seasonId === selectedSeasonId);
+          
+          if (!isInSeason) return false;
+          
+          // Check if club is in the selected division
+          return season.divisionIds && season.divisionIds.some((divisionId: any) => {
+            return (typeof divisionId === 'object' && divisionId._id === selectedDivisionId) ||
+                   (typeof divisionId === 'string' && divisionId === selectedDivisionId);
+          });
+        });
+      }).sort((a, b) => a.name.localeCompare(b.name));
     } else {
       this.filteredClubs = [];
     }

@@ -14,8 +14,9 @@ import { ClubStatLegendComponent } from './club-stat-legend/club-stat-legend.com
 import { Club } from '../store/models/models/club.interface';
 import { environment } from '../../environments/environment';
 
-// Import selectors
+// Import selectors and actions
 import * as ClubsSelectors from '../store/clubs.selectors';
+import * as ClubsActions from '../store/clubs.actions';
 import * as MatchesSelectors from '../store/matches.selectors';
 import * as SeasonsSelectors from '../store/seasons.selectors';
 
@@ -48,6 +49,7 @@ interface Season {
 })
 export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private rosterSubscription$ = new Subject<void>();
   
   // Observable selectors
   selectedClub$: Observable<Club | null>;
@@ -93,12 +95,24 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const clubId = params['id'];
-      if (clubId) {
+      console.log('Route params changed - new clubId:', clubId, 'current clubId:', this.currentClubId);
+      if (clubId && clubId !== this.currentClubId) {
+        console.log('Switching to different club, clearing data');
+        // Clear previous club data when switching to a different club
+        this.clearClubData();
         this.loadClubData(clubId);
       }
     });
     
     this.setupDataSubscriptions();
+    
+    // Listen for storage events (when players are added/removed from other components)
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'admin-data-updated' || event.key === 'roster-updated') {
+        console.log('Roster data updated, refreshing...');
+        this.refreshRoster();
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -110,6 +124,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Subscribe to selected club changes
     this.selectedClub$.pipe(takeUntil(this.destroy$)).subscribe(club => {
       if (club) {
+        // Clear previous roster data immediately to prevent showing wrong data
+        this.signedPlayers = [];
+        this.skaterStats = [];
+        this.goalieStats = [];
+        
         this.backendClub = club as any;
         this.club = this.mapBackendClubToFrontend(club);
         // Filter matches for the new club
@@ -119,8 +138,19 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Update club roster selector for the new club
         this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(club._id));
         
+        // Set up roster subscription for the new club
+        this.setupRosterSubscription();
+        
+        // Reset season selection for the new club
+        this.selectedSeasonId = '';
+        
         // Trigger season selection now that we have the club data
         this.selectSeasonForClub();
+        
+        // Load roster for the selected season (or default season)
+        if (this.selectedSeasonId) {
+          this.ngrxApiService.loadClubRoster(club._id, this.selectedSeasonId);
+        }
       }
     });
 
@@ -142,12 +172,58 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Subscribe to matches and recalculate stats when they change
     this.matches$.pipe(takeUntil(this.destroy$)).subscribe(matches => {
       this.matches = matches;
+      console.log('All matches loaded:', matches.length);
+      console.log('First few matches:', matches.slice(0, 3).map(m => ({ 
+        id: m._id || m.id, 
+        homeTeam: m.homeTeam, 
+        awayTeam: m.awayTeam,
+        homeClubId: m.homeClubId,
+        awayClubId: m.awayClubId,
+        seasonId: m.seasonId 
+      })));
+      
       // Filter matches for current club
       if (this.backendClub) {
-        this.clubMatches = matches.filter(match => 
-          match.homeClubId?.name === this.backendClub?.name || match.awayClubId?.name === this.backendClub?.name
-        );
+        console.log('Filtering matches for club:', this.backendClub.name);
+        
+        // Try different filtering approaches
+        let clubMatches = matches.filter(match => {
+          const homeMatch = match.homeClubId?.name === this.backendClub?.name;
+          const awayMatch = match.awayClubId?.name === this.backendClub?.name;
+          const homeTeamMatch = match.homeTeam === this.backendClub?.name;
+          const awayTeamMatch = match.awayTeam === this.backendClub?.name;
+          
+          console.log(`Match ${match._id || match.id}:`, {
+            homeClubId: match.homeClubId?.name,
+            awayClubId: match.awayClubId?.name,
+            homeTeam: match.homeTeam,
+            awayTeam: match.awayTeam,
+            homeMatch,
+            awayMatch,
+            homeTeamMatch,
+            awayTeamMatch
+          });
+          
+          return homeMatch || awayMatch || homeTeamMatch || awayTeamMatch;
+        });
+        
+        console.log('Filtered club matches:', clubMatches.length);
+        console.log('Club matches details:', clubMatches.map(m => ({ 
+          id: m._id || m.id, 
+          homeTeam: m.homeTeam, 
+          awayTeam: m.awayTeam,
+          homeClubId: m.homeClubId?.name,
+          awayClubId: m.awayClubId?.name
+        })));
+        
+        this.clubMatches = clubMatches;
         this.club = this.mapBackendClubToFrontend(this.backendClub);
+        
+        // Recalculate player stats when matches are loaded/updated
+        if (this.signedPlayers.length > 0) {
+          console.log('Recalculating player stats with', this.clubMatches.length, 'matches');
+          this.processPlayerStatsFromMatches(this.signedPlayers);
+        }
       }
     });
 
@@ -160,13 +236,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       this.error = error;
     });
 
-    // Subscribe to club roster data - only if we have a club selected
-    this.clubRoster$.pipe(
-      takeUntil(this.destroy$),
-      filter(roster => roster !== undefined)
-    ).subscribe(roster => {
-      this.processRosterData(roster);
-    });
+    // Subscribe to club roster data - this will be updated when club changes
+    this.setupRosterSubscription();
   }
 
   private loadClubData(clubId: string) {
@@ -216,8 +287,61 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Method to refresh roster data (can be called when players are added/removed)
+  refreshRoster() {
+    if (this.backendClub && this.selectedSeasonId) {
+      this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
+    }
+  }
+
+  // Method to set up roster subscription for the current club
+  private setupRosterSubscription() {
+    // Unsubscribe from previous roster subscription
+    this.rosterSubscription$.next();
+    this.rosterSubscription$.complete();
+    this.rosterSubscription$ = new Subject<void>();
+    
+    // Set up new roster subscription
+    this.clubRoster$.pipe(
+      takeUntil(this.destroy$),
+      takeUntil(this.rosterSubscription$),
+      filter(roster => roster !== undefined)
+    ).subscribe(roster => {
+      console.log('Roster subscription triggered for club:', this.backendClub?.name);
+      this.processRosterData(roster);
+    });
+  }
+
+  // Method to clear club data when switching clubs
+  private clearClubData() {
+    console.log('Clearing club data for clubId:', this.currentClubId);
+    
+    // Clear roster data from NgRx store
+    if (this.currentClubId) {
+      this.store.dispatch(ClubsActions.clearClubRoster({ clubId: this.currentClubId }));
+    }
+    
+    // Clear local component data
+    this.club = undefined;
+    this.backendClub = null;
+    this.signedPlayers = [];
+    this.skaterStats = [];
+    this.goalieStats = [];
+    this.matches = [];
+    this.clubMatches = [];
+    this.selectedSeasonId = '';
+    this.currentClubId = '';
+    this.loading = false;
+    this.error = null;
+    
+    console.log('Club data cleared, signedPlayers length:', this.signedPlayers.length);
+  }
+
   private processRosterData(roster: any[]) {
+    console.log('Processing roster data for club:', this.backendClub?.name, 'Roster:', roster);
+    
     if (!roster || roster.length === 0) {
+      console.log('No roster data, clearing arrays');
       this.signedPlayers = [];
       this.skaterStats = [];
       this.goalieStats = [];
@@ -226,17 +350,26 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
     // Process signed players - filter for players with gamertag (new player system)
     this.signedPlayers = roster.filter(player => player && player.gamertag);
+    console.log('Signed players for', this.backendClub?.name, ':', this.signedPlayers.map(p => p.gamertag));
 
     // Process skater and goalie stats from matches
     this.processPlayerStatsFromMatches(roster);
+    
+    // If matches are already loaded, recalculate stats
+    if (this.clubMatches.length > 0) {
+      console.log('Matches already loaded, recalculating player stats with', this.clubMatches.length, 'matches');
+      this.processPlayerStatsFromMatches(roster);
+    }
   }
 
   private processPlayerStatsFromMatches(roster: any[]) {
+    console.log('Processing player stats from matches for club:', this.backendClub?.name);
+    console.log('Club matches available:', this.clubMatches.length);
+    console.log('Roster players:', roster.length);
     
-    const skaterStatsMap = new Map<string, any>();
-    const goalieStatsMap = new Map<string, any>();
+    const playerStatsMap = new Map<string, any>();
 
-    // Initialize stats for each player
+    // Initialize stats for each player in the roster
     roster.forEach(player => {
       if (!player || !player.gamertag) return;
 
@@ -244,7 +377,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         playerId: player._id || player.id,
         name: player.gamertag,
         number: player.number || 0,
-        position: player.position || 'C',
+        position: 'Unknown', // Will be determined by game performance
         gamesPlayed: 0,
         wins: 0,
         losses: 0,
@@ -269,27 +402,37 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         faceoffsWon: 0,
         faceoffPercentage: 0,
         playerScore: 0,
-        penaltyKillCorsiZone: 0
+        penaltyKillCorsiZone: 0,
+        // Goalie-specific stats
+        saves: 0,
+        shotsAgainst: 0,
+        goalsAgainst: 0,
+        savePercentage: 0,
+        goalsAgainstAverage: 0,
+        shutouts: 0,
+        otl: 0
       };
 
-      if (player.position === 'G') {
-        goalieStatsMap.set(player.gamertag, {
-          ...baseStats,
-          saves: 0,
-          shotsAgainst: 0,
-          savePercentage: 0,
-          goalsAgainstAverage: 0,
-          shutouts: 0,
-          otl: 0
-        });
-      } else {
-        skaterStatsMap.set(player.gamertag, baseStats);
-      }
+      playerStatsMap.set(player.gamertag, baseStats);
     });
 
     // Process matches to calculate stats
-    this.clubMatches.forEach(match => {
-      if (!match.eashlData || !match.eashlData.players) return;
+    console.log('Processing', this.clubMatches.length, 'club matches for stats calculation');
+    this.clubMatches.forEach((match, index) => {
+      console.log(`Match ${index + 1}:`, {
+        id: match._id || match.id,
+        hasEashlData: !!match.eashlData,
+        hasPlayers: !!(match.eashlData && match.eashlData.players),
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        homeScore: match.homeScore,
+        awayScore: match.awayScore
+      });
+      
+      if (!match.eashlData || !match.eashlData.players) {
+        console.log(`Skipping match ${match._id || match.id}: no eashlData or players`);
+        return;
+      }
 
       const isHomeTeam = match.homeTeam === this.backendClub?.name;
       const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
@@ -305,63 +448,165 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             if (!playerData || !playerData.playername) return;
 
             const playerName = playerData.playername;
-            const isGoalie = playerData.position === 'G';
+            
+            console.log(`Processing player: ${playerName}, game position: ${playerData.position}`);
+            console.log('Available players:', Array.from(playerStatsMap.keys()));
 
-            if (isGoalie && goalieStatsMap.has(playerName)) {
-              const goalieStats = goalieStatsMap.get(playerName);
-              goalieStats.gamesPlayed++;
-              if (won) goalieStats.wins++;
-              else if (lost) goalieStats.losses++;
-              else if (otLoss) goalieStats.otl++;
+            // Try to find a matching player by name (exact match first, then partial match)
+            let matchingKey = null;
+            
+            if (playerStatsMap.has(playerName)) {
+              matchingKey = playerName;
+            } else {
+              // Try partial match
+              for (const [key, stats] of playerStatsMap.entries()) {
+                if (stats.name === playerName || 
+                    stats.name.includes(playerName) || 
+                    playerName.includes(stats.name)) {
+                  matchingKey = key;
+                  break;
+                }
+              }
+            }
 
-              goalieStats.saves += Number(playerData.saves) || 0;
-              goalieStats.shotsAgainst += Number(playerData.shotsAgainst) || 0;
-              goalieStats.goalsAgainstAverage = goalieStats.shotsAgainst > 0 ? 
-                (goalieStats.shotsAgainst - goalieStats.saves) / goalieStats.gamesPlayed : 0;
-              goalieStats.savePercentage = goalieStats.shotsAgainst > 0 ? 
-                (goalieStats.saves / goalieStats.shotsAgainst) * 100 : 0;
-            } else if (!isGoalie && skaterStatsMap.has(playerName)) {
-              const skaterStats = skaterStatsMap.get(playerName);
-              skaterStats.gamesPlayed++;
-              if (won) skaterStats.wins++;
-              else if (lost) skaterStats.losses++;
-              else if (otLoss) skaterStats.otLosses++;
+            if (matchingKey) {
+              console.log(`Found matching player: ${playerName} -> ${matchingKey}`);
+              const playerStats = playerStatsMap.get(matchingKey);
+              playerStats.gamesPlayed++;
+              if (won) playerStats.wins++;
+              else if (lost) playerStats.losses++;
+              else if (otLoss) playerStats.otLosses++;
 
-              skaterStats.goals += Number(playerData.skgoals) || 0;
-              skaterStats.assists += Number(playerData.skassists) || 0;
-              skaterStats.points = skaterStats.goals + skaterStats.assists;
-              skaterStats.plusMinus += Number(playerData.skplusmin) || 0;
-              skaterStats.shots += Number(playerData.skshots) || 0;
-              skaterStats.hits += Number(playerData.skhits) || 0;
-              skaterStats.blockedShots += Number(playerData.skblockedshots) || 0;
-              skaterStats.pim += Number(playerData.skpim) || 0;
-              skaterStats.ppg += Number(playerData.skppg) || 0;
-              skaterStats.shg += Number(playerData.skshg) || 0;
-              skaterStats.gwg += Number(playerData.skgwg) || 0;
-              skaterStats.takeaways += Number(playerData.sktakeaways) || 0;
-              skaterStats.giveaways += Number(playerData.skgiveaways) || 0;
-              skaterStats.passes += Number(playerData.skpasses) || 0;
-              skaterStats.passAttempts += Number(playerData.skpassattempts) || 0;
-              skaterStats.faceoffsWon += Number(playerData.skfaceoffswon) || 0;
-              skaterStats.playerScore += Number(playerData.score) || 0;
-              skaterStats.penaltyKillCorsiZone += Number(playerData.skpossession) || 0;
+              // Check if this player has goalie stats (saves, shots against)
+              // Try both possible field names for goalie stats
+              const hasGoalieStats = (playerData.saves && playerData.saves > 0) || 
+                                   (playerData.shotsAgainst && playerData.shotsAgainst > 0) ||
+                                   (playerData.glsaves && playerData.glsaves > 0) ||
+                                   (playerData.glshots && playerData.glshots > 0);
+              
+              console.log(`Player ${playerName} goalie check:`, {
+                saves: playerData.saves,
+                shotsAgainst: playerData.shotsAgainst,
+                hasGoalieStats: hasGoalieStats,
+                allPlayerData: playerData
+              });
+              
+              // Debug: Show all available fields for goalies
+              if (playerData.position === 'goalie') {
+                console.log(`GOALIE DEBUG - ${playerName} available fields:`, Object.keys(playerData));
+                console.log(`GOALIE DEBUG - ${playerName} field values:`, {
+                  glsaves: playerData.glsaves,
+                  glshots: playerData.glshots,
+                  glgoals: playerData.glgoals,
+                  glga: playerData.glga,
+                  glsavepct: playerData.glsavepct,
+                  glshutouts: playerData.glshutouts,
+                  glwins: playerData.glwins,
+                  gllosses: playerData.gllosses,
+                  glotl: playerData.glotl
+                });
+                console.log(`GOALIE DEBUG - ${playerName} calculated values:`, {
+                  saves: Number(playerData.glsaves) || Number(playerData.saves) || 0,
+                  shotsAgainst: Number(playerData.glshots) || Number(playerData.shotsAgainst) || 0,
+                  goalsAgainst: Number(playerData.glga) || 0
+                });
+              }
+              
+              if (hasGoalieStats) {
+                console.log(`Player ${playerName} has goalie stats - processing as goalie`);
+                playerStats.position = 'G';
+                
+                // Use the correct field names for goalie stats (matching goalie stats component)
+                const saves = Number(playerData.glsaves) || Number(playerData.saves) || 0;
+                const shotsAgainst = Number(playerData.glshots) || Number(playerData.shotsAgainst) || 0;
+                const goalsAgainst = Number(playerData.glga) || 0;
+                
+                playerStats.saves += saves;
+                playerStats.shotsAgainst += shotsAgainst;
+                playerStats.goalsAgainst += goalsAgainst;
+                playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? 
+                  playerStats.goalsAgainst / playerStats.gamesPlayed : 0;
+                playerStats.savePercentage = shotsAgainst > 0 ? 
+                  saves / shotsAgainst : 0;
+                
+                // Add other goalie-specific stats if available
+                playerStats.shutouts += Number(playerData.glshutouts) || 0;
+                playerStats.otl += Number(playerData.glotl) || 0;
+              } else {
+                console.log(`Player ${playerName} has skater stats - processing as skater`);
+                playerStats.position = playerData.position || 'C';
+                playerStats.goals += Number(playerData.skgoals) || 0;
+                playerStats.assists += Number(playerData.skassists) || 0;
+                playerStats.points = playerStats.goals + playerStats.assists;
+                playerStats.plusMinus += Number(playerData.skplusmin) || 0;
+                playerStats.shots += Number(playerData.skshots) || 0;
+                playerStats.hits += Number(playerData.skhits) || 0;
+                playerStats.blockedShots += Number(playerData.skblockedshots) || 0;
+                playerStats.pim += Number(playerData.skpim) || 0;
+                playerStats.ppg += Number(playerData.skppg) || 0;
+                playerStats.shg += Number(playerData.skshg) || 0;
+                playerStats.gwg += Number(playerData.skgwg) || 0;
+                playerStats.takeaways += Number(playerData.sktakeaways) || 0;
+                playerStats.giveaways += Number(playerData.skgiveaways) || 0;
+                playerStats.passes += Number(playerData.skpasses) || 0;
+                playerStats.passAttempts += Number(playerData.skpassattempts) || 0;
+                playerStats.faceoffsWon += Number(playerData.skfaceoffswon) || 0;
+                playerStats.playerScore += Number(playerData.score) || 0;
+                playerStats.penaltyKillCorsiZone += Number(playerData.skpkcorsi) || 0;
+              }
+            } else {
+              console.log(`No matching player found for: ${playerName}`);
             }
           });
         }
       });
     });
 
-    // Calculate derived stats
-    skaterStatsMap.forEach(stats => {
+    // Calculate derived stats and categorize players
+    const allPlayers = Array.from(playerStatsMap.values());
+    
+    allPlayers.forEach(stats => {
+      // Calculate skater stats
       stats.shotPercentage = stats.shots > 0 ? (stats.goals / stats.shots) * 100 : 0;
       stats.passPercentage = stats.passAttempts > 0 ? (stats.passes / stats.passAttempts) * 100 : 0;
       stats.faceoffPercentage = (stats.faceoffsWon + (stats.faceoffsWon || 0)) > 0 ? 
         (stats.faceoffsWon / (stats.faceoffsWon + (stats.faceoffsWon || 0))) * 100 : 0;
     });
 
-    // Convert maps to arrays
-    this.skaterStats = Array.from(skaterStatsMap.values());
-    this.goalieStats = Array.from(goalieStatsMap.values());
+    // Categorize players based on their actual performance
+    this.skaterStats = allPlayers.filter(player => 
+      player.position !== 'G' && player.gamesPlayed > 0
+    );
+    
+    this.goalieStats = allPlayers.filter(player => 
+      player.position === 'G' && player.gamesPlayed > 0
+    );
+    
+    console.log('Player categorization:');
+    console.log('All players with games:', allPlayers.filter(p => p.gamesPlayed > 0).map(p => ({ 
+      name: p.name, 
+      position: p.position, 
+      gp: p.gamesPlayed,
+      saves: p.saves,
+      shotsAgainst: p.shotsAgainst
+    })));
+    console.log('Skaters:', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed })));
+    console.log('Goalies:', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves })));
+    
+    console.log('Final skater stats:', this.skaterStats.length, 'players');
+    console.log('Final goalie stats:', this.goalieStats.length, 'players');
+    console.log('Goalie stats details:', this.goalieStats);
+    
+    // Debug: Check if goalies have any stats
+    if (this.goalieStats.length > 0) {
+      console.log('Goalie stats breakdown:');
+      this.goalieStats.forEach(goalie => {
+        console.log(`- ${goalie.name}: GP=${goalie.gamesPlayed}, Saves=${goalie.saves}, SA=${goalie.shotsAgainst}`);
+      });
+    } else {
+      console.log('No goalie stats found - checking why...');
+      console.log('All players:', allPlayers.map(p => ({ name: p.name, position: p.position, gp: p.gamesPlayed })));
+    }
   }
 
   getImageUrl(logoUrl: string | undefined): string {

@@ -182,5 +182,11 @@ export const clubsReducer = createReducer(
 
   // Clear Actions
   on(ClubsActions.clearClubs, (state) => ({ ...state, clubs: [], selectedClub: null })),
-  on(ClubsActions.clearSelectedClub, (state) => ({ ...state, selectedClub: null }))
+  on(ClubsActions.clearSelectedClub, (state) => ({ ...state, selectedClub: null })),
+  on(ClubsActions.clearClubRoster, (state, { clubId }) => {
+    const newClubRosters = { ...state.clubRosters };
+    delete newClubRosters[clubId];
+    return { ...state, clubRosters: newClubRosters };
+  }),
+  on(ClubsActions.clearAllRosters, (state) => ({ ...state, clubRosters: {}, globalRosters: {} }))
 );

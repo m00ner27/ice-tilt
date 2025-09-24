@@ -225,7 +225,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
           }
           return false;
         })
-      );
+      ).sort((a, b) => a.name.localeCompare(b.name));
 
     });
   }
@@ -326,6 +326,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
       this.api.addClub(clubData).subscribe({
         next: (newClub) => {
           this.clubs.push(newClub);
+          this.clubs.sort((a, b) => a.name.localeCompare(b.name));
           this.cancelClubForm();
         },
         error: (error) => {
@@ -443,6 +444,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
         console.log('Club updated successfully:', updatedClub);
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
         if (idx > -1) this.clubs[idx] = updatedClub;
+        this.clubs.sort((a, b) => a.name.localeCompare(b.name));
         this.cancelClubForm();
       },
       error: (error) => {
@@ -652,6 +654,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
             this.clubs[clubIndex].roster = roster;
           });
         }
+        
+        // Trigger storage event to notify club detail component
+        localStorage.setItem('roster-updated', Date.now().toString());
       },
       error: (error) => {
         console.error('Error adding player:', error);
@@ -691,6 +696,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
             this.clubs[clubIndex].roster = roster;
           });
         }
+        
+        // Trigger storage event to notify club detail component
+        localStorage.setItem('roster-updated', Date.now().toString());
       },
       error: (error) => {
         console.error('Error removing player:', error);

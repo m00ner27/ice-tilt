@@ -56,3 +56,5 @@ export const uploadClubLogoFailure = createAction('[Clubs] Upload Club Logo Fail
 // Clear Actions
 export const clearClubs = createAction('[Clubs] Clear Clubs');
 export const clearSelectedClub = createAction('[Clubs] Clear Selected Club');
+export const clearClubRoster = createAction('[Clubs] Clear Club Roster', props<{ clubId: string }>());
+export const clearAllRosters = createAction('[Clubs] Clear All Rosters');

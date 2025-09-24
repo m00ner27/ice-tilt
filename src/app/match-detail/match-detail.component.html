@@ -67,7 +67,6 @@
         <table class="stats-table">
         <thead>
           <tr>
-            <th>#</th>
             <th>Name</th>
             <th>POS</th>
             <th>G</th>
@@ -95,7 +94,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let player of homeTeamPlayers">
-            <td>{{ player.number }}</td>
             <td>{{ player.name }}</td>
             <td>{{ player.position }}</td>
             <td>{{ player.goals }}</td>
@@ -132,7 +130,6 @@
         <table class="stats-table goalie-table">
         <thead>
           <tr>
-            <th>#</th>
             <th>Name</th>
             <th>SA</th>
             <th>SV</th>
@@ -142,7 +139,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let goalie of homeTeamGoalies">
-            <td>{{ goalie.number }}</td>
             <td>{{ goalie.name }}</td>
             <td>{{ goalie.shotsAgainst }}</td>
             <td>{{ goalie.saves }}</td>
@@ -184,7 +180,6 @@
         <table class="stats-table">
         <thead>
           <tr>
-            <th>#</th>
             <th>Name</th>
             <th>POS</th>
             <th>G</th>
@@ -212,7 +207,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let player of awayTeamPlayers">
-            <td>{{ player.number }}</td>
             <td>{{ player.name }}</td>
             <td>{{ player.position }}</td>
             <td>{{ player.goals }}</td>
@@ -249,7 +243,6 @@
         <table class="stats-table goalie-table">
         <thead>
           <tr>
-            <th>#</th>
             <th>Name</th>
             <th>SA</th>
             <th>SV</th>
@@ -259,7 +252,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let goalie of awayTeamGoalies">
-            <td>{{ goalie.number }}</td>
             <td>{{ goalie.name }}</td>
             <td>{{ goalie.shotsAgainst }}</td>
             <td>{{ goalie.saves }}</td>
