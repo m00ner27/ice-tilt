@@ -11,8 +11,8 @@ import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '../../store';
-import { selectFreeAgents, selectAdminLoading, selectAdminError } from '../../store/players.selectors';
-import { loadFreeAgents } from '../../store/players.actions';
+import { selectFreeAgents, selectFreeAgentsForSeason, selectAdminLoading, selectAdminError } from '../../store/players.selectors';
+import { loadFreeAgents, loadFreeAgentsForSeason } from '../../store/players.actions';
 
 interface Club {
   _id?: string;
@@ -72,6 +72,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
   
   // Local state for free agents
   freeAgents: Player[] = [];
+  seasonFreeAgents: Player[] = [];
+  private seasonFreeAgentsSubscription?: Subscription;
   clubForm: FormGroup;
   logoPreview: string | ArrayBuffer | null = null;
   uploadingLogo = false;
@@ -119,25 +121,26 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   get availableFreeAgents(): Player[] {
+    // Use season-specific free agents if available, otherwise fallback to general free agents
+    const freeAgentsToUse = this.seasonFreeAgents.length > 0 ? this.seasonFreeAgents : this.freeAgents;
+    const seasonId = this.selectedSeasonId;
+    
     if (!this.selectedClub?.roster) {
-      console.log('No selected club roster, returning all free agents:', this.freeAgents?.length || 0);
-      return this.freeAgents || [];
+      return freeAgentsToUse || [];
     }
     
-    // Get player IDs that are already on the current club's roster
-    const rosterPlayerIds = this.selectedClub.roster
+    // Get player IDs that are already on ANY club's roster for this season
+    const allRosterPlayerIds = this.clubs
+      .filter(club => club.roster && club.roster.length > 0)
+      .flatMap(club => club.roster!)
       .filter(p => p && p._id)
       .map(p => p._id);
     
-    console.log('Roster player IDs:', rosterPlayerIds);
-    console.log('Total free agents:', this.freeAgents?.length || 0);
-    
-    // Filter out players who are already on the roster
-    const filtered = (this.freeAgents || []).filter(player => 
-      !rosterPlayerIds.includes(player._id)
+    // Filter out players who are already on ANY club's roster
+    const filtered = (freeAgentsToUse || []).filter(player => 
+      !allRosterPlayerIds.includes(player._id)
     );
     
-    console.log('Available free agents after filtering:', filtered.length);
     return filtered;
   }
 
@@ -168,6 +171,15 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.freeAgents$.subscribe((agents: Player[]) => {
       this.freeAgents = agents || [];
     });
+    
+    // Also load general free agents to ensure we have some data
+    this.store.dispatch(loadFreeAgents());
+    
+    // Subscribe to season-specific free agents when season changes
+    this.clubForm.get('seasons')?.valueChanges.subscribe(() => {
+      this.updateSeasonFreeAgents();
+      this.updateFreeAgentsList();
+    });
 
     // Load regions from API
     this.api.getRegions().subscribe(list => {
@@ -184,8 +196,15 @@ export class ClubsComponent implements OnInit, OnDestroy {
         }
         // Also refresh the free agents list for the current season
         this.updateFreeAgentsList();
+        this.updateSeasonFreeAgents();
       }
     });
+    
+    // Initialize season-specific free agents if a season is already selected
+    if (this.selectedSeasonId) {
+      console.log('Initializing season-specific free agents for season:', this.selectedSeasonId);
+      this.updateSeasonFreeAgents();
+    }
   }
 
   loadData(): void {
@@ -231,8 +250,24 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   private loadFreeAgentsForSeason(seasonId: string): void {
-    // Load free agents using Player state
-    this.store.dispatch(loadFreeAgents());
+    // Load season-specific free agents using Player state
+    this.store.dispatch(loadFreeAgentsForSeason({ seasonId }));
+  }
+
+  private updateSeasonFreeAgents(): void {
+    // Unsubscribe from previous subscription
+    if (this.seasonFreeAgentsSubscription) {
+      this.seasonFreeAgentsSubscription.unsubscribe();
+    }
+    
+    const seasonId = this.selectedSeasonId;
+    if (seasonId) {
+      this.seasonFreeAgentsSubscription = this.store.select(selectFreeAgentsForSeason(seasonId)).subscribe((agents: Player[]) => {
+        this.seasonFreeAgents = agents || [];
+      });
+    } else {
+      this.seasonFreeAgents = [];
+    }
   }
 
   private updateFreeAgentsList(): void {
@@ -278,10 +313,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   onSeasonChange(event: any): void {
     const seasonId = event.target.value;
+    console.log('Season changed to:', seasonId);
 
     this.selectedSeasonId = seasonId;
     this.loadClubsForSeason(seasonId);
     this.loadFreeAgentsForSeason(seasonId);
+    this.updateSeasonFreeAgents();
   }
 
   addClub(): void {
@@ -678,8 +715,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
     this.api.removePlayerFromClub(club._id, player._id, selectedSeasonId).subscribe({
       next: () => {
-        console.log('Player removed successfully');
-        
         // Refresh the selected club if it's the one we just updated
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(club);
@@ -727,6 +762,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.rosterUpdateSubscription) {
       this.rosterUpdateSubscription.unsubscribe();
+    }
+    if (this.seasonFreeAgentsSubscription) {
+      this.seasonFreeAgentsSubscription.unsubscribe();
     }
   }
 

@@ -2,13 +2,47 @@
   <div class="bg-admin-card rounded-lg p-8 shadow-lg">
     <div class="flex justify-between items-center mb-8">
       <h2 class="text-3xl font-bold text-blue-300">Players Management</h2>
-      <button 
-        (click)="loadPlayers()" 
-        [disabled]="loading"
-        class="px-4 py-2 bg-admin-secondary text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-      >
-        {{ loading ? 'Loading...' : 'Refresh' }}
-      </button>
+      <div class="flex items-center gap-4">
+        <!-- Season Selector -->
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 text-sm">Season:</span>
+          <select 
+            (change)="onSeasonChange($event)"
+            [value]="selectedSeasonId || ''"
+            class="px-3 py-1 bg-gray-700 text-white text-sm rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="">Select Season</option>
+            <option *ngFor="let season of seasons" [value]="season._id">
+              {{ season.name }}
+            </option>
+          </select>
+        </div>
+        
+        <!-- Sort Controls -->
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 text-sm">Sort by:</span>
+          <button 
+            (click)="setSortBy('name')" 
+            [class]="sortBy === 'name' ? 'px-3 py-1 bg-blue-600 text-white text-sm rounded' : 'px-3 py-1 bg-gray-600 text-gray-300 text-sm rounded hover:bg-gray-500'"
+          >
+            Name {{ sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button 
+            (click)="setSortBy('season')" 
+            [class]="sortBy === 'season' ? 'px-3 py-1 bg-blue-600 text-white text-sm rounded' : 'px-3 py-1 bg-gray-600 text-gray-300 text-sm rounded hover:bg-gray-500'"
+          >
+            Club {{ sortBy === 'season' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+        </div>
+        
+        <button 
+          (click)="loadPlayers()" 
+          [disabled]="loading"
+          class="px-4 py-2 bg-admin-secondary text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+        >
+          {{ loading ? 'Loading...' : 'Refresh' }}
+        </button>
+      </div>
     </div>
 
     <!-- Error Message -->
@@ -23,10 +57,10 @@
     </div>
 
     <!-- Players List -->
-    <div *ngIf="!loading && players.length > 0" class="space-y-4">
+    <div *ngIf="!loading && getSortedPlayers().length > 0 && clubs.length > 0" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div 
-          *ngFor="let player of players" 
+          *ngFor="let player of getSortedPlayers()" 
           class="bg-admin-hover rounded-lg p-4 border border-admin-accent hover:border-blue-500 transition-colors"
         >
           <div class="flex justify-between items-start mb-3">
@@ -39,7 +73,7 @@
             </button>
           </div>
           
-          <div class="text-sm">
+          <div class="text-sm space-y-2">
             <div class="flex justify-between items-center">
               <span class="text-gray-400">Console:</span>
               <div class="flex items-center gap-2">
@@ -56,13 +90,25 @@
                 <span class="text-white">{{ player.platform === 'PS5' ? 'PlayStation' : 'Xbox' }}</span>
               </div>
             </div>
+            
+            <div *ngIf="!isPlayerFreeAgent(player)" class="mt-2">
+              <span class="text-gray-400">Club:</span>
+              <span class="px-2 py-1 bg-blue-600 text-white text-xs rounded-md ml-2">
+                {{ getPlayerClubForSeason(player) }}
+              </span>
+            </div>
+            
+            <div *ngIf="isPlayerFreeAgent(player)" class="mt-2">
+              <span class="text-gray-400">Status:</span>
+              <span class="text-yellow-400 text-xs">Free Agent</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!loading && players.length === 0" class="text-center py-12">
+    <div *ngIf="!loading && getSortedPlayers().length === 0" class="text-center py-12">
       <div class="text-gray-400 mb-4">
         <i class="fas fa-users text-4xl mb-4"></i>
         <p class="text-xl">No players found</p>

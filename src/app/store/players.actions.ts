@@ -45,6 +45,11 @@ export const loadFreeAgents = createAction('[Players] Load Free Agents');
 export const loadFreeAgentsSuccess = createAction('[Players] Load Free Agents Success', props<{ freeAgents: Player[] }>());
 export const loadFreeAgentsFailure = createAction('[Players] Load Free Agents Failure', props<{ error: any }>());
 
+// Season-specific free agents
+export const loadFreeAgentsForSeason = createAction('[Players] Load Free Agents For Season', props<{ seasonId: string }>());
+export const loadFreeAgentsForSeasonSuccess = createAction('[Players] Load Free Agents For Season Success', props<{ seasonId: string; freeAgents: Player[] }>());
+export const loadFreeAgentsForSeasonFailure = createAction('[Players] Load Free Agents For Season Failure', props<{ seasonId: string; error: any }>());
+
 export const deletePlayer = createAction('[Players] Delete Player', props<{ playerId: string }>());
 export const deletePlayerSuccess = createAction('[Players] Delete Player Success', props<{ playerId: string }>());
 export const deletePlayerFailure = createAction('[Players] Delete Player Failure', props<{ error: any }>());

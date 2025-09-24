@@ -17,6 +17,7 @@ export class PlayersEffects {
   loadPlayerStats$: any;
   createPlayer$: any;
   loadFreeAgents$: any;
+  loadFreeAgentsForSeason$: any;
   deletePlayer$: any;
 
   constructor(
@@ -124,6 +125,37 @@ export class PlayersEffects {
             catchError(error => of(PlayersActions.loadFreeAgentsFailure({ error })))
           )
         )
+      );
+    });
+
+    this.loadFreeAgentsForSeason$ = createEffect(() => {
+      return this.actions$.pipe(
+        ofType(PlayersActions.loadFreeAgentsForSeason),
+        mergeMap(({ seasonId }) => {
+          console.log('PlayersEffects: loadFreeAgentsForSeason action received for season:', seasonId);
+          return this.apiService.getFreeAgentsForSeason(seasonId).pipe(
+            map((agents: any[]) => {
+              console.log('PlayersEffects: getFreeAgentsForSeason API response for season', seasonId, ':', agents?.length || 0, 'agents');
+              // Map API response to Player objects
+              const players = agents.map((agent: any): PlayersActions.Player => ({
+                _id: agent._id,
+                gamertag: agent.gamertag || 'Unknown',
+                discordId: agent.discordId,
+                discordUsername: agent.discordUsername,
+                platform: agent.platform || 'PS5',
+                position: agent.playerProfile?.position || 'C',
+                status: agent.playerProfile?.status || 'Free Agent',
+                playerProfile: agent.playerProfile
+              }));
+              console.log('PlayersEffects: Mapped players for season', seasonId, ':', players.length);
+              return PlayersActions.loadFreeAgentsForSeasonSuccess({ seasonId, freeAgents: players });
+            }),
+            catchError(error => {
+              console.error('PlayersEffects: Error loading free agents for season', seasonId, ':', error);
+              return of(PlayersActions.loadFreeAgentsForSeasonFailure({ seasonId, error }));
+            })
+          );
+        })
       );
     });
 

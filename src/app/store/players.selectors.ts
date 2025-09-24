@@ -44,6 +44,16 @@ export const selectFreeAgents = createSelector(
   (state: PlayersState) => state.freeAgents
 );
 
+export const selectFreeAgentsBySeason = createSelector(
+  selectPlayersState,
+  (state: PlayersState) => state.freeAgentsBySeason
+);
+
+export const selectFreeAgentsForSeason = (seasonId: string) => createSelector(
+  selectFreeAgentsBySeason,
+  (freeAgentsBySeason) => freeAgentsBySeason[seasonId] || []
+);
+
 export const selectAdminLoading = createSelector(
   selectPlayersState,
   (state: PlayersState) => state.adminLoading

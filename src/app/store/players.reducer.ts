@@ -1,5 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
-import { loadPlayersSuccess, upsertPlayerProfileSuccess, loadPlayerProfile, playerProfileFailure, loadPlayerStats, loadPlayerStatsSuccess, loadPlayerStatsFailure, createPlayer, createPlayerSuccess, createPlayerFailure, loadFreeAgents, loadFreeAgentsSuccess, loadFreeAgentsFailure, deletePlayer, deletePlayerSuccess, deletePlayerFailure, Player } from './players.actions';
+import { loadPlayersSuccess, upsertPlayerProfileSuccess, loadPlayerProfile, playerProfileFailure, loadPlayerStats, loadPlayerStatsSuccess, loadPlayerStatsFailure, createPlayer, createPlayerSuccess, createPlayerFailure, loadFreeAgents, loadFreeAgentsSuccess, loadFreeAgentsFailure, loadFreeAgentsForSeason, loadFreeAgentsForSeasonSuccess, loadFreeAgentsForSeasonFailure, deletePlayer, deletePlayerSuccess, deletePlayerFailure, Player } from './players.actions';
 import { PlayerProfile } from './models/models/player-profile.model';
 
 export interface PlayersState {
@@ -12,6 +12,7 @@ export interface PlayersState {
   statsError: any;
   // Admin Player Management
   freeAgents: Player[];
+  freeAgentsBySeason: { [seasonId: string]: Player[] };
   adminLoading: boolean;
   adminError: any;
 }
@@ -26,6 +27,7 @@ export const initialState: PlayersState = {
   statsError: null,
   // Admin Player Management
   freeAgents: [],
+  freeAgentsBySeason: {},
   adminLoading: false,
   adminError: null,
 };
@@ -75,6 +77,29 @@ export const playersReducer = createReducer(
     adminLoading: false, 
     adminError: error 
   })),
+
+  // Season-specific free agents
+  on(loadFreeAgentsForSeason, (state) => {
+    console.log('PlayersReducer: loadFreeAgentsForSeason action received');
+    return { ...state, adminLoading: true, adminError: null };
+  }),
+  on(loadFreeAgentsForSeasonSuccess, (state, { seasonId, freeAgents }) => {
+    console.log('PlayersReducer: loadFreeAgentsForSeasonSuccess action received for season', seasonId, 'with', freeAgents.length, 'agents');
+    return { 
+      ...state, 
+      adminLoading: false, 
+      freeAgentsBySeason: { ...state.freeAgentsBySeason, [seasonId]: freeAgents },
+      adminError: null 
+    };
+  }),
+  on(loadFreeAgentsForSeasonFailure, (state, { seasonId, error }) => {
+    console.error('PlayersReducer: loadFreeAgentsForSeasonFailure action received for season', seasonId, 'with error:', error);
+    return { 
+      ...state, 
+      adminLoading: false, 
+      adminError: error 
+    };
+  }),
 
   // Delete Player
   on(deletePlayer, (state) => {
