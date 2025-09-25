@@ -384,20 +384,24 @@ h4:has(+ .table-container .goalie-table) {
 
 /* Goalie table column widths - compact to fit all columns */
 .goalie-table th:nth-child(1), .goalie-table td:nth-child(1) { 
-  width: 20%;
-  text-align: center;
+  width: 30%;
+  text-align: left;
+  padding-left: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .goalie-table th:nth-child(2), .goalie-table td:nth-child(2) { 
-  width: 20%;
+  width: 17.5%;
 }
 .goalie-table th:nth-child(3), .goalie-table td:nth-child(3) { 
-  width: 20%;
+  width: 17.5%;
 }
 .goalie-table th:nth-child(4), .goalie-table td:nth-child(4) { 
-  width: 20%;
+  width: 17.5%;
 }
 .goalie-table th:nth-child(5), .goalie-table td:nth-child(5) { 
-  width: 20%;
+  width: 17.5%;
 }
 
 /* Sticky Columns */
@@ -408,9 +412,14 @@ h4:has(+ .table-container .goalie-table) {
   background-color: #1a252f !important;
   border-right: 2px solid #34495e !important;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  text-align: left !important;
+  padding-left: 8px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .stats-table thead th:nth-child(1) {
@@ -515,9 +524,9 @@ h4:has(+ .table-container .goalie-table) {
   }
 
   .stats-table th:nth-child(1), .stats-table td:nth-child(1) {
-    width: 120px !important;
-    min-width: 120px !important;
-    max-width: 120px !important;
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
   }
 
   .schedule-legend {
@@ -576,9 +585,9 @@ h4:has(+ .table-container .goalie-table) {
   }
 
   .stats-table th:nth-child(1), .stats-table td:nth-child(1) {
-    width: 100px !important;
-    min-width: 100px !important;
-    max-width: 100px !important;
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
   }
 
   /* Goalie table responsive adjustments */
@@ -596,30 +605,31 @@ h4:has(+ .table-container .goalie-table) {
   
   /* Ensure all goalie columns are visible on small screens */
   .goalie-table th:nth-child(1), .goalie-table td:nth-child(1) { 
-    width: 20% !important;
+    width: 30% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
-    text-align: center;
+    max-width: 30% !important;
+    text-align: left;
+    padding-left: 4px;
   }
   .goalie-table th:nth-child(2), .goalie-table td:nth-child(2) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
   .goalie-table th:nth-child(3), .goalie-table td:nth-child(3) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
   .goalie-table th:nth-child(4), .goalie-table td:nth-child(4) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
   .goalie-table th:nth-child(5), .goalie-table td:nth-child(5) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
 
   .schedule-legend {
@@ -648,29 +658,30 @@ h4:has(+ .table-container .goalie-table) {
   }
   
   .goalie-table th:nth-child(1), .goalie-table td:nth-child(1) { 
-    width: 20% !important;
+    width: 30% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
-    text-align: center;
+    max-width: 30% !important;
+    text-align: left;
+    padding-left: 2px;
   }
   .goalie-table th:nth-child(2), .goalie-table td:nth-child(2) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
   .goalie-table th:nth-child(3), .goalie-table td:nth-child(3) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
   .goalie-table th:nth-child(4), .goalie-table td:nth-child(4) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
   .goalie-table th:nth-child(5), .goalie-table td:nth-child(5) { 
-    width: 20% !important;
+    width: 17.5% !important;
     min-width: 0 !important;
-    max-width: 20% !important;
+    max-width: 17.5% !important;
   }
 }

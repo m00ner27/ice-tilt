@@ -81,6 +81,10 @@ export class ClubsComponent implements OnInit, OnDestroy {
   private rosterUpdateSubscription: Subscription | undefined;
   regions: any[] = []; // Change from string[] to any[] to store full region objects
   regionOptions: string[] = []; // Keep this for the dropdown display
+  
+  // Roster data for filtering
+  private allRostersLoaded = false;
+  private rosterLoadingPromises: Promise<any>[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -125,8 +129,20 @@ export class ClubsComponent implements OnInit, OnDestroy {
     const freeAgentsToUse = this.seasonFreeAgents.length > 0 ? this.seasonFreeAgents : this.freeAgents;
     const seasonId = this.selectedSeasonId;
     
-    if (!this.selectedClub?.roster) {
-      return freeAgentsToUse || [];
+    console.log('=== AVAILABLE FREE AGENTS DEBUG ===');
+    console.log('Season ID:', seasonId);
+    console.log('Season free agents count:', this.seasonFreeAgents.length);
+    console.log('General free agents count:', this.freeAgents.length);
+    console.log('Free agents to use count:', freeAgentsToUse?.length || 0);
+    console.log('Clubs count:', this.clubs.length);
+    console.log('Clubs with rosters:', this.clubs.filter(club => club.roster && club.roster.length > 0).length);
+    console.log('All rosters loaded:', this.allRostersLoaded);
+    console.log('Season free agents:', this.seasonFreeAgents.map(p => ({ id: p._id, name: p.gamertag })));
+    console.log('General free agents:', this.freeAgents.map(p => ({ id: p._id, name: p.gamertag })));
+    
+    if (!freeAgentsToUse || freeAgentsToUse.length === 0) {
+      console.log('No free agents available');
+      return [];
     }
     
     // Get player IDs that are already on ANY club's roster for this season
@@ -136,10 +152,28 @@ export class ClubsComponent implements OnInit, OnDestroy {
       .filter(p => p && p._id)
       .map(p => p._id);
     
+    console.log('All roster player IDs:', allRosterPlayerIds);
+    console.log('Free agents to filter:', freeAgentsToUse.map(p => ({ id: p._id, name: p.gamertag })));
+    
     // Filter out players who are already on ANY club's roster
-    const filtered = (freeAgentsToUse || []).filter(player => 
+    const filtered = freeAgentsToUse.filter(player => 
       !allRosterPlayerIds.includes(player._id)
     );
+    
+    console.log('Filtered free agents count:', filtered.length);
+    console.log('Filtered free agents:', filtered.map(p => ({ id: p._id, name: p.gamertag })));
+    
+    // Debug: Show which players were filtered out and why
+    const filteredOut = freeAgentsToUse.filter(player => 
+      allRosterPlayerIds.includes(player._id)
+    );
+    console.log('Players filtered out (on rosters):', filteredOut.map(p => ({ id: p._id, name: p.gamertag })));
+    
+    // TEMPORARY: If no season-specific free agents and all general free agents are on rosters,
+    // show a message indicating this is expected behavior
+    if (this.seasonFreeAgents.length === 0 && filtered.length === 0 && this.freeAgents.length > 0) {
+      console.log('All general free agents are on rosters - this is expected if season-specific free agents API is not working');
+    }
     
     return filtered;
   }
@@ -246,6 +280,55 @@ export class ClubsComponent implements OnInit, OnDestroy {
         })
       ).sort((a, b) => a.name.localeCompare(b.name));
 
+      console.log('Loaded clubs for season:', seasonId, 'Count:', this.clubs.length);
+      
+      // Load all rosters for proper filtering
+      this.loadAllRostersForFiltering(seasonId);
+    });
+  }
+
+  private loadAllRostersForFiltering(seasonId: string): void {
+    this.allRostersLoaded = false;
+    this.rosterLoadingPromises = [];
+    
+    console.log('Loading rosters for filtering, clubs count:', this.clubs.length);
+    
+    // Load rosters for all clubs
+    this.clubs.forEach(club => {
+      if (club._id) {
+        const rosterPromise = this.api.getClubRoster(club._id, seasonId).toPromise().then(roster => {
+          // Map roster data to Player objects
+          const mappedRoster = (roster || []).map((player: any): Player => ({
+            _id: player._id,
+            gamertag: player.gamertag || player.discordUsername || 'Unknown',
+            discordId: player.discordId,
+            discordUsername: player.discordUsername,
+            platform: player.platform || 'PS5',
+            position: player.playerProfile?.position || 'C',
+            status: player.playerProfile?.status || 'Signed',
+            playerProfile: player.playerProfile
+          }));
+          
+          // Update the club's roster in the clubs array
+          const clubIndex = this.clubs.findIndex(c => c._id === club._id);
+          if (clubIndex > -1) {
+            this.clubs[clubIndex].roster = mappedRoster;
+          }
+          
+          return mappedRoster;
+        }).catch(error => {
+          console.error(`Error fetching roster for club ${club.name}:`, error);
+          return [];
+        });
+        
+        this.rosterLoadingPromises.push(rosterPromise);
+      }
+    });
+    
+    // Wait for all rosters to load
+    Promise.all(this.rosterLoadingPromises).then(() => {
+      this.allRostersLoaded = true;
+      console.log('All rosters loaded for filtering');
     });
   }
 
@@ -261,11 +344,16 @@ export class ClubsComponent implements OnInit, OnDestroy {
     }
     
     const seasonId = this.selectedSeasonId;
+    console.log('updateSeasonFreeAgents called with seasonId:', seasonId);
+    
     if (seasonId) {
       this.seasonFreeAgentsSubscription = this.store.select(selectFreeAgentsForSeason(seasonId)).subscribe((agents: Player[]) => {
+        console.log('Season free agents subscription received:', agents?.length || 0, 'agents');
+        console.log('Season free agents data:', agents?.map(p => ({ id: p._id, name: p.gamertag })) || []);
         this.seasonFreeAgents = agents || [];
       });
     } else {
+      console.log('No season selected, clearing season free agents');
       this.seasonFreeAgents = [];
     }
   }
@@ -277,14 +365,27 @@ export class ClubsComponent implements OnInit, OnDestroy {
     if (selectedSeasonId) {
       // Refresh season-specific free agents
       this.loadFreeAgentsForSeason(selectedSeasonId);
+      
+      // Reload all rosters to ensure proper filtering
+      this.loadAllRostersForFiltering(selectedSeasonId);
     }
     
     // Refresh the selected club's roster if one is selected
     if (this.selectedClub && this.selectedClub._id && selectedSeasonId) {
       this.api.getClubRoster(this.selectedClub._id, selectedSeasonId).subscribe(roster => {
+        const mappedRoster = roster.map((player: any): Player => ({
+          _id: player._id,
+          gamertag: player.gamertag || player.discordUsername || 'Unknown',
+          discordId: player.discordId,
+          discordUsername: player.discordUsername,
+          platform: player.platform || 'PS5',
+          position: player.playerProfile?.position || 'C',
+          status: player.playerProfile?.status || 'Signed',
+          playerProfile: player.playerProfile
+        }));
 
         if (this.selectedClub) {
-          this.selectedClub.roster = roster;
+          this.selectedClub.roster = mappedRoster;
         }
       });
     }
@@ -642,7 +743,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
         this.api.getClubRoster(club._id, selectedSeasonId).subscribe({
           next: (roster) => {
             // Map roster data to Player objects
-            this.selectedClub!.roster = roster.map((player: any): Player => ({
+            const mappedRoster = roster.map((player: any): Player => ({
               _id: player._id,
               gamertag: player.gamertag || player.discordUsername || 'Unknown',
               discordId: player.discordId,
@@ -652,6 +753,15 @@ export class ClubsComponent implements OnInit, OnDestroy {
               status: player.playerProfile?.status || 'Signed',
               playerProfile: player.playerProfile
             }));
+            
+            // Update both selectedClub and the clubs array
+            this.selectedClub!.roster = mappedRoster;
+            
+            // Also update the roster in the clubs array to ensure filtering works correctly
+            const clubIndex = this.clubs.findIndex(c => c._id === club._id);
+            if (clubIndex > -1) {
+              this.clubs[clubIndex].roster = mappedRoster;
+            }
           },
           error: (error) => {
             console.error('Error fetching roster:', error);
@@ -688,7 +798,17 @@ export class ClubsComponent implements OnInit, OnDestroy {
         if (clubIndex > -1 && club._id) {
           // Refresh just this club's roster
           this.api.getClubRoster(club._id, selectedSeasonId).subscribe(roster => {
-            this.clubs[clubIndex].roster = roster;
+            const mappedRoster = roster.map((player: any): Player => ({
+              _id: player._id,
+              gamertag: player.gamertag || player.discordUsername || 'Unknown',
+              discordId: player.discordId,
+              discordUsername: player.discordUsername,
+              platform: player.platform || 'PS5',
+              position: player.playerProfile?.position || 'C',
+              status: player.playerProfile?.status || 'Signed',
+              playerProfile: player.playerProfile
+            }));
+            this.clubs[clubIndex].roster = mappedRoster;
           });
         }
         
@@ -728,7 +848,17 @@ export class ClubsComponent implements OnInit, OnDestroy {
         if (clubIndex > -1 && club._id) {
           // Refresh just this club's roster
           this.api.getClubRoster(club._id, selectedSeasonId).subscribe(roster => {
-            this.clubs[clubIndex].roster = roster;
+            const mappedRoster = roster.map((player: any): Player => ({
+              _id: player._id,
+              gamertag: player.gamertag || player.discordUsername || 'Unknown',
+              discordId: player.discordId,
+              discordUsername: player.discordUsername,
+              platform: player.platform || 'PS5',
+              position: player.playerProfile?.position || 'C',
+              status: player.playerProfile?.status || 'Signed',
+              playerProfile: player.playerProfile
+            }));
+            this.clubs[clubIndex].roster = mappedRoster;
           });
         }
         

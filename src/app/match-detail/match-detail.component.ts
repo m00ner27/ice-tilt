@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
@@ -60,7 +60,7 @@ interface PlayerStatDisplay {
   templateUrl: './match-detail.component.html',
   styleUrls: ['./match-detail.component.css']
 })
-export class MatchDetailComponent implements OnInit {
+export class MatchDetailComponent implements OnInit, OnDestroy {
   // Observable selectors
   selectedMatch$: Observable<any>;
   matchEashlData$: Observable<any>;
@@ -76,6 +76,9 @@ export class MatchDetailComponent implements OnInit {
   awayTeamGoalies: PlayerStatDisplay[] = [];
   isMergedGame: boolean = false;
   noStatsMessage: string = '';
+  
+  // Subscription management
+  private routeParamsSubscription?: Subscription;
   
   constructor(
     private route: ActivatedRoute,
@@ -102,22 +105,23 @@ export class MatchDetailComponent implements OnInit {
       }
     }
     
-    if (!this.match) {
-      // Get match ID from route and load match
-      this.route.params.pipe(take(1)).subscribe(params => {
-        console.log('=== MATCH DETAIL ROUTE PARAMS ===');
-        console.log('Route params:', params);
-        const matchId = params['id'];
-        console.log('Match ID from params:', matchId);
-        console.log('Match ID type:', typeof matchId);
-        
-        if (matchId && matchId !== 'undefined') {
+    // Always listen to route parameter changes to handle navigation between matches
+    this.routeParamsSubscription = this.route.params.subscribe(params => {
+      console.log('=== MATCH DETAIL ROUTE PARAMS ===');
+      console.log('Route params:', params);
+      const matchId = params['id'];
+      console.log('Match ID from params:', matchId);
+      console.log('Match ID type:', typeof matchId);
+      
+      if (matchId && matchId !== 'undefined') {
+        // Only load if we don't already have this match or if it's a different match
+        if (!this.match || this.match.id !== matchId) {
           this.loadMatch(matchId);
-        } else {
-          console.error('Invalid match ID provided:', matchId);
         }
-      });
-    }
+      } else {
+        console.error('Invalid match ID provided:', matchId);
+      }
+    });
   }
   
   loadMatch(id: string): void {
@@ -401,5 +405,11 @@ export class MatchDetailComponent implements OnInit {
     if (!saves || !shotsAgainst || shotsAgainst === 0) return '0.000';
     const percentage = (saves / shotsAgainst) * 100;
     return percentage.toFixed(3);
+  }
+
+  ngOnDestroy(): void {
+    if (this.routeParamsSubscription) {
+      this.routeParamsSubscription.unsubscribe();
+    }
   }
 }
