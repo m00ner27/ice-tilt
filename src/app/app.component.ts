@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService, User } from '@auth0/auth0-angular';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { RouterModule, RouterOutlet, Router } from '@angular/router';
 import { NavigationComponent } from './navigation/navigation.component';
 import { ScheduleBarComponent } from './schedule-bar/schedule-bar.component';
 import { Store } from '@ngrx/store';
@@ -25,7 +25,8 @@ export class AppComponent implements OnInit {
 
   constructor(
     private auth: AuthService,
-    private store: Store
+    private store: Store,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -52,6 +53,13 @@ export class AppComponent implements OnInit {
 
         // Sync user with MongoDB via NgRx action; follow-up handled in effect
         this.store.dispatch(UsersActions.auth0Sync());
+        
+        // Check if user should be redirected to admin panel after login
+        const adminRedirect = sessionStorage.getItem('adminRedirectAfterLogin');
+        if (adminRedirect) {
+          sessionStorage.removeItem('adminRedirectAfterLogin');
+          this.router.navigate([adminRedirect]);
+        }
       },
       error: (error) => {
         this.isLoading = false;

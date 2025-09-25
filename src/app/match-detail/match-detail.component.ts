@@ -107,11 +107,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     
     // Always listen to route parameter changes to handle navigation between matches
     this.routeParamsSubscription = this.route.params.subscribe(params => {
-      console.log('=== MATCH DETAIL ROUTE PARAMS ===');
-      console.log('Route params:', params);
       const matchId = params['id'];
-      console.log('Match ID from params:', matchId);
-      console.log('Match ID type:', typeof matchId);
       
       if (matchId && matchId !== 'undefined') {
         // Only load if we don't already have this match or if it's a different match
@@ -125,19 +121,14 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   }
   
   loadMatch(id: string): void {
-    console.log('=== LOADING MATCH ===');
-    console.log('Match ID to load:', id);
-    console.log('Match ID type:', typeof id);
     
     // First check if the match is already in the store
     this.store.select(MatchesSelectors.selectAllMatches).pipe(take(1)).subscribe(matches => {
       const existingMatch = matches.find(match => match.id === id);
       if (existingMatch) {
-        console.log('Match found in store:', existingMatch);
         this.match = existingMatch;
         this.processMatchData();
       } else {
-        console.log('Match not in store, loading from API...');
         // If not in store, load from API
         this.ngrxApiService.loadMatch(id);
         
@@ -146,7 +137,6 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           filter(match => match !== null && match.id === id),
           take(1)
         ).subscribe(match => {
-          console.log('Match loaded from API:', match);
           this.match = match;
           this.processMatchData();
         });
@@ -184,35 +174,23 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     this.awayTeamGoalies = [];
 
     // Check for manual stats first
-    console.log('=== CHECKING FOR MANUAL STATS ===');
-    console.log('Match EASHL Data:', this.match.eashlData);
-    console.log('Manual Entry Flag:', this.match.eashlData?.manualEntry);
-    console.log('EASHL Match ID:', this.match.eashlMatchId);
-    
     if (this.match.eashlData && this.match.eashlData.manualEntry) {
-      console.log('Manual stats detected for game:', this.match.id);
       this.processManualStats();
       return;
     }
 
     if (this.isMergedGame) {
-      console.log('Merged game detected:', this.match.eashlMatchId);
       // Merged games should now have combined player stats
       if (!this.match.playerStats || this.match.playerStats.length === 0) {
         this.noStatsMessage = `This game was created by merging multiple EASHL games (${this.match.eashlMatchId}). Player statistics are being processed and should be available shortly.`;
-        console.log('Merged game detected but no player stats yet');
         return;
       }
     }
 
     if (!this.match.playerStats || this.match.playerStats.length === 0) {
       this.noStatsMessage = 'No detailed player statistics are available for this game.';
-      console.log('No player stats available for game:', this.match.id);
       return;
     }
-
-    console.log('=== PROCESSING PLAYER STATS ===');
-    console.log('Raw player stats:', this.match.playerStats);
     
     this.match.playerStats.forEach((playerStat: any) => {
       const statDisplay: PlayerStatDisplay = {
@@ -266,19 +244,12 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         }
       }
     });
-
-    console.log('=== PROCESSED STATS ===');
-    console.log('Home team players:', this.homeTeamPlayers);
-    console.log('Away team players:', this.awayTeamPlayers);
-    console.log('Home team goalies:', this.homeTeamGoalies);
-    console.log('Away team goalies:', this.awayTeamGoalies);
   }
 
   processManualStats(): void {
     // Process manual stats if available
     if (this.match.eashlData && this.match.eashlData.manualEntry) {
       // Implementation for manual stats processing
-      console.log('Processing manual stats for game:', this.match.id);
     }
   }
 

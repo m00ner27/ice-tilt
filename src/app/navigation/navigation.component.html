@@ -26,7 +26,7 @@
             <div class="flex items-center">
                 <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
                     <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
-                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
+                    <!-- Login button is now hidden - users must go to /admin to access admin features -->
                 </ng-container>
                 <ng-template #authLoading>
                     <!-- Optional: placeholder/spinner -->

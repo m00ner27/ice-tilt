@@ -39,21 +39,21 @@ export const adminGuard = () => {
     take(1),
     switchMap(isAuthenticated => {
       if (!isAuthenticated) {
-        auth.loginWithPopup({
-          authorizationParams: {
-            audience: environment.apiAudience,
-            scope: 'openid profile email offline_access'
-          }
-        }).subscribe();
-        return of(false);
+        // Redirect to admin password page instead of using popup
+        return of(router.createUrlTree(['/admin-password']));
       }
+      // User is authenticated, check if they have admin privileges
       return api.getMyAdminRecord().pipe(
         map((me: any) => !!me),
         catchError(() => of(false))
       );
     }),
-    map(isAdmin => {
-      if (!isAdmin) {
+    map(result => {
+      if (result instanceof Object && 'commands' in result) {
+        // This is a UrlTree (redirect)
+        return result;
+      }
+      if (!result) {
         return router.createUrlTree(['/']);
       }
       return true;
@@ -70,21 +70,20 @@ export const superAdminGuard = () => {
     take(1),
     switchMap(isAuthenticated => {
       if (!isAuthenticated) {
-        auth.loginWithPopup({
-          authorizationParams: {
-            audience: environment.apiAudience,
-            scope: 'openid profile email offline_access'
-          }
-        }).subscribe();
-        return of(false);
+        // Redirect to admin password page instead of using popup
+        return of(router.createUrlTree(['/admin-password']));
       }
       return api.getMyAdminRecord().pipe(
         map((me: any) => !!me?.superAdmin),
         catchError(() => of(false))
       );
     }),
-    map(isSuper => {
-      if (!isSuper) {
+    map(result => {
+      if (result instanceof Object && 'commands' in result) {
+        // This is a UrlTree (redirect)
+        return result;
+      }
+      if (!result) {
         return router.createUrlTree(['/']);
       }
       return true;

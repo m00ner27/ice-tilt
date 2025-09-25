@@ -166,14 +166,6 @@ export class HomeComponent implements OnInit {
       // Check for goalies
       const allGoalies = Object.values(playerMap).filter(p => p.position === 'G');
       
-      console.log('=== HOME PAGE DATA LOADED ===');
-      console.log('Top goals:', this.topGoals.length);
-      console.log('Top assists:', this.topAssists.length);
-      console.log('Top points:', this.topPoints.length);
-      console.log('Top save %:', this.topSavePct.length);
-      if (this.topGoals.length > 0) {
-        console.log('First goal scorer:', this.topGoals[0].name, 'Team:', this.topGoals[0].team);
-      }
       
       // Top 5 save percentage (all-time leaders, minimum 1 shot against)
       this.topSavePct = Object.values(playerMap)

@@ -20,6 +20,8 @@ import { InboxComponent } from './inbox/inbox.component';
 import { ViewProfileComponent } from './view-profile/view-profile.component';
 import { authGuard, adminGuard, superAdminGuard } from './core/guards/auth.guard';
 import { ManagerGuard } from './core/guards/manager.guard';
+import { AdminPasswordGuard } from './guards/admin-password.guard';
+import { AdminPasswordComponent } from './admin-password/admin-password.component';
 import { AdminPanelComponent } from './admin-panel/admin-panel.component';
 import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
 import { SeasonsComponent } from './admin-panel/seasons/seasons.component';
@@ -56,17 +58,18 @@ export const routes: Routes = [
   { path: 'test', component: TestComponent },
   { path: 'real-data', component: RealDataComponent },
   { path: 'eashl-stats', component: EashlStatsComponent, canActivate: [authGuard] },
-  { path: 'admin', component: AdminPanelComponent, canActivate: [adminGuard], children: [
+  { path: 'admin-password', component: AdminPasswordComponent },
+  { path: 'admin', component: AdminPanelComponent, canActivate: [AdminPasswordGuard], children: [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-    { path: 'dashboard', component: AdminDashboardComponent },
-    { path: 'seasons', component: SeasonsComponent },
-    { path: 'clubs', component: ClubsComponent },
-    { path: 'add-games', component: AddGamesComponent },
-    { path: 'schedule', component: AdminScheduleComponent },
-    { path: 'users', component: UsersComponent },
-    { path: 'players', component: AdminPlayersComponent },
-    { path: 'create-player', component: CreatePlayerComponent },
-    { path: 'admins', component: AdminsComponent, canActivate: [superAdminGuard] },
+    { path: 'dashboard', component: AdminDashboardComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'seasons', component: SeasonsComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'clubs', component: ClubsComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'add-games', component: AddGamesComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'schedule', component: AdminScheduleComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'users', component: UsersComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'players', component: AdminPlayersComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'create-player', component: CreatePlayerComponent, canActivate: [AdminPasswordGuard] },
+    { path: 'admins', component: AdminsComponent, canActivate: [AdminPasswordGuard, superAdminGuard] },
   ]},
   {
     path: 'admin/manual-stats/:gameId',

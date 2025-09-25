@@ -18,7 +18,6 @@ export class ApiService {
     private auth: AuthService
   ) { 
     // Add request interceptor to track all HTTP requests
-    console.log('=== API SERVICE: Constructor initialized ===');
   }
 
   // Add method to test the specific endpoint directly
@@ -27,14 +26,7 @@ export class ApiService {
     const seasonId = '687649d7ab18f6cd40f8d83d';
     const url = `${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`;
     
-    console.log('=== TESTING PETOSEN PALLO ROSTER ENDPOINT ===');
-    console.log('Testing URL:', url);
-    
     return this.http.get(url).pipe(
-      tap(response => {
-        console.log('=== TEST RESPONSE RECEIVED ===');
-        console.log('Response:', response);
-      }),
       catchError(error => {
         console.error('=== TEST ERROR RECEIVED ===');
         console.error('Error:', error);
@@ -87,15 +79,7 @@ export class ApiService {
 
   // Season data methods
   getSeasons(): Observable<any[]> {
-    console.log('=== API SERVICE: getSeasons ===');
-    console.log('URL:', `${this.apiUrl}/api/seasons`);
-    
     return this.http.get<any[]>(`${this.apiUrl}/api/seasons`).pipe(
-      tap(response => {
-        console.log('=== API SERVICE: getSeasons Response ===');
-        console.log('Response:', response);
-        console.log('Response length:', response?.length || 0);
-      }),
       catchError(error => {
         console.error('=== API SERVICE: getSeasons Error ===');
         console.error('Error:', error);
@@ -145,16 +129,7 @@ export class ApiService {
   }
 
   getClubById(clubId: string): Observable<any> {
-    console.log('=== API SERVICE: getClubById ===');
-    console.log('clubId:', clubId);
-    console.log('URL:', `${this.apiUrl}/api/clubs/${clubId}`);
-    
     return this.http.get<any>(`${this.apiUrl}/api/clubs/${clubId}`).pipe(
-      tap(response => {
-        console.log('=== API SERVICE: getClubById Response ===');
-        console.log('Response:', response);
-        console.log('Response type:', typeof response);
-      }),
       catchError(error => {
         console.error('=== API SERVICE: getClubById Error ===');
         console.error('Error:', error);
@@ -170,7 +145,6 @@ export class ApiService {
   }
 
   updateClub(clubData: any): Observable<any> {
-    console.log('ApiService: updateClub called for clubId:', clubData._id);
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -185,7 +159,6 @@ export class ApiService {
   }
 
   deleteClub(id: string): Observable<any> {
-    console.log('ApiService: deleteClub called for clubId:', id);
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -215,15 +188,7 @@ export class ApiService {
   }
 
   getGames(): Observable<any[]> {
-    console.log('=== API SERVICE: getGames ===');
-    console.log('URL:', `${this.apiUrl}/api/games`);
-    
     return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
-      tap(response => {
-        console.log('=== API SERVICE: getGames Response ===');
-        console.log('Response:', response);
-        console.log('Response length:', response?.length || 0);
-      }),
       catchError(error => {
         console.error('=== API SERVICE: getGames Error ===');
         console.error('Error:', error);
@@ -239,13 +204,10 @@ export class ApiService {
   }
 
   deleteGame(gameId: string): Observable<any> {
-    console.log('ApiService: deleteGame called for gameId', gameId);
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for deleteGame, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -256,13 +218,10 @@ export class ApiService {
   }
 
   bulkUpdateGames(updates: any[]): Observable<any> {
-    console.log('ApiService: bulkUpdateGames called with', updates.length, 'updates');
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for bulkUpdateGames, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -273,13 +232,10 @@ export class ApiService {
   }
 
   mergeGames(primaryGameId: string, secondaryGameId: string): Observable<any> {
-    console.log('ApiService: mergeGames called');
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for mergeGames, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -395,13 +351,10 @@ export class ApiService {
   }
 
   getGameEashlData(gameId: string): Observable<any> {
-    console.log('ApiService: getGameEashlData called for gameId', gameId);
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for getGameEashlData, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -412,13 +365,10 @@ export class ApiService {
   }
 
   unlinkGameStats(gameId: string): Observable<any> {
-    console.log('ApiService: unlinkGameStats called for gameId', gameId);
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for unlinkGameStats, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -442,13 +392,10 @@ export class ApiService {
   }
 
   addAdmin(payload: { username: string; note?: string; superAdmin?: boolean }): Observable<any> {
-    console.log('ApiService: addAdmin called');
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for addAdmin, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -459,13 +406,10 @@ export class ApiService {
   }
 
   removeAdmin(auth0Id: string): Observable<any> {
-    console.log('ApiService: removeAdmin called for auth0Id', auth0Id);
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for removeAdmin, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -476,13 +420,10 @@ export class ApiService {
   }
 
   setSuperAdmin(auth0Id: string, superAdmin: boolean): Observable<any> {
-    console.log('ApiService: setSuperAdmin called for auth0Id', auth0Id);
-    
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token for setSuperAdmin, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

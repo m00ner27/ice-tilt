@@ -129,19 +129,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     const freeAgentsToUse = this.seasonFreeAgents.length > 0 ? this.seasonFreeAgents : this.freeAgents;
     const seasonId = this.selectedSeasonId;
     
-    console.log('=== AVAILABLE FREE AGENTS DEBUG ===');
-    console.log('Season ID:', seasonId);
-    console.log('Season free agents count:', this.seasonFreeAgents.length);
-    console.log('General free agents count:', this.freeAgents.length);
-    console.log('Free agents to use count:', freeAgentsToUse?.length || 0);
-    console.log('Clubs count:', this.clubs.length);
-    console.log('Clubs with rosters:', this.clubs.filter(club => club.roster && club.roster.length > 0).length);
-    console.log('All rosters loaded:', this.allRostersLoaded);
-    console.log('Season free agents:', this.seasonFreeAgents.map(p => ({ id: p._id, name: p.gamertag })));
-    console.log('General free agents:', this.freeAgents.map(p => ({ id: p._id, name: p.gamertag })));
-    
     if (!freeAgentsToUse || freeAgentsToUse.length === 0) {
-      console.log('No free agents available');
       return [];
     }
     
@@ -152,28 +140,10 @@ export class ClubsComponent implements OnInit, OnDestroy {
       .filter(p => p && p._id)
       .map(p => p._id);
     
-    console.log('All roster player IDs:', allRosterPlayerIds);
-    console.log('Free agents to filter:', freeAgentsToUse.map(p => ({ id: p._id, name: p.gamertag })));
-    
     // Filter out players who are already on ANY club's roster
     const filtered = freeAgentsToUse.filter(player => 
       !allRosterPlayerIds.includes(player._id)
     );
-    
-    console.log('Filtered free agents count:', filtered.length);
-    console.log('Filtered free agents:', filtered.map(p => ({ id: p._id, name: p.gamertag })));
-    
-    // Debug: Show which players were filtered out and why
-    const filteredOut = freeAgentsToUse.filter(player => 
-      allRosterPlayerIds.includes(player._id)
-    );
-    console.log('Players filtered out (on rosters):', filteredOut.map(p => ({ id: p._id, name: p.gamertag })));
-    
-    // TEMPORARY: If no season-specific free agents and all general free agents are on rosters,
-    // show a message indicating this is expected behavior
-    if (this.seasonFreeAgents.length === 0 && filtered.length === 0 && this.freeAgents.length > 0) {
-      console.log('All general free agents are on rosters - this is expected if season-specific free agents API is not working');
-    }
     
     return filtered;
   }
@@ -236,7 +206,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     
     // Initialize season-specific free agents if a season is already selected
     if (this.selectedSeasonId) {
-      console.log('Initializing season-specific free agents for season:', this.selectedSeasonId);
       this.updateSeasonFreeAgents();
     }
   }
@@ -280,8 +249,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
         })
       ).sort((a, b) => a.name.localeCompare(b.name));
 
-      console.log('Loaded clubs for season:', seasonId, 'Count:', this.clubs.length);
-      
       // Load all rosters for proper filtering
       this.loadAllRostersForFiltering(seasonId);
     });
@@ -290,8 +257,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
   private loadAllRostersForFiltering(seasonId: string): void {
     this.allRostersLoaded = false;
     this.rosterLoadingPromises = [];
-    
-    console.log('Loading rosters for filtering, clubs count:', this.clubs.length);
     
     // Load rosters for all clubs
     this.clubs.forEach(club => {
@@ -328,7 +293,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     // Wait for all rosters to load
     Promise.all(this.rosterLoadingPromises).then(() => {
       this.allRostersLoaded = true;
-      console.log('All rosters loaded for filtering');
     });
   }
 
@@ -344,16 +308,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
     }
     
     const seasonId = this.selectedSeasonId;
-    console.log('updateSeasonFreeAgents called with seasonId:', seasonId);
     
     if (seasonId) {
       this.seasonFreeAgentsSubscription = this.store.select(selectFreeAgentsForSeason(seasonId)).subscribe((agents: Player[]) => {
-        console.log('Season free agents subscription received:', agents?.length || 0, 'agents');
-        console.log('Season free agents data:', agents?.map(p => ({ id: p._id, name: p.gamertag })) || []);
         this.seasonFreeAgents = agents || [];
       });
     } else {
-      console.log('No season selected, clearing season free agents');
       this.seasonFreeAgents = [];
     }
   }
@@ -414,7 +374,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   onSeasonChange(event: any): void {
     const seasonId = event.target.value;
-    console.log('Season changed to:', seasonId);
 
     this.selectedSeasonId = seasonId;
     this.loadClubsForSeason(seasonId);
@@ -450,8 +409,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
         return;
       }
       
-      console.log('Adding club with seasons:', seasons);
-      
       const clubData = {
         name: form.name,
         logoUrl: form.logo,
@@ -478,9 +435,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.editingClub = club;
     this.isAddingClub = true;
     this.logoPreview = club.logoUrl;
-    
-    console.log('Editing club:', club.name);
-    console.log('Club seasons:', club.seasons);
     
     // Ensure season controls are added
     this.addSeasonControls();
@@ -522,16 +476,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
     
     // Mark form as touched to trigger validation
     this.clubForm.markAllAsTouched();
-    
-    console.log('Form validity after edit setup:', this.clubForm.valid);
-    console.log('Form errors:', this.getFormErrors());
   }
 
   updateClub(): void {
-    console.log('Update club called');
-    console.log('Form valid:', this.clubForm.valid);
-    console.log('Form errors:', this.getFormErrors());
-    
     if (!this.editingClub) {
       console.error('No club selected for editing');
       return;
@@ -562,8 +509,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
       }
     });
     
-    console.log('Updated seasons for club:', seasons);
-    
     // Create a clean update object with only the fields that should be updated
     const updated = {
       _id: this.editingClub._id, // Include the club ID for the API call
@@ -575,11 +520,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
       eashlClubId: form.eashlClubId
     };
     
-    console.log('Sending update:', updated);
-    
     this.api.updateClub(updated).subscribe({
       next: (updatedClub) => {
-        console.log('Club updated successfully:', updatedClub);
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
         if (idx > -1) this.clubs[idx] = updatedClub;
         this.clubs.sort((a, b) => a.name.localeCompare(b.name));
@@ -626,8 +568,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     
     // Update validation status
     this.clubForm.updateValueAndValidity();
-    
-    console.log('Season controls added. Form controls:', Object.keys(this.clubForm.controls));
   }
 
   validateSeasons(): any {
@@ -642,7 +582,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
       });
       
       if (!hasSelectedSeason) {
-        console.log('No seasons selected');
         return { noSeasonsSelected: true };
       }
       
@@ -654,20 +593,15 @@ export class ClubsComponent implements OnInit, OnDestroy {
         if (formGroup.get(seasonControlName)?.value === true) {
           const divisionValue = formGroup.get(divisionControlName)?.value;
           const isInvalid = !divisionValue || divisionValue === '';
-          if (isInvalid) {
-            console.log(`Season ${season.name} selected but no division chosen`);
-          }
           return isInvalid;
         }
         return false;
       });
       
       if (hasInvalidSeasons) {
-        console.log('Some seasons have incomplete divisions');
         return { incompleteSeasons: true };
       }
       
-      console.log('Season validation passed');
       return null;
     };
   }
@@ -675,20 +609,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   // Removed loadDivisionsForSeason - divisions are loaded globally in loadData()
 
   getDivisionsForSeason(seasonId: string): Division[] {
-    console.log('Getting divisions for season:', seasonId);
-    console.log('All divisions:', this.divisions);
-    
-    // Debug: Show the seasonId of each division
-    this.divisions.forEach((div, index) => {
-      console.log(`Division ${index}:`, div.name, '-> seasonId:', div.seasonId, 'Type:', typeof div.seasonId);
-    });
-    
-    // Debug: Show what we're comparing against
-    console.log('Looking for seasonId:', seasonId, 'Type:', typeof seasonId);
-    
-    const filtered = this.divisions.filter(d => d.seasonId === seasonId);
-    console.log('Filtered divisions for season', seasonId, ':', filtered);
-    return filtered;
+    return this.divisions.filter(d => d.seasonId === seasonId);
   }
 
   isSeasonSelected(seasonId: string): boolean {
@@ -872,10 +793,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
   
   addMeAsAdmin(): void {
-    console.log('Adding current user as admin...');
     this.api.addMeAsAdmin().subscribe({
       next: (response) => {
-        console.log('Admin added successfully:', response);
         alert('You have been added as an admin! You can now delete clubs.');
       },
       error: (error) => {

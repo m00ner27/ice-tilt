@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthButtonComponent } from './auth-button/auth-button.component'; // Correct path
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { AuthService } from '@auth0/auth0-angular';
 import { ApiService } from '../store/services/api.service';
@@ -14,16 +13,18 @@ import { selectIsUserAnyManager } from '../store/managers.selectors';
 @Component({
   selector: 'app-navigation',
   standalone: true,
-  imports: [RouterModule, CommonModule, AuthButtonComponent, UserProfileComponent],
+  imports: [RouterModule, CommonModule, UserProfileComponent],
   templateUrl: './navigation.component.html',
 })
 export class NavigationComponent {
   isMenuCollapsed = true;
   isAdmin$: Observable<boolean>;
   isManager$: Observable<boolean>;
-
-  constructor(public auth: AuthService, private api: ApiService, private store: Store<AppState>) {
-    console.log('Navigation component initialized!');
+  constructor(
+    public auth: AuthService, 
+    private api: ApiService, 
+    private store: Store<AppState>
+  ) {
     this.isAdmin$ = this.auth.isAuthenticated$.pipe(
       map(isAuth => {
         if (!isAuth) return false;
@@ -36,6 +37,7 @@ export class NavigationComponent {
   toggleMenu() {
     this.isMenuCollapsed = !this.isMenuCollapsed;
   }
+
 }
 
 

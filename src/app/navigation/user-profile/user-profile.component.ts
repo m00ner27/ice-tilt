@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { AppState } from '../../store';
 import { selectIsUserAnyManager, selectUserManagedClubs } from '../../store/managers.selectors';
 import * as ManagersActions from '../../store/managers.actions';
+import { AdminPasswordService } from '../../services/admin-password.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -21,7 +22,11 @@ export class UserProfileComponent implements OnInit {
   isManager$: Observable<boolean>;
   managedClubs$: Observable<any[]>;
 
-  constructor(public auth: AuthService, private store: Store<AppState>) {
+  constructor(
+    public auth: AuthService, 
+    private store: Store<AppState>,
+    private adminPasswordService: AdminPasswordService
+  ) {
     this.isManager$ = this.store.select(selectIsUserAnyManager);
     this.managedClubs$ = this.store.select(selectUserManagedClubs);
   }
@@ -59,6 +64,8 @@ export class UserProfileComponent implements OnInit {
   }
 
   logout() {
+    // Reset admin password verification when logging out
+    this.adminPasswordService.resetAdminPasswordVerification();
     this.auth.logout({ logoutParams: { returnTo: window.location.origin } });
     this.isDropdownOpen = false;
   }
