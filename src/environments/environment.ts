@@ -5,44 +5,63 @@ export const environment = {
   apiAllowedList: [
     // Public endpoints that don't require authentication
     {
-      uri: '/api/seasons',
+      uri: 'http://localhost:3000/api/seasons',
       allowAnonymous: true
     },
     // Clubs - GET requests are public, but PUT/POST/DELETE require auth
     {
-      uri: '/api/clubs',
+      uri: 'http://localhost:3000/api/clubs',
       allowAnonymous: true
     },
     {
       uri: 'http://localhost:3000/api/clubs/*',
-      allowAnonymous: false,
-      tokenOptions: {
-        authorizationParams: {
-          audience: 'http://localhost:3000',
-          scope: 'openid profile email offline_access'
-        }
-      }
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3000/api/clubs/*/roster*',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3000/api/clubs/*/roster',
+      allowAnonymous: true
+    },
+    // More specific patterns for club roster endpoints
+    {
+      uri: 'http://localhost:3000/api/clubs/*/roster?*',
+      allowAnonymous: true
     },
     {
       uri: 'http://localhost:3000/api/games',
-      allowAnonymous: false,
-      tokenOptions: {
-        authorizationParams: {
-          audience: 'http://localhost:3000',
-          scope: 'openid profile email offline_access'
-        }
-      }
-    },
-    {
-      uri: '/api/divisions',
       allowAnonymous: true
     },
     {
-      uri: '/api/player-profiles',
+      uri: 'http://localhost:3000/api/games/*',
       allowAnonymous: true
     },
     {
-      uri: '/api/regions',
+      uri: 'http://localhost:3000/api/divisions',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3000/api/player-profiles',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3000/api/regions',
+      allowAnonymous: true
+    },
+    // Player stats endpoints - public for viewing
+    {
+      uri: 'http://localhost:3000/api/skater-data',
+      allowAnonymous: true
+    },
+    // Standings and stats endpoints - public for viewing
+    {
+      uri: 'http://localhost:3000/api/standings',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3000/api/standings/*',
       allowAnonymous: true
     },
     {
