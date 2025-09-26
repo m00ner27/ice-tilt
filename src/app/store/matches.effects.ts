@@ -108,7 +108,7 @@ export class MatchesEffects {
       this.actions$.pipe(
         ofType(MatchesActions.mergeMatches),
         mergeMap(({ primaryMatchId, secondaryMatchId }) =>
-          this.apiService.mergeGames(primaryMatchId, secondaryMatchId).pipe(
+          this.apiService.mergeGames(primaryMatchId, [secondaryMatchId]).pipe(
             map(match => MatchesActions.mergeMatchesSuccess({ match })),
             catchError(error => of(MatchesActions.mergeMatchesFailure({ error })))
           )

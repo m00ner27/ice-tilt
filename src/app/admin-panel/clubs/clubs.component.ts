@@ -706,6 +706,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
     this.api.addPlayerToClub(club._id, player._id, selectedSeasonId).subscribe({
       next: () => {
+        // Log transaction
+        this.logPlayerSigning(club, player, selectedSeasonId);
+        
         // Refresh the selected club if it's the one we just updated
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(club);
@@ -756,6 +759,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
     this.api.removePlayerFromClub(club._id, player._id, selectedSeasonId).subscribe({
       next: () => {
+        // Log transaction
+        this.logPlayerRelease(club, player, selectedSeasonId);
+        
         // Refresh the selected club if it's the one we just updated
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(club);
@@ -826,6 +832,57 @@ export class ClubsComponent implements OnInit, OnDestroy {
       base.unshift(current);
     }
     return base;
+  }
+
+  // ---------- Transaction logging helpers ----------
+  private logPlayerSigning(club: Club, player: Player, seasonId: string): void {
+    const season = this.seasons.find(s => s._id === seasonId);
+    const seasonName = season ? season.name : 'Unknown Season';
+    
+    this.transactionsService.logPlayerSigning(
+      club._id!,
+      club.name,
+      club.logoUrl,
+      player._id,
+      player.gamertag || player.discordUsername || 'Unknown Player',
+      seasonId,
+      seasonName,
+      'Admin' // Since this is admin action
+    ).subscribe({
+      next: (transaction) => {
+        console.log('Player signing logged:', transaction);
+        // Notify roster update service for real-time updates
+        this.rosterUpdateService.notifyPlayerSigned(club._id!, seasonId, player._id);
+      },
+      error: (error) => {
+        console.error('Error logging player signing:', error);
+      }
+    });
+  }
+
+  private logPlayerRelease(club: Club, player: Player, seasonId: string): void {
+    const season = this.seasons.find(s => s._id === seasonId);
+    const seasonName = season ? season.name : 'Unknown Season';
+    
+    this.transactionsService.logPlayerRelease(
+      club._id!,
+      club.name,
+      club.logoUrl,
+      player._id,
+      player.gamertag || player.discordUsername || 'Unknown Player',
+      seasonId,
+      seasonName,
+      'Admin' // Since this is admin action
+    ).subscribe({
+      next: (transaction) => {
+        console.log('Player release logged:', transaction);
+        // Notify roster update service for real-time updates
+        this.rosterUpdateService.notifyPlayerReleased(club._id!, seasonId, player._id);
+      },
+      error: (error) => {
+        console.error('Error logging player release:', error);
+      }
+    });
   }
 
   // ---------- Debug helpers ----------

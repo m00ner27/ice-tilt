@@ -231,7 +231,7 @@ export class ApiService {
     );
   }
 
-  mergeGames(primaryGameId: string, secondaryGameId: string): Observable<any> {
+  mergeGames(primaryGameId: string, gameIds: string[]): Observable<any> {
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -242,7 +242,7 @@ export class ApiService {
         });
         return this.http.post(`${this.apiUrl}/api/games/merge`, {
           primaryGameId,
-          secondaryGameId
+          gameIds
         }, { headers });
       })
     );

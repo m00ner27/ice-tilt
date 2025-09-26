@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
-import { RecentTransactionsComponent } from '../recent-transactions/recent-transactions.component';
+import { TransactionsComponent } from '../transactions/transactions.component';
 import { ScheduleComponent } from '../schedule/schedule.component';
 import { environment } from '../../environments/environment';
 
@@ -25,7 +25,7 @@ interface AggregatedPlayer {
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  imports: [CommonModule, RouterModule, RecentTransactionsComponent, ScheduleComponent]
+  imports: [CommonModule, RouterModule, TransactionsComponent, ScheduleComponent]
 })
 export class HomeComponent implements OnInit {
   topGoals: AggregatedPlayer[] = [];

@@ -1,0 +1,128 @@
+<div class="transactions-section">
+  <div class="container">
+    <!-- Header -->
+    <div class="mb-8" *ngIf="!isPreview">
+      <h1 class="text-3xl font-bold text-admin-primary mb-2">Transactions</h1>
+      <p class="text-gray-400">Track all player signings and releases across the league</p>
+    </div>
+    
+
+    <!-- Filters -->
+    <div class="bg-admin-card rounded-lg p-6 mb-6" *ngIf="!isPreview">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">Filters</h3>
+      <div class="flex flex-wrap gap-4 items-center">
+        <div class="flex-1 min-w-48">
+          <label class="block text-sm font-medium text-white mb-2">Season</label>
+          <select 
+            [(ngModel)]="selectedSeason" 
+            (change)="onSeasonChange()" 
+            class="w-full px-3 py-2 bg-admin-hover border border-admin-accent rounded-md text-white focus:outline-none focus:ring-2 focus:ring-admin-primary"
+          >
+            <option value="All">All Seasons</option>
+            <option *ngFor="let season of seasons" [value]="season.name">
+              {{ season.name }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="flex-1 min-w-48">
+          <label class="block text-sm font-medium text-white mb-2">Club</label>
+          <select 
+            [(ngModel)]="selectedClub" 
+            (change)="onClubChange()" 
+            class="w-full px-3 py-2 bg-admin-hover border border-admin-accent rounded-md text-white focus:outline-none focus:ring-2 focus:ring-admin-primary"
+          >
+            <option value="All">All Clubs</option>
+            <option *ngFor="let club of filteredClubs" [value]="club.name">
+              {{ club.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-admin-primary"></div>
+      <p class="text-gray-400 mt-4">Loading transactions...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="bg-red-900/20 border border-red-500 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+        <p class="text-red-400">{{ error }}</p>
+      </div>
+    </div>
+
+    <!-- Transactions List -->
+    <div *ngIf="!loading && !error" class="space-y-4">
+      <div *ngIf="transactions.length === 0" class="bg-admin-card rounded-lg p-8 text-center">
+        <i class="fas fa-receipt text-4xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-400 mb-2">No Transactions Found</h3>
+        <p class="text-gray-500">No transactions match your current filters.</p>
+      </div>
+
+      <!-- Transactions Table with Header -->
+      <div *ngIf="transactions.length > 0" class="bg-admin-card rounded-lg overflow-hidden mb-6">
+        <!-- Table Header -->
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold" *ngIf="isPreview">
+          Recent Transactions
+        </div>
+        
+        <!-- Transaction Items -->
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngFor="let transaction of transactions; let i = index" 
+               class="bg-admin-card last:rounded-b-lg hover:bg-admin-hover transition-colors"
+               [class.border-b]="i < transactions.length - 1"
+               [class.border-admin-accent]="i < transactions.length - 1">
+            <div class="p-4 flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <!-- Transaction Icon -->
+                <div class="flex-shrink-0">
+                  <i [class]="getTransactionIcon(transaction.transactionType)" 
+                     [class]="getTransactionClass(transaction.transactionType)"
+                     class="text-2xl"></i>
+                </div>
+                
+                <!-- Transaction Details -->
+                <div class="flex-1">
+                  <div class="flex items-center space-x-2 mb-1">
+                    <span class="text-white font-semibold">{{ transaction.playerName }}</span>
+                    <span [class]="getTransactionClass(transaction.transactionType)" 
+                          class="text-sm font-medium px-2 py-1 rounded">
+                      {{ getTransactionText(transaction.transactionType) }}
+                    </span>
+                  </div>
+                  
+                  <div class="flex items-center space-x-4 text-sm text-gray-400">
+                    <div class="flex items-center space-x-1">
+                      <i class="fas fa-building text-admin-primary"></i>
+                      <span>{{ transaction.clubName }}</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                      <i class="fas fa-calendar text-admin-primary"></i>
+                      <span>{{ transaction.seasonName }}</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                      <i class="fas fa-clock text-admin-primary"></i>
+                      <span>{{ formatDate(transaction.date) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Club Logo (if available) -->
+              <div *ngIf="transaction.clubLogoUrl" class="flex-shrink-0">
+                <img [src]="transaction.clubLogoUrl" 
+                     [alt]="transaction.clubName + ' logo'"
+                     class="w-12 h-12 rounded-lg object-cover">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

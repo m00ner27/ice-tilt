@@ -341,15 +341,20 @@ export class AdminScheduleComponent implements OnInit {
     
     // Create HTML for the EASHL game selection modal
     const modalHtml = `
-      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: 20px auto;">
+      <div style="background: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: 20px auto;">
         <h3 style="margin-top: 0; color: #333;">Select EASHL Games to Merge</h3>
-        <p style="color: #666; margin-bottom: 20px;">Choose 2 EASHL games to merge into one complete game record:</p>
+        <p style="color: #666; margin-bottom: 20px;">Choose 2 or more EASHL games to merge into one complete game record:</p>
         
-        <div style="margin-bottom: 20px;">
+        <div style="margin-bottom: 20px; max-height: 400px; overflow-y: auto;">
           ${eashlGames.map((game, i) => `
-            <label style="display: block; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">
-              <input type="checkbox" name="mergeGame" value="${game.matchId}" style="margin-right: 10px;">
-              <strong>${this.formatEashlGameLabel(game, primaryGame)}</strong>
+            <label style="display: block; margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: background-color 0.2s;" 
+                   onmouseover="this.style.backgroundColor='#f8f9fa'" 
+                   onmouseout="this.style.backgroundColor='white'">
+              <input type="checkbox" name="mergeGame" value="${game.matchId}" style="margin-right: 10px; transform: scale(1.2);">
+              <div style="font-weight: bold; margin-bottom: 5px;">${this.formatEashlGameLabel(game, primaryGame)}</div>
+              <div style="font-size: 12px; color: #666; margin-left: 20px;">
+                Match ID: ${game.matchId} | Time: ${game.timeAgo.number} ${game.timeAgo.unit} ago
+              </div>
             </label>
           `).join('')}
         </div>
@@ -543,6 +548,86 @@ export class AdminScheduleComponent implements OnInit {
     return combinedPlayers;
   }
 
+  combineMultiplePlayerStats(games: any[], homeClubEashlId: string): any {
+    // Combine player statistics from multiple EASHL games
+    const combinedPlayers: any = {};
+    
+    // Process all games
+    games.forEach((game, gameIndex) => {
+      console.log(`Processing game ${gameIndex + 1} for player stats:`, game.matchId);
+      
+      if (game.players) {
+        Object.keys(game.players).forEach(clubId => {
+          if (!combinedPlayers[clubId]) {
+            combinedPlayers[clubId] = {};
+          }
+          
+          const teamPlayers = game.players[clubId];
+          Object.keys(teamPlayers).forEach(playerId => {
+            const player = teamPlayers[playerId];
+            
+            // Debug: log player data to see what fields are available
+            console.log(`Player ${playerId} data:`, player);
+            
+            if (!combinedPlayers[clubId][playerId]) {
+              // Initialize player if not exists - use the same field as match service
+              const playerName = player.playername || player.name || player.gamertag || `Player ${playerId}`;
+              
+              console.log(`Player name resolved: ${playerName} from fields:`, {
+                playername: player.playername,
+                name: player.name,
+                gamertag: player.gamertag
+              });
+              
+              combinedPlayers[clubId][playerId] = {
+                playername: playerName, // Use playername field to match existing structure
+                name: playerName, // Also include name for compatibility
+                jerseynum: player.jerseynum || 0,
+                position: player.position || 'Unknown',
+                skgoals: 0,
+                skassists: 0,
+                skplusmin: 0, // Note: match service uses skplusmin not skplusminus
+                sktoi: 0,
+                skhits: 0,
+                skblk: 0,
+                skgiveaways: 0,
+                sktakeaways: 0,
+                skpim: 0,
+                glsaves: 0,
+                glshots: 0,
+                glga: 0,
+                glso: 0
+              };
+            }
+            
+            // Add stats from this game to the combined total
+            const combinedPlayer = combinedPlayers[clubId][playerId];
+            
+            // Skater stats
+            if (player.skgoals) combinedPlayer.skgoals += parseInt(player.skgoals) || 0;
+            if (player.skassists) combinedPlayer.skassists += parseInt(player.skassists) || 0;
+            if (player.skplusmin) combinedPlayer.skplusmin += parseInt(player.skplusmin) || 0;
+            if (player.sktoi) combinedPlayer.sktoi += parseInt(player.sktoi) || 0;
+            if (player.skhits) combinedPlayer.skhits += parseInt(player.skhits) || 0;
+            if (player.skblk) combinedPlayer.skblk += parseInt(player.skblk) || 0;
+            if (player.skgiveaways) combinedPlayer.skgiveaways += parseInt(player.skgiveaways) || 0;
+            if (player.sktakeaways) combinedPlayer.sktakeaways += parseInt(player.sktakeaways) || 0;
+            if (player.skpim) combinedPlayer.skpim += parseInt(player.skpim) || 0;
+            
+            // Goalie stats
+            if (player.glsaves) combinedPlayer.glsaves += parseInt(player.glsaves) || 0;
+            if (player.glshots) combinedPlayer.glshots += parseInt(player.glshots) || 0;
+            if (player.glga) combinedPlayer.glga += parseInt(player.glga) || 0;
+            if (player.glso) combinedPlayer.glso += parseInt(player.glso) || 0;
+          });
+        });
+      }
+    });
+    
+    console.log('Combined player stats from multiple games:', combinedPlayers);
+    return combinedPlayers;
+  }
+
   formatEashlGameLabel(eashlGame: any, primaryGame: any): string {
     // Format the EASHL game label similar to the dropdown
     const homeClub = this.clubs.find(c => c.eashlClubId === primaryGame.homeClubId?.eashlClubId);
@@ -555,19 +640,59 @@ export class AdminScheduleComponent implements OnInit {
         const opponentName = opponentDetails ? opponentDetails.details.name : 'Unknown';
         const score = clubDetails ? `${clubDetails.score} - ${clubDetails.opponentScore}` : 'N/A';
         const timeAgo = eashlGame.timeAgo.number + ' ' + eashlGame.timeAgo.unit + ' ago';
-        return `${homeClub.name} vs ${opponentName} (${score}) - ${timeAgo}`;
+        
+        // Get goal scorers for better identification
+        const goalScorers = this.getGoalScorers(eashlGame, homeClub.eashlClubId, clubDetails.opponentClubId);
+        const goalScorerText = goalScorers ? ` | Goals: ${goalScorers}` : '';
+        
+        return `${homeClub.name} vs ${opponentName} (${score})${goalScorerText} - ${timeAgo}`;
       }
     }
     
     return `Game ${eashlGame.matchId} - ${eashlGame.timeAgo.number} ${eashlGame.timeAgo.unit} ago`;
   }
 
+  getGoalScorers(eashlGame: any, homeClubId: string, awayClubId: string): string {
+    if (!eashlGame.players) return '';
+    
+    const homeGoalScorers: string[] = [];
+    const awayGoalScorers: string[] = [];
+    
+    // Process home team goal scorers
+    if (eashlGame.players[homeClubId]) {
+      Object.values(eashlGame.players[homeClubId]).forEach((player: any) => {
+        if (player.skgoals && player.skgoals > 0) {
+          const name = player.playername || player.name || 'Unknown';
+          homeGoalScorers.push(`${name}(${player.skgoals})`);
+        }
+      });
+    }
+    
+    // Process away team goal scorers
+    if (eashlGame.players[awayClubId]) {
+      Object.values(eashlGame.players[awayClubId]).forEach((player: any) => {
+        if (player.skgoals && player.skgoals > 0) {
+          const name = player.playername || player.name || 'Unknown';
+          awayGoalScorers.push(`${name}(${player.skgoals})`);
+        }
+      });
+    }
+    
+    const homeGoals = homeGoalScorers.length > 0 ? homeGoalScorers.join(', ') : 'No goals';
+    const awayGoals = awayGoalScorers.length > 0 ? awayGoalScorers.join(', ') : 'No goals';
+    
+    return `Home: ${homeGoals} | Away: ${awayGoals}`;
+  }
+
   confirmEashlMerge(primaryGame: any, selectedEashlGames: any[]) {
+    const gameList = selectedEashlGames.map((game, index) => 
+      `EASHL Game ${index + 1}: ${this.formatEashlGameLabel(game, primaryGame)}`
+    ).join('\n');
+    
     const confirmMessage = `Are you sure you want to merge these EASHL games?\n\n` +
       `Primary Game: ${primaryGame.homeTeam} vs ${primaryGame.awayTeam}\n` +
-      `EASHL Game 1: ${this.formatEashlGameLabel(selectedEashlGames[0], primaryGame)}\n` +
-      `EASHL Game 2: ${this.formatEashlGameLabel(selectedEashlGames[1], primaryGame)}\n\n` +
-      `This will create one complete game record with merged EASHL data.`;
+      `${gameList}\n\n` +
+      `This will create one complete game record with merged EASHL data from ${selectedEashlGames.length} games.`;
 
     if (confirm(confirmMessage)) {
       this.performEashlMerge(primaryGame._id, selectedEashlGames);
@@ -575,16 +700,13 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   performEashlMerge(primaryGameId: string, selectedEashlGames: any[]) {
-    // Actually merge the EASHL data from both games
-    if (selectedEashlGames.length !== 2) {
-      alert('Please select exactly 2 EASHL games to merge.');
+    // Actually merge the EASHL data from multiple games
+    if (selectedEashlGames.length < 2) {
+      alert('Please select at least 2 EASHL games to merge.');
       return;
     }
     
-    const game1 = selectedEashlGames[0];
-    const game2 = selectedEashlGames[1];
-    
-    console.log('Merging EASHL games:', { game1: game1.matchId, game2: game2.matchId });
+    console.log('Merging EASHL games:', selectedEashlGames.map(game => game.matchId));
     
     // First, extract and combine the scores from the selected EASHL games
     console.log('Extracting scores from EASHL games...');
@@ -602,29 +724,24 @@ export class AdminScheduleComponent implements OnInit {
     if (homeClubEashlId) {
       console.log('Home club EASHL ID:', homeClubEashlId);
       
-      // Calculate scores for Game 1 by summing player goals
-      const game1HomeGoals = this.calculateTeamGoals(game1, homeClubEashlId, true);
-      const game1AwayGoals = this.calculateTeamGoals(game1, homeClubEashlId, false);
+      // Calculate scores for each game by summing player goals
+      selectedEashlGames.forEach((game, index) => {
+        const gameHomeGoals = this.calculateTeamGoals(game, homeClubEashlId, true);
+        const gameAwayGoals = this.calculateTeamGoals(game, homeClubEashlId, false);
+        
+        combinedScore.home += gameHomeGoals;
+        combinedScore.away += gameAwayGoals;
+        
+        console.log(`Game ${index + 1} actual goals:`, { home: gameHomeGoals, away: gameAwayGoals });
+      });
       
-      // Calculate scores for Game 2 by summing player goals
-      const game2HomeGoals = this.calculateTeamGoals(game2, homeClubEashlId, true);
-      const game2AwayGoals = this.calculateTeamGoals(game2, homeClubEashlId, false);
-      
-      // Combine the actual goals scored
-      combinedScore = {
-        home: game1HomeGoals + game2HomeGoals,
-        away: game1AwayGoals + game2AwayGoals
-      };
-      
-      console.log('Game 1 actual goals:', { home: game1HomeGoals, away: game1AwayGoals });
-      console.log('Game 2 actual goals:', { home: game2HomeGoals, away: game2AwayGoals });
       console.log('Combined actual goals:', combinedScore);
     } else {
       console.error('Could not find home club EASHL ID');
     }
     
-    // Combine player statistics from both games
-    const combinedPlayerStats = this.combinePlayerStats(game1, game2, homeClubEashlId);
+    // Combine player statistics from all selected games
+    const combinedPlayerStats = this.combineMultiplePlayerStats(selectedEashlGames, homeClubEashlId);
     
     // Create combined EASHL data structure
     const combinedEashlData = {
@@ -641,7 +758,7 @@ export class AdminScheduleComponent implements OnInit {
     // Send the combined score and player stats to the backend
     const updatePayload = {
       gameId: primaryGameId,
-      eashlMatchId: `${game1.matchId}+${game2.matchId}`, // Use a special format to indicate merged games
+      eashlMatchId: selectedEashlGames.map(game => game.matchId).join('+'), // Use a special format to indicate merged games
       status: 'completed', // Mark as completed since we have the final scores
       score: combinedScore,
       homeTeamScore: combinedScore.home,
@@ -651,7 +768,8 @@ export class AdminScheduleComponent implements OnInit {
     
     this.api.bulkUpdateGames([updatePayload]).subscribe({
       next: (updatedGames) => {
-        alert(`EASHL games merged successfully!\n\nGame ${primaryGameId} now linked to merged EASHL matches ${game1.matchId} + ${game2.matchId}`);
+        const mergedMatchIds = selectedEashlGames.map(game => game.matchId).join(' + ');
+        alert(`EASHL games merged successfully!\n\nGame ${primaryGameId} now linked to merged EASHL matches: ${mergedMatchIds}`);
         
         console.log('EASHL merge result:', updatedGames);
         
@@ -660,7 +778,7 @@ export class AdminScheduleComponent implements OnInit {
         if (gameIndex !== -1) {
           const updatedGame = {
             ...this.games[gameIndex],
-            eashlMatchId: `${game1.matchId}+${game2.matchId}`,
+            eashlMatchId: mergedMatchIds,
             status: 'pending_stats'
           };
           console.log('Updated game after EASHL merge:', updatedGame);
@@ -715,7 +833,7 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   performMerge(primaryGameId: string, secondaryGameId: string) {
-    this.api.mergeGames(primaryGameId, secondaryGameId).subscribe({
+    this.api.mergeGames(primaryGameId, [secondaryGameId]).subscribe({
       next: (result) => {
         alert(`Games merged successfully!\n\nMerged game ID: ${result.mergedGame._id}\nDeleted game ID: ${result.deletedGameId}`);
         
