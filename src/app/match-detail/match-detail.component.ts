@@ -51,6 +51,7 @@ interface PlayerStatDisplay {
   shotsAgainst?: number;
   savePercentage?: number;
   goalsAgainst?: number;
+  goalsAgainstAverage?: number;
 }
 
 @Component({
@@ -253,10 +254,8 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       
       // Process all players from match.playerStats
       this.match.playerStats.forEach((player: any) => {
-        // Skip goalies
-        if (this.isGoalie(player.position)) {
-          return;
-        }
+        // Process both skaters and goalies
+        const isGoaliePlayer = this.isGoalie(player.position);
         
         // Determine team based on player.team
         const isHomeTeam = player.team === this.match.homeTeam;
@@ -272,35 +271,49 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           number: player.number || 0,
           position: this.getPositionAbbreviation(player.position || 'Unknown'),
           gamesPlayed: 1,
-          goals: player.goals || 0,
+          goals: isGoaliePlayer ? 0 : (player.goals || 0), // Goalies don't score goals
           assists: player.assists || 0,
-          points: (player.goals || 0) + (player.assists || 0),
-          plusMinus: player.plusMinus || 0,
-          shots: player.shots || 0,
-          shotPercentage: player.shots > 0 ? ((player.goals || 0) / player.shots * 100) : 0,
-          hits: player.hits || 0,
-          blockedShots: player.blockedShots || 0,
+          points: isGoaliePlayer ? (player.assists || 0) : ((player.goals || 0) + (player.assists || 0)),
+          plusMinus: isGoaliePlayer ? 0 : (player.plusMinus || 0), // Goalies don't have plus/minus
+          shots: isGoaliePlayer ? 0 : (player.shots || 0), // Goalies don't take shots
+          shotPercentage: isGoaliePlayer ? 0 : (player.shots > 0 ? ((player.goals || 0) / player.shots * 100) : 0),
+          hits: isGoaliePlayer ? 0 : (player.hits || 0), // Goalies don't hit
+          blockedShots: isGoaliePlayer ? 0 : (player.blockedShots || 0), // Goalies don't block shots
           pim: player.penaltyMinutes || 0,
-          ppg: player.powerPlayGoals || 0,
-          shg: player.shortHandedGoals || 0,
-          gwg: player.gameWinningGoals || 0,
-          takeaways: player.takeaways || 0,
-          giveaways: player.giveaways || 0,
-          faceoffsWon: player.faceoffsWon || 0,
-          faceoffsLost: player.faceoffsLost || 0,
-          faceoffPercentage: (player.faceoffsWon || 0) + (player.faceoffsLost || 0) > 0 ? 
-            ((player.faceoffsWon || 0) / ((player.faceoffsWon || 0) + (player.faceoffsLost || 0)) * 100) : 0,
-          passAttempts: player.passAttempts || 0,
-          passes: player.passesCompleted || 0,
-          passPercentage: player.passAttempts > 0 ? ((player.passesCompleted || 0) / player.passAttempts * 100) : 0,
-          playerScore: this.calculatePlayerScore(player)
+          ppg: isGoaliePlayer ? 0 : (player.powerPlayGoals || 0),
+          shg: isGoaliePlayer ? 0 : (player.shortHandedGoals || 0),
+          gwg: isGoaliePlayer ? 0 : (player.gameWinningGoals || 0),
+          takeaways: isGoaliePlayer ? 0 : (player.takeaways || 0),
+          giveaways: isGoaliePlayer ? 0 : (player.giveaways || 0),
+          faceoffsWon: isGoaliePlayer ? 0 : (player.faceoffsWon || 0),
+          faceoffsLost: isGoaliePlayer ? 0 : (player.faceoffsLost || 0),
+          faceoffPercentage: isGoaliePlayer ? 0 : ((player.faceoffsWon || 0) + (player.faceoffsLost || 0) > 0 ? 
+            ((player.faceoffsWon || 0) / ((player.faceoffsWon || 0) + (player.faceoffsLost || 0)) * 100) : 0),
+          passAttempts: isGoaliePlayer ? 0 : (player.passAttempts || 0),
+          passes: isGoaliePlayer ? 0 : (player.passesCompleted || 0),
+          passPercentage: isGoaliePlayer ? 0 : (player.passAttempts > 0 ? ((player.passesCompleted || 0) / player.passAttempts * 100) : 0),
+          playerScore: this.calculatePlayerScore(player),
+          // Goalie-specific stats
+          saves: isGoaliePlayer ? (player.saves || 0) : 0,
+          shotsAgainst: isGoaliePlayer ? (player.shotsAgainst || 0) : 0,
+          savePercentage: isGoaliePlayer ? (player.shotsAgainst > 0 ? (player.saves || 0) / player.shotsAgainst * 100 : 0) : 0,
+          goalsAgainst: isGoaliePlayer ? (player.goalsAgainst || 0) : 0,
+          goalsAgainstAverage: isGoaliePlayer ? (player.shotsAgainst > 0 ? (player.goalsAgainst || 0) / (player.shotsAgainst || 1) * 60 : 0) : 0
         };
         
-        // Assign to correct team
+        // Assign to correct team and category (skaters vs goalies)
         if (isHomeTeam) {
-          this.homeTeamPlayers.push(statDisplay);
+          if (isGoaliePlayer) {
+            this.homeTeamGoalies.push(statDisplay);
+          } else {
+            this.homeTeamPlayers.push(statDisplay);
+          }
         } else if (isAwayTeam) {
-          this.awayTeamPlayers.push(statDisplay);
+          if (isGoaliePlayer) {
+            this.awayTeamGoalies.push(statDisplay);
+          } else {
+            this.awayTeamPlayers.push(statDisplay);
+          }
         }
       });
     }

@@ -278,7 +278,7 @@ export class GoalieStatsComponent implements OnInit {
   }
   
   aggregateGoalieStats(matches: EashlMatch[], teamDivisionMap: Map<string, string>): void {
-    const statsMap = new Map<number, GoalieStats>();
+    const statsMap = new Map<string, GoalieStats>();
     const teamLogoMap = new Map<string, string | undefined>();
 
     console.log('Processing matches for goalie stats:', matches.length);
@@ -301,8 +301,142 @@ export class GoalieStatsComponent implements OnInit {
         console.log('Processing match for All Seasons:', match.id, 'Home:', match.homeTeam, 'Away:', match.awayTeam);
         console.log('Match eashlData:', match.eashlData);
         
-        // Use eashlData.players instead of playerStats
-        if (match.eashlData?.players) {
+        // Check if this is a manual stats entry first
+        if (match.eashlData?.manualEntry && match.eashlData?.players) {
+          console.log('Processing manual stats for goalies in match:', match.id);
+          console.log('Manual stats eashlData.players:', match.eashlData.players);
+          
+          // Process manual stats from eashlData.players (homeGoalies, awayGoalies)
+          const { homeGoalies = [], awayGoalies = [] } = match.eashlData.players;
+          
+          console.log('Home goalies found:', homeGoalies.length);
+          console.log('Away goalies found:', awayGoalies.length);
+          
+          // Process home goalies
+          homeGoalies.forEach((player: any) => {
+            if (!player || !player.gamertag) return;
+            
+            console.log('Processing home goalie:', player.gamertag, 'position:', player.position, 'isGoalie:', this.isGoalie(player.position));
+            
+            // Only process goalies
+            if (!this.isGoalie(player.position)) return;
+            
+            const teamName = match.homeTeam;
+            
+            console.log('Home goalie team name:', teamName, 'Season teams:', Array.from(allTeams));
+            console.log('Match homeTeam:', match.homeTeam, 'Match awayTeam:', match.awayTeam);
+            
+            // Use a combination of name and team for unique identification since playerId might be 0
+            const playerKey = `${player.gamertag}_${teamName}`;
+            let existingStats = statsMap.get(playerKey);
+            
+            if (!existingStats) {
+              existingStats = {
+                playerId: parseInt(player.playerId) || 0,
+                name: player.gamertag,
+                team: teamName,
+                teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                number: parseInt(player.number) || 0,
+                division: teamDivisionMap.get(teamName) || 'Unknown',
+                gamesPlayed: 0,
+                saves: 0,
+                shotsAgainst: 0,
+                goalsAgainst: 0,
+                shutouts: 0,
+                savePercentage: 0,
+                goalsAgainstAverage: 0
+              };
+              statsMap.set(playerKey, existingStats);
+            }
+            
+            if (existingStats) {
+              console.log(`Updating home goalie stats for ${player.gamertag}:`, {
+                saves: player.saves,
+                shotsAgainst: player.shotsAgainst,
+                goalsAgainst: player.goalsAgainst
+              });
+              
+              existingStats.gamesPlayed++;
+              existingStats.saves += parseInt(player.saves) || 0;
+              existingStats.shotsAgainst += parseInt(player.shotsAgainst) || 0;
+              existingStats.goalsAgainst += parseInt(player.goalsAgainst) || 0;
+              existingStats.shutouts += parseInt(player.shutout) || 0;
+              existingStats.team = teamName;
+              existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+              existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+              
+              console.log(`Updated stats for ${player.gamertag}:`, {
+                gamesPlayed: existingStats.gamesPlayed,
+                saves: existingStats.saves,
+                shotsAgainst: existingStats.shotsAgainst,
+                goalsAgainst: existingStats.goalsAgainst
+              });
+            }
+          });
+          
+          // Process away goalies
+          awayGoalies.forEach((player: any) => {
+            if (!player || !player.gamertag) return;
+            
+            console.log('Processing away goalie:', player.gamertag, 'position:', player.position, 'isGoalie:', this.isGoalie(player.position));
+            
+            // Only process goalies
+            if (!this.isGoalie(player.position)) return;
+            
+            const teamName = match.awayTeam;
+            
+            console.log('Away goalie team name:', teamName, 'Season teams:', Array.from(allTeams));
+            console.log('Match homeTeam:', match.homeTeam, 'Match awayTeam:', match.awayTeam);
+            
+            // Use a combination of name and team for unique identification since playerId might be 0
+            const playerKey = `${player.gamertag}_${teamName}`;
+            let existingStats = statsMap.get(playerKey);
+            
+            if (!existingStats) {
+              existingStats = {
+                playerId: parseInt(player.playerId) || 0,
+                name: player.gamertag,
+                team: teamName,
+                teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                number: parseInt(player.number) || 0,
+                division: teamDivisionMap.get(teamName) || 'Unknown',
+                gamesPlayed: 0,
+                saves: 0,
+                shotsAgainst: 0,
+                goalsAgainst: 0,
+                shutouts: 0,
+                savePercentage: 0,
+                goalsAgainstAverage: 0
+              };
+              statsMap.set(playerKey, existingStats);
+            }
+            
+            if (existingStats) {
+              console.log(`Updating away goalie stats for ${player.gamertag}:`, {
+                saves: player.saves,
+                shotsAgainst: player.shotsAgainst,
+                goalsAgainst: player.goalsAgainst
+              });
+              
+              existingStats.gamesPlayed++;
+              existingStats.saves += parseInt(player.saves) || 0;
+              existingStats.shotsAgainst += parseInt(player.shotsAgainst) || 0;
+              existingStats.goalsAgainst += parseInt(player.goalsAgainst) || 0;
+              existingStats.shutouts += parseInt(player.shutout) || 0;
+              existingStats.team = teamName;
+              existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+              existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+              
+              console.log(`Updated stats for ${player.gamertag}:`, {
+                gamesPlayed: existingStats.gamesPlayed,
+                saves: existingStats.saves,
+                shotsAgainst: existingStats.shotsAgainst,
+                goalsAgainst: existingStats.goalsAgainst
+              });
+            }
+          });
+        } else if (match.eashlData?.players) {
+          // Process EASHL data
           console.log('Found eashlData.players:', Object.keys(match.eashlData.players));
           
           Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
@@ -326,7 +460,8 @@ export class GoalieStatsComponent implements OnInit {
                 }
 
                 const playerIdNum = parseInt(playerId);
-                let existingStats = statsMap.get(playerIdNum);
+                const playerKey = `${playerData.playername || 'Unknown'}_${teamName}`;
+                let existingStats = statsMap.get(playerKey);
 
                 if (!existingStats) {
                   existingStats = {
@@ -344,7 +479,7 @@ export class GoalieStatsComponent implements OnInit {
                     savePercentage: 0,
                     goalsAgainstAverage: 0
                   };
-                  statsMap.set(playerIdNum, existingStats);
+                  statsMap.set(playerKey, existingStats);
                 }
 
                 existingStats.gamesPlayed++;
@@ -413,8 +548,180 @@ export class GoalieStatsComponent implements OnInit {
       console.log('Processing match:', match.id, 'Home:', match.homeTeam, 'Away:', match.awayTeam);
       console.log('Match eashlData:', match.eashlData);
       
-      // Use eashlData.players instead of playerStats
-      if (match.eashlData?.players) {
+      // Check if this is a manual stats entry
+      if (match.eashlData?.manualEntry && match.eashlData?.players) {
+        console.log('Processing manual stats for goalies in match:', match.id);
+        console.log('Manual stats eashlData.players:', match.eashlData.players);
+        
+        // Process manual stats from eashlData.players (homeGoalies, awayGoalies)
+        const { homeGoalies = [], awayGoalies = [] } = match.eashlData.players;
+        
+        console.log('Home goalies found:', homeGoalies.length);
+        console.log('Away goalies found:', awayGoalies.length);
+        
+        // Process home goalies
+        homeGoalies.forEach((player: any) => {
+          if (!player || !player.gamertag) return;
+          
+          console.log('Processing home goalie:', player.gamertag, 'position:', player.position, 'isGoalie:', this.isGoalie(player.position));
+          
+          // Only process goalies
+          if (!this.isGoalie(player.position)) return;
+          
+          const teamName = match.homeTeam;
+          
+          console.log('Home goalie team name:', teamName, 'Season teams:', Array.from(seasonTeams));
+          console.log('Match homeTeam:', match.homeTeam, 'Match awayTeam:', match.awayTeam);
+          
+          // Check if team is in the selected season (try exact match first, then partial match)
+          let isTeamInSeason = seasonTeams.has(teamName);
+          
+          if (!isTeamInSeason) {
+            // Try partial matching for team names
+            for (const seasonTeam of seasonTeams) {
+              if (teamName.includes(seasonTeam) || seasonTeam.includes(teamName)) {
+                console.log(`Found partial team match: ${teamName} matches ${seasonTeam}`);
+                isTeamInSeason = true;
+                break;
+              }
+            }
+          }
+          
+          if (!isTeamInSeason) {
+            console.log('Skipping team', teamName, '- not in selected season');
+            return;
+          }
+          
+          // Use a combination of name and team for unique identification since playerId might be 0
+          const playerKey = `${player.gamertag}_${teamName}`;
+          let existingStats = statsMap.get(playerKey);
+          
+          if (!existingStats) {
+            existingStats = {
+              playerId: parseInt(player.playerId) || 0,
+              name: player.gamertag,
+              team: teamName,
+              teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+              number: parseInt(player.number) || 0,
+              division: teamDivisionMap.get(teamName) || 'Unknown',
+              gamesPlayed: 0,
+              saves: 0,
+              shotsAgainst: 0,
+              goalsAgainst: 0,
+              shutouts: 0,
+              savePercentage: 0,
+              goalsAgainstAverage: 0
+            };
+            statsMap.set(playerKey, existingStats);
+          }
+          
+          if (existingStats) {
+            console.log(`Updating home goalie stats for ${player.gamertag}:`, {
+              saves: player.saves,
+              shotsAgainst: player.shotsAgainst,
+              goalsAgainst: player.goalsAgainst
+            });
+            
+            existingStats.gamesPlayed++;
+            existingStats.saves += parseInt(player.saves) || 0;
+            existingStats.shotsAgainst += parseInt(player.shotsAgainst) || 0;
+            existingStats.goalsAgainst += parseInt(player.goalsAgainst) || 0;
+            existingStats.shutouts += parseInt(player.shutout) || 0;
+            existingStats.team = teamName;
+            existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+            existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+            
+            console.log(`Updated stats for ${player.gamertag}:`, {
+              gamesPlayed: existingStats.gamesPlayed,
+              saves: existingStats.saves,
+              shotsAgainst: existingStats.shotsAgainst,
+              goalsAgainst: existingStats.goalsAgainst
+            });
+          }
+        });
+        
+        // Process away goalies
+        awayGoalies.forEach((player: any) => {
+          if (!player || !player.gamertag) return;
+          
+          console.log('Processing away goalie:', player.gamertag, 'position:', player.position, 'isGoalie:', this.isGoalie(player.position));
+          
+          // Only process goalies
+          if (!this.isGoalie(player.position)) return;
+          
+          const teamName = match.awayTeam;
+          
+          console.log('Away goalie team name:', teamName, 'Season teams:', Array.from(seasonTeams));
+          console.log('Match homeTeam:', match.homeTeam, 'Match awayTeam:', match.awayTeam);
+          
+          // Check if team is in the selected season (try exact match first, then partial match)
+          let isTeamInSeason = seasonTeams.has(teamName);
+          
+          if (!isTeamInSeason) {
+            // Try partial matching for team names
+            for (const seasonTeam of seasonTeams) {
+              if (teamName.includes(seasonTeam) || seasonTeam.includes(teamName)) {
+                console.log(`Found partial team match: ${teamName} matches ${seasonTeam}`);
+                isTeamInSeason = true;
+                break;
+              }
+            }
+          }
+          
+          if (!isTeamInSeason) {
+            console.log('Skipping team', teamName, '- not in selected season');
+            return;
+          }
+          
+          // Use a combination of name and team for unique identification since playerId might be 0
+          const playerKey = `${player.gamertag}_${teamName}`;
+          let existingStats = statsMap.get(playerKey);
+          
+          if (!existingStats) {
+            existingStats = {
+              playerId: parseInt(player.playerId) || 0,
+              name: player.gamertag,
+              team: teamName,
+              teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+              number: parseInt(player.number) || 0,
+              division: teamDivisionMap.get(teamName) || 'Unknown',
+              gamesPlayed: 0,
+              saves: 0,
+              shotsAgainst: 0,
+              goalsAgainst: 0,
+              shutouts: 0,
+              savePercentage: 0,
+              goalsAgainstAverage: 0
+            };
+            statsMap.set(playerKey, existingStats);
+          }
+          
+          if (existingStats) {
+            console.log(`Updating away goalie stats for ${player.gamertag}:`, {
+              saves: player.saves,
+              shotsAgainst: player.shotsAgainst,
+              goalsAgainst: player.goalsAgainst
+            });
+            
+            existingStats.gamesPlayed++;
+            existingStats.saves += parseInt(player.saves) || 0;
+            existingStats.shotsAgainst += parseInt(player.shotsAgainst) || 0;
+            existingStats.goalsAgainst += parseInt(player.goalsAgainst) || 0;
+            existingStats.shutouts += parseInt(player.shutout) || 0;
+            existingStats.team = teamName;
+            existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
+            existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
+            
+            console.log(`Updated stats for ${player.gamertag}:`, {
+              gamesPlayed: existingStats.gamesPlayed,
+              saves: existingStats.saves,
+              shotsAgainst: existingStats.shotsAgainst,
+              goalsAgainst: existingStats.goalsAgainst
+            });
+          }
+        });
+      } else if (match.eashlData?.players) {
+        // Process EASHL data
         console.log('Found eashlData.players:', Object.keys(match.eashlData.players));
         
         Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
@@ -443,7 +750,8 @@ export class GoalieStatsComponent implements OnInit {
               }
 
               const playerIdNum = parseInt(playerId);
-              let existingStats = statsMap.get(playerIdNum);
+              const playerKey = `${playerData.playername || 'Unknown'}_${teamName}`;
+              let existingStats = statsMap.get(playerKey);
 
               if (!existingStats) {
                 existingStats = {
@@ -461,7 +769,7 @@ export class GoalieStatsComponent implements OnInit {
                   savePercentage: 0,
                   goalsAgainstAverage: 0
                 };
-                statsMap.set(playerIdNum, existingStats);
+                statsMap.set(playerKey, existingStats);
               }
 
               if (existingStats) {
@@ -483,6 +791,13 @@ export class GoalieStatsComponent implements OnInit {
     });
     
     console.log('Final goalie stats map:', statsMap.size, 'goalies');
+    console.log('Final goalie stats details:', Array.from(statsMap.values()).map(g => ({
+      name: g.name,
+      team: g.team,
+      gamesPlayed: g.gamesPlayed,
+      saves: g.saves,
+      shotsAgainst: g.shotsAgainst
+    })));
     
     // Calculate derived stats for each goalie
     statsMap.forEach(goalie => {

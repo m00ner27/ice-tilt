@@ -13,7 +13,8 @@ import { selectAllMatches, selectStatsLoading, selectStatsError } from '../../st
   selector: 'app-manual-stats',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './manual-stats.component.html'
+  templateUrl: './manual-stats.component.html',
+  styleUrls: ['./manual-stats.component.css']
 })
 export class ManualStatsComponent implements OnInit {
   games$!: Observable<any[]>;
@@ -32,28 +33,12 @@ export class ManualStatsComponent implements OnInit {
   ) {
     this.statsForm = this.fb.group({
       gameId: ['', Validators.required],
-      homeGoals: [0, [Validators.required, Validators.min(0)]],
-      homeShots: [0, [Validators.required, Validators.min(0)]],
-      homeHits: [0, [Validators.required, Validators.min(0)]],
-      homePIM: [0, [Validators.required, Validators.min(0)]],
-      homePPG: [0, [Validators.required, Validators.min(0)]],
-      homePPO: [0, [Validators.required, Validators.min(0)]],
-      homeFaceoffs: [0, [Validators.required, Validators.min(0)]],
-      homeBlockedShots: [0, [Validators.required, Validators.min(0)]],
-      awayGoals: [0, [Validators.required, Validators.min(0)]],
-      awayShots: [0, [Validators.required, Validators.min(0)]],
-      awayHits: [0, [Validators.required, Validators.min(0)]],
-      awayPIM: [0, [Validators.required, Validators.min(0)]],
-      awayPPG: [0, [Validators.required, Validators.min(0)]],
-      awayPPO: [0, [Validators.required, Validators.min(0)]],
-      awayFaceoffs: [0, [Validators.required, Validators.min(0)]],
-      awayBlockedShots: [0, [Validators.required, Validators.min(0)]],
       status: ['scheduled', Validators.required],
       overtime: ['none', Validators.required]
     });
   }
 
-  // Player arrays for dynamic form management
+  // Player arrays for dynamic form management - fixed to 6 skaters per team
   homeSkaters: any[] = [];
   awaySkaters: any[] = [];
   homeGoalies: any[] = [];
@@ -151,11 +136,70 @@ export class ManualStatsComponent implements OnInit {
   }
 
   initializePlayerArrays() {
-    // Initialize with empty player objects
-    this.homeSkaters = [{ gamertag: '', position: 'C', goals: 0, assists: 0, shots: 0, hits: 0, takeaways: 0, giveaways: 0, plusMinus: 0, penaltyMinutes: 0, blockedShots: 0, faceoffsWon: 0, faceoffsLost: 0, passAttempts: 0, passesCompleted: 0, interceptions: 0, timeOnIceMinutes: 0, timeOnIceSeconds: 0 }];
-    this.awaySkaters = [{ gamertag: '', position: 'C', goals: 0, assists: 0, shots: 0, hits: 0, takeaways: 0, giveaways: 0, plusMinus: 0, penaltyMinutes: 0, blockedShots: 0, faceoffsWon: 0, faceoffsLost: 0, passAttempts: 0, passesCompleted: 0, interceptions: 0, timeOnIceMinutes: 0, timeOnIceSeconds: 0 }];
-    this.homeGoalies = [{ gamertag: '', position: 'G', saves: 0, shotsAgainst: 0, goalsAgainst: 0, shutoutPeriods: 0, timeOnIceMinutes: 0, timeOnIceSeconds: 0 }];
-    this.awayGoalies = [{ gamertag: '', position: 'G', saves: 0, shotsAgainst: 0, goalsAgainst: 0, shutoutPeriods: 0, timeOnIceMinutes: 0, timeOnIceSeconds: 0 }];
+    // Initialize with exactly 6 skaters per team and 1 goalie per team
+    this.homeSkaters = Array(6).fill(null).map(() => ({
+      gamertag: '', 
+      position: 'C', 
+      goals: 0, 
+      assists: 0, 
+      shots: 0, 
+      hits: 0, 
+      takeaways: 0, 
+      giveaways: 0, 
+      plusMinus: 0, 
+      penaltyMinutes: 0, 
+      blockedShots: 0, 
+      faceoffsWon: 0, 
+      faceoffsLost: 0, 
+      passAttempts: 0, 
+      passesCompleted: 0, 
+      interceptions: 0, 
+      timeOnIceMinutes: 0, 
+      timeOnIceSeconds: 0
+    }));
+    
+    this.awaySkaters = Array(6).fill(null).map(() => ({
+      gamertag: '', 
+      position: 'C', 
+      goals: 0, 
+      assists: 0, 
+      shots: 0, 
+      hits: 0, 
+      takeaways: 0, 
+      giveaways: 0, 
+      plusMinus: 0, 
+      penaltyMinutes: 0, 
+      blockedShots: 0, 
+      faceoffsWon: 0, 
+      faceoffsLost: 0, 
+      passAttempts: 0, 
+      passesCompleted: 0, 
+      interceptions: 0, 
+      timeOnIceMinutes: 0, 
+      timeOnIceSeconds: 0
+    }));
+    
+    this.homeGoalies = [{
+      gamertag: '', 
+      position: 'G', 
+      saves: 0, 
+      shotsAgainst: 0, 
+      goalsAgainst: 0, 
+      shutoutPeriods: 0, 
+      timeOnIceMinutes: 0, 
+      timeOnIceSeconds: 0
+    }];
+    
+    this.awayGoalies = [{
+      gamertag: '', 
+      position: 'G', 
+      saves: 0, 
+      shotsAgainst: 0, 
+      goalsAgainst: 0, 
+      shutoutPeriods: 0, 
+      timeOnIceMinutes: 0, 
+      timeOnIceSeconds: 0
+    }];
   }
 
   clearPlayerArrays() {
@@ -165,44 +209,70 @@ export class ManualStatsComponent implements OnInit {
     this.awayGoalies = [];
   }
 
-  addPlayer(team: 'home' | 'away', type: 'skater' | 'goalie') {
-    if (type === 'skater') {
-      const newPlayer = { gamertag: '', position: 'C', goals: 0, assists: 0, shots: 0, hits: 0, takeaways: 0, giveaways: 0, plusMinus: 0, penaltyMinutes: 0, blockedShots: 0, faceoffsWon: 0, faceoffsLost: 0, passAttempts: 0, passesCompleted: 0, interceptions: 0, timeOnIceMinutes: 0, timeOnIceSeconds: 0 };
-      if (team === 'home') {
-        this.homeSkaters.push(newPlayer);
-      } else {
-        this.awaySkaters.push(newPlayer);
-      }
+  // Calculate total goals for a team
+  getTotalGoals(team: 'home' | 'away'): number {
+    const skaters = team === 'home' ? this.homeSkaters : this.awaySkaters;
+    return skaters.reduce((total, player) => total + (Number(player.goals) || 0), 0);
+  }
+
+  // Calculate winner based on total goals
+  getWinner(): string {
+    const homeGoals = this.getTotalGoals('home');
+    const awayGoals = this.getTotalGoals('away');
+    
+    if (homeGoals > awayGoals) {
+      return `${this.selectedGameData?.homeTeam?.name || 'Home Team'} Wins!`;
+    } else if (awayGoals > homeGoals) {
+      return `${this.selectedGameData?.awayTeam?.name || 'Away Team'} Wins!`;
     } else {
-      const newGoalie = { gamertag: '', position: 'G', saves: 0, shotsAgainst: 0, goalsAgainst: 0, shutoutPeriods: 0, timeOnIceMinutes: 0, timeOnIceSeconds: 0 };
-      if (team === 'home') {
-        this.homeGoalies.push(newGoalie);
-      } else {
-        this.awayGoalies.push(newGoalie);
-      }
+      return 'Tie Game';
     }
   }
 
-  removePlayer(team: 'home' | 'away', type: 'skater' | 'goalie', index: number) {
-    if (type === 'skater') {
-      if (team === 'home') {
-        this.homeSkaters.splice(index, 1);
-      } else {
-        this.awaySkaters.splice(index, 1);
-      }
+  // Get winner CSS class for styling
+  getWinnerClass(): string {
+    const homeGoals = this.getTotalGoals('home');
+    const awayGoals = this.getTotalGoals('away');
+    
+    if (homeGoals > awayGoals) {
+      return 'text-green-400';
+    } else if (awayGoals > homeGoals) {
+      return 'text-blue-400';
     } else {
-      if (team === 'home') {
-        this.homeGoalies.splice(index, 1);
-      } else {
-        this.awayGoalies.splice(index, 1);
-      }
+      return 'text-yellow-400';
     }
+  }
+
+  // Calculate save percentage for goalies
+  calculateSavePercentage(goalie: any): number {
+    const saves = Number(goalie.saves) || 0;
+    const shotsAgainst = Number(goalie.shotsAgainst) || 0;
+    
+    if (shotsAgainst === 0) return 0;
+    return Math.round((saves / shotsAgainst) * 100);
+  }
+
+  // Calculate goals against average for goalies
+  calculateGAA(goalie: any): number {
+    const goalsAgainst = Number(goalie.goalsAgainst) || 0;
+    const timeOnIceMinutes = Number(goalie.timeOnIceMinutes) || 0;
+    const timeOnIceSeconds = Number(goalie.timeOnIceSeconds) || 0;
+    const totalMinutes = timeOnIceMinutes + (timeOnIceSeconds / 60);
+    
+    if (totalMinutes === 0) return 0;
+    return Math.round((goalsAgainst / totalMinutes) * 60 * 100) / 100;
   }
 
   submitStats() {
     if (this.statsForm.valid && this.selectedGame) {
+      // Calculate final scores
+      const homeGoals = this.getTotalGoals('home');
+      const awayGoals = this.getTotalGoals('away');
+      
       const statsData = {
         gameId: this.selectedGame._id,
+        homeScore: homeGoals,
+        awayScore: awayGoals,
         manualStats: {
           homeSkaters: this.homeSkaters.filter(p => p.gamertag.trim() !== ''),
           awaySkaters: this.awaySkaters.filter(p => p.gamertag.trim() !== ''),
@@ -211,6 +281,12 @@ export class ManualStatsComponent implements OnInit {
         },
         ...this.statsForm.value
       };
+
+      console.log('Submitting stats with calculated scores:', {
+        homeGoals,
+        awayGoals,
+        winner: homeGoals > awayGoals ? 'home' : awayGoals > homeGoals ? 'away' : 'tie'
+      });
 
       // Dispatch NgRx action to save manual game stats
       this.store.dispatch(MatchesActions.saveManualGameStats({ gameStats: statsData }));

@@ -92,50 +92,169 @@ export class MatchService {
 
     if (isManualEntry) {
       console.log(`Processing manual stats entry for game ${game._id}`);
-      // Manual stats store players by their database ID, not by club
+      // Manual stats are stored in eashlData.players with homeSkaters/awaySkaters arrays
       if (game.eashlData?.players) {
-        Object.entries(game.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
-          // For manual stats, determine team based on the stored team field
-          let teamName = 'Unknown';
-          if (playerData.team === 'home') {
-            teamName = game.homeClubId?.name || 'Home Team';
-          } else if (playerData.team === 'away') {
-            teamName = game.awayClubId?.name || 'Away Team';
-          }
+        const { homeSkaters = [], awaySkaters = [], homeGoalies = [], awayGoalies = [] } = game.eashlData.players;
+        
+        // Process home team skaters
+        homeSkaters.forEach((playerData: any) => {
+          const teamName = game.homeClubId?.name || 'Home Team';
           
           playerStats.push({
-            playerId: parseInt(playerId),
-            name: playerData.playername || playerData.name || 'Unknown',
+            playerId: parseInt(playerData.playerId) || 0,
+            name: playerData.gamertag || playerData.name || 'Unknown',
             team: teamName,
-            number: 0, // Manual stats don't have jersey numbers
+            number: parseInt(playerData.number) || 0,
             position: playerData.position || 'Unknown',
-            goals: parseInt(playerData.skgoals) || 0,
-            assists: parseInt(playerData.skassists) || 0,
-            plusMinus: parseInt(playerData.skplusmin) || 0,
-            shots: parseInt(playerData.skshots) || 0,
-            timeOnIce: playerData.sktoi || 'N/A',
-            shotPercentage: playerData.skshots ? (parseInt(playerData.skgoals) || 0) / parseInt(playerData.skshots) * 100 : 0,
-            hits: parseInt(playerData.skhits) || 0,
-            blockedShots: parseInt(playerData.skblk) || 0,
-            penaltyMinutes: parseInt(playerData.skpim) || 0,
-            powerPlayGoals: parseInt(playerData.skppg) || 0,
-            shortHandedGoals: parseInt(playerData.skshg) || 0,
-            gameWinningGoals: parseInt(playerData.skgwg) || 0,
-            takeaways: parseInt(playerData.sktakeaways) || 0,
-            giveaways: parseInt(playerData.skgiveaways) || 0,
-            passes: parseInt(playerData.skpasses) || 0,
-            passPercentage: parseInt(playerData.skpasspercentage) || 0,
-            faceoffsWon: parseInt(playerData.skfow) || 0,
-            faceoffsLost: parseInt(playerData.skfol) || 0,
-            faceoffPercentage: parseInt(playerData.skfopercentage) || 0,
+            goals: parseInt(playerData.goals) || 0,
+            assists: parseInt(playerData.assists) || 0,
+            plusMinus: parseInt(playerData.plusMinus) || 0,
+            shots: parseInt(playerData.shots) || 0,
+            timeOnIce: 'N/A', // Manual stats don't track time on ice
+            shotPercentage: playerData.shots ? (parseInt(playerData.goals) || 0) / parseInt(playerData.shots) * 100 : 0,
+            hits: parseInt(playerData.hits) || 0,
+            blockedShots: parseInt(playerData.blockedShots) || 0,
+            penaltyMinutes: parseInt(playerData.penaltyMinutes) || 0,
+            powerPlayGoals: parseInt(playerData.powerPlayGoals) || 0,
+            shortHandedGoals: parseInt(playerData.shortHandedGoals) || 0,
+            gameWinningGoals: parseInt(playerData.gameWinningGoals) || 0,
+            takeaways: parseInt(playerData.takeaways) || 0,
+            giveaways: parseInt(playerData.giveaways) || 0,
+            passes: parseInt(playerData.passesCompleted) || 0,
+            passPercentage: playerData.passAttempts ? (parseInt(playerData.passesCompleted) || 0) / parseInt(playerData.passAttempts) * 100 : 0,
+            faceoffsWon: parseInt(playerData.faceoffsWon) || 0,
+            faceoffsLost: parseInt(playerData.faceoffsLost) || 0,
+            faceoffPercentage: (playerData.faceoffsWon && playerData.faceoffsLost) ? 
+              (parseInt(playerData.faceoffsWon) || 0) / ((parseInt(playerData.faceoffsWon) || 0) + (parseInt(playerData.faceoffsLost) || 0)) * 100 : 0,
             playerScore: parseInt(playerData.score) || 0,
-            penaltyKillCorsiZone: parseInt(playerData.skpkc) || 0,
-            saves: parseInt(playerData.glsaves) || 0,
-            shotsAgainst: parseInt(playerData.glshots) || 0,
-            goalsAgainst: parseInt(playerData.glga) || 0,
-            goalsAgainstAverage: parseFloat(playerData.glgaa) || 0,
-            shutout: parseInt(playerData.glso) || 0,
-            shutoutPeriods: parseInt(playerData.glsoperiods) || 0
+            penaltyKillCorsiZone: parseInt(playerData.penaltyKillCorsiZone) || 0,
+            saves: 0, // Skaters don't have saves
+            shotsAgainst: 0,
+            goalsAgainst: 0,
+            goalsAgainstAverage: 0,
+            shutout: 0,
+            shutoutPeriods: 0
+          });
+        });
+        
+        // Process away team skaters
+        awaySkaters.forEach((playerData: any) => {
+          const teamName = game.awayClubId?.name || 'Away Team';
+          
+          playerStats.push({
+            playerId: parseInt(playerData.playerId) || 0,
+            name: playerData.gamertag || playerData.name || 'Unknown',
+            team: teamName,
+            number: parseInt(playerData.number) || 0,
+            position: playerData.position || 'Unknown',
+            goals: parseInt(playerData.goals) || 0,
+            assists: parseInt(playerData.assists) || 0,
+            plusMinus: parseInt(playerData.plusMinus) || 0,
+            shots: parseInt(playerData.shots) || 0,
+            timeOnIce: 'N/A', // Manual stats don't track time on ice
+            shotPercentage: playerData.shots ? (parseInt(playerData.goals) || 0) / parseInt(playerData.shots) * 100 : 0,
+            hits: parseInt(playerData.hits) || 0,
+            blockedShots: parseInt(playerData.blockedShots) || 0,
+            penaltyMinutes: parseInt(playerData.penaltyMinutes) || 0,
+            powerPlayGoals: parseInt(playerData.powerPlayGoals) || 0,
+            shortHandedGoals: parseInt(playerData.shortHandedGoals) || 0,
+            gameWinningGoals: parseInt(playerData.gameWinningGoals) || 0,
+            takeaways: parseInt(playerData.takeaways) || 0,
+            giveaways: parseInt(playerData.giveaways) || 0,
+            passes: parseInt(playerData.passesCompleted) || 0,
+            passPercentage: playerData.passAttempts ? (parseInt(playerData.passesCompleted) || 0) / parseInt(playerData.passAttempts) * 100 : 0,
+            faceoffsWon: parseInt(playerData.faceoffsWon) || 0,
+            faceoffsLost: parseInt(playerData.faceoffsLost) || 0,
+            faceoffPercentage: (playerData.faceoffsWon && playerData.faceoffsLost) ? 
+              (parseInt(playerData.faceoffsWon) || 0) / ((parseInt(playerData.faceoffsWon) || 0) + (parseInt(playerData.faceoffsLost) || 0)) * 100 : 0,
+            playerScore: parseInt(playerData.score) || 0,
+            penaltyKillCorsiZone: parseInt(playerData.penaltyKillCorsiZone) || 0,
+            saves: 0, // Skaters don't have saves
+            shotsAgainst: 0,
+            goalsAgainst: 0,
+            goalsAgainstAverage: 0,
+            shutout: 0,
+            shutoutPeriods: 0
+          });
+        });
+        
+        // Process home team goalies
+        homeGoalies.forEach((playerData: any) => {
+          const teamName = game.homeClubId?.name || 'Home Team';
+          
+          playerStats.push({
+            playerId: parseInt(playerData.playerId) || 0,
+            name: playerData.gamertag || playerData.name || 'Unknown',
+            team: teamName,
+            number: parseInt(playerData.number) || 0,
+            position: 'G',
+            goals: 0, // Goalies don't score goals
+            assists: parseInt(playerData.assists) || 0,
+            plusMinus: 0, // Goalies don't have plus/minus
+            shots: 0, // Goalies don't take shots
+            timeOnIce: 'N/A',
+            shotPercentage: 0,
+            hits: 0,
+            blockedShots: 0,
+            penaltyMinutes: parseInt(playerData.penaltyMinutes) || 0,
+            powerPlayGoals: 0,
+            shortHandedGoals: 0,
+            gameWinningGoals: 0,
+            takeaways: 0,
+            giveaways: 0,
+            passes: 0,
+            passPercentage: 0,
+            faceoffsWon: 0,
+            faceoffsLost: 0,
+            faceoffPercentage: 0,
+            playerScore: parseInt(playerData.score) || 0,
+            penaltyKillCorsiZone: 0,
+            saves: parseInt(playerData.saves) || 0,
+            shotsAgainst: parseInt(playerData.shotsAgainst) || 0,
+            goalsAgainst: parseInt(playerData.goalsAgainst) || 0,
+            goalsAgainstAverage: playerData.shotsAgainst ? (parseInt(playerData.goalsAgainst) || 0) / (parseInt(playerData.shotsAgainst) || 1) * 60 : 0,
+            shutout: parseInt(playerData.shutout) || 0,
+            shutoutPeriods: parseInt(playerData.shutoutPeriods) || 0
+          });
+        });
+        
+        // Process away team goalies
+        awayGoalies.forEach((playerData: any) => {
+          const teamName = game.awayClubId?.name || 'Away Team';
+          
+          playerStats.push({
+            playerId: parseInt(playerData.playerId) || 0,
+            name: playerData.gamertag || playerData.name || 'Unknown',
+            team: teamName,
+            number: parseInt(playerData.number) || 0,
+            position: 'G',
+            goals: 0, // Goalies don't score goals
+            assists: parseInt(playerData.assists) || 0,
+            plusMinus: 0, // Goalies don't have plus/minus
+            shots: 0, // Goalies don't take shots
+            timeOnIce: 'N/A',
+            shotPercentage: 0,
+            hits: 0,
+            blockedShots: 0,
+            penaltyMinutes: parseInt(playerData.penaltyMinutes) || 0,
+            powerPlayGoals: 0,
+            shortHandedGoals: 0,
+            gameWinningGoals: 0,
+            takeaways: 0,
+            giveaways: 0,
+            passes: 0,
+            passPercentage: 0,
+            faceoffsWon: 0,
+            faceoffsLost: 0,
+            faceoffPercentage: 0,
+            playerScore: parseInt(playerData.score) || 0,
+            penaltyKillCorsiZone: 0,
+            saves: parseInt(playerData.saves) || 0,
+            shotsAgainst: parseInt(playerData.shotsAgainst) || 0,
+            goalsAgainst: parseInt(playerData.goalsAgainst) || 0,
+            goalsAgainstAverage: playerData.shotsAgainst ? (parseInt(playerData.goalsAgainst) || 0) / (parseInt(playerData.shotsAgainst) || 1) * 60 : 0,
+            shutout: parseInt(playerData.shutout) || 0,
+            shutoutPeriods: parseInt(playerData.shutoutPeriods) || 0
           });
         });
       }

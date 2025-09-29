@@ -369,15 +369,16 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     
     const playerStatsMap = new Map<string, any>();
 
-    // Initialize stats for each player in the roster
+    // Initialize stats for each player in the roster - create separate entries for skater and goalie
     roster.forEach(player => {
       if (!player || !player.gamertag) return;
 
-      const baseStats = {
+      const baseSkaterStats = {
         playerId: player._id || player.id,
         name: player.gamertag,
         number: player.number || 0,
         position: 'Unknown', // Will be determined by game performance
+        role: 'skater', // Track the role
         gamesPlayed: 0,
         wins: 0,
         losses: 0,
@@ -403,6 +404,47 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         faceoffPercentage: 0,
         playerScore: 0,
         penaltyKillCorsiZone: 0,
+        // Goalie-specific stats (set to 0 for skater role)
+        saves: 0,
+        shotsAgainst: 0,
+        goalsAgainst: 0,
+        savePercentage: 0,
+        goalsAgainstAverage: 0,
+        shutouts: 0,
+        otl: 0
+      };
+
+      const baseGoalieStats = {
+        playerId: player._id || player.id,
+        name: player.gamertag,
+        number: player.number || 0,
+        position: 'G',
+        role: 'goalie', // Track the role
+        gamesPlayed: 0,
+        wins: 0,
+        losses: 0,
+        otLosses: 0,
+        goals: 0, // Goalies don't score goals
+        assists: 0,
+        points: 0,
+        plusMinus: 0, // Goalies don't have plus/minus
+        shots: 0, // Goalies don't take shots
+        shotPercentage: 0,
+        hits: 0, // Goalies don't hit
+        blockedShots: 0, // Goalies don't block shots
+        pim: 0,
+        ppg: 0, // Goalies don't have power play goals
+        shg: 0, // Goalies don't have short handed goals
+        gwg: 0, // Goalies don't have game winning goals
+        takeaways: 0, // Goalies don't have takeaways
+        giveaways: 0, // Goalies don't have giveaways
+        passes: 0, // Goalies don't have passes
+        passAttempts: 0, // Goalies don't have pass attempts
+        passPercentage: 0,
+        faceoffsWon: 0, // Goalies don't take faceoffs
+        faceoffPercentage: 0,
+        playerScore: 0,
+        penaltyKillCorsiZone: 0, // Goalies don't have PKC
         // Goalie-specific stats
         saves: 0,
         shotsAgainst: 0,
@@ -413,7 +455,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         otl: 0
       };
 
-      playerStatsMap.set(player.gamertag, baseStats);
+      // Create separate entries for skater and goalie roles
+      playerStatsMap.set(`${player.gamertag}_skater`, baseSkaterStats);
+      playerStatsMap.set(`${player.gamertag}_goalie`, baseGoalieStats);
     });
 
     // Process matches to calculate stats
@@ -456,17 +500,21 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           console.log(`Processing manual stats player: ${playerName}, game position: ${playerData.position}`);
           console.log('Available players:', Array.from(playerStatsMap.keys()));
 
-          // Try to find a matching player by name (exact match first, then partial match)
+          // Determine if this is a goalie based on position
+          const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
+          const roleSuffix = isGoalie ? '_goalie' : '_skater';
+          
+          // Try to find a matching player by name with the correct role
           let matchingKey = null;
           
-          if (playerStatsMap.has(playerName)) {
-            matchingKey = playerName;
+          if (playerStatsMap.has(`${playerName}${roleSuffix}`)) {
+            matchingKey = `${playerName}${roleSuffix}`;
           } else {
-            // Try partial match
+            // Try partial match with role suffix
             for (const [key, stats] of playerStatsMap.entries()) {
-              if (stats.name === playerName || 
+              if (key.endsWith(roleSuffix) && (stats.name === playerName || 
                   stats.name.includes(playerName) || 
-                  playerName.includes(stats.name)) {
+                  playerName.includes(stats.name))) {
                 matchingKey = key;
                 break;
               }
@@ -481,26 +529,42 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             else if (lost) playerStats.losses++;
             else if (otLoss) playerStats.otLosses++;
 
-            // Process as skater (manual stats don't have goalie stats)
-            playerStats.position = playerData.position || 'C';
-            playerStats.goals += Number(playerData.goals) || 0;
-            playerStats.assists += Number(playerData.assists) || 0;
-            playerStats.points = playerStats.goals + playerStats.assists;
-            playerStats.plusMinus += Number(playerData.plusMinus) || 0;
-            playerStats.shots += Number(playerData.shots) || 0;
-            playerStats.hits += Number(playerData.hits) || 0;
-            playerStats.blockedShots += Number(playerData.blockedShots) || 0;
-            playerStats.pim += Number(playerData.penaltyMinutes) || 0;
-            playerStats.ppg += Number(playerData.powerPlayGoals) || 0;
-            playerStats.shg += Number(playerData.shortHandedGoals) || 0;
-            playerStats.gwg += Number(playerData.gameWinningGoals) || 0;
-            playerStats.takeaways += Number(playerData.takeaways) || 0;
-            playerStats.giveaways += Number(playerData.giveaways) || 0;
-            playerStats.passes += Number(playerData.passesCompleted) || 0;
-            playerStats.passAttempts += Number(playerData.passAttempts) || 0;
-            playerStats.faceoffsWon += Number(playerData.faceoffsWon) || 0;
-            playerStats.playerScore += Number(playerData.score) || 0;
-            playerStats.penaltyKillCorsiZone += Number(playerData.penaltyKillCorsiZone) || 0;
+            if (isGoalie) {
+              // Process as goalie - update goalie-specific stats
+              playerStats.saves += Number(playerData.saves) || 0;
+              playerStats.shotsAgainst += Number(playerData.shotsAgainst) || 0;
+              playerStats.goalsAgainst += Number(playerData.goalsAgainst) || 0;
+              playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? 
+                playerStats.goalsAgainst / playerStats.gamesPlayed : 0;
+              playerStats.savePercentage = playerStats.shotsAgainst > 0 ? 
+                playerStats.saves / playerStats.shotsAgainst : 0;
+              
+              // Update position to G
+              playerStats.position = 'G';
+            } else {
+              // Process as skater - update skater-specific stats
+              playerStats.goals += Number(playerData.goals) || 0;
+              playerStats.assists += Number(playerData.assists) || 0;
+              playerStats.points = playerStats.goals + playerStats.assists;
+              playerStats.plusMinus += Number(playerData.plusMinus) || 0;
+              playerStats.shots += Number(playerData.shots) || 0;
+              playerStats.hits += Number(playerData.hits) || 0;
+              playerStats.blockedShots += Number(playerData.blockedShots) || 0;
+              playerStats.pim += Number(playerData.penaltyMinutes) || 0;
+              playerStats.ppg += Number(playerData.powerPlayGoals) || 0;
+              playerStats.shg += Number(playerData.shortHandedGoals) || 0;
+              playerStats.gwg += Number(playerData.gameWinningGoals) || 0;
+              playerStats.takeaways += Number(playerData.takeaways) || 0;
+              playerStats.giveaways += Number(playerData.giveaways) || 0;
+              playerStats.passes += Number(playerData.passesCompleted) || 0;
+              playerStats.passAttempts += Number(playerData.passAttempts) || 0;
+              playerStats.faceoffsWon += Number(playerData.faceoffsWon) || 0;
+              playerStats.playerScore += Number(playerData.score) || 0;
+              playerStats.penaltyKillCorsiZone += Number(playerData.penaltyKillCorsiZone) || 0;
+              
+              // Update position to skater position
+              playerStats.position = playerData.position || 'C';
+            }
           } else {
             console.log(`No matching player found for: ${playerName}`);
           }
@@ -517,17 +581,28 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             console.log(`Processing player: ${playerName}, game position: ${playerData.position}`);
             console.log('Available players:', Array.from(playerStatsMap.keys()));
 
-            // Try to find a matching player by name (exact match first, then partial match)
+            // Check if this player has goalie stats (saves, shots against)
+            // Try both possible field names for goalie stats
+            const hasGoalieStats = (playerData.saves && playerData.saves > 0) || 
+                                 (playerData.shotsAgainst && playerData.shotsAgainst > 0) ||
+                                 (playerData.glsaves && playerData.glsaves > 0) ||
+                                 (playerData.glshots && playerData.glshots > 0);
+            
+            // Determine role based on goalie stats or position
+            const isGoalie = hasGoalieStats || playerData.position === 'goalie';
+            const roleSuffix = isGoalie ? '_goalie' : '_skater';
+            
+            // Try to find a matching player by name with the correct role
             let matchingKey = null;
             
-            if (playerStatsMap.has(playerName)) {
-              matchingKey = playerName;
+            if (playerStatsMap.has(`${playerName}${roleSuffix}`)) {
+              matchingKey = `${playerName}${roleSuffix}`;
             } else {
-              // Try partial match
+              // Try partial match with role suffix
               for (const [key, stats] of playerStatsMap.entries()) {
-                if (stats.name === playerName || 
+                if (key.endsWith(roleSuffix) && (stats.name === playerName || 
                     stats.name.includes(playerName) || 
-                    playerName.includes(stats.name)) {
+                    playerName.includes(stats.name))) {
                   matchingKey = key;
                   break;
                 }
@@ -541,13 +616,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
               if (won) playerStats.wins++;
               else if (lost) playerStats.losses++;
               else if (otLoss) playerStats.otLosses++;
-
-              // Check if this player has goalie stats (saves, shots against)
-              // Try both possible field names for goalie stats
-              const hasGoalieStats = (playerData.saves && playerData.saves > 0) || 
-                                   (playerData.shotsAgainst && playerData.shotsAgainst > 0) ||
-                                   (playerData.glsaves && playerData.glsaves > 0) ||
-                                   (playerData.glshots && playerData.glshots > 0);
               
               console.log(`Player ${playerName} goalie check:`, {
                 saves: playerData.saves,
@@ -556,28 +624,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
                 allPlayerData: playerData
               });
               
-              // Debug: Show all available fields for goalies
-              if (playerData.position === 'goalie') {
-                console.log(`GOALIE DEBUG - ${playerName} available fields:`, Object.keys(playerData));
-                console.log(`GOALIE DEBUG - ${playerName} field values:`, {
-                  glsaves: playerData.glsaves,
-                  glshots: playerData.glshots,
-                  glgoals: playerData.glgoals,
-                  glga: playerData.glga,
-                  glsavepct: playerData.glsavepct,
-                  glshutouts: playerData.glshutouts,
-                  glwins: playerData.glwins,
-                  gllosses: playerData.gllosses,
-                  glotl: playerData.glotl
-                });
-                console.log(`GOALIE DEBUG - ${playerName} calculated values:`, {
-                  saves: Number(playerData.glsaves) || Number(playerData.saves) || 0,
-                  shotsAgainst: Number(playerData.glshots) || Number(playerData.shotsAgainst) || 0,
-                  goalsAgainst: Number(playerData.glga) || 0
-                });
-              }
-              
-              if (hasGoalieStats) {
+              if (isGoalie) {
                 console.log(`Player ${playerName} has goalie stats - processing as goalie`);
                 playerStats.position = 'G';
                 
@@ -639,13 +686,14 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         (stats.faceoffsWon / (stats.faceoffsWon + (stats.faceoffsWon || 0))) * 100 : 0;
     });
 
-    // Categorize players based on their actual performance
+    // Categorize players based on their role
+    // Players can appear in both skater and goalie sections if they have stats for both
     this.skaterStats = allPlayers.filter(player => 
-      player.position !== 'G' && player.gamesPlayed > 0
+      player.role === 'skater' && player.gamesPlayed > 0
     );
     
     this.goalieStats = allPlayers.filter(player => 
-      player.position === 'G' && player.gamesPlayed > 0
+      player.role === 'goalie' && player.gamesPlayed > 0
     );
     
     console.log('Player categorization:');

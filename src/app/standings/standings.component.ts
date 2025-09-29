@@ -34,8 +34,8 @@ interface Game {
   _id: string;
   seasonId: string;
   divisionId: string;
-  homeClubId: string;
-  awayClubId: string;
+  homeClubId: string | Club;
+  awayClubId: string | Club;
   date: string;
   isOvertime?: boolean;
   eashlMatchId?: string;
@@ -43,9 +43,18 @@ interface Game {
     home: number;
     away: number;
   };
+  homeTeamScore?: number;
+  awayTeamScore?: number;
   eashlData?: {
     homeScore: number;
     awayScore: number;
+    manualEntry?: boolean;
+    clubs?: {
+      [clubId: string]: {
+        goals: number;
+        goalsAgainst: number;
+      };
+    };
   };
   homeClub?: Club;
   awayClub?: Club;
@@ -305,20 +314,61 @@ export class StandingsComponent implements OnInit, OnDestroy {
 
     // Calculate stats from games
     let gamesWithScores = 0;
+    let manualEntryGames = 0;
+    let eashlGames = 0;
     
     games.forEach((game, index) => {
-      // Use game.score if available, as it's now the single source of truth for scores,
-      // populated by both manual entry and the EASHL data linking.
-      if (!game.score || typeof game.score.home === 'undefined' || typeof game.score.away === 'undefined') {
-        // Skip games without valid scores
+      // Check for scores in multiple possible locations
+      let homeScore: number | undefined;
+      let awayScore: number | undefined;
+      
+      // First try game.score (for EASHL data)
+      if (game.score && typeof game.score.home !== 'undefined' && typeof game.score.away !== 'undefined') {
+        homeScore = game.score.home;
+        awayScore = game.score.away;
+      }
+      // Then try game.homeTeamScore/game.awayTeamScore (for manual entries)
+      else if (typeof game.homeTeamScore !== 'undefined' && typeof game.awayTeamScore !== 'undefined') {
+        homeScore = game.homeTeamScore;
+        awayScore = game.awayTeamScore;
+      }
+      // Finally try eashlData scores (fallback)
+      else if (game.eashlData?.clubs) {
+        const homeClubId = typeof game.homeClubId === 'object' ? (game.homeClubId as any)._id : game.homeClubId;
+        const awayClubId = typeof game.awayClubId === 'object' ? (game.awayClubId as any)._id : game.awayClubId;
+        
+        if (homeClubId && game.eashlData.clubs[homeClubId]?.goals !== undefined) {
+          homeScore = game.eashlData.clubs[homeClubId].goals;
+        }
+        if (awayClubId && game.eashlData.clubs[awayClubId]?.goals !== undefined) {
+          awayScore = game.eashlData.clubs[awayClubId].goals;
+        }
+      }
+      
+      // Skip games without valid scores
+      if (typeof homeScore === 'undefined' || typeof awayScore === 'undefined') {
         return;
       }
 
       gamesWithScores++;
-      const homeScore = game.score.home;
-      const awayScore = game.score.away;
-      const homeTeamName = typeof game.homeClubId === 'object' && game.homeClubId ? (game.homeClubId as any).name : 'Unknown';
-      const awayTeamName = typeof game.awayClubId === 'object' && game.awayClubId ? (game.awayClubId as any).name : 'Unknown';
+      
+      // Debug logging for manual entries
+      if (game.eashlData?.manualEntry) {
+        manualEntryGames++;
+        console.log(`Processing manual entry game ${game._id}:`, {
+          homeTeam: typeof game.homeClubId === 'object' ? (game.homeClubId as Club).name : 'Unknown',
+          awayTeam: typeof game.awayClubId === 'object' ? (game.awayClubId as Club).name : 'Unknown',
+          homeScore,
+          awayScore,
+          homeTeamScore: game.homeTeamScore,
+          awayTeamScore: game.awayTeamScore
+        });
+      } else {
+        eashlGames++;
+      }
+      
+      const homeTeamName = typeof game.homeClubId === 'object' && game.homeClubId ? (game.homeClubId as Club).name : 'Unknown';
+      const awayTeamName = typeof game.awayClubId === 'object' && game.awayClubId ? (game.awayClubId as Club).name : 'Unknown';
       // Extract club IDs from objects if needed
       const homeClubId = typeof game.homeClubId === 'object' ? (game.homeClubId as any)._id : game.homeClubId;
       const awayClubId = typeof game.awayClubId === 'object' ? (game.awayClubId as any)._id : game.awayClubId;
@@ -373,6 +423,15 @@ export class StandingsComponent implements OnInit, OnDestroy {
     standingsMap.forEach(team => {
       team.goalDifferential = team.goalsFor - team.goalsAgainst;
       team.winPercentage = team.gamesPlayed > 0 ? team.wins / team.gamesPlayed : 0;
+    });
+    
+    // Debug summary
+    console.log(`Standings calculation summary:`, {
+      totalGames: games.length,
+      gamesWithScores,
+      manualEntryGames,
+      eashlGames,
+      teamsInStandings: standingsMap.size
     });
 
     // Convert to array and sort
