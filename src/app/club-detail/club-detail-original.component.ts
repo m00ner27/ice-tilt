@@ -691,16 +691,28 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
       const isManualEntry = match.eashlData.manualEntry;
       
       if (isManualEntry) {
+        // Manual stats: players are stored in arrays by team
+        const allPlayers = [
+          ...(match.eashlData.players.homeSkaters || []),
+          ...(match.eashlData.players.awaySkaters || []),
+          ...(match.eashlData.players.homeGoalies || []),
+          ...(match.eashlData.players.awayGoalies || [])
+        ];
 
-        
-        // Manual stats: players are stored with a 'team' field
-        Object.entries(match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+        allPlayers.forEach((playerData: any) => {
           // Determine if this player belongs to the current club
           let isCurrentClubPlayer = false;
           
-          if (playerData.team === 'home' && match.homeTeam === pageClubName) {
+          // Check if this player is from the home team and we're viewing the home club
+          if ((match.eashlData.players.homeSkaters?.includes(playerData) || 
+               match.eashlData.players.homeGoalies?.includes(playerData)) && 
+              match.homeTeam === pageClubName) {
             isCurrentClubPlayer = true;
-          } else if (playerData.team === 'away' && match.awayTeam === pageClubName) {
+          }
+          // Check if this player is from the away team and we're viewing the away club
+          else if ((match.eashlData.players.awaySkaters?.includes(playerData) || 
+                    match.eashlData.players.awayGoalies?.includes(playerData)) && 
+                   match.awayTeam === pageClubName) {
             isCurrentClubPlayer = true;
           }
           
@@ -709,7 +721,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
           }
 
           // For manual stats, try to find existing player by name first
-          const playerName = playerData.playername || playerData.name || 'Unknown';
+          const playerName = playerData.gamertag || 'Unknown';
           let existingKey = null;
           let existingStats = null;
           
@@ -775,70 +787,48 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
 
           
           if (this.isGoalie(playerData.position)) {
-
             // Calculate win/loss based on match result
-            const playerTeamScore = parseInt(playerData.score) || 0;
-            const opponentScore = parseInt(playerData.opponentScore) || 0;
+            const isHomeTeam = match.homeTeam === pageClubName;
+            const homeScore = match.homeScore || match.score?.home || 0;
+            const awayScore = match.awayScore || match.score?.away || 0;
             
-            // If we have valid scores, use them for win/loss calculation
-            if (playerTeamScore > 0 || opponentScore > 0) {
-              if (playerTeamScore > opponentScore) {
+            // Calculate win/loss based on match result
+            if (isHomeTeam) {
+              if (homeScore > awayScore) {
                 stats.wins = (stats.wins || 0) + 1;
-              } else if (playerTeamScore < opponentScore) {
-                // Check if this was an overtime/shootout loss
-
+              } else if (homeScore < awayScore) {
                 if (match.isOvertime) {
                   stats.otl = (stats.otl || 0) + 1;
-
                 } else {
                   stats.losses = (stats.losses || 0) + 1;
-
                 }
               }
             } else {
-              // Fallback: if no valid scores, try to determine from match data
-              const isHomeTeam = match.homeTeam === pageClubName;
-              const homeScore = match.homeScore || 0;
-              const awayScore = match.awayScore || 0;
-              
-              if (isHomeTeam) {
-                if (homeScore > awayScore) {
-                  stats.wins = (stats.wins || 0) + 1;
-                } else if (homeScore < awayScore) {
-                  if (match.isOvertime) {
-                    stats.otl = (stats.otl || 0) + 1;
-                  } else {
-                    stats.losses = (stats.losses || 0) + 1;
-                  }
-                }
-              } else {
-                if (awayScore > homeScore) {
-                  stats.wins = (stats.wins || 0) + 1;
-                } else if (awayScore < homeScore) {
-                  if (match.isOvertime) {
-                    stats.otl = (stats.otl || 0) + 1;
-                  } else {
-                    stats.losses = (stats.losses || 0) + 1;
-                  }
+              if (awayScore > homeScore) {
+                stats.wins = (stats.wins || 0) + 1;
+              } else if (awayScore < homeScore) {
+                if (match.isOvertime) {
+                  stats.otl = (stats.otl || 0) + 1;
+                } else {
+                  stats.losses = (stats.losses || 0) + 1;
                 }
               }
             }
             
-            stats.saves = (stats.saves || 0) + (parseInt(playerData.glsaves) || 0);
-            stats.shotsAgainst = (stats.shotsAgainst || 0) + (parseInt(playerData.glshots) || 0);
-            stats.goalsAgainst = (stats.goalsAgainst || 0) + (parseInt(playerData.glga) || 0);
-            stats.shutouts = (stats.shutouts || 0) + (parseInt(playerData.glso) || 0);
+            stats.saves = (stats.saves || 0) + (playerData.saves || 0);
+            stats.shotsAgainst = (stats.shotsAgainst || 0) + (playerData.shotsAgainst || 0);
+            stats.goalsAgainst = (stats.goalsAgainst || 0) + (playerData.goalsAgainst || 0);
+            stats.shutouts = (stats.shutouts || 0) + (playerData.shutouts || 0);
           } else {
-            // Calculate win/loss based on match result
-            const playerTeamScore = parseInt(playerData.score) || 0;
-            const opponentScore = parseInt(playerData.opponentScore) || 0;
+            // Calculate win/loss based on match result for skaters
+            const isHomeTeam = match.homeTeam === pageClubName;
+            const homeScore = match.homeScore || match.score?.home || 0;
+            const awayScore = match.awayScore || match.score?.away || 0;
             
-            // If we have valid scores, use them for win/loss calculation
-            if (playerTeamScore > 0 || opponentScore > 0) {
-              if (playerTeamScore > opponentScore) {
+            if (isHomeTeam) {
+              if (homeScore > awayScore) {
                 stats.wins = (stats.wins || 0) + 1;
-              } else if (playerTeamScore < opponentScore) {
-                // Check if this was an overtime/shootout loss
+              } else if (homeScore < awayScore) {
                 if (match.isOvertime) {
                   stats.otl = (stats.otl || 0) + 1;
                 } else {
@@ -846,51 +836,35 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
                 }
               }
             } else {
-              // Fallback: if no valid scores, try to determine from match data
-              const isHomeTeam = match.homeTeam === pageClubName;
-              const homeScore = match.homeScore || 0;
-              const awayScore = match.awayScore || 0;
-              
-              if (isHomeTeam) {
-                if (homeScore > awayScore) {
-                  stats.wins = (stats.wins || 0) + 1;
-                } else if (homeScore < awayScore) {
-                  if (match.isOvertime) {
-                    stats.otl = (stats.otl || 0) + 1;
-                  } else {
-                    stats.losses = (stats.losses || 0) + 1;
-                  }
-                }
-              } else {
-                if (awayScore > homeScore) {
-                  stats.wins = (stats.wins || 0) + 1;
-                } else if (awayScore < homeScore) {
-                  if (match.isOvertime) {
-                    stats.otl = (stats.otl || 0) + 1;
-                  } else {
-                    stats.losses = (stats.losses || 0) + 1;
-                  }
+              if (awayScore > homeScore) {
+                stats.wins = (stats.wins || 0) + 1;
+              } else if (awayScore < homeScore) {
+                if (match.isOvertime) {
+                  stats.otl = (stats.otl || 0) + 1;
+                } else {
+                  stats.losses = (stats.losses || 0) + 1;
                 }
               }
             }
-            stats.goals += parseInt(playerData.skgoals) || 0;
-            stats.assists += parseInt(playerData.skassists) || 0;
+            
+            stats.goals += (playerData.goals || 0);
+            stats.assists += (playerData.assists || 0);
             stats.points = stats.goals + stats.assists;
-            stats.plusMinus += parseInt(playerData.skplusmin) || 0;
-            stats.shots = (stats.shots || 0) + (parseInt(playerData.skshots) || 0);
-            stats.hits = (stats.hits || 0) + (parseInt(playerData.skhits) || 0);
-            stats.blockedShots = (stats.blockedShots || 0) + (parseInt(playerData.skblocks) || 0);
-            stats.pim = (stats.pim || 0) + (parseInt(playerData.skpim) || 0);
-            stats.ppg = (stats.ppg || 0) + (parseInt(playerData.skppg) || 0);
-            stats.shg = (stats.shg || 0) + (parseInt(playerData.skshg) || 0);
-            stats.gwg = (stats.gwg || 0) + (parseInt(playerData.skgwg) || 0);
-            stats.takeaways = (stats.takeaways || 0) + (parseInt(playerData.sktakeaways) || 0);
-            stats.giveaways = (stats.giveaways || 0) + (parseInt(playerData.skgiveaways) || 0);
-            stats.passes = (stats.passes || 0) + (parseInt(playerData.skpasses) || 0);
-            stats.passAttempts = (stats.passAttempts || 0) + (parseInt(playerData.skpassattempts) || 0);
-            stats.faceoffsWon = (stats.faceoffsWon || 0) + (parseInt(playerData.skfaceoffswon) || 0);
-            stats.playerScore = (stats.playerScore || 0) + (parseInt(playerData.skplayerscore) || 0);
-            stats.penaltyKillCorsiZone = (stats.penaltyKillCorsiZone || 0) + (parseInt(playerData.skpkcorsi) || 0);
+            stats.plusMinus += (playerData.plusMinus || 0);
+            stats.shots = (stats.shots || 0) + (playerData.shots || 0);
+            stats.hits = (stats.hits || 0) + (playerData.hits || 0);
+            stats.blockedShots = (stats.blockedShots || 0) + (playerData.blockedShots || 0);
+            stats.pim = (stats.pim || 0) + (playerData.penaltyMinutes || 0);
+            stats.ppg = (stats.ppg || 0) + (playerData.powerPlayGoals || 0);
+            stats.shg = (stats.shg || 0) + (playerData.shortHandedGoals || 0);
+            stats.gwg = (stats.gwg || 0) + (playerData.gameWinningGoals || 0);
+            stats.takeaways = (stats.takeaways || 0) + (playerData.takeaways || 0);
+            stats.giveaways = (stats.giveaways || 0) + (playerData.giveaways || 0);
+            stats.passes = (stats.passes || 0) + (playerData.passesCompleted || 0);
+            stats.passAttempts = (stats.passAttempts || 0) + (playerData.passAttempts || 0);
+            stats.faceoffsWon = (stats.faceoffsWon || 0) + (playerData.faceoffsWon || 0);
+            stats.playerScore = (stats.playerScore || 0) + (this.calculatePlayerScore(playerData));
+            stats.penaltyKillCorsiZone = (stats.penaltyKillCorsiZone || 0) + (playerData.penaltyKillCorsiZone || 0);
           }
         });
       } else {
@@ -1126,6 +1100,21 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
   private isGoalie(position: string): boolean {
     const lowerPos = position.toLowerCase().replace(/\s/g, '');
     return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
+  }
+
+  private calculatePlayerScore(player: any): number {
+    const goals = player.goals || 0;
+    const assists = player.assists || 0;
+    const points = goals + assists;
+    const shots = player.shots || 0;
+    const hits = player.hits || 0;
+    const blockedShots = player.blockedShots || 0;
+    const takeaways = player.takeaways || 0;
+    const giveaways = player.giveaways || 0;
+    const plusMinus = player.plusMinus || 0;
+    
+    // Simple scoring system: points + defensive stats - giveaways + plus/minus
+    return points + (hits * 0.1) + (blockedShots * 0.2) + (takeaways * 0.1) - (giveaways * 0.1) + (plusMinus * 0.5);
   }
 
   private normalizePosition(position: string): string {

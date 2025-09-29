@@ -301,23 +301,24 @@ export class PlayerStatsComponent implements OnInit {
 
         
         if (isManualEntry) {
-          // Process manual stats: players are stored with a 'team' field
-          if (match.eashlData?.players) {
-            Object.entries(match.eashlData.players).forEach(([playerId, playerData]: [string, any]) => {
+          // Process manual stats: players are processed by match service and stored in match.playerStats
+          if (match.playerStats && match.playerStats.length > 0) {
+            console.log('📝 Processing manual stats from match.playerStats:', match.playerStats.length, 'players');
+            match.playerStats.forEach((playerData: any) => {
               if (!playerData.position || this.isGoalie(playerData.position)) {
                 return; // Skip goalies or players without position
               }
 
-              // Determine team name from manual stats
-              let teamName = 'Unknown';
-              if (playerData.team === 'home') {
-                teamName = match.homeTeam;
-              } else if (playerData.team === 'away') {
-                teamName = match.awayTeam;
-              }
-
-              // For "All Seasons", include all teams
-              const playerName = playerData.playername || playerData.name || 'Unknown';
+              // Team name is already determined by match service
+              const teamName = playerData.team || 'Unknown';
+              const playerName = playerData.name || 'Unknown';
+              
+              console.log(`👤 Processing manual player: ${playerName}`, {
+                goals: playerData.goals,
+                assists: playerData.assists,
+                position: playerData.position,
+                team: teamName
+              });
               
               // Try to find existing player by name first, then by ID
               let existingKey = null;
@@ -369,29 +370,29 @@ export class PlayerStatsComponent implements OnInit {
               }
 
               existingStats.gamesPlayed++;
-              existingStats.goals += parseInt(playerData.skgoals) || 0;
-              existingStats.assists += parseInt(playerData.skassists) || 0;
+              existingStats.goals += parseInt(playerData.goals) || 0;
+              existingStats.assists += parseInt(playerData.assists) || 0;
               existingStats.points = existingStats.goals + existingStats.assists;
-              existingStats.plusMinus += parseInt(playerData.skplusmin) || 0;
+              existingStats.plusMinus += parseInt(playerData.plusMinus) || 0;
               
 
               
-              existingStats.shots += parseInt(playerData.skshots) || 0;
-              existingStats.hits += parseInt(playerData.skhits) || 0;
-              existingStats.blockedShots += parseInt(playerData.skblk) || 0;
-              existingStats.penaltyMinutes += parseInt(playerData.skpim) || 0;
-              existingStats.powerPlayGoals += parseInt(playerData.skppg) || 0;
-              existingStats.shortHandedGoals += parseInt(playerData.skshg) || 0;
-              existingStats.gameWinningGoals += parseInt(playerData.skgwg) || 0;
-              existingStats.takeaways += parseInt(playerData.sktakeaways) || 0;
-              existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
-              existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
-              existingStats.passes += parseInt(playerData.skpasses) || 0;
+              existingStats.shots += parseInt(playerData.shots) || 0;
+              existingStats.hits += parseInt(playerData.hits) || 0;
+              existingStats.blockedShots += parseInt(playerData.blockedShots) || 0;
+              existingStats.penaltyMinutes += parseInt(playerData.penaltyMinutes) || 0;
+              existingStats.powerPlayGoals += parseInt(playerData.powerPlayGoals) || 0;
+              existingStats.shortHandedGoals += parseInt(playerData.shortHandedGoals) || 0;
+              existingStats.gameWinningGoals += parseInt(playerData.gameWinningGoals) || 0;
+              existingStats.takeaways += parseInt(playerData.takeaways) || 0;
+              existingStats.giveaways += parseInt(playerData.giveaways) || 0;
+              existingStats.passAttempts += parseInt(playerData.passAttempts) || 0;
+              existingStats.passes += parseInt(playerData.passes) || 0;
               existingStats.playerScore += parseInt(playerData.score) || 0;
-              existingStats.possession += parseInt(playerData.skpossession) || 0;
-              existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
-              existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
-              existingStats.penaltyKillCorsiZone += parseInt(playerData.skpkc) || 0;
+              existingStats.possession += parseInt(playerData.possession) || 0;
+              existingStats.faceoffsWon += parseInt(playerData.faceoffsWon) || 0;
+              existingStats.faceoffsLost += parseInt(playerData.faceoffsLost) || 0;
+              existingStats.penaltyKillCorsiZone += parseInt(playerData.penaltyKillCorsiZone) || 0;
             });
           }
         } else {

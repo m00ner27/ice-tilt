@@ -247,9 +247,62 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   }
 
   processManualStats(): void {
-    // Process manual stats if available
-    if (this.match.eashlData && this.match.eashlData.manualEntry) {
-      // Implementation for manual stats processing
+    // Process manual stats if available - they are processed by match service and stored in match.playerStats
+    if (this.match.eashlData && this.match.eashlData.manualEntry && this.match.playerStats) {
+      console.log('Processing manual stats from match.playerStats:', this.match.playerStats);
+      
+      // Process all players from match.playerStats
+      this.match.playerStats.forEach((player: any) => {
+        // Skip goalies
+        if (this.isGoalie(player.position)) {
+          return;
+        }
+        
+        // Determine team based on player.team
+        const isHomeTeam = player.team === this.match.homeTeam;
+        const isAwayTeam = player.team === this.match.awayTeam;
+        
+        if (!isHomeTeam && !isAwayTeam) {
+          return; // Skip if team doesn't match
+        }
+        
+        const statDisplay: PlayerStatDisplay = {
+          playerId: player.playerId || 0,
+          name: player.name || 'Unknown Player',
+          number: player.number || 0,
+          position: this.getPositionAbbreviation(player.position || 'Unknown'),
+          gamesPlayed: 1,
+          goals: player.goals || 0,
+          assists: player.assists || 0,
+          points: (player.goals || 0) + (player.assists || 0),
+          plusMinus: player.plusMinus || 0,
+          shots: player.shots || 0,
+          shotPercentage: player.shots > 0 ? ((player.goals || 0) / player.shots * 100) : 0,
+          hits: player.hits || 0,
+          blockedShots: player.blockedShots || 0,
+          pim: player.penaltyMinutes || 0,
+          ppg: player.powerPlayGoals || 0,
+          shg: player.shortHandedGoals || 0,
+          gwg: player.gameWinningGoals || 0,
+          takeaways: player.takeaways || 0,
+          giveaways: player.giveaways || 0,
+          faceoffsWon: player.faceoffsWon || 0,
+          faceoffsLost: player.faceoffsLost || 0,
+          faceoffPercentage: (player.faceoffsWon || 0) + (player.faceoffsLost || 0) > 0 ? 
+            ((player.faceoffsWon || 0) / ((player.faceoffsWon || 0) + (player.faceoffsLost || 0)) * 100) : 0,
+          passAttempts: player.passAttempts || 0,
+          passes: player.passesCompleted || 0,
+          passPercentage: player.passAttempts > 0 ? ((player.passesCompleted || 0) / player.passAttempts * 100) : 0,
+          playerScore: this.calculatePlayerScore(player)
+        };
+        
+        // Assign to correct team
+        if (isHomeTeam) {
+          this.homeTeamPlayers.push(statDisplay);
+        } else if (isAwayTeam) {
+          this.awayTeamPlayers.push(statDisplay);
+        }
+      });
     }
   }
 
@@ -382,5 +435,33 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     if (this.routeParamsSubscription) {
       this.routeParamsSubscription.unsubscribe();
     }
+  }
+
+  isGoalie(position: string): boolean {
+    if (!position) return false;
+    const lowerPos = position.toLowerCase().replace(/\s/g, '');
+    return lowerPos === 'g' || lowerPos === 'goalie' || lowerPos === 'goaltender';
+  }
+
+  formatTimeOnIce(minutes: number, seconds: number): string {
+    const totalSeconds = (minutes * 60) + seconds;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  calculatePlayerScore(player: any): number {
+    const goals = player.goals || 0;
+    const assists = player.assists || 0;
+    const points = goals + assists;
+    const shots = player.shots || 0;
+    const hits = player.hits || 0;
+    const blockedShots = player.blockedShots || 0;
+    const takeaways = player.takeaways || 0;
+    const giveaways = player.giveaways || 0;
+    const plusMinus = player.plusMinus || 0;
+    
+    // Simple scoring system: points + defensive stats - giveaways + plus/minus
+    return points + (hits * 0.1) + (blockedShots * 0.2) + (takeaways * 0.1) - (giveaways * 0.1) + (plusMinus * 0.5);
   }
 }

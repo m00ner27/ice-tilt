@@ -442,7 +442,72 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       const otLoss = ourScore === opponentScore;
 
       // Process player stats from match data
-      Object.values(match.eashlData.players).forEach((clubPlayers: any) => {
+      if (match.eashlData.manualEntry && match.playerStats) {
+        // Process manual stats: players are processed by match service and stored in match.playerStats
+        const ourPlayers = match.playerStats.filter((player: any) => 
+          player.team === this.backendClub?.name
+        );
+        
+        ourPlayers.forEach((playerData: any) => {
+          if (!playerData || !playerData.name) return;
+
+          const playerName = playerData.name;
+          
+          console.log(`Processing manual stats player: ${playerName}, game position: ${playerData.position}`);
+          console.log('Available players:', Array.from(playerStatsMap.keys()));
+
+          // Try to find a matching player by name (exact match first, then partial match)
+          let matchingKey = null;
+          
+          if (playerStatsMap.has(playerName)) {
+            matchingKey = playerName;
+          } else {
+            // Try partial match
+            for (const [key, stats] of playerStatsMap.entries()) {
+              if (stats.name === playerName || 
+                  stats.name.includes(playerName) || 
+                  playerName.includes(stats.name)) {
+                matchingKey = key;
+                break;
+              }
+            }
+          }
+
+          if (matchingKey) {
+            console.log(`Found matching player: ${playerName} -> ${matchingKey}`);
+            const playerStats = playerStatsMap.get(matchingKey);
+            playerStats.gamesPlayed++;
+            if (won) playerStats.wins++;
+            else if (lost) playerStats.losses++;
+            else if (otLoss) playerStats.otLosses++;
+
+            // Process as skater (manual stats don't have goalie stats)
+            playerStats.position = playerData.position || 'C';
+            playerStats.goals += Number(playerData.goals) || 0;
+            playerStats.assists += Number(playerData.assists) || 0;
+            playerStats.points = playerStats.goals + playerStats.assists;
+            playerStats.plusMinus += Number(playerData.plusMinus) || 0;
+            playerStats.shots += Number(playerData.shots) || 0;
+            playerStats.hits += Number(playerData.hits) || 0;
+            playerStats.blockedShots += Number(playerData.blockedShots) || 0;
+            playerStats.pim += Number(playerData.penaltyMinutes) || 0;
+            playerStats.ppg += Number(playerData.powerPlayGoals) || 0;
+            playerStats.shg += Number(playerData.shortHandedGoals) || 0;
+            playerStats.gwg += Number(playerData.gameWinningGoals) || 0;
+            playerStats.takeaways += Number(playerData.takeaways) || 0;
+            playerStats.giveaways += Number(playerData.giveaways) || 0;
+            playerStats.passes += Number(playerData.passesCompleted) || 0;
+            playerStats.passAttempts += Number(playerData.passAttempts) || 0;
+            playerStats.faceoffsWon += Number(playerData.faceoffsWon) || 0;
+            playerStats.playerScore += Number(playerData.score) || 0;
+            playerStats.penaltyKillCorsiZone += Number(playerData.penaltyKillCorsiZone) || 0;
+          } else {
+            console.log(`No matching player found for: ${playerName}`);
+          }
+        });
+      } else {
+        // Process EASHL data
+        Object.values(match.eashlData.players).forEach((clubPlayers: any) => {
         if (typeof clubPlayers === 'object' && clubPlayers !== null) {
           Object.values(clubPlayers).forEach((playerData: any) => {
             if (!playerData || !playerData.playername) return;
@@ -560,6 +625,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           });
         }
       });
+      }
     });
 
     // Calculate derived stats and categorize players
@@ -658,7 +724,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     return filteredSeasons;
   }
 
-  private mapBackendClubToFrontend(backendClub: any): any {
+  mapBackendClubToFrontend(backendClub: any): any {
     if (!backendClub) return null;
     
     // Calculate stats from matches
@@ -673,7 +739,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     };
   }
 
-  private calculateClubStats(clubId: string): any {
+  calculateClubStats(clubId: string): any {
     // Filter matches for this club
     const clubMatches = this.matches.filter(match => 
       match.homeTeam === this.backendClub?.name || match.awayTeam === this.backendClub?.name
