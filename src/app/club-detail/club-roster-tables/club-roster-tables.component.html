@@ -70,8 +70,11 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let skater of skaterStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
-        <td class="px-2 py-3 text-left text-white font-medium">{{ skater.name }}</td>
+      <tr *ngFor="let skater of skaterStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors" [class.bg-red-900]="!skater.isSigned" [class.bg-red-800]="!skater.isSigned">
+        <td class="px-2 py-3 text-left font-medium" [class.text-white]="skater.isSigned" [class.text-red-200]="!skater.isSigned">
+          {{ skater.name }}
+          <span *ngIf="!skater.isSigned" class="text-red-400 text-xs ml-2">(Unsigned)</span>
+        </td>
         <td class="px-2 py-3 text-center text-white">{{ skater.gamesPlayed }}</td>
         <td class="px-2 py-3 text-center text-white">{{ skater.wins || 0 }}</td>
         <td class="px-2 py-3 text-center text-white">{{ skater.losses || 0 }}</td>
@@ -123,8 +126,11 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let goalie of goalieStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
-        <td class="px-4 py-3 text-left text-white font-medium">{{ goalie.name }}</td>
+      <tr *ngFor="let goalie of goalieStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors" [class.bg-red-900]="!goalie.isSigned" [class.bg-red-800]="!goalie.isSigned">
+        <td class="px-4 py-3 text-left font-medium" [class.text-white]="goalie.isSigned" [class.text-red-200]="!goalie.isSigned">
+          {{ goalie.name }}
+          <span *ngIf="!goalie.isSigned" class="text-red-400 text-xs ml-2">(Unsigned)</span>
+        </td>
         <td class="px-4 py-3 text-center text-white">{{ goalie.gamesPlayed }}</td>
         <td class="px-4 py-3 text-center text-white">{{ goalie.wins || 0 }}</td>
         <td class="px-4 py-3 text-center text-white">{{ goalie.losses || 0 }}</td>

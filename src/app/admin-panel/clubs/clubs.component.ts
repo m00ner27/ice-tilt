@@ -85,6 +85,17 @@ export class ClubsComponent implements OnInit, OnDestroy {
   // Roster data for filtering
   private allRostersLoaded = false;
   private rosterLoadingPromises: Promise<any>[] = [];
+  
+  // Free agents search and filtering
+  freeAgentSearchTerm: string = '';
+  freeAgentPlatformFilter: string = 'all';
+  freeAgentSortBy: string = 'gamertag';
+  freeAgentSortOrder: 'asc' | 'desc' = 'asc';
+  currentFreeAgentPage: number = 1;
+  freeAgentsPerPage: number = 20;
+  
+  // Expose Math for template use
+  Math = Math;
 
   constructor(
     private fb: FormBuilder,
@@ -141,11 +152,67 @@ export class ClubsComponent implements OnInit, OnDestroy {
       .map(p => p._id);
     
     // Filter out players who are already on ANY club's roster
-    const filtered = freeAgentsToUse.filter(player => 
+    let filtered = freeAgentsToUse.filter(player => 
       !allRosterPlayerIds.includes(player._id)
     );
     
+    // Apply search filter
+    if (this.freeAgentSearchTerm.trim()) {
+      const searchTerm = this.freeAgentSearchTerm.toLowerCase().trim();
+      filtered = filtered.filter(player => 
+        player.gamertag?.toLowerCase().includes(searchTerm) ||
+        player.discordUsername?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    // Apply platform filter
+    if (this.freeAgentPlatformFilter !== 'all') {
+      filtered = filtered.filter(player => player.platform === this.freeAgentPlatformFilter);
+    }
+    
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (this.freeAgentSortBy) {
+        case 'gamertag':
+          aValue = a.gamertag || '';
+          bValue = b.gamertag || '';
+          break;
+        case 'platform':
+          aValue = a.platform || '';
+          bValue = b.platform || '';
+          break;
+        default:
+          aValue = a.gamertag || '';
+          bValue = b.gamertag || '';
+      }
+      
+      if (aValue < bValue) return this.freeAgentSortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return this.freeAgentSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
     return filtered;
+  }
+  
+  get paginatedFreeAgents(): Player[] {
+    const startIndex = (this.currentFreeAgentPage - 1) * this.freeAgentsPerPage;
+    const endIndex = startIndex + this.freeAgentsPerPage;
+    return this.availableFreeAgents.slice(startIndex, endIndex);
+  }
+  
+  get totalFreeAgentPages(): number {
+    return Math.ceil(this.availableFreeAgents.length / this.freeAgentsPerPage);
+  }
+  
+  get freeAgentPageNumbers(): number[] {
+    const pages: number[] = [];
+    for (let i = 1; i <= this.totalFreeAgentPages; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   // Method to get the full image URL
@@ -895,5 +962,44 @@ export class ClubsComponent implements OnInit, OnDestroy {
       }
     });
     return errors;
+  }
+  
+  // Free agents management methods
+  onFreeAgentSearchChange(): void {
+    this.currentFreeAgentPage = 1; // Reset to first page when searching
+  }
+  
+  onFreeAgentFilterChange(): void {
+    this.currentFreeAgentPage = 1; // Reset to first page when filtering
+  }
+  
+  onFreeAgentSortChange(): void {
+    this.currentFreeAgentPage = 1; // Reset to first page when sorting
+  }
+  
+  goToFreeAgentPage(page: number): void {
+    if (page >= 1 && page <= this.totalFreeAgentPages) {
+      this.currentFreeAgentPage = page;
+    }
+  }
+  
+  previousFreeAgentPage(): void {
+    if (this.currentFreeAgentPage > 1) {
+      this.currentFreeAgentPage--;
+    }
+  }
+  
+  nextFreeAgentPage(): void {
+    if (this.currentFreeAgentPage < this.totalFreeAgentPages) {
+      this.currentFreeAgentPage++;
+    }
+  }
+  
+  clearFreeAgentFilters(): void {
+    this.freeAgentSearchTerm = '';
+    this.freeAgentPlatformFilter = 'all';
+    this.freeAgentSortBy = 'gamertag';
+    this.freeAgentSortOrder = 'asc';
+    this.currentFreeAgentPage = 1;
   }
 } 

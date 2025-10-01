@@ -87,24 +87,142 @@
       </div>
 
       <div class="mt-6">
-        <h4 class="text-admin-primary mb-3">Free Agents</h4>
-        <div class="flex flex-col gap-2">
-          <div class="bg-admin-hover rounded-md p-3 flex items-center justify-between gap-3" *ngFor="let player of availableFreeAgents">
-            <div class="flex flex-col">
-              <span class="text-white font-medium">{{ player.gamertag }}</span>
-              <span class="text-gray-400 text-sm" *ngIf="player.discordUsername">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="text-admin-primary">Free Agents ({{ availableFreeAgents.length }})</h4>
+          <button 
+            (click)="clearFreeAgentFilters()" 
+            class="text-sm text-gray-400 hover:text-white transition-colors"
+            *ngIf="freeAgentSearchTerm || freeAgentPlatformFilter !== 'all'"
+          >
+            Clear Filters
+          </button>
+        </div>
+        
+        <!-- Search and Filter Controls -->
+        <div class="mb-4 space-y-3">
+          <!-- Search Bar -->
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="freeAgentSearchTerm"
+              (input)="onFreeAgentSearchChange()"
+              placeholder="Search by gamertag or Discord username..."
+              class="w-full px-4 py-2 bg-admin-hover border border-admin-accent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            >
+            <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+          </div>
+          
+          <!-- Filter Controls -->
+          <div class="flex flex-wrap gap-3">
+            <!-- Platform Filter -->
+            <select
+              [(ngModel)]="freeAgentPlatformFilter"
+              (change)="onFreeAgentFilterChange()"
+              class="px-3 py-2 bg-admin-hover border border-admin-accent rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="all">All Platforms</option>
+              <option value="PS5">PlayStation</option>
+              <option value="Xbox">Xbox</option>
+            </select>
+            
+            
+            <!-- Sort Controls -->
+            <div class="flex gap-2">
+              <select
+                [(ngModel)]="freeAgentSortBy"
+                (change)="onFreeAgentSortChange()"
+                class="px-3 py-2 bg-admin-hover border border-admin-accent rounded-lg text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="gamertag">Sort by Name</option>
+                <option value="platform">Sort by Platform</option>
+              </select>
+              
+              <button
+                (click)="freeAgentSortOrder = freeAgentSortOrder === 'asc' ? 'desc' : 'asc'; onFreeAgentSortChange()"
+                class="px-3 py-2 bg-admin-accent hover:bg-blue-600 text-white rounded-lg transition-colors"
+                [title]="freeAgentSortOrder === 'asc' ? 'Sort Ascending' : 'Sort Descending'"
+              >
+                <i class="fas" [class.fa-sort-alpha-down]="freeAgentSortOrder === 'asc'" [class.fa-sort-alpha-up]="freeAgentSortOrder === 'desc'"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Free Agents List -->
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          <div 
+            class="bg-admin-hover rounded-md p-3 flex items-center justify-between gap-3 hover:bg-gray-700 transition-colors" 
+            *ngFor="let player of paginatedFreeAgents"
+          >
+            <div class="flex flex-col flex-1 min-w-0">
+              <span class="text-white font-medium truncate">{{ player.gamertag }}</span>
+              <span class="text-gray-400 text-sm truncate" *ngIf="player.discordUsername">
                 {{ player.discordUsername }}
               </span>
             </div>
-            <div class="flex items-center gap-2 text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">
-              <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
-              <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
-              <span>{{ player.platform === 'PS5' ? 'PlayStation' : 'Xbox' }}</span>
+            
+            <div class="flex items-center gap-3">
+              <!-- Platform Badge -->
+              <div class="flex items-center gap-1 text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">
+                <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
+                <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+                <span class="text-xs">{{ player.platform === 'PS5' ? 'PS5' : 'Xbox' }}</span>
+              </div>
+              
+              <!-- Add Button -->
+              <button 
+                class="p-2 text-admin-primary hover:bg-green-600 hover:text-white rounded transition-colors"
+                (click)="addPlayer(selectedClub, player)"
+                title="Add to roster"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
             </div>
-            <button class="p-1 text-admin-primary hover:bg-admin-hover hover:text-white rounded transition-colors" (click)="addPlayer(selectedClub, player)">
-              <i class="fas fa-plus"></i>
+          </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="mt-4 flex items-center justify-between" *ngIf="totalFreeAgentPages > 1">
+          <div class="text-sm text-gray-400">
+            Showing {{ (currentFreeAgentPage - 1) * freeAgentsPerPage + 1 }} to 
+            {{ Math.min(currentFreeAgentPage * freeAgentsPerPage, availableFreeAgents.length) }} 
+            of {{ availableFreeAgents.length }} free agents
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button
+              (click)="previousFreeAgentPage()"
+              [disabled]="currentFreeAgentPage === 1"
+              class="px-3 py-1 bg-admin-accent hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="flex gap-1">
+              <button
+                *ngFor="let page of freeAgentPageNumbers.slice(Math.max(0, currentFreeAgentPage - 3), Math.min(totalFreeAgentPages, currentFreeAgentPage + 2))"
+                (click)="goToFreeAgentPage(page)"
+                [class]="page === currentFreeAgentPage ? 'bg-blue-600 text-white' : 'bg-admin-accent hover:bg-blue-600 text-white'"
+                class="px-3 py-1 rounded transition-colors"
+              >
+                {{ page }}
+              </button>
+            </div>
+            
+            <button
+              (click)="nextFreeAgentPage()"
+              [disabled]="currentFreeAgentPage === totalFreeAgentPages"
+              class="px-3 py-1 bg-admin-accent hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+            >
+              <i class="fas fa-chevron-right"></i>
             </button>
           </div>
+        </div>
+        
+        <!-- No Results Message -->
+        <div *ngIf="availableFreeAgents.length === 0" class="text-center py-8 text-gray-400">
+          <i class="fas fa-search text-4xl mb-2"></i>
+          <p>No free agents found matching your criteria</p>
         </div>
       </div>
     </div>

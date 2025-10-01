@@ -368,108 +368,14 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     console.log('Roster players:', roster.length);
     
     const playerStatsMap = new Map<string, any>();
-
-    // Initialize stats for each player in the roster - create separate entries for skater and goalie
-    roster.forEach(player => {
-      if (!player || !player.gamertag) return;
-
-      const baseSkaterStats = {
-        playerId: player._id || player.id,
-        name: player.gamertag,
-        number: player.number || 0,
-        position: 'Unknown', // Will be determined by game performance
-        role: 'skater', // Track the role
-        gamesPlayed: 0,
-        wins: 0,
-        losses: 0,
-        otLosses: 0,
-        goals: 0,
-        assists: 0,
-        points: 0,
-        plusMinus: 0,
-        shots: 0,
-        shotPercentage: 0,
-        hits: 0,
-        blockedShots: 0,
-        pim: 0,
-        ppg: 0,
-        shg: 0,
-        gwg: 0,
-        takeaways: 0,
-        giveaways: 0,
-        passes: 0,
-        passAttempts: 0,
-        passPercentage: 0,
-        faceoffsWon: 0,
-        faceoffPercentage: 0,
-        playerScore: 0,
-        penaltyKillCorsiZone: 0,
-        // Goalie-specific stats (set to 0 for skater role)
-        saves: 0,
-        shotsAgainst: 0,
-        goalsAgainst: 0,
-        savePercentage: 0,
-        goalsAgainstAverage: 0,
-        shutouts: 0,
-        otl: 0,
-        isSigned: true
-      };
-
-      const baseGoalieStats = {
-        playerId: player._id || player.id,
-        name: player.gamertag,
-        number: player.number || 0,
-        position: 'G',
-        role: 'goalie', // Track the role
-        gamesPlayed: 0,
-        wins: 0,
-        losses: 0,
-        otLosses: 0,
-        goals: 0, // Goalies don't score goals
-        assists: 0,
-        points: 0,
-        plusMinus: 0, // Goalies don't have plus/minus
-        shots: 0, // Goalies don't take shots
-        shotPercentage: 0,
-        hits: 0, // Goalies don't hit
-        blockedShots: 0, // Goalies don't block shots
-        pim: 0,
-        ppg: 0, // Goalies don't have power play goals
-        shg: 0, // Goalies don't have short handed goals
-        gwg: 0, // Goalies don't have game winning goals
-        takeaways: 0, // Goalies don't have takeaways
-        giveaways: 0, // Goalies don't have giveaways
-        passes: 0, // Goalies don't have passes
-        passAttempts: 0, // Goalies don't have pass attempts
-        passPercentage: 0,
-        faceoffsWon: 0, // Goalies don't take faceoffs
-        faceoffPercentage: 0,
-        playerScore: 0,
-        penaltyKillCorsiZone: 0, // Goalies don't have PKC
-        // Goalie-specific stats
-        saves: 0,
-        shotsAgainst: 0,
-        goalsAgainst: 0,
-        savePercentage: 0,
-        goalsAgainstAverage: 0,
-        shutouts: 0,
-        otl: 0,
-        isSigned: true
-      };
-
-      // Create separate entries for skater and goalie roles
-      playerStatsMap.set(`${player.gamertag}_skater`, baseSkaterStats);
-      playerStatsMap.set(`${player.gamertag}_goalie`, baseGoalieStats);
-    });
-
-    // Now collect all players who played for this team from match data (including unsigned ones)
     const allPlayersWhoPlayed = new Set<string>();
-    
-    this.clubMatches.forEach(match => {
-      if (!match.eashlData) return; // Skip if no eashlData
 
+    // First, collect all players who played for this team from match data
+    this.clubMatches.forEach(match => {
+      if (!match.eashlData) return;
+      
       if (match.eashlData.manualEntry && match.playerStats) {
-        console.log(`Collecting manual entry players for match ${match._id || match.id}`);
+        // Process manual stats
         const ourPlayers = match.playerStats.filter((player: any) => 
           player.team === this.backendClub?.name
         );
@@ -480,9 +386,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         });
       } else if (match.eashlData.players) {
         // Process EASHL data - players is an object, not an array
+        const isHomeTeam = match.homeTeam === this.backendClub?.name;
         console.log(`Collecting EASHL players for match ${match._id || match.id}`);
         console.log('EASHL players structure:', match.eashlData.players);
         console.log('Our team name:', this.backendClub?.name);
+        console.log('Is home team:', isHomeTeam);
         
         // Try to identify which team key represents our team
         const teamKeys = Object.keys(match.eashlData.players);
@@ -535,15 +443,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Create a map of signed players for quick lookup
     const signedPlayerNames = new Set(roster.map(player => player.gamertag).filter(Boolean));
 
-    // Initialize stats for any new players who played for this team but aren't on the roster
+    // Initialize stats for each player who played for this team - create separate entries for skater and goalie
     allPlayersWhoPlayed.forEach(playerName => {
-      // Skip if we already have this player (they're on the roster)
-      if (signedPlayerNames.has(playerName)) return;
-      
-      const isSigned = false; // These are unsigned players
-      
+      const isSigned = signedPlayerNames.has(playerName);
+
       const baseSkaterStats = {
-        playerId: 0, // No roster player
+        playerId: 0, // Will be updated if we find a roster player
         name: playerName,
         number: 0,
         position: 'Unknown', // Will be determined by game performance
@@ -585,7 +490,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       };
 
       const baseGoalieStats = {
-        playerId: 0, // No roster player
+        playerId: 0, // Will be updated if we find a roster player
         name: playerName,
         number: 0,
         position: 'G',
@@ -610,6 +515,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         giveaways: 0, // Goalies don't have giveaways
         passes: 0, // Goalies don't have passes
         passAttempts: 0, // Goalies don't have pass attempts
+        passPercentage: 0,
         faceoffsWon: 0, // Goalies don't take faceoffs
         faceoffPercentage: 0,
         playerScore: 0,
@@ -643,8 +549,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         awayScore: match.awayScore
       });
       
-      if (!match.eashlData || !match.eashlData.players) {
-        console.log(`Skipping match ${match._id || match.id}: no eashlData or players`);
+      if (!match.eashlData) {
+        console.log(`Skipping match ${match._id || match.id}: no eashlData`);
         return;
       }
 
@@ -657,6 +563,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
       // Process player stats from match data
       if (match.eashlData.manualEntry && match.playerStats) {
+        console.log(`Processing manual entry match ${match._id || match.id}`);
         // Process manual stats: players are processed by match service and stored in match.playerStats
         const ourPlayers = match.playerStats.filter((player: any) => 
           player.team === this.backendClub?.name
@@ -739,14 +646,55 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             console.log(`No matching player found for: ${playerName}`);
           }
         });
-      } else {
+      } else if (match.eashlData.players) {
+        console.log(`Processing EASHL data match ${match._id || match.id}`);
+        console.log('EASHL players data structure:', match.eashlData.players);
+        console.log('Our team name:', this.backendClub?.name);
+        console.log('Is home team:', isHomeTeam);
+        
         // Process EASHL data
-        Object.values(match.eashlData.players).forEach((clubPlayers: any) => {
-        if (typeof clubPlayers === 'object' && clubPlayers !== null) {
-          Object.values(clubPlayers).forEach((playerData: any) => {
-            if (!playerData || !playerData.playername) return;
+        // EASHL data structure: {1535: {player1, player2...}, 19876: {player1, player2...}}
+        // The keys (1535, 19876) represent the two teams, we need to figure out which is ours
+        const teamKeys = Object.keys(match.eashlData.players);
+        console.log('EASHL team keys:', teamKeys);
+        
+        // Try to identify which team key represents our team
+        let ourTeamKey = null;
+        for (const teamKey of teamKeys) {
+          const teamPlayers = match.eashlData.players[teamKey];
+          if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+            // Check if any player in this team is in our current roster
+            const hasRosterPlayer = Object.values(teamPlayers).some((playerData: any) => 
+              playerData && playerData.playername && 
+              roster.some(rosterPlayer => 
+                rosterPlayer.gamertag === playerData.playername
+              )
+            );
+            
+            if (hasRosterPlayer) {
+              ourTeamKey = teamKey;
+              console.log(`Found our team key: ${teamKey} (has roster player)`);
+              break;
+            }
+          }
+        }
+        
+        // If we found our team key, process all players from that team
+        if (ourTeamKey) {
+          const ourTeamPlayers = match.eashlData.players[ourTeamKey];
+          if (typeof ourTeamPlayers === 'object' && ourTeamPlayers !== null) {
+            Object.values(ourTeamPlayers).forEach((playerData: any) => {
+              if (!playerData || !playerData.playername) return;
 
-            const playerName = playerData.playername;
+              console.log('Processing EASHL player from our team:', {
+                name: playerData.playername,
+                team: playerData.team,
+                clubname: playerData.clubname,
+                ishome: playerData.ishome,
+                position: playerData.position
+              });
+
+              const playerName = playerData.playername;
             
             console.log(`Processing player: ${playerName}, game position: ${playerData.position}`);
             console.log('Available players:', Array.from(playerStatsMap.keys()));
@@ -842,226 +790,225 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           });
         }
       });
-      }
-    });
-
-    // Calculate derived stats and categorize players
-    const allPlayers = Array.from(playerStatsMap.values());
-    
-    allPlayers.forEach(stats => {
-      // Calculate skater stats
-      stats.shotPercentage = stats.shots > 0 ? (stats.goals / stats.shots) * 100 : 0;
-      stats.passPercentage = stats.passAttempts > 0 ? (stats.passes / stats.passAttempts) * 100 : 0;
-      stats.faceoffPercentage = (stats.faceoffsWon + (stats.faceoffsWon || 0)) > 0 ? 
-        (stats.faceoffsWon / (stats.faceoffsWon + (stats.faceoffsWon || 0))) * 100 : 0;
-    });
-
-    // Categorize players based on their role
-    // Players can appear in both skater and goalie sections if they have stats for both
-    this.skaterStats = allPlayers.filter(player => 
-      player.role === 'skater' && player.gamesPlayed > 0
-    );
-    
-    this.goalieStats = allPlayers.filter(player => 
-      player.role === 'goalie' && player.gamesPlayed > 0
-    );
-    
-    console.log('Player categorization:');
-    console.log('All players with games:', allPlayers.filter(p => p.gamesPlayed > 0).map(p => ({ 
-      name: p.name, 
-      position: p.position, 
-      gp: p.gamesPlayed,
-      saves: p.saves,
-      shotsAgainst: p.shotsAgainst
-    })));
-    console.log('Skaters:', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed })));
-    console.log('Goalies:', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves })));
-    
-    console.log('Final skater stats:', this.skaterStats.length, 'players');
-    console.log('Final goalie stats:', this.goalieStats.length, 'players');
-    console.log('Goalie stats details:', this.goalieStats);
-    
-    // Debug: Check if goalies have any stats
-    if (this.goalieStats.length > 0) {
-      console.log('Goalie stats breakdown:');
-      this.goalieStats.forEach(goalie => {
-        console.log(`- ${goalie.name}: GP=${goalie.gamesPlayed}, Saves=${goalie.saves}, SA=${goalie.shotsAgainst}`);
-      });
-    } else {
-      console.log('No goalie stats found - checking why...');
-      console.log('All players:', allPlayers.map(p => ({ name: p.name, position: p.position, gp: p.gamesPlayed })));
     }
+
+        // Calculate derived stats and categorize players
+        const allPlayers = Array.from(playerStatsMap.values());
+        
+        allPlayers.forEach(stats => {
+          // Calculate skater stats
+          stats.shotPercentage = stats.shots > 0 ? (stats.goals / stats.shots) * 100 : 0;
+          stats.passPercentage = stats.passAttempts > 0 ? (stats.passes / stats.passAttempts) * 100 : 0;
+          stats.faceoffPercentage = (stats.faceoffsWon + (stats.faceoffsWon || 0)) > 0 ? 
+            (stats.faceoffsWon / (stats.faceoffsWon + (stats.faceoffsWon || 0))) * 100 : 0;
+        });
+
+        // Categorize players based on their role
+        // Players can appear in both skater and goalie sections if they have stats for both
+        this.skaterStats = allPlayers.filter(player => 
+          player.role === 'skater' && player.gamesPlayed > 0
+        );
+        
+        this.goalieStats = allPlayers.filter(player => 
+          player.role === 'goalie' && player.gamesPlayed > 0
+        );
+        
+        console.log('Player categorization:');
+        console.log('All players with games:', allPlayers.filter(p => p.gamesPlayed > 0).map(p => ({ 
+          name: p.name, 
+          position: p.position, 
+          gp: p.gamesPlayed,
+          saves: p.saves,
+          shotsAgainst: p.shotsAgainst
+        })));
+        console.log('Skaters:', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed })));
+        console.log('Goalies:', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves })));
+        
+        console.log('Final skater stats:', this.skaterStats.length, 'players');
+        console.log('Final goalie stats:', this.goalieStats.length, 'players');
+        console.log('Goalie stats details:', this.goalieStats);
+        
+        // Debug: Check if goalies have any stats
+        if (this.goalieStats.length > 0) {
+          console.log('Goalie stats breakdown:');
+          this.goalieStats.forEach(goalie => {
+            console.log(`- ${goalie.name}: GP=${goalie.gamesPlayed}, Saves=${goalie.saves}, SA=${goalie.shotsAgainst}`);
+          });
+        } else {
+          console.log('No goalie stats found - checking why...');
+          console.log('All players:', allPlayers.map(p => ({ name: p.name, position: p.position, gp: p.gamesPlayed })));
+        }
   }
 
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
-    }
-    
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
+  if (!logoUrl) {
+    return 'assets/images/square-default.png';
+  }
+  
+  if (logoUrl.startsWith('http')) {
     return logoUrl;
+  }
+  
+  if (logoUrl.startsWith('/uploads/')) {
+    return `${environment.apiUrl}${logoUrl}`;
+  }
+  
+  return logoUrl;
   }
 
   getSelectedSeasonDivision(): any {
-    // Return the division for the selected season
-    // This is a placeholder implementation
-    return null;
+  // Return the division for the selected season
+  // This is a placeholder implementation
+  return null;
   }
 
   getClubSeasons(): any[] {
-    // Return only seasons that this club has participated in
-    if (!this.backendClub || !this.backendClub.seasons || !this.seasons) {
-      console.log('ClubDetail: No club, club seasons, or all seasons available');
-      return [];
-    }
-    
-    const clubSeasonIds = this.backendClub.seasons.map((clubSeason: any) => {
-      // Handle both object and string seasonId formats
-      return typeof clubSeason.seasonId === 'object' && clubSeason.seasonId._id 
-        ? clubSeason.seasonId._id 
-        : clubSeason.seasonId;
-    });
-    
-    console.log('ClubDetail: Club season IDs:', clubSeasonIds);
-    console.log('ClubDetail: All seasons:', this.seasons.map(s => ({ id: s._id, name: s.name })));
-    
-    // Filter seasons to only include those the club participates in
-    const filteredSeasons = this.seasons.filter(season => 
-      clubSeasonIds.includes(season._id)
-    );
-    
-    console.log('ClubDetail: Filtered seasons for club:', filteredSeasons.map(s => ({ id: s._id, name: s.name })));
-    
-    return filteredSeasons;
+  // Return only seasons that this club has participated in
+  if (!this.backendClub || !this.backendClub.seasons || !this.seasons) {
+    console.log('ClubDetail: No club, club seasons, or all seasons available');
+    return [];
+  }
+  
+  const clubSeasonIds = this.backendClub.seasons.map((clubSeason: any) => {
+    // Handle both object and string seasonId formats
+    return typeof clubSeason.seasonId === 'object' && clubSeason.seasonId._id 
+      ? clubSeason.seasonId._id 
+      : clubSeason.seasonId;
+  });
+  
+  console.log('ClubDetail: Club season IDs:', clubSeasonIds);
+  console.log('ClubDetail: All seasons:', this.seasons.map(s => ({ id: s._id, name: s.name })));
+  
+  // Filter seasons to only include those the club participates in
+  const filteredSeasons = this.seasons.filter(season => 
+    clubSeasonIds.includes(season._id)
+  );
+  
+  console.log('ClubDetail: Filtered seasons for club:', filteredSeasons.map(s => ({ id: s._id, name: s.name })));
+  
+  return filteredSeasons;
   }
 
   mapBackendClubToFrontend(backendClub: any): any {
-    if (!backendClub) return null;
-    
-    // Calculate stats from matches
-    const calculatedStats = this.calculateClubStats(backendClub._id);
-    
-    return {
-      ...backendClub,
-      clubName: backendClub.name,
-      colour: backendClub.primaryColour,
-      image: this.getImageUrl(backendClub.logoUrl),
-      stats: calculatedStats
-    };
+  if (!backendClub) return null;
+  
+  // Calculate stats from matches
+  const calculatedStats = this.calculateClubStats(backendClub._id);
+  
+  return {
+    ...backendClub,
+    clubName: backendClub.name,
+    colour: backendClub.primaryColour,
+    image: this.getImageUrl(backendClub.logoUrl),
+    stats: calculatedStats
+  };
   }
 
   calculateClubStats(clubId: string): any {
-    // Filter matches for this club
-    const clubMatches = this.matches.filter(match => 
-      match.homeTeam === this.backendClub?.name || match.awayTeam === this.backendClub?.name
-    );
+  // Filter matches for this club
+  const clubMatches = this.matches.filter(match => 
+    match.homeTeam === this.backendClub?.name || match.awayTeam === this.backendClub?.name
+  );
 
-    if (clubMatches.length === 0) {
-      return {
-        wins: 0,
-        losses: 0,
-        otLosses: 0,
-        points: 0,
-        gamesPlayed: 0,
-        goalsFor: 0,
-        goalsAgainst: 0,
-        winPercentage: 0,
-        goalDifferential: 0,
-        streakCount: 0,
-        streakType: '-' as 'W' | 'L' | 'OTL' | '-',
-        lastTen: []
-      };
-    }
+  if (clubMatches.length === 0) {
+    return {
+      wins: 0,
+      losses: 0,
+      otLosses: 0,
+      points: 0,
+      gamesPlayed: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      winPercentage: 0,
+      goalDifferential: 0,
+      streakCount: 0,
+      streakType: '-' as 'W' | 'L' | 'OTL' | '-',
+      lastTen: []
+    };
+  }
 
-    let wins = 0;
-    let losses = 0;
-    let otLosses = 0;
-    let goalsFor = 0;
-    let goalsAgainst = 0;
-    const lastTenResults: Array<'W' | 'L' | 'OTL'> = [];
+  let wins = 0;
+  let losses = 0;
+  let otLosses = 0;
+  let goalsFor = 0;
+  let goalsAgainst = 0;
+  const lastTenResults: Array<'W' | 'L' | 'OTL'> = [];
 
-    // Process each match
-    clubMatches.forEach(match => {
-      const isHomeTeam = match.homeTeam === this.backendClub?.name;
-      const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
-      const opponentScore = isHomeTeam ? match.awayScore : match.homeScore;
-      
-      goalsFor += ourScore;
-      goalsAgainst += opponentScore;
+  // Process each match
+  clubMatches.forEach(match => {
+    const isHomeTeam = match.homeTeam === this.backendClub?.name;
+    const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
+    const opponentScore = isHomeTeam ? match.awayScore : match.homeScore;
+    
+    goalsFor += ourScore;
+    goalsAgainst += opponentScore;
 
-      // Only count games that have been played (have EASHL data or actual scores > 0)
-      const hasBeenPlayed = match.eashlData && match.eashlData.matchId || 
-                           (ourScore > 0 || opponentScore > 0) ||
-                           (match.isOvertime || match.isShootout);
+    // Only count games that have been played (have EASHL data or actual scores > 0)
+    const hasBeenPlayed = match.eashlData && match.eashlData.matchId || 
+                         (ourScore > 0 || opponentScore > 0) ||
+                         (match.isOvertime || match.isShootout);
 
-      if (hasBeenPlayed) {
-        // Determine result
-        if (ourScore > opponentScore) {
-          wins++;
-          lastTenResults.push('W');
-        } else if (ourScore < opponentScore) {
+    if (hasBeenPlayed) {
+      // Determine result
+      if (ourScore > opponentScore) {
+        wins++;
+        lastTenResults.push('W');
+      } else if (ourScore < opponentScore) {
+        losses++;
+        lastTenResults.push('L');
+      } else {
+        // Only count as OTL if it was actually an overtime/shootout game
+        if (match.isOvertime || match.isShootout) {
+          otLosses++;
+          lastTenResults.push('OTL');
+        } else {
+          // Regular tie - count as loss
           losses++;
           lastTenResults.push('L');
-        } else {
-          // Only count as OTL if it was actually an overtime/shootout game
-          if (match.isOvertime || match.isShootout) {
-            otLosses++;
-            lastTenResults.push('OTL');
-          } else {
-            // Regular tie - count as loss
-            losses++;
-            lastTenResults.push('L');
-          }
-        }
-      }
-    });
-
-    const gamesPlayed = wins + losses + otLosses;
-    const points = wins * 2 + otLosses;
-    const winPercentage = gamesPlayed > 0 ? (wins / gamesPlayed) * 100 : 0;
-    const goalDifferential = goalsFor - goalsAgainst;
-
-    // Calculate streak (last 10 games)
-    const lastTen = lastTenResults.slice(-10);
-
-    // Calculate current streak
-    let streakCount = 0;
-    let streakType: 'W' | 'L' | 'OTL' | '-' = '-';
-    
-    if (lastTen.length > 0) {
-      const currentResult = lastTen[lastTen.length - 1];
-      streakType = currentResult;
-      
-      for (let i = lastTen.length - 1; i >= 0; i--) {
-        if (lastTen[i] === currentResult) {
-          streakCount++;
-        } else {
-          break;
         }
       }
     }
+  });
 
-    return {
-      wins,
-      losses,
-      otLosses,
-      points,
-      gamesPlayed,
-      goalsFor,
-      goalsAgainst,
-      winPercentage,
-      goalDifferential,
-      streakCount,
-      streakType,
-      lastTen
-    };
+  const gamesPlayed = wins + losses + otLosses;
+  const points = wins * 2 + otLosses;
+  const winPercentage = gamesPlayed > 0 ? (wins / gamesPlayed) * 100 : 0;
+  const goalDifferential = goalsFor - goalsAgainst;
+
+  // Calculate streak (last 10 games)
+  const lastTen = lastTenResults.slice(-10);
+
+  // Calculate current streak
+  let streakCount = 0;
+  let streakType: 'W' | 'L' | 'OTL' | '-' = '-';
+  
+  if (lastTen.length > 0) {
+    const currentResult = lastTen[lastTen.length - 1];
+    streakType = currentResult;
+    
+    for (let i = lastTen.length - 1; i >= 0; i--) {
+      if (lastTen[i] === currentResult) {
+        streakCount++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return {
+    wins,
+    losses,
+    otLosses,
+    points,
+    gamesPlayed,
+    goalsFor,
+    goalsAgainst,
+    winPercentage,
+    goalDifferential,
+    streakCount,
+    streakType,
+    lastTen
+  };
   }
 
   // Additional methods for club detail functionality would go here

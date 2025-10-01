@@ -15,6 +15,7 @@ export class ArticleComponent implements OnInit {
   articleImage: string = '';
   articleLead: string = '';
   articleBody: string = '';
+  articleAuthor: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -42,35 +43,28 @@ export class ArticleComponent implements OnInit {
   }
 
   loadNewSeasonArticle(): void {
-    this.articleTitle = 'Exciting Announcement: New Season Begins!';
-    this.articleDate = 'August 20, 2025';
+    this.articleTitle = 'Welcome to the new ITHL!';
+    this.articleDate = 'October 1, 2025';
     this.articleImage = 'assets/images/IMG_3840.jpg';
-    this.articleLead = 'The Ice Tilt Hockey League is thrilled to announce the start of our brand new season, bringing more excitement, competition, and unforgettable moments to the ice.';
+    this.articleLead = 'After years of development, we\'re excited to finally launch our new ITHL website! This is version 1.0 with more features coming soon.';
+    this.articleAuthor = 'm00ner';
     this.articleBody = `
-      <h2>What's New This Season</h2>
-      <p>We're excited to introduce several enhancements that will make this season our best yet:</p>
+      <h2>We've Finally Launched Our New Site!</h2>
+      <p>After years of development and hard work, we're thrilled to announce that our brand new ITHL website is officially live! This has been a long journey, and we're incredibly excited to finally share the site with all of you.</p>
       
-      <h3>Enhanced Statistics Tracking</h3>
-      <p>Our new advanced statistics system will provide deeper insights into player performance, including detailed analytics for skaters and goalies across all divisions.</p>
+      <h2>What to Expect</h2>
+      <p>This is version 1.0 of our site, and while it's currently fairly barebones, it represents a solid foundation for everything we have planned. We're committed to continuously improving and expanding the platform with new features and enhancements in the coming months.</p>
       
-      <h3>Improved Match Scheduling</h3>
-      <p>Teams can now enjoy a more streamlined scheduling process with better conflict resolution and automatic game assignment features.</p>
+      <h2>Reporting Issues</h2>
+      <p>As with any new platform, there may be some bugs or issues you encounter while using the site. If you notice anything that seems off or doesn't work as expected, please don't hesitate to create a ticket in our Discord server. Your feedback is invaluable in helping us identify and fix these issues quickly.</p>
       
-      <h3>New Team Features</h3>
-      <p>Clubs now have access to enhanced roster management tools, making it easier to track player movements and maintain team rosters throughout the season.</p>
+      <h2>Your Input Matters</h2>
+      <p>We want this platform to serve our community in the best way possible. If you have any suggestions for features, improvements, or changes you'd like to see, please share them in the suggestions channel on our Discord. Your ideas help shape the future of our platform.</p>
       
-      <h2>Season Structure</h2>
-      <p>This season will feature:</p>
-      <ul>
-        <li><strong>Regular Season:</strong> 20 games per team</li>
-        <li><strong>Playoffs:</strong> Top 8 teams from each division</li>
-        <li><strong>Championship:</strong> Division winners face off for the ultimate prize</li>
-      </ul>
+      <h2>What's Next</h2>
+      <p>We have big plans for the future of this site, including sign in functionality, player profiles, managerial permissions, and more. </p>
       
-      <h2>Get Ready to Play</h2>
-      <p>Whether you're a returning player or new to the league, this season promises to deliver the most competitive and enjoyable hockey experience yet. Check your team schedules, review the updated rules, and get ready to hit the ice!</p>
-      
-      <p>Good luck to all teams, and may the best players win!</p>
+      <p>Thank you for your patience and support as we've worked to bring this vision to life. We can't wait to see how you all use and enjoy the new platform!</p>
     `;
   }
 
@@ -80,6 +74,7 @@ export class ArticleComponent implements OnInit {
     this.articleImage = 'assets/images/square-default.png';
     this.articleLead = 'The requested article could not be found.';
     this.articleBody = '<p>Please check the URL or return to the home page to browse available articles.</p>';
+    this.articleAuthor = 'ITHL Staff';
   }
 
   goBack(): void {

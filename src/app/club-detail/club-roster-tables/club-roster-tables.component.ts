@@ -34,6 +34,7 @@ interface SkaterStats {
   faceoffPercentage?: number;
   playerScore?: number;
   penaltyKillCorsiZone?: number;
+  isSigned?: boolean;
 }
 
 interface GoalieStats {
@@ -50,6 +51,7 @@ interface GoalieStats {
   savePercentage: number;
   goalsAgainstAverage: number;
   shutouts: number;
+  isSigned?: boolean;
 }
 
 @Component({
