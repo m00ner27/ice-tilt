@@ -65,9 +65,11 @@ export class GoalieStatsComponent implements OnInit {
   allMatches: EashlMatch[] = [];
   allClubs: Club[] = [];
   groupedStats: GroupedGoalieStats[] = [];
+  filteredGroupedStats: GroupedGoalieStats[] = [];
   seasons: Season[] = [];
   divisions: Division[] = [];
   selectedSeasonId: string | null = null;
+  selectedDivisionId: string = 'all-divisions';
   
   isLoading: boolean = true;
   sortColumn: string = 'savePercentage'; // Default sort by save percentage
@@ -118,7 +120,12 @@ export class GoalieStatsComponent implements OnInit {
   }
 
   onSeasonChange(): void {
+    this.selectedDivisionId = 'all-divisions'; // Reset division filter when season changes
     this.loadStatsForSeason();
+  }
+
+  onDivisionChange(): void {
+    this.applyDivisionFilter();
   }
 
   loadStatsForSeason(): void {
@@ -514,6 +521,8 @@ export class GoalieStatsComponent implements OnInit {
         divisionData: undefined, // No specific division for All Seasons
         stats: allGoalieStats.sort((a, b) => b.savePercentage - a.savePercentage || b.goalsAgainstAverage - a.goalsAgainstAverage)
       }];
+      
+      this.applyDivisionFilter();
       console.log('All Seasons combined stats:', this.groupedStats[0].stats.length, 'goalies');
       return;
     }
@@ -825,8 +834,25 @@ export class GoalieStatsComponent implements OnInit {
       this.sortGoalieStats(stats, this.sortColumn, this.sortDirection);
       return { division, divisionData, stats };
     });
+    
+    this.applyDivisionFilter();
     console.log('Grouped by division:', this.groupedStats.length, 'groups');
     console.log('Division breakdown:', this.groupedStats.map(g => ({ division: g.division, goalies: g.stats.length })));
+  }
+
+  applyDivisionFilter(): void {
+    if (this.selectedDivisionId === 'all-divisions') {
+      this.filteredGroupedStats = [...this.groupedStats];
+    } else {
+      const selectedDivision = this.divisions.find(d => d._id === this.selectedDivisionId);
+      if (selectedDivision) {
+        this.filteredGroupedStats = this.groupedStats.filter(group => 
+          group.division === selectedDivision.name
+        );
+      } else {
+        this.filteredGroupedStats = [...this.groupedStats];
+      }
+    }
   }
   
   sortGoalieStats(stats: GoalieStats[], column: string, direction: 'asc' | 'desc'): void {

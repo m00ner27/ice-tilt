@@ -88,8 +88,10 @@ export class PlayerStatsComponent implements OnInit {
   allClubs: Club[] = []; // Store clubs with type
   divisions: Division[] = [];
   groupedStats: GroupedPlayerStats[] = [];
+  filteredGroupedStats: GroupedPlayerStats[] = [];
   seasons: Season[] = [];
   selectedSeasonId: string | null = null;
+  selectedDivisionId: string = 'all-divisions';
   
   isLoading: boolean = true;
   sortColumn: string = 'points'; // Default sort by points
@@ -135,7 +137,12 @@ export class PlayerStatsComponent implements OnInit {
   }
   
   onSeasonChange(): void {
+    this.selectedDivisionId = 'all-divisions'; // Reset division filter when season changes
     this.loadStatsForSeason();
+  }
+
+  onDivisionChange(): void {
+    this.applyDivisionFilter();
   }
 
   loadStatsForSeason(): void {
@@ -511,6 +518,8 @@ export class PlayerStatsComponent implements OnInit {
         divisionData: undefined, // No specific division for All Seasons
         stats: allPlayerStats.sort((a, b) => b.points - a.points || b.goals - a.goals)
       }];
+      
+      this.applyDivisionFilter();
       return;
     }
     
@@ -745,6 +754,23 @@ export class PlayerStatsComponent implements OnInit {
         stats: stats.sort((a, b) => b.points - a.points || b.goals - a.goals) 
       };
     });
+    
+    this.applyDivisionFilter();
+  }
+
+  applyDivisionFilter(): void {
+    if (this.selectedDivisionId === 'all-divisions') {
+      this.filteredGroupedStats = [...this.groupedStats];
+    } else {
+      const selectedDivision = this.divisions.find(d => d._id === this.selectedDivisionId);
+      if (selectedDivision) {
+        this.filteredGroupedStats = this.groupedStats.filter(group => 
+          group.division === selectedDivision.name
+        );
+      } else {
+        this.filteredGroupedStats = [...this.groupedStats];
+      }
+    }
   }
   
   sortPlayerStats(stats: PlayerStats[], column: string, direction: 'asc' | 'desc'): void {

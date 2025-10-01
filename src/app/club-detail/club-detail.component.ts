@@ -369,7 +369,337 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     
     const playerStatsMap = new Map<string, any>();
 
-    // Initialize stats for each player in the roster - create separate entries for skater and goalie
+    // First, collect all players who played for this team from match data (including unsigned ones)
+    const allPlayersWhoPlayed = new Set<string>();
+    
+    this.clubMatches.forEach(match => {
+      console.log(`Processing match ${match._id || match.id} for club ${this.backendClub?.name}:`, {
+        hasEashlData: !!match.eashlData,
+        isManualEntry: match.eashlData?.manualEntry,
+        hasPlayerStats: !!match.playerStats,
+        hasPlayers: !!match.eashlData?.players,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam
+      });
+      
+      if (!match.eashlData) {
+        console.log(`Skipping match ${match._id || match.id}: no eashlData`);
+        return; // Skip if no eashlData
+      }
+
+      if (match.eashlData.manualEntry && match.playerStats) {
+        console.log(`Collecting manual entry players for match ${match._id || match.id}`);
+        console.log('Manual entry playerStats:', match.playerStats);
+        const ourPlayers = match.playerStats.filter((player: any) => 
+          player.team === this.backendClub?.name
+        );
+        console.log(`Found ${ourPlayers.length} players for ${this.backendClub?.name} in manual entry:`, ourPlayers.map((p: any) => p.name));
+        ourPlayers.forEach((playerData: any) => {
+          if (playerData && playerData.name) {
+            allPlayersWhoPlayed.add(playerData.name);
+          }
+        });
+      } else if (match.eashlData.players) {
+        // Process EASHL data - players is an object, not an array
+        console.log(`Collecting EASHL players for match ${match._id || match.id}`);
+        console.log('EASHL players structure:', match.eashlData.players);
+        console.log('Our team name:', this.backendClub?.name);
+        
+        // Try to identify which team key represents our team
+        const teamKeys = Object.keys(match.eashlData.players);
+        console.log('EASHL team keys for collection:', teamKeys);
+        
+        let ourTeamKey = null;
+        for (const teamKey of teamKeys) {
+          const teamPlayers = match.eashlData.players[teamKey];
+          if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+            // Check if any player in this team is in our current roster
+            const hasRosterPlayer = Object.values(teamPlayers).some((playerData: any) => 
+              playerData && playerData.playername && 
+              roster.some(rosterPlayer => 
+                rosterPlayer.gamertag === playerData.playername
+              )
+            );
+            
+            if (hasRosterPlayer) {
+              ourTeamKey = teamKey;
+              console.log(`Found our team key for collection: ${teamKey} (has roster player)`);
+              break;
+            }
+            
+            // Fallback: Check if any player in this team has our club name in their data
+            const hasClubNameMatch = Object.values(teamPlayers).some((playerData: any) => 
+              playerData && (
+                playerData.clubname === this.backendClub?.name ||
+                playerData.team === this.backendClub?.name ||
+                (playerData.ishome && match.homeTeam === this.backendClub?.name) ||
+                (!playerData.ishome && match.awayTeam === this.backendClub?.name)
+              )
+            );
+            
+            // Debug: Log what we're checking for team identification
+            console.log(`Team ${teamKey} player data sample:`, Object.values(teamPlayers).slice(0, 2).map((p: any) => ({
+              playername: p.playername,
+              clubname: p.clubname,
+              team: p.team,
+              ishome: p.ishome
+            })));
+            console.log(`Match teams: home=${match.homeTeam}, away=${match.awayTeam}`);
+            console.log(`Our club: ${this.backendClub?.name}`);
+            console.log(`Club name match: ${hasClubNameMatch}`);
+            
+            // Additional validation: Check if this team actually contains players from our club
+            // by looking at the match result and seeing if the team's performance matches our club's result
+            if (hasClubNameMatch) {
+              // Double-check: If we're the away team, make sure this team's players are marked as away
+              // If we're the home team, make sure this team's players are marked as home
+              const isHomeTeam = match.homeTeam === this.backendClub?.name;
+              const teamPlayersAreHome = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === true);
+              const teamPlayersAreAway = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === false);
+              
+              console.log(`Team ${teamKey} validation: isHomeTeam=${isHomeTeam}, teamPlayersAreHome=${teamPlayersAreHome}, teamPlayersAreAway=${teamPlayersAreAway}`);
+              
+              // Only proceed if the home/away status matches
+              if ((isHomeTeam && teamPlayersAreHome) || (!isHomeTeam && teamPlayersAreAway)) {
+                ourTeamKey = teamKey;
+                console.log(`Found our team key for collection: ${teamKey} (club name match with home/away validation)`);
+                break;
+              } else {
+                console.log(`Team ${teamKey} failed home/away validation, continuing search...`);
+              }
+            }
+          }
+        }
+        
+        // Additional fallback: If no team found by club name, try to identify by home/away status only
+        if (!ourTeamKey) {
+          console.log('No team found by club name, trying home/away status fallback...');
+          for (const teamKey of teamKeys) {
+            const teamPlayers = match.eashlData.players[teamKey];
+            if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+              const isHomeTeam = match.homeTeam === this.backendClub?.name;
+              const teamPlayersAreHome = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === true);
+              const teamPlayersAreAway = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === false);
+              
+              // Debug: Show actual ishome values
+              const ishomeValues = Object.values(teamPlayers).map((playerData: any) => playerData?.ishome);
+              console.log(`Team ${teamKey} home/away check: isHomeTeam=${isHomeTeam}, teamPlayersAreHome=${teamPlayersAreHome}, teamPlayersAreAway=${teamPlayersAreAway}`);
+              console.log(`Team ${teamKey} actual ishome values:`, ishomeValues);
+              
+              // If we're the home team and this team's players are marked as home, it's our team
+              // If we're the away team and this team's players are marked as away, it's our team
+              if ((isHomeTeam && teamPlayersAreHome) || (!isHomeTeam && teamPlayersAreAway)) {
+                ourTeamKey = teamKey;
+                console.log(`Found our team key for collection: ${teamKey} (home/away status fallback)`);
+                break;
+              }
+              
+              // Additional fallback: If ishome field is not available, try to identify by team order
+              // This is a last resort when EASHL data doesn't have proper home/away flags
+              if (!teamPlayersAreHome && !teamPlayersAreAway) {
+                console.log(`Team ${teamKey} has no ishome data, trying team order fallback...`);
+                // If we're the home team and this is the first team we're checking, assume it's our team
+                // If we're the away team and this is the second team we're checking, assume it's our team
+                const teamIndex = teamKeys.indexOf(teamKey);
+                console.log(`Team order check: isHomeTeam=${isHomeTeam}, teamIndex=${teamIndex}, teamKeys=${teamKeys.join(',')}`);
+                
+                // Try both possible team orders since EASHL data might not follow expected order
+                // Based on the logs, it seems the EASHL data has teams in reverse order
+                if ((isHomeTeam && teamIndex === 1) || (!isHomeTeam && teamIndex === 0)) {
+                  // Try the reverse order first since that seems to be the actual order
+                  ourTeamKey = teamKey;
+                  console.log(`Found our team key for collection: ${teamKey} (team order fallback - reverse order - isHomeTeam=${isHomeTeam}, teamIndex=${teamIndex})`);
+                  break;
+                } else if ((isHomeTeam && teamIndex === 0) || (!isHomeTeam && teamIndex === 1)) {
+                  // Try the normal order as fallback
+                  ourTeamKey = teamKey;
+                  console.log(`Found our team key for collection: ${teamKey} (team order fallback - normal order - isHomeTeam=${isHomeTeam}, teamIndex=${teamIndex})`);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Final fallback: If still no team found, try to identify by roster player matching
+        if (!ourTeamKey && roster.length > 0) {
+          console.log('No team found by other methods, trying roster player matching fallback...');
+          const rosterGamertags = roster.map(player => player.gamertag).filter(Boolean);
+          console.log('Looking for roster players in EASHL data:', rosterGamertags);
+          
+          for (const teamKey of teamKeys) {
+            const teamPlayers = match.eashlData.players[teamKey];
+            if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+              const teamPlayerNames = Object.values(teamPlayers).map((playerData: any) => playerData?.playername).filter(Boolean);
+              console.log(`Team ${teamKey} players:`, teamPlayerNames);
+              
+              // Check if any roster player is in this team
+              const hasRosterPlayer = teamPlayerNames.some(playerName => 
+                rosterGamertags.some(gamertag => 
+                  playerName.toLowerCase() === gamertag.toLowerCase()
+                )
+              );
+              
+              if (hasRosterPlayer) {
+                ourTeamKey = teamKey;
+                console.log(`Found our team key for collection: ${teamKey} (roster player matching fallback)`);
+                break;
+              }
+            }
+          }
+        }
+        
+        // If we found our team key, collect all players from that team
+        if (ourTeamKey) {
+          const ourTeamPlayers = match.eashlData.players[ourTeamKey];
+          if (typeof ourTeamPlayers === 'object' && ourTeamPlayers !== null) {
+            console.log(`Collecting players from team ${ourTeamKey} for ${this.backendClub?.name}:`);
+            console.log('Team players:', Object.values(ourTeamPlayers).map((p: any) => p.playername));
+            
+            // Debug: Show what team this actually is by checking if it contains roster players
+            const rosterGamertags = roster.map(player => player.gamertag).filter(Boolean);
+            const teamPlayerNames = Object.values(ourTeamPlayers).map((p: any) => p.playername);
+            const hasRosterPlayer = teamPlayerNames.some(playerName => 
+              rosterGamertags.some(gamertag => 
+                playerName.toLowerCase() === gamertag.toLowerCase()
+              )
+            );
+            console.log(`Team ${ourTeamKey} contains roster players: ${hasRosterPlayer}`);
+            console.log(`Roster players: ${rosterGamertags.join(', ')}`);
+            console.log(`Team players: ${teamPlayerNames.join(', ')}`);
+            
+            Object.values(ourTeamPlayers).forEach((playerData: any) => {
+              if (!playerData || !playerData.playername) return;
+
+              console.log('Adding EASHL player to collection:', {
+                name: playerData.playername,
+                team: playerData.team,
+                clubname: playerData.clubname,
+                ishome: playerData.ishome
+              });
+
+              console.log(`Adding player to collection: ${playerData.playername}`);
+              allPlayersWhoPlayed.add(playerData.playername);
+            });
+          }
+        } else {
+          console.log(`No team key found for ${this.backendClub?.name}. Available teams:`, teamKeys);
+          console.log('Available team players:');
+          const rosterGamertags = roster.map(player => player.gamertag).filter(Boolean);
+          teamKeys.forEach(teamKey => {
+            const teamPlayers = match.eashlData.players[teamKey];
+            if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+              const teamPlayerNames = Object.values(teamPlayers).map((p: any) => p.playername);
+              const hasRosterPlayer = teamPlayerNames.some(playerName => 
+                rosterGamertags.some(gamertag => 
+                  playerName.toLowerCase() === gamertag.toLowerCase()
+                )
+              );
+              console.log(`Team ${teamKey}:`, teamPlayerNames, `(contains roster players: ${hasRosterPlayer})`);
+            }
+          });
+        }
+      }
+    });
+
+    console.log('All players who played for this team:', Array.from(allPlayersWhoPlayed));
+
+    // Create a map of signed players for quick lookup
+    const signedPlayerNames = new Set(roster.map(player => player.gamertag).filter(Boolean));
+
+    // Initialize stats for all players who played for this team (both signed and unsigned)
+    allPlayersWhoPlayed.forEach(playerName => {
+      const isSigned = signedPlayerNames.has(playerName);
+
+      const baseSkaterStats = {
+        playerId: isSigned ? roster.find(p => p.gamertag === playerName)?._id || roster.find(p => p.gamertag === playerName)?.id || 0 : 0,
+        name: playerName,
+        number: isSigned ? roster.find(p => p.gamertag === playerName)?.number || 0 : 0,
+        position: 'Unknown', // Will be determined by game performance
+        role: 'skater', // Track the role
+        gamesPlayed: 0,
+        wins: 0,
+        losses: 0,
+        otLosses: 0,
+        goals: 0,
+        assists: 0,
+        points: 0,
+        plusMinus: 0,
+        shots: 0,
+        shotPercentage: 0,
+        hits: 0,
+        blockedShots: 0,
+        pim: 0,
+        ppg: 0,
+        shg: 0,
+        gwg: 0,
+        takeaways: 0,
+        giveaways: 0,
+        passes: 0,
+        passAttempts: 0,
+        passPercentage: 0,
+        faceoffsWon: 0,
+        faceoffPercentage: 0,
+        playerScore: 0,
+        penaltyKillCorsiZone: 0,
+        isSigned: isSigned,
+        // Goalie-specific stats (set to 0 for skater role)
+        saves: 0,
+        shotsAgainst: 0,
+        goalsAgainst: 0,
+        savePercentage: 0,
+        goalsAgainstAverage: 0,
+        shutouts: 0,
+        otl: 0
+      };
+
+      const baseGoalieStats = {
+        playerId: isSigned ? roster.find(p => p.gamertag === playerName)?._id || roster.find(p => p.gamertag === playerName)?.id || 0 : 0,
+        name: playerName,
+        number: isSigned ? roster.find(p => p.gamertag === playerName)?.number || 0 : 0,
+        position: 'G',
+        role: 'goalie', // Track the role
+        gamesPlayed: 0,
+        wins: 0,
+        losses: 0,
+        otLosses: 0,
+        goals: 0, // Goalies don't score goals
+        assists: 0,
+        points: 0,
+        plusMinus: 0, // Goalies don't have plus/minus
+        shots: 0, // Goalies don't take shots
+        shotPercentage: 0,
+        hits: 0, // Goalies don't hit
+        blockedShots: 0, // Goalies don't block shots
+        pim: 0,
+        ppg: 0, // Goalies don't have power play goals
+        shg: 0, // Goalies don't have short handed goals
+        gwg: 0, // Goalies don't have game winning goals
+        takeaways: 0, // Goalies don't have takeaways
+        giveaways: 0, // Goalies don't have giveaways
+        passes: 0, // Goalies don't have passes
+        passAttempts: 0, // Goalies don't have pass attempts
+        faceoffsWon: 0, // Goalies don't take faceoffs
+        faceoffPercentage: 0,
+        playerScore: 0,
+        penaltyKillCorsiZone: 0, // Goalies don't have PKC
+        // Goalie-specific stats
+        saves: 0,
+        shotsAgainst: 0,
+        goalsAgainst: 0,
+        savePercentage: 0,
+        goalsAgainstAverage: 0,
+        shutouts: 0,
+        otl: 0,
+        isSigned: isSigned
+      };
+
+      // Create separate entries for skater and goalie roles
+      playerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
+      playerStatsMap.set(`${playerName}_goalie`, baseGoalieStats);
+    });
+
+    // Also initialize stats for roster players who might not have played yet
     roster.forEach(player => {
       if (!player || !player.gamertag) return;
 
@@ -462,173 +792,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       playerStatsMap.set(`${player.gamertag}_goalie`, baseGoalieStats);
     });
 
-    // Now collect all players who played for this team from match data (including unsigned ones)
-    const allPlayersWhoPlayed = new Set<string>();
-    
-    this.clubMatches.forEach(match => {
-      if (!match.eashlData) return; // Skip if no eashlData
-
-      if (match.eashlData.manualEntry && match.playerStats) {
-        console.log(`Collecting manual entry players for match ${match._id || match.id}`);
-        const ourPlayers = match.playerStats.filter((player: any) => 
-          player.team === this.backendClub?.name
-        );
-        ourPlayers.forEach((playerData: any) => {
-          if (playerData && playerData.name) {
-            allPlayersWhoPlayed.add(playerData.name);
-          }
-        });
-      } else if (match.eashlData.players) {
-        // Process EASHL data - players is an object, not an array
-        console.log(`Collecting EASHL players for match ${match._id || match.id}`);
-        console.log('EASHL players structure:', match.eashlData.players);
-        console.log('Our team name:', this.backendClub?.name);
-        
-        // Try to identify which team key represents our team
-        const teamKeys = Object.keys(match.eashlData.players);
-        console.log('EASHL team keys for collection:', teamKeys);
-        
-        let ourTeamKey = null;
-        for (const teamKey of teamKeys) {
-          const teamPlayers = match.eashlData.players[teamKey];
-          if (typeof teamPlayers === 'object' && teamPlayers !== null) {
-            // Check if any player in this team is in our current roster
-            const hasRosterPlayer = Object.values(teamPlayers).some((playerData: any) => 
-              playerData && playerData.playername && 
-              roster.some(rosterPlayer => 
-                rosterPlayer.gamertag === playerData.playername
-              )
-            );
-            
-            if (hasRosterPlayer) {
-              ourTeamKey = teamKey;
-              console.log(`Found our team key for collection: ${teamKey} (has roster player)`);
-              break;
-            }
-          }
-        }
-        
-        // If we found our team key, collect all players from that team
-        if (ourTeamKey) {
-          const ourTeamPlayers = match.eashlData.players[ourTeamKey];
-          if (typeof ourTeamPlayers === 'object' && ourTeamPlayers !== null) {
-            Object.values(ourTeamPlayers).forEach((playerData: any) => {
-              if (!playerData || !playerData.playername) return;
-              
-              console.log('Adding EASHL player to collection:', {
-                name: playerData.playername,
-                team: playerData.team,
-                clubname: playerData.clubname,
-                ishome: playerData.ishome
-              });
-              
-              console.log(`Adding player to collection: ${playerData.playername}`);
-              allPlayersWhoPlayed.add(playerData.playername);
-            });
-          }
-        }
-      }
-    });
-
-    console.log('All players who played for this team:', Array.from(allPlayersWhoPlayed));
-
-    // Create a map of signed players for quick lookup
-    const signedPlayerNames = new Set(roster.map(player => player.gamertag).filter(Boolean));
-
-    // Initialize stats for any new players who played for this team but aren't on the roster
-    allPlayersWhoPlayed.forEach(playerName => {
-      // Skip if we already have this player (they're on the roster)
-      if (signedPlayerNames.has(playerName)) return;
-      
-      const isSigned = false; // These are unsigned players
-      
-      const baseSkaterStats = {
-        playerId: 0, // No roster player
-        name: playerName,
-        number: 0,
-        position: 'Unknown', // Will be determined by game performance
-        role: 'skater', // Track the role
-        gamesPlayed: 0,
-        wins: 0,
-        losses: 0,
-        otLosses: 0,
-        goals: 0,
-        assists: 0,
-        points: 0,
-        plusMinus: 0,
-        shots: 0,
-        shotPercentage: 0,
-        hits: 0,
-        blockedShots: 0,
-        pim: 0,
-        ppg: 0,
-        shg: 0,
-        gwg: 0,
-        takeaways: 0,
-        giveaways: 0,
-        passes: 0,
-        passAttempts: 0,
-        passPercentage: 0,
-        faceoffsWon: 0,
-        faceoffPercentage: 0,
-        playerScore: 0,
-        penaltyKillCorsiZone: 0,
-        isSigned: isSigned,
-        // Goalie-specific stats (set to 0 for skater role)
-        saves: 0,
-        shotsAgainst: 0,
-        goalsAgainst: 0,
-        savePercentage: 0,
-        goalsAgainstAverage: 0,
-        shutouts: 0,
-        otl: 0
-      };
-
-      const baseGoalieStats = {
-        playerId: 0, // No roster player
-        name: playerName,
-        number: 0,
-        position: 'G',
-        role: 'goalie', // Track the role
-        gamesPlayed: 0,
-        wins: 0,
-        losses: 0,
-        otLosses: 0,
-        goals: 0, // Goalies don't score goals
-        assists: 0,
-        points: 0,
-        plusMinus: 0, // Goalies don't have plus/minus
-        shots: 0, // Goalies don't take shots
-        shotPercentage: 0,
-        hits: 0, // Goalies don't hit
-        blockedShots: 0, // Goalies don't block shots
-        pim: 0,
-        ppg: 0, // Goalies don't have power play goals
-        shg: 0, // Goalies don't have short handed goals
-        gwg: 0, // Goalies don't have game winning goals
-        takeaways: 0, // Goalies don't have takeaways
-        giveaways: 0, // Goalies don't have giveaways
-        passes: 0, // Goalies don't have passes
-        passAttempts: 0, // Goalies don't have pass attempts
-        faceoffsWon: 0, // Goalies don't take faceoffs
-        faceoffPercentage: 0,
-        playerScore: 0,
-        penaltyKillCorsiZone: 0, // Goalies don't have PKC
-        // Goalie-specific stats
-        saves: 0,
-        shotsAgainst: 0,
-        goalsAgainst: 0,
-        savePercentage: 0,
-        goalsAgainstAverage: 0,
-        shutouts: 0,
-        otl: 0,
-        isSigned: isSigned
-      };
-
-      // Create separate entries for skater and goalie roles
-      playerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
-      playerStatsMap.set(`${playerName}_goalie`, baseGoalieStats);
-    });
 
     // Process matches to calculate stats
     console.log('Processing', this.clubMatches.length, 'club matches for stats calculation');
@@ -741,9 +904,155 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         });
       } else {
         // Process EASHL data
-        Object.values(match.eashlData.players).forEach((clubPlayers: any) => {
-        if (typeof clubPlayers === 'object' && clubPlayers !== null) {
-          Object.values(clubPlayers).forEach((playerData: any) => {
+        // First, identify which team key represents our team
+        const teamKeys = Object.keys(match.eashlData.players);
+        console.log('EASHL team keys for processing:', teamKeys);
+
+        let ourTeamKey = null;
+        for (const teamKey of teamKeys) {
+          const teamPlayers = match.eashlData.players[teamKey];
+          if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+            // Check if any player in this team is in our current roster
+            const hasRosterPlayer = Object.values(teamPlayers).some((playerData: any) =>
+              playerData && playerData.playername &&
+              roster.some(rosterPlayer =>
+                rosterPlayer.gamertag === playerData.playername
+              )
+            );
+
+            if (hasRosterPlayer) {
+              ourTeamKey = teamKey;
+              console.log(`Found our team key for processing: ${teamKey} (has roster player)`);
+              break;
+            }
+            
+            // Fallback: Check if any player in this team has our club name in their data
+            const hasClubNameMatch = Object.values(teamPlayers).some((playerData: any) => 
+              playerData && (
+                playerData.clubname === this.backendClub?.name ||
+                playerData.team === this.backendClub?.name ||
+                (playerData.ishome && match.homeTeam === this.backendClub?.name) ||
+                (!playerData.ishome && match.awayTeam === this.backendClub?.name)
+              )
+            );
+            
+            // Debug: Log what we're checking for team identification
+            console.log(`Team ${teamKey} player data sample:`, Object.values(teamPlayers).slice(0, 2).map((p: any) => ({
+              playername: p.playername,
+              clubname: p.clubname,
+              team: p.team,
+              ishome: p.ishome
+            })));
+            console.log(`Match teams: home=${match.homeTeam}, away=${match.awayTeam}`);
+            console.log(`Our club: ${this.backendClub?.name}`);
+            console.log(`Club name match: ${hasClubNameMatch}`);
+            
+            // Additional validation: Check if this team actually contains players from our club
+            // by looking at the match result and seeing if the team's performance matches our club's result
+            if (hasClubNameMatch) {
+              // Double-check: If we're the away team, make sure this team's players are marked as away
+              // If we're the home team, make sure this team's players are marked as home
+              const isHomeTeam = match.homeTeam === this.backendClub?.name;
+              const teamPlayersAreHome = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === true);
+              const teamPlayersAreAway = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === false);
+              
+              console.log(`Team ${teamKey} validation: isHomeTeam=${isHomeTeam}, teamPlayersAreHome=${teamPlayersAreHome}, teamPlayersAreAway=${teamPlayersAreAway}`);
+              
+              // Only proceed if the home/away status matches
+              if ((isHomeTeam && teamPlayersAreHome) || (!isHomeTeam && teamPlayersAreAway)) {
+                ourTeamKey = teamKey;
+                console.log(`Found our team key for processing: ${teamKey} (club name match with home/away validation)`);
+                break;
+              } else {
+                console.log(`Team ${teamKey} failed home/away validation, continuing search...`);
+              }
+            }
+          }
+        }
+
+        // Additional fallback: If no team found by club name, try to identify by home/away status only
+        if (!ourTeamKey) {
+          console.log('No team found by club name for processing, trying home/away status fallback...');
+          for (const teamKey of teamKeys) {
+            const teamPlayers = match.eashlData.players[teamKey];
+            if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+              const isHomeTeam = match.homeTeam === this.backendClub?.name;
+              const teamPlayersAreHome = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === true);
+              const teamPlayersAreAway = Object.values(teamPlayers).some((playerData: any) => playerData && playerData.ishome === false);
+              
+              // Debug: Show actual ishome values
+              const ishomeValues = Object.values(teamPlayers).map((playerData: any) => playerData?.ishome);
+              console.log(`Team ${teamKey} home/away check for processing: isHomeTeam=${isHomeTeam}, teamPlayersAreHome=${teamPlayersAreHome}, teamPlayersAreAway=${teamPlayersAreAway}`);
+              console.log(`Team ${teamKey} actual ishome values for processing:`, ishomeValues);
+              
+              // If we're the home team and this team's players are marked as home, it's our team
+              // If we're the away team and this team's players are marked as away, it's our team
+              if ((isHomeTeam && teamPlayersAreHome) || (!isHomeTeam && teamPlayersAreAway)) {
+                ourTeamKey = teamKey;
+                console.log(`Found our team key for processing: ${teamKey} (home/away status fallback)`);
+                break;
+              }
+              
+              // Additional fallback: If ishome field is not available, try to identify by team order
+              // This is a last resort when EASHL data doesn't have proper home/away flags
+              if (!teamPlayersAreHome && !teamPlayersAreAway) {
+                console.log(`Team ${teamKey} has no ishome data for processing, trying team order fallback...`);
+                // If we're the home team and this is the first team we're checking, assume it's our team
+                // If we're the away team and this is the second team we're checking, assume it's our team
+                const teamIndex = teamKeys.indexOf(teamKey);
+                console.log(`Team order check for processing: isHomeTeam=${isHomeTeam}, teamIndex=${teamIndex}, teamKeys=${teamKeys.join(',')}`);
+                
+                // Try both possible team orders since EASHL data might not follow expected order
+                // Based on the logs, it seems the EASHL data has teams in reverse order
+                if ((isHomeTeam && teamIndex === 1) || (!isHomeTeam && teamIndex === 0)) {
+                  // Try the reverse order first since that seems to be the actual order
+                  ourTeamKey = teamKey;
+                  console.log(`Found our team key for processing: ${teamKey} (team order fallback - reverse order - isHomeTeam=${isHomeTeam}, teamIndex=${teamIndex})`);
+                  break;
+                } else if ((isHomeTeam && teamIndex === 0) || (!isHomeTeam && teamIndex === 1)) {
+                  // Try the normal order as fallback
+                  ourTeamKey = teamKey;
+                  console.log(`Found our team key for processing: ${teamKey} (team order fallback - normal order - isHomeTeam=${isHomeTeam}, teamIndex=${teamIndex})`);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        // Final fallback: If still no team found, try to identify by roster player matching
+        if (!ourTeamKey && roster.length > 0) {
+          console.log('No team found by other methods for processing, trying roster player matching fallback...');
+          const rosterGamertags = roster.map(player => player.gamertag).filter(Boolean);
+          console.log('Looking for roster players in EASHL data for processing:', rosterGamertags);
+          
+          for (const teamKey of teamKeys) {
+            const teamPlayers = match.eashlData.players[teamKey];
+            if (typeof teamPlayers === 'object' && teamPlayers !== null) {
+              const teamPlayerNames = Object.values(teamPlayers).map((playerData: any) => playerData?.playername).filter(Boolean);
+              console.log(`Team ${teamKey} players for processing:`, teamPlayerNames);
+              
+              // Check if any roster player is in this team
+              const hasRosterPlayer = teamPlayerNames.some(playerName => 
+                rosterGamertags.some(gamertag => 
+                  playerName.toLowerCase() === gamertag.toLowerCase()
+                )
+              );
+              
+              if (hasRosterPlayer) {
+                ourTeamKey = teamKey;
+                console.log(`Found our team key for processing: ${teamKey} (roster player matching fallback)`);
+                break;
+              }
+            }
+          }
+        }
+
+        // Only process players from our team
+        if (ourTeamKey) {
+          const ourTeamPlayers = match.eashlData.players[ourTeamKey];
+          if (typeof ourTeamPlayers === 'object' && ourTeamPlayers !== null) {
+            Object.values(ourTeamPlayers).forEach((playerData: any) => {
             if (!playerData || !playerData.playername) return;
 
             const playerName = playerData.playername;
@@ -841,7 +1150,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             }
           });
         }
-      });
+        } else {
+          console.log(`No team key found for club: ${this.backendClub?.name}`);
+        }
       }
     });
 

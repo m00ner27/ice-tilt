@@ -8,17 +8,27 @@
 
   <!-- Main Content -->
   <div *ngIf="!isLoading">
-    <!-- Season Selector -->
+    <!-- Season and Division Selectors -->
     <div class="filters-container">
-      <label for="season-select">Season:</label>
-      <select id="season-select" [(ngModel)]="selectedSeasonId" (ngModelChange)="onSeasonChange()">
-        <option value="all-seasons">All-Time</option>
-        <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
-      </select>
+      <div class="filter-group">
+        <label for="season-select">Season:</label>
+        <select id="season-select" [(ngModel)]="selectedSeasonId" (ngModelChange)="onSeasonChange()">
+          <option value="all-seasons">All-Time</option>
+          <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group" *ngIf="selectedSeasonId !== 'all-seasons'">
+        <label for="division-select">Division:</label>
+        <select id="division-select" [(ngModel)]="selectedDivisionId" (ngModelChange)="onDivisionChange()">
+          <option value="all-divisions">All Divisions</option>
+          <option *ngFor="let division of divisions" [value]="division._id">{{ division.name }}</option>
+        </select>
+      </div>
     </div>
 
     <!-- Stats Tables per Division -->
-    <div *ngFor="let group of groupedStats" class="division-group">
+    <div *ngFor="let group of filteredGroupedStats" class="division-group">
       <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
         <img *ngIf="group.divisionData?.logoUrl" 
              [src]="getImageUrl(group.divisionData?.logoUrl)" 
