@@ -22,6 +22,11 @@ export class AdminScheduleComponent implements OnInit {
   clubs: any[] = [];
   currentFilter: 'all' | 'linked' | 'unlinked' = 'unlinked';
   unlinkedGamesCount: number = 0;
+  
+  // Club filtering and sorting
+  selectedClub: string = 'all';
+  sortBy: 'date' | 'homeTeam' | 'awayTeam' = 'date';
+  sortOrder: 'asc' | 'desc' = 'asc';
 
   constructor(
     private api: ApiService,
@@ -39,21 +44,89 @@ export class AdminScheduleComponent implements OnInit {
     this.applyFilter();
   }
 
+  onClubFilterChange(): void {
+    this.applyFilter();
+  }
+
+
+  onSortChange(): void {
+    this.applyFilter();
+  }
+
+  toggleSortOrder(): void {
+    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.applyFilter();
+  }
+
+  clearFilters(): void {
+    this.selectedClub = 'all';
+    this.sortBy = 'date';
+    this.sortOrder = 'asc';
+    this.applyFilter();
+  }
+
+  get sortedClubs(): any[] {
+    return [...this.clubs].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   applyFilter(): void {
     console.log('=== Applying filter ===');
     console.log('Current filter:', this.currentFilter);
+    console.log('Selected club:', this.selectedClub);
+    console.log('Sort by:', this.sortBy, this.sortOrder);
     console.log('Total games:', this.games.length);
     
+    let filtered = [...this.games];
+    
+    // Apply status filter (linked/unlinked/all)
     if (this.currentFilter === 'unlinked') {
-      this.filteredGames = this.games.filter(g => !this.isGameLinked(g) && !this.isForfeit(g.status));
-      console.log('Unlinked games:', this.filteredGames.length);
+      filtered = filtered.filter(g => !this.isGameLinked(g) && !this.isForfeit(g.status));
+      console.log('After unlinked filter:', filtered.length);
     } else if (this.currentFilter === 'linked') {
-      this.filteredGames = this.games.filter(g => this.isGameLinked(g) || this.isForfeit(g.status));
-      console.log('Linked games:', this.filteredGames.length);
-    } else {
-      this.filteredGames = this.games;
-      console.log('All games:', this.filteredGames.length);
+      filtered = filtered.filter(g => this.isGameLinked(g) || this.isForfeit(g.status));
+      console.log('After linked filter:', filtered.length);
     }
+    
+    // Apply club filter
+    if (this.selectedClub !== 'all') {
+      filtered = filtered.filter(g => 
+        g.homeTeam === this.selectedClub || g.awayTeam === this.selectedClub
+      );
+      console.log('After club filter:', filtered.length);
+    }
+    
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (this.sortBy) {
+        case 'date':
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+          break;
+        case 'homeTeam':
+          aValue = a.homeTeam.toLowerCase();
+          bValue = b.homeTeam.toLowerCase();
+          break;
+        case 'awayTeam':
+          aValue = a.awayTeam.toLowerCase();
+          bValue = b.awayTeam.toLowerCase();
+          break;
+        default:
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+      }
+      
+      if (this.sortOrder === 'asc') {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      }
+    });
+    
+    this.filteredGames = filtered;
+    console.log('Final filtered games:', this.filteredGames.length);
   }
 
   calculateUnlinkedCount(): void {

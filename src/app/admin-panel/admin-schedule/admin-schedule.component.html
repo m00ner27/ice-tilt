@@ -1,6 +1,7 @@
 <div class="max-w-6xl mx-auto my-10 bg-admin-card rounded-xl p-8 shadow-lg">
   <h2 class="text-admin-primary mb-6 text-center text-2xl font-bold">Admin: Game Schedule</h2>
   
+  <!-- Status Filter Buttons -->
   <div class="flex justify-center gap-3 mb-6 flex-wrap">
     <button 
       (click)="setFilter('unlinked')" 
@@ -23,6 +24,56 @@
       class="border rounded-lg px-4 py-2 font-medium transition-colors">
       All Games
     </button>
+  </div>
+
+  <!-- Club Filtering and Sorting Controls -->
+  <div class="mb-6 space-y-4">
+    <div class="flex flex-wrap gap-4 items-center justify-center">
+      <!-- Club Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-admin-text font-medium">Filter by Club:</label>
+        <select 
+          [(ngModel)]="selectedClub" 
+          (change)="onClubFilterChange()"
+          class="bg-admin-hover text-white border border-admin-accent rounded px-3 py-2 min-w-[200px]">
+          <option value="all">All Clubs</option>
+          <option *ngFor="let club of sortedClubs" [value]="club.name">{{ club.name }}</option>
+        </select>
+      </div>
+
+
+      <!-- Sort Controls -->
+      <div class="flex items-center gap-2">
+        <label class="text-admin-text font-medium">Sort by:</label>
+        <select 
+          [(ngModel)]="sortBy" 
+          (change)="onSortChange()"
+          class="bg-admin-hover text-white border border-admin-accent rounded px-3 py-2">
+          <option value="date">Date</option>
+          <option value="homeTeam">Home Team</option>
+          <option value="awayTeam">Away Team</option>
+        </select>
+        <button 
+          (click)="toggleSortOrder()"
+          class="bg-admin-accent hover:bg-blue-600 text-white rounded px-3 py-2 transition-colors"
+          [title]="sortOrder === 'asc' ? 'Sort Ascending' : 'Sort Descending'">
+          <i class="fas" [class.fa-sort-alpha-down]="sortOrder === 'asc'" [class.fa-sort-alpha-up]="sortOrder === 'desc'"></i>
+        </button>
+      </div>
+
+      <!-- Clear Filters -->
+      <button 
+        (click)="clearFilters()" 
+        class="bg-gray-600 hover:bg-gray-700 text-white rounded px-4 py-2 transition-colors"
+        *ngIf="selectedClub !== 'all' || sortBy !== 'date'">
+        Clear Filters
+      </button>
+    </div>
+
+    <!-- Results Count -->
+    <div class="text-center text-admin-text text-sm">
+      Showing {{ filteredGames.length }} of {{ games.length }} games
+    </div>
   </div>
 
   <div class="overflow-x-auto">
