@@ -24,12 +24,6 @@ export const appConfig: ApplicationConfig = {
         allowedList: [
           ...environment.apiAllowedList,
         ],
-        tokenOptions: {
-          authorizationParams: {
-            audience: environment.apiAudience,
-            scope: 'read:clubs read:games read:seasons read:divisions read:player-profiles read:regions read:skater-data read:standings read:users read:offers',
-          },
-        },
       },
       cacheLocation: 'localstorage',
       useRefreshTokens: true,
