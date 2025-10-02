@@ -11,7 +11,7 @@ import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { Player } from '../store/models/models/player.interface';
 import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
 import * as UsersSelectors from '../store/users.selectors';
@@ -79,7 +79,8 @@ export class PlayersComponent implements OnInit, OnDestroy {
 
   constructor(
     private store: Store<AppState>,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
     this.users$ = this.store.select(UsersSelectors.selectAllUsers);
@@ -292,32 +293,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
   }
 
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/1ithlwords.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
-      return logoUrl;
-    }
-    
-    // If it starts with /uploads/, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // If it matches the timestamp pattern (e.g., "1754503785707-306812067-HCPurijat.png")
-    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
-      return `${environment.apiUrl}/uploads/${logoUrl}`;
-    }
-    
-    // If it starts with uploads/, prepend the API URL
-    if (logoUrl.startsWith('uploads/')) {
-      return `${environment.apiUrl}/${logoUrl}`;
-    }
-    
-    // For any other case, return as is (might be a relative path or filename)
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl, 'assets/images/1ithlwords.png');
   }
 
   applyFilters(players: Player[]) {

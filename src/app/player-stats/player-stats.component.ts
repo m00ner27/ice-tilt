@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service'; // Import ApiService
 import { forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Define interfaces for Season and Division
 interface Season {
@@ -100,7 +100,8 @@ export class PlayerStatsComponent implements OnInit {
   
   constructor(
     private matchService: MatchService,
-    private apiService: ApiService // Inject ApiService
+    private apiService: ApiService, // Inject ApiService
+    private imageUrlService: ImageUrlService
   ) { }
   
   ngOnInit(): void {
@@ -899,44 +900,8 @@ export class PlayerStatsComponent implements OnInit {
     return positionMap[key] || position;
   }
 
-  // Helper method to get the full image URL
+  // Helper method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
-    console.log('🔍 getImageUrl called with:', logoUrl);
-    
-    if (!logoUrl) {
-      console.log('🔍 No logo URL, using fallback');
-      return 'assets/images/1ithlwords.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      console.log('🔍 Full URL detected, returning as-is:', logoUrl);
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      const fullUrl = `${environment.apiUrl}${logoUrl}`;
-      console.log('🔍 Upload path detected, constructed URL:', fullUrl);
-      return fullUrl;
-    }
-    
-    // If it's a filename that looks like an upload (has timestamp pattern), add /uploads/ prefix
-    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
-      const fullUrl = `${environment.apiUrl}/uploads/${logoUrl}`;
-      console.log('🔍 Timestamp filename detected, constructed URL:', fullUrl);
-      return fullUrl;
-    }
-    
-    // If it starts with 'uploads/' (no leading slash), add the API URL
-    if (logoUrl.startsWith('uploads/')) {
-      const fullUrl = `${environment.apiUrl}/${logoUrl}`;
-      console.log('🔍 Uploads path detected, constructed URL:', fullUrl);
-      return fullUrl;
-    }
-    
-    // Otherwise, assume it's a local asset
-    console.log('🔍 Local asset path, returning:', logoUrl);
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl, 'assets/images/1ithlwords.png');
   }
 }

@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
 import { TransactionsComponent } from '../transactions/transactions.component';
 import { ScheduleComponent } from '../schedule/schedule.component';
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 interface AggregatedPlayer {
   playerId: number;
@@ -33,35 +33,13 @@ export class HomeComponent implements OnInit {
   topPoints: AggregatedPlayer[] = [];
   topSavePct: any[] = [];
 
-  constructor(private matchService: MatchService) {}
+  constructor(
+    private matchService: MatchService,
+    private imageUrlService: ImageUrlService
+  ) {}
 
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/1ithlwords.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
-      return logoUrl;
-    }
-    
-    // If it starts with /uploads/, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // If it matches the timestamp pattern (e.g., "1754503785707-306812067-HCPurijat.png")
-    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
-      return `${environment.apiUrl}/uploads/${logoUrl}`;
-    }
-    
-    // If it starts with uploads/, prepend the API URL
-    if (logoUrl.startsWith('uploads/')) {
-      return `${environment.apiUrl}/${logoUrl}`;
-    }
-    
-    // For any other case, return as is (might be a relative path or filename)
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl, 'assets/images/1ithlwords.png');
   }
 
   ngOnInit() {

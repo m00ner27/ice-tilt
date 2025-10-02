@@ -7,6 +7,7 @@ import { Observable, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
@@ -86,7 +87,8 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private location: Location,
     private store: Store<AppState>,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
     this.selectedMatch$ = this.store.select(MatchesSelectors.selectSelectedMatch);
@@ -396,15 +398,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   }
 
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) return '/assets/images/default-logo.png';
-    
-    // If it's a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl, '/assets/images/default-logo.png');
   }
 
   getTeamTotalGoals(team: 'home' | 'away'): number {

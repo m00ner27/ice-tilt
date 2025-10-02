@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
 import { forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 interface Season {
   _id: string;
@@ -78,7 +78,8 @@ export class GoalieStatsComponent implements OnInit {
   
   constructor(
     private matchService: MatchService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private imageUrlService: ImageUrlService
   ) { }
   
   ngOnInit(): void {
@@ -933,33 +934,8 @@ export class GoalieStatsComponent implements OnInit {
     return position;
   }
 
-  // Helper method to get the full image URL
+  // Helper method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/1ithlwords.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // If it's a filename that looks like an upload (has timestamp pattern), add /uploads/ prefix
-    if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
-      return `${environment.apiUrl}/uploads/${logoUrl}`;
-    }
-    
-    // If it starts with 'uploads/' (no leading slash), add the API URL
-    if (logoUrl.startsWith('uploads/')) {
-      return `${environment.apiUrl}/${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl, 'assets/images/1ithlwords.png');
   }
 }
