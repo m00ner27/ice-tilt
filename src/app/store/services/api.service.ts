@@ -65,7 +65,17 @@ export class ApiService {
   }
 
   addGameData(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/api/game-data`, data);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/game-data`, data, { headers });
+      })
+    );
   }
 
   // Player Profile Methods (New)
@@ -99,7 +109,17 @@ export class ApiService {
   }
 
   updateSeason(season: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/api/seasons/${season._id}`, season);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put(`${this.apiUrl}/api/seasons/${season._id}`, season, { headers });
+      })
+    );
   }
 
   // Division data methods
@@ -120,7 +140,17 @@ export class ApiService {
   }
 
   updateDivision(division: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/api/divisions/${division._id}`, division);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put(`${this.apiUrl}/api/divisions/${division._id}`, division, { headers });
+      })
+    );
   }
 
   // Club data methods
@@ -193,7 +223,17 @@ export class ApiService {
   }
 
   addGame(game: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/api/games`, game);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/games`, game, { headers });
+      })
+    );
   }
 
   getGames(): Observable<any[]> {
@@ -270,7 +310,17 @@ export class ApiService {
   }
 
   saveManualGameStats(gameStats: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/api/games/manual-stats`, gameStats);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/games/manual-stats`, gameStats, { headers });
+      })
+    );
   }
 
   // Club roster methods
