@@ -33,7 +33,7 @@
           [src]="getImageUrl(club.logoUrl)" 
           [alt]="club.name" 
           class="w-30 h-30 rounded-none mb-4 object-contain p-1 bg-transparent"
-          (error)="club.logoUrl = 'assets/images/square-default.png'"
+          (error)="onImageError($event, club)"
         >
         <h3 class="my-3 text-white text-xl font-semibold">{{club.name}}</h3>
       </div>

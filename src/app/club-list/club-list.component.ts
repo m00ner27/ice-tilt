@@ -99,4 +99,10 @@ export class ClubListComponent implements OnInit, OnDestroy {
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl);
   }
+
+  // Handle image loading errors
+  onImageError(event: any, club: any): void {
+    console.log('Image failed to load for club:', club.name, 'URL:', event.target.src);
+    event.target.src = 'assets/images/square-default.png';
+  }
 }

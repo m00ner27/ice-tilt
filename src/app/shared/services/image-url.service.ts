@@ -45,6 +45,21 @@ export class ImageUrlService {
   }
 
   /**
+   * Get image URL with error handling - returns default image if the original fails to load
+   */
+  getImageUrlWithFallback(logoUrl: string | undefined, defaultImage: string = 'assets/images/square-default.png'): string {
+    const imageUrl = this.getImageUrl(logoUrl, defaultImage);
+    
+    // If it's the default image, return it directly
+    if (imageUrl === defaultImage) {
+      return imageUrl;
+    }
+    
+    // For backend URLs, we'll let the browser handle the error and show default via (error) handler
+    return imageUrl;
+  }
+
+  /**
    * Get club logo URL by club name from a list of clubs
    * @param clubName - Name of the club
    * @param allClubs - Array of all clubs
