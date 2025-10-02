@@ -243,7 +243,7 @@
           <div class="flex flex-col gap-2">
             <input type="file" accept="image/*" (change)="onLogoFileChange($event)" class="text-white">
             <div *ngIf="logoPreview" class="flex items-center gap-2">
-              <img [src]="getImageUrl(logoPreview)" alt="Logo Preview" class="w-10 h-10 object-contain rounded bg-admin-card">
+              <img [src]="getLogoPreviewUrl()" alt="Logo Preview" class="w-10 h-10 object-contain rounded bg-admin-card">
               <span *ngIf="uploadingLogo" class="text-admin-primary text-sm">Uploading...</span>
             </div>
           </div>

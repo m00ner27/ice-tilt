@@ -218,25 +218,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     return pages;
   }
 
-  // Method to get the full image URL
-  getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
-  }
 
   ngOnInit(): void {
     this.loadData();
@@ -444,6 +425,14 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl);
+  }
+
+  getLogoPreviewUrl(): string {
+    if (typeof this.logoPreview === 'string') {
+      return this.imageUrlService.getImageUrl(this.logoPreview);
+    }
+    // If it's an ArrayBuffer (local preview), return it directly
+    return this.logoPreview as string;
   }
 
   onSeasonChange(event: any): void {
