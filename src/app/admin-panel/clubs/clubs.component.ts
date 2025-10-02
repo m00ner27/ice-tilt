@@ -432,7 +432,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
       return this.imageUrlService.getImageUrl(this.logoPreview);
     }
     // If it's an ArrayBuffer (local preview), return it directly
-    return this.logoPreview as string;
+    return this.logoPreview as unknown as string;
   }
 
   onSeasonChange(event: any): void {
