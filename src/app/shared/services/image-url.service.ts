@@ -13,6 +13,9 @@ export class ImageUrlService {
    * @returns Full URL to the image
    */
   getImageUrl(logoUrl: string | undefined, defaultImage: string = 'assets/images/square-default.png'): string {
+    // Always use the production backend URL for images
+    const BACKEND_URL = 'https://ice-tilt-backend.onrender.com';
+    
     if (!logoUrl) {
       return defaultImage;
     }
@@ -22,19 +25,19 @@ export class ImageUrlService {
       return logoUrl;
     }
     
-    // If it's a relative path starting with /uploads, prepend the API URL
+    // If it's a relative path starting with /uploads, prepend the backend URL
     if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
+      return `${BACKEND_URL}${logoUrl}`;
     }
     
     // If it's a filename that looks like an upload (has timestamp pattern), add /uploads/ prefix
     if (logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
-      return `${environment.apiUrl}/uploads/${logoUrl}`;
+      return `${BACKEND_URL}/uploads/${logoUrl}`;
     }
     
-    // If it starts with 'uploads/' (no leading slash), add the API URL
+    // If it starts with 'uploads/' (no leading slash), add the backend URL
     if (logoUrl.startsWith('uploads/')) {
-      return `${environment.apiUrl}/${logoUrl}`;
+      return `${BACKEND_URL}/${logoUrl}`;
     }
     
     // Otherwise, assume it's a local asset
