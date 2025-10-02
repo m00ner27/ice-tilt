@@ -5,6 +5,7 @@ import { ApiService } from '../../store/services/api.service';
 import { EashlService } from '../../services/eashl.service';
 import { TransactionsService } from '../../store/services/transactions.service';
 import { RosterUpdateService } from '../../store/services/roster-update.service';
+import { ImageUrlService } from '../../shared/services/image-url.service';
 import { environment } from '../../../environments/environment';
 import { REGIONS } from '../../shared';
 import { Subscription } from 'rxjs';
@@ -104,6 +105,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     private eashlService: EashlService,
     private transactionsService: TransactionsService,
     private rosterUpdateService: RosterUpdateService,
+    private imageUrlService: ImageUrlService,
     private store: Store<AppState>
   ) {
     // Initialize store selectors
@@ -426,7 +428,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
       this.api.uploadFile(file).subscribe({
         next: (res) => {
           this.clubForm.patchValue({ logo: res.url });
-          this.logoPreview = res.url;
+          this.logoPreview = this.imageUrlService.getImageUrl(res.url);
           this.uploadingLogo = false;
         },
         error: () => {
@@ -438,6 +440,10 @@ export class ClubsComponent implements OnInit, OnDestroy {
       reader.onload = e => this.logoPreview = reader.result;
       reader.readAsDataURL(file);
     }
+  }
+
+  getImageUrl(logoUrl: string | undefined): string {
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
 
   onSeasonChange(event: any): void {
@@ -502,7 +508,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   editClub(club: Club): void {
     this.editingClub = club;
     this.isAddingClub = true;
-    this.logoPreview = club.logoUrl;
+    this.logoPreview = this.imageUrlService.getImageUrl(club.logoUrl);
     
     // Ensure season controls are added
     this.addSeasonControls();
