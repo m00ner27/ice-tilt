@@ -103,6 +103,14 @@ export class ClubListComponent implements OnInit, OnDestroy {
   // Handle image loading errors
   onImageError(event: any, club: any): void {
     console.log('Image failed to load for club:', club.name, 'URL:', event.target.src);
+    
+    // Prevent infinite error loops - if we're already showing the default image, don't change it
+    if (event.target.src.includes('square-default.png')) {
+      console.log('Default image also failed to load, stopping error handling');
+      return;
+    }
+    
+    // Set the fallback image
     event.target.src = 'assets/images/square-default.png';
   }
 }

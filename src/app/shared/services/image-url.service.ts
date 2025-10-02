@@ -16,7 +16,7 @@ export class ImageUrlService {
     // Always use the production backend URL for images
     const BACKEND_URL = 'https://ice-tilt-backend.onrender.com';
     
-    if (!logoUrl) {
+    if (!logoUrl || logoUrl.trim() === '') {
       return defaultImage;
     }
     
