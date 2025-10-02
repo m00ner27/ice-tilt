@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AdminPasswordService } from '../services/admin-password.service';
 import { AuthService } from '@auth0/auth0-angular';
 import { take } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-admin-password',
@@ -132,7 +133,7 @@ export class AdminPasswordComponent implements OnInit {
             // User needs to login with Auth0
             this.auth.loginWithRedirect({
               authorizationParams: {
-                audience: 'http://localhost:3000',
+                audience: environment.apiAudience,
                 scope: 'openid profile email offline_access'
               }
             });

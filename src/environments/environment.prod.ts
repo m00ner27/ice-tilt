@@ -1,100 +1,100 @@
 export const environment = {
   production: true,
-  apiPlayerProfilesUrl: 'http://localhost:3001/api/player-profiles',
-  apiUrl: 'http://localhost:3001',
-  apiAudience: 'http://localhost:3001',
+  apiPlayerProfilesUrl: 'https://ice-tilt-api.onrender.com/api/player-profiles',
+  apiUrl: 'https://ice-tilt-api.onrender.com',
+  apiAudience: 'https://ice-tilt-api.onrender.com',
   apiAllowedList: [
     // Public endpoints that don't require authentication
     {
-      uri: 'http://localhost:3001/api/seasons',
+      uri: 'https://ice-tilt-api.onrender.com/api/seasons',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/clubs',
+      uri: 'https://ice-tilt-api.onrender.com/api/clubs',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/clubs/*',
+      uri: 'https://ice-tilt-api.onrender.com/api/clubs/*',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/clubs/*/roster*',
+      uri: 'https://ice-tilt-api.onrender.com/api/clubs/*/roster*',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/clubs/*/roster',
+      uri: 'https://ice-tilt-api.onrender.com/api/clubs/*/roster',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/games',
+      uri: 'https://ice-tilt-api.onrender.com/api/games',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/divisions',
+      uri: 'https://ice-tilt-api.onrender.com/api/divisions',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/player-profiles',
+      uri: 'https://ice-tilt-api.onrender.com/api/player-profiles',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/regions',
+      uri: 'https://ice-tilt-api.onrender.com/api/regions',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/skater-data',
+      uri: 'https://ice-tilt-api.onrender.com/api/skater-data',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/standings',
+      uri: 'https://ice-tilt-api.onrender.com/api/standings',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/standings/*',
+      uri: 'https://ice-tilt-api.onrender.com/api/standings/*',
       allowAnonymous: true
     },
     {
-      uri: 'http://localhost:3001/api/games/*',
+      uri: 'https://ice-tilt-api.onrender.com/api/games/*',
       allowAnonymous: true
     },
     // Protected endpoints that require authentication
     {
-      uri: 'http://localhost:3001/api/users/*',
+      uri: 'https://ice-tilt-api.onrender.com/api/users/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3001',
+          audience: 'https://ice-tilt-api.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
     },
     {
-      uri: 'http://localhost:3001/api/offers/*',
+      uri: 'https://ice-tilt-api.onrender.com/api/offers/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3001',
+          audience: 'https://ice-tilt-api.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
     },
     // Admin endpoints - be explicit about all possible patterns
     {
-      uri: 'http://localhost:3001/api/admins',
+      uri: 'https://ice-tilt-api.onrender.com/api/admins',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3001',
+          audience: 'https://ice-tilt-api.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
     },
     {
-      uri: 'http://localhost:3001/api/admins/*',
+      uri: 'https://ice-tilt-api.onrender.com/api/admins/*',
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3001',
+          audience: 'https://ice-tilt-api.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
