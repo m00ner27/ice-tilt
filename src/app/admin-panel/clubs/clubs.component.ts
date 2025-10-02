@@ -29,6 +29,7 @@ interface Division {
   _id?: string;
   name: string;
   seasonId: string;
+  order?: number;
 }
 
 interface Player {
@@ -283,7 +284,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
       
       // Load all divisions for all seasons
       this.api.getDivisions().subscribe(divisions => {
-        this.divisions = divisions;
+        this.divisions = divisions.sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
         
         // Add season controls to form after seasons are loaded
         this.addSeasonControls();

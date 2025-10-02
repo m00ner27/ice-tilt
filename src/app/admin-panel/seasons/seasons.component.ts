@@ -40,7 +40,8 @@ export class SeasonsComponent implements OnInit {
 
     this.divisionForm = this.fb.group({
       name: ['', Validators.required],
-      logoUrl: ['']
+      logoUrl: [''],
+      order: [0]
     });
   }
 
@@ -72,7 +73,18 @@ export class SeasonsComponent implements OnInit {
 
   getDivisionsForSelectedSeason(): Division[] {
     if (!this.selectedSeason) return [];
-    return this.divisions.filter(div => div.seasonId === this.selectedSeason!._id);
+    const filtered = this.divisions
+      .filter(div => div.seasonId === this.selectedSeason!._id)
+      .sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
+    
+    // Only log when we have divisions to avoid spam
+    if (filtered.length > 0) {
+      console.log('getDivisionsForSelectedSeason - selectedSeason:', this.selectedSeason?.name);
+      console.log('getDivisionsForSelectedSeason - all divisions:', this.divisions.map(d => ({ name: d.name, order: d.order, seasonId: d.seasonId })));
+      console.log('getDivisionsForSelectedSeason - filtered divisions:', filtered.map(d => ({ name: d.name, order: d.order })));
+    }
+    
+    return filtered;
   }
 
   getClubsForDivision(divisionId: string): any[] {
@@ -148,21 +160,34 @@ export class SeasonsComponent implements OnInit {
 
   editDivision(division: Division) {
     this.editingDivision = division;
-    this.divisionForm.patchValue(division);
+    this.divisionForm.patchValue({
+      name: division.name,
+      logoUrl: division.logoUrl || '',
+      order: division.order || 0
+    });
     this.isAddingDivision = true;
   }
 
   updateDivision() {
     if (this.divisionForm.valid && this.editingDivision) {
       const divisionData = { ...this.divisionForm.value, _id: this.editingDivision._id };
+      console.log('Sending division update:', divisionData);
       
       // Update via API
       this.apiService.updateDivision(divisionData).subscribe({
         next: (updatedDivision) => {
+          console.log('Received updated division:', updatedDivision);
+          console.log('Updated division order field:', updatedDivision.order);
+          
           // Update local array after successful API call
           const index = this.divisions.findIndex(d => d._id === updatedDivision._id);
           if (index !== -1) {
+            console.log('Found division at index:', index, 'before update:', this.divisions[index]);
             this.divisions[index] = updatedDivision;
+            console.log('After update:', this.divisions[index]);
+            console.log('All divisions after update:', this.divisions.map(d => ({ name: d.name, order: d.order })));
+          } else {
+            console.log('Division not found in local array!');
           }
           this.cancelDivisionForm();
           

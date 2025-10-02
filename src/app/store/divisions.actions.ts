@@ -5,6 +5,7 @@ export interface Division {
   name: string;
   seasonId: string;
   logoUrl?: string;
+  order?: number;
 }
 
 // Load Divisions Actions

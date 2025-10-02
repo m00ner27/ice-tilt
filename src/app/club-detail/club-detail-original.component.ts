@@ -46,6 +46,7 @@ interface Division {
   _id: string;
   name: string;
   seasonId: string;
+  order?: number;
 }
 
 // Keep these stats interfaces as they're specific to this component

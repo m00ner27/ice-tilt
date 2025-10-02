@@ -20,6 +20,7 @@ interface Division {
   name: string;
   seasonId: string;
   logoUrl?: string;
+  order?: number;
 }
 
 interface ClubSeasonInfo {
@@ -753,7 +754,7 @@ export class PlayerStatsComponent implements OnInit {
         divisionData,
         stats: stats.sort((a, b) => b.points - a.points || b.goals - a.goals) 
       };
-    });
+    }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
     
     this.applyDivisionFilter();
   }

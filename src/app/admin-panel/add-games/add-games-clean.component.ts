@@ -18,6 +18,7 @@ interface Division {
   logoUrl: string;
   manager: string;
   seasons: any[];
+  order?: number;
 }
 
 interface Club {

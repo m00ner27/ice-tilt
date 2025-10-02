@@ -1,5 +1,5 @@
 import { Component, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { AppState } from '../../store';
@@ -25,7 +25,7 @@ export class CreatePlayerComponent implements OnDestroy {
     private store: Store<AppState>
   ) {
     this.playerForm = this.fb.group({
-      gamertag: ['', Validators.required],
+      gamertag: ['', [Validators.required, this.duplicateNameValidator.bind(this)]],
       platform: ['PS5', Validators.required] // Default to PlayStation
     });
 
@@ -39,6 +39,32 @@ export class CreatePlayerComponent implements OnDestroy {
           this.success = false;
         }
       });
+  }
+
+  // Custom validator to check for duplicate gamertags
+  duplicateNameValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null; // Don't validate empty values
+    }
+    
+    // Get current free agents from the store
+    let freeAgents: any[] = [];
+    this.store.select(selectPlayersState)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        freeAgents = state.freeAgents || [];
+      });
+    
+    // Check if gamertag already exists (case-insensitive)
+    const existingPlayer = freeAgents.find(player => 
+      player.gamertag && player.gamertag.toLowerCase() === control.value.toLowerCase()
+    );
+    
+    if (existingPlayer) {
+      return { duplicateName: true };
+    }
+    
+    return null;
   }
 
   onButtonClick() {

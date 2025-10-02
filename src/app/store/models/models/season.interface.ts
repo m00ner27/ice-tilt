@@ -14,6 +14,7 @@ export interface Division {
   name: string;
   seasonId: string;
   logoUrl?: string;
+  order?: number;
   createdAt?: string;
   updatedAt?: string;
 }

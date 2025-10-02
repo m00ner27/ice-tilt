@@ -28,6 +28,7 @@ interface Division {
   name: string;
   seasonId: string;
   logoUrl?: string;
+  order?: number;
 }
 
 interface Game {
@@ -261,8 +262,12 @@ export class StandingsComponent implements OnInit, OnDestroy {
     });
     
 
-    // Calculate standings for each division
-    this.divisions.forEach(division => {
+    // Calculate standings for each division, sorted by order
+    const sortedDivisions = this.divisions
+      .filter(division => division.seasonId === this.selectedSeasonId)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    sortedDivisions.forEach(division => {
       const divisionGames = gamesByDivision.get(division._id) || [];
       const standings = this.calculateDivisionStandings(divisionGames, division);
       

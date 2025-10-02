@@ -19,6 +19,7 @@ interface Division {
   name: string;
   seasonId: string;
   logoUrl?: string;
+  order?: number;
 }
 
 interface ClubSeasonInfo {
@@ -833,7 +834,7 @@ export class GoalieStatsComponent implements OnInit {
       const divisionData = this.divisions.find(d => d.name === division);
       this.sortGoalieStats(stats, this.sortColumn, this.sortDirection);
       return { division, divisionData, stats };
-    });
+    }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
     
     this.applyDivisionFilter();
     console.log('Grouped by division:', this.groupedStats.length, 'groups');
