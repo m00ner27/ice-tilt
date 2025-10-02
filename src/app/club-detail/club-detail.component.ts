@@ -6,13 +6,13 @@ import { Observable, Subject } from 'rxjs';
 import { takeUntil, filter } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
+import { ImageUrlService } from '../shared/services/image-url.service';
 import { MatchHistoryComponent } from './match-history/match-history.component';
 import { ClubHeaderComponent } from './club-header/club-header.component';
 import { ClubStatsGridComponent } from './club-stats-grid/club-stats-grid.component';
 import { ClubRosterTablesComponent } from './club-roster-tables/club-roster-tables.component';
 import { ClubStatLegendComponent } from './club-stat-legend/club-stat-legend.component';
 import { Club } from '../store/models/models/club.interface';
-import { environment } from '../../environments/environment';
 
 // Import selectors and actions
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -80,7 +80,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private store: Store<AppState>,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
     this.selectedClub$ = this.store.select(ClubsSelectors.selectSelectedClub);
@@ -1205,19 +1206,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
-    }
-    
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
 
   getSelectedSeasonDivision(): any {

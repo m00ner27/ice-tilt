@@ -5,7 +5,7 @@ import { Player } from '../store/models/models/player.interface';
 import { ApiService } from '../store/services/api.service';
 import { Club } from '../store/models/models/club.interface';
 import { PositionPillComponent } from '../components/position-pill/position-pill.component';
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 import { PlayerStatsService } from '../store/services/player-stats.service';
 import { MatchService, EashlMatch } from '../store/services/match.service';
 
@@ -33,27 +33,13 @@ export class PlayerProfileComponent implements OnInit {
     private router: Router,
     private apiService: ApiService,
     private playerStatsService: PlayerStatsService,
-    private matchService: MatchService
+    private matchService: MatchService,
+    private imageUrlService: ImageUrlService
   ) {}
 
-  // Method to get the full image URL
+  // Method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
 
   // Method to get club logo URL by club name

@@ -7,7 +7,7 @@ import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -42,7 +42,8 @@ export class ClubListComponent implements OnInit, OnDestroy {
 
   constructor(
     private store: Store<AppState>,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
     this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
@@ -94,23 +95,8 @@ export class ClubListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Method to get the full image URL
+  // Method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
 }
