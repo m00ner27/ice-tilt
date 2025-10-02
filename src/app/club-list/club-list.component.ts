@@ -110,7 +110,7 @@ export class ClubListComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Set the fallback image
-    event.target.src = 'assets/images/square-default.png';
+    // Set the fallback image using the image service to ensure correct URL construction
+    event.target.src = this.imageUrlService.getImageUrl(undefined);
   }
 }
