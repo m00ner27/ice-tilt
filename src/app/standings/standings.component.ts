@@ -528,6 +528,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
   // Handle image loading errors
   onImageError(event: any): void {
     console.error('Image failed to load:', event.target.src);
+    event.target.src = 'assets/images/1ithlwords.png';
   }
 
   // Helper method to get the full image URL using the centralized service
