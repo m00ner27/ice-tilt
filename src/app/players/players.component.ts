@@ -121,7 +121,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
     this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
       clubs.forEach(club => {
         if (club.name && club.logoUrl) {
-          this.clubLogoMap[club.name.toLowerCase()] = club.logoUrl;
+          this.clubLogoMap[club.name.toLowerCase()] = this.getImageUrl(club.logoUrl);
         }
       });
     });
@@ -206,7 +206,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
             clubName = club.name;
             clubId = club._id;
             status = 'Signed';
-            logo = club.logoUrl;
+            logo = this.getImageUrl(club.logoUrl);
           }
         }
       }

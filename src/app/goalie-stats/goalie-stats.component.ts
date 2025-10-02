@@ -302,8 +302,8 @@ export class GoalieStatsComponent implements OnInit {
       
       // Create a map of team names to their logos from all matches
       matches.forEach(match => {
-        if (match.homeTeam) teamLogoMap.set(match.homeTeam, match.homeClub?.logoUrl);
-        if (match.awayTeam) teamLogoMap.set(match.awayTeam, match.awayClub?.logoUrl);
+        if (match.homeTeam) teamLogoMap.set(match.homeTeam, this.getImageUrl(match.homeClub?.logoUrl));
+        if (match.awayTeam) teamLogoMap.set(match.awayTeam, this.getImageUrl(match.awayClub?.logoUrl));
       });
       
       matches.forEach(match => {
@@ -551,8 +551,8 @@ export class GoalieStatsComponent implements OnInit {
     
     // Create a map of team names to their logos from all matches
     matches.forEach(match => {
-      if (match.homeTeam) teamLogoMap.set(match.homeTeam, match.homeClub?.logoUrl);
-      if (match.awayTeam) teamLogoMap.set(match.awayTeam, match.awayClub?.logoUrl);
+      if (match.homeTeam) teamLogoMap.set(match.homeTeam, this.getImageUrl(match.homeClub?.logoUrl));
+      if (match.awayTeam) teamLogoMap.set(match.awayTeam, this.getImageUrl(match.awayClub?.logoUrl));
     });
     
     matches.forEach(match => {
