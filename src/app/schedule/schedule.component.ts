@@ -221,4 +221,10 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl);
   }
+
+  // Handle image loading errors
+  onImageError(event: any): void {
+    console.log('Image failed to load, URL:', event.target.src);
+    event.target.src = 'assets/images/square-default.png';
+  }
 }

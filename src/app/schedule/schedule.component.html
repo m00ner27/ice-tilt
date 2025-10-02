@@ -82,7 +82,7 @@
               <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.homeTeam }}</a>
             </td>
             <td class="px-3 py-3 text-center">
-              <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
+              <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded" (error)="onImageError($event)">
             </td>
             <td class="px-3 py-3 text-center">
               <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-sm">W</span>
@@ -97,7 +97,7 @@
               <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-sm">L</span>
             </td>
             <td class="px-3 py-3 text-center">
-              <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded">
+              <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain mx-auto rounded" (error)="onImageError($event)">
             </td>
             <td class="px-3 py-3 text-left">
               <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors">{{ match.awayTeam }}</a>
@@ -140,7 +140,7 @@
             <td class="px-2 py-3 text-center">
               <div class="flex items-center justify-center space-x-1">
                 <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-xs truncate max-w-28">{{ match.homeTeam }}</a>
-                <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-5 h-5 object-contain rounded">
+                <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-5 h-5 object-contain rounded" (error)="onImageError($event)">
                 <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
                 <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
               </div>
@@ -153,7 +153,7 @@
               <div class="flex items-center justify-center space-x-1">
                 <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
                 <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
-                <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-5 h-5 object-contain rounded">
+                <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-5 h-5 object-contain rounded" (error)="onImageError($event)">
                 <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-xs truncate max-w-28">{{ match.awayTeam }}</a>
               </div>
             </td>
@@ -180,7 +180,7 @@
           <!-- Home Team -->
           <div class="flex items-center space-x-2 flex-1 justify-end">
             <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-sm">{{ match.homeTeam }}</a>
-            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain rounded">
+            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain rounded" (error)="onImageError($event)">
             <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
             <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
           </div>
@@ -195,7 +195,7 @@
           <div class="flex items-center space-x-2 flex-1 justify-start">
             <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
             <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
-            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain rounded">
+            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain rounded" (error)="onImageError($event)">
             <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-sm">{{ match.awayTeam }}</a>
           </div>
         </div>
