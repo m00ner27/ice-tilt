@@ -4,60 +4,7 @@ export const environment = {
   apiUrl: 'https://ice-tilt-backend.onrender.com',
   apiAudience: 'https://ice-tilt-backend.onrender.com',
   apiAllowedList: [
-    // Public endpoints that don't require authentication
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/seasons',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/clubs',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/clubs/*',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/clubs/*/roster*',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/clubs/*/roster',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/games',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/divisions',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/player-profiles',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/regions',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/skater-data',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/standings',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/standings/*',
-      allowAnonymous: true
-    },
-    {
-      uri: 'https://ice-tilt-backend.onrender.com/api/games/*',
-      allowAnonymous: true
-    },
-    // Protected endpoints that require authentication
+    // Only include protected endpoints that require authentication
     {
       uri: 'https://ice-tilt-backend.onrender.com/api/users/*',
       allowAnonymous: false,
