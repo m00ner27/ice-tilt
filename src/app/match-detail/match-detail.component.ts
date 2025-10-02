@@ -401,6 +401,12 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     return this.imageUrlService.getImageUrl(logoUrl, '/assets/images/default-logo.png');
   }
 
+  // Handle image loading errors
+  onImageError(event: any): void {
+    console.log('Image failed to load, URL:', event.target.src);
+    event.target.src = 'assets/images/square-default.png';
+  }
+
   getTeamTotalGoals(team: 'home' | 'away'): number {
     if (!this.match) return 0;
     

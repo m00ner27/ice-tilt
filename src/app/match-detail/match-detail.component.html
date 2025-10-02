@@ -6,7 +6,7 @@
     <div class="match-clubs">
       <div class="club home-club" [class.winner]="isTeamWinner(match.homeTeam)">
         <div class="club-name-logo">
-          <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="club-logo">
+          <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="club-logo" (error)="onImageError($event)">
           <span class="club-name">{{ match.homeTeam }}</span>
         </div>
       </div>
@@ -18,7 +18,7 @@
       <div class="club away-club" [class.winner]="isTeamWinner(match.awayTeam)">
         <div class="club-name-logo">
           <span class="club-name">{{ match.awayTeam }}</span>
-          <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="club-logo">
+          <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="club-logo" (error)="onImageError($event)">
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@
   <div class="match-content" *ngIf="!noStatsMessage">
     <!-- Home Club Statistics -->
     <div class="club-stats">
-      <h3><img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} Logo" class="club-logo-sm"> {{ match.homeTeam }} Stats</h3>
+      <h3><img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} Logo" class="club-logo-sm" (error)="onImageError($event)"> {{ match.homeTeam }} Stats</h3>
       
       <!-- Club Summary Stats -->
       <div class="club-summary-stats" *ngIf="homeTeamPlayers.length > 0 || homeTeamGoalies.length > 0">
@@ -152,7 +152,7 @@
     
     <!-- Away Club Statistics -->
     <div class="club-stats">
-      <h3><img [src]="getImageUrl(match.awayClub?.logoUrl)" alt="{{ match.awayTeam }} Logo" class="club-logo-sm"> {{ match.awayTeam }} Stats</h3>
+      <h3><img [src]="getImageUrl(match.awayClub?.logoUrl)" alt="{{ match.awayTeam }} Logo" class="club-logo-sm" (error)="onImageError($event)"> {{ match.awayTeam }} Stats</h3>
       
       <!-- Club Summary Stats -->
       <div class="club-summary-stats" *ngIf="awayTeamPlayers.length > 0 || awayTeamGoalies.length > 0">
