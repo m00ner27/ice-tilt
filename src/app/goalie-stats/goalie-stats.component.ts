@@ -938,4 +938,18 @@ export class GoalieStatsComponent implements OnInit {
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl, 'assets/images/1ithlwords.png');
   }
+
+  // Handle image loading errors
+  onImageError(event: any): void {
+    console.log('Image failed to load, URL:', event.target.src);
+    
+    // Prevent infinite error loops - if we're already showing the default image, don't change it
+    if (event.target.src.includes('square-default.png')) {
+      console.log('Default image also failed to load, stopping error handling');
+      return;
+    }
+    
+    // Set the fallback image using the image service to ensure correct URL construction
+    event.target.src = this.imageUrlService.getImageUrl(undefined);
+  }
 }

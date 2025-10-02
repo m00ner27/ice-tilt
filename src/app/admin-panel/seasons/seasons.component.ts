@@ -7,6 +7,7 @@ import * as SeasonsActions from '../../store/seasons.actions';
 import { selectAllSeasons, selectSeasonsLoading, selectSeasonsError } from '../../store/seasons.selectors';
 import { Season, Division } from '../../store/models/models';
 import { ApiService } from '../../store/services/api.service';
+import { ImageUrlService } from '../../shared/services/image-url.service';
 
 @Component({
   selector: 'app-seasons',
@@ -30,7 +31,8 @@ export class SeasonsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private store: Store,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private imageUrlService: ImageUrlService
   ) {
     this.seasonForm = this.fb.group({
       name: ['', Validators.required],
@@ -92,10 +94,22 @@ export class SeasonsComponent implements OnInit {
     return [];
   }
 
-  getImageUrl(url: string): string {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return url; // Simplified for now
+  getImageUrl(url: string | undefined): string {
+    return this.imageUrlService.getImageUrl(url);
+  }
+
+  // Handle image loading errors
+  onImageError(event: any): void {
+    console.log('Image failed to load, URL:', event.target.src);
+    
+    // Prevent infinite error loops - if we're already showing the default image, don't change it
+    if (event.target.src.includes('square-default.png')) {
+      console.log('Default image also failed to load, stopping error handling');
+      return;
+    }
+    
+    // Set the fallback image using the image service to ensure correct URL construction
+    event.target.src = this.imageUrlService.getImageUrl(undefined);
   }
 
   // Season methods

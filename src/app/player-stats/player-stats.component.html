@@ -33,7 +33,8 @@
         <img *ngIf="group.divisionData?.logoUrl" 
              [src]="getImageUrl(group.divisionData?.logoUrl)" 
              [alt]="group.division + ' logo'" 
-             class="division-logo">
+             class="division-logo"
+             (error)="onImageError($event)">
         {{ group.division }}
       </h2>
       

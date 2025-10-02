@@ -30,7 +30,7 @@
     <!-- Stats Tables per Division -->
     <div *ngFor="let group of filteredGroupedStats" class="division-group">
       <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
-        <img *ngIf="group.divisionData?.logoUrl" [src]="getImageUrl(group.divisionData?.logoUrl)" [alt]="group.division + ' logo'" class="division-logo">
+        <img *ngIf="group.divisionData?.logoUrl" [src]="getImageUrl(group.divisionData?.logoUrl)" [alt]="group.division + ' logo'" class="division-logo" (error)="onImageError($event)">
         {{ group.division }}
       </h2>
       

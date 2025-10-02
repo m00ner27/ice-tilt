@@ -45,7 +45,7 @@
         <div class="flex items-center justify-between p-3 bg-admin-hover rounded-lg" *ngFor="let division of getDivisionsForSelectedSeason()">
           <div class="flex items-center gap-3">
             <span class="text-admin-primary font-mono text-sm bg-admin-accent px-2 py-1 rounded">{{ division.order || 0 }}</span>
-            <img *ngIf="division.logoUrl" [src]="getImageUrl(division.logoUrl)" [alt]="division.name + ' logo'" class="w-8 h-8 object-contain rounded">
+            <img *ngIf="division.logoUrl" [src]="getImageUrl(division.logoUrl)" [alt]="division.name + ' logo'" class="w-8 h-8 object-contain rounded" (error)="onImageError($event)">
             <h4 class="text-white font-medium">{{ division.name }}</h4>
           </div>
           <div class="flex gap-2">
