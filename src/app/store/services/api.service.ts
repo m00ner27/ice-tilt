@@ -178,9 +178,18 @@ export class ApiService {
 
   // File upload method
   uploadFile(file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<any>(`${this.apiUrl}/api/upload`, formData);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/upload`, formData, { headers });
+      })
+    );
   }
 
   addGame(game: any): Observable<any> {
