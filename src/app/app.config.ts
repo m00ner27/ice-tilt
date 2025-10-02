@@ -18,7 +18,7 @@ export const appConfig: ApplicationConfig = {
       authorizationParams: {
         redirect_uri: window.location.origin,
         audience: environment.apiAudience,
-        scope: 'openid profile email offline_access read:clubs read:games read:seasons read:divisions read:player-profiles read:regions read:skater-data read:standings read:users read:offers',
+        scope: 'openid profile email offline_access',
       },
       httpInterceptor: {
         allowedList: [
