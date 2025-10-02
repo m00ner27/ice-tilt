@@ -25,6 +25,11 @@ export class ImageUrlService {
       return logoUrl;
     }
     
+    // If it's a local asset path (starts with 'assets/'), return as-is
+    if (logoUrl.startsWith('assets/')) {
+      return logoUrl;
+    }
+    
     // If it's a relative path starting with /uploads, prepend the backend URL
     if (logoUrl.startsWith('/uploads/')) {
       return `${BACKEND_URL}${logoUrl}`;
