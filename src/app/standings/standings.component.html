@@ -58,8 +58,9 @@
                 <div class="flex items-center gap-2">
                   <img 
                     class="w-8 h-8 object-contain rounded" 
-                    [src]="team.logo || 'assets/images/square-default.png'" 
+                    [src]="getImageUrl(team.logo)" 
                     [alt]="team.teamName + ' logo'" 
+                    (error)="onImageError($event)"
                   />
                   <span class="font-medium">
                     <a [routerLink]="['/clubs', team.teamId]" class="text-white hover:text-admin-primary transition-colors">{{ team.teamName }}</a>
