@@ -743,6 +743,10 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       playerStatsMap.set(`${playerName}_goalie`, baseGoalieStats);
     });
 
+    // Create a set of roster player names for quick lookup
+    const rosterPlayerNames = new Set(roster.map(p => p.gamertag).filter(Boolean));
+    console.log('Roster player names for stats processing:', Array.from(rosterPlayerNames));
+
     // Also initialize stats for roster players who might not have played yet
     roster.forEach(player => {
       if (!player || !player.gamertag) return;
@@ -1213,25 +1217,27 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     });
 
     // Categorize players based on their role
-    // Players can appear in both skater and goalie sections if they have stats for both
+    // Only include players who are on the club's roster
     this.skaterStats = allPlayers.filter(player => 
-      player.role === 'skater' && player.gamesPlayed > 0
+      player.role === 'skater' && player.gamesPlayed > 0 && rosterPlayerNames.has(player.name)
     );
     
     this.goalieStats = allPlayers.filter(player => 
-      player.role === 'goalie' && player.gamesPlayed > 0
+      player.role === 'goalie' && player.gamesPlayed > 0 && rosterPlayerNames.has(player.name)
     );
     
     console.log('Player categorization:');
-    console.log('All players with games:', allPlayers.filter(p => p.gamesPlayed > 0).map(p => ({ 
+    const allPlayersWithGames = allPlayers.filter(p => p.gamesPlayed > 0);
+    console.log('All players with games:', allPlayersWithGames.map(p => ({ 
       name: p.name, 
       position: p.position, 
       gp: p.gamesPlayed,
       saves: p.saves,
-      shotsAgainst: p.shotsAgainst
+      shotsAgainst: p.shotsAgainst,
+      onRoster: rosterPlayerNames.has(p.name)
     })));
-    console.log('Skaters:', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed })));
-    console.log('Goalies:', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves })));
+    console.log('Skaters (roster only):', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed })));
+    console.log('Goalies (roster only):', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves })));
     
     console.log('Final skater stats:', this.skaterStats.length, 'players');
     console.log('Final goalie stats:', this.goalieStats.length, 'players');
