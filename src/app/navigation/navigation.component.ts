@@ -5,6 +5,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
 import { AuthButtonComponent } from './auth-button/auth-button.component';
 import { AuthService } from '@auth0/auth0-angular';
 import { ApiService } from '../store/services/api.service';
+import { AdminPasswordService } from '../services/admin-password.service';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -21,10 +22,13 @@ export class NavigationComponent {
   isMenuCollapsed = true;
   isAdmin$: Observable<boolean>;
   isManager$: Observable<boolean>;
+  shouldShowLoginButton$: Observable<boolean>;
+  
   constructor(
     public auth: AuthService, 
     private api: ApiService, 
-    private store: Store<AppState>
+    private store: Store<AppState>,
+    private adminPasswordService: AdminPasswordService
   ) {
     this.isAdmin$ = this.auth.isAuthenticated$.pipe(
       map(isAuth => {
@@ -33,6 +37,7 @@ export class NavigationComponent {
       })
     );
     this.isManager$ = this.store.select(selectIsUserAnyManager);
+    this.shouldShowLoginButton$ = this.adminPasswordService.isAdminPasswordVerified$;
   }
 
   toggleMenu() {

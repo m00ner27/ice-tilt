@@ -25,7 +25,7 @@
             <div class="flex items-center">
                 <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
                     <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
-                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
+                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async) && (shouldShowLoginButton$ | async)"></app-auth-button>
                 </ng-container>
                 <ng-template #authLoading>
                     <!-- Optional: placeholder/spinner -->
@@ -59,7 +59,7 @@
                 <!-- Mobile Auth Section -->
                 <div class="pt-2 border-t border-gray-700">
                     <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
-                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
+                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async) && (shouldShowLoginButton$ | async)"></app-auth-button>
                 </div>
             </div>
         </div>
