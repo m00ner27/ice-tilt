@@ -132,9 +132,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   applyFiltersAndSort(): void {
     this.matches$.pipe(takeUntil(this.destroy$)).subscribe((matches: any[]) => {
-      console.log('ScheduleComponent: Raw matches from store:', matches?.length || 0, matches);
-      console.log('ScheduleComponent: Current filters - team:', this.filterTeam, 'season:', this.filterSeason);
-      
       let filtered = [...matches];
 
       // Apply team filter
@@ -142,13 +139,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         filtered = filtered.filter(match => 
           match.homeTeam === this.filterTeam || match.awayTeam === this.filterTeam
         );
-        console.log('ScheduleComponent: After team filter:', filtered.length);
       }
 
       // Apply season filter
       if (this.filterSeason) {
         filtered = filtered.filter(match => match.seasonId === this.filterSeason);
-        console.log('ScheduleComponent: After season filter:', filtered.length);
       }
 
       // Apply sorting
@@ -168,7 +163,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         return this.sortDirection === 'asc' ? comparison : -comparison;
       });
 
-      console.log('ScheduleComponent: Final filtered matches:', filtered.length, filtered);
       this.filteredMatches = filtered;
     });
   }
