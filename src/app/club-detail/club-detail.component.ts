@@ -125,6 +125,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Subscribe to selected club changes
     this.selectedClub$.pipe(takeUntil(this.destroy$)).subscribe(club => {
       if (club) {
+        console.log('Selected club changed:', club.name);
         // Clear previous roster data immediately to prevent showing wrong data
         this.signedPlayers = [];
         this.skaterStats = [];
@@ -132,10 +133,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         
         this.backendClub = club as any;
         this.club = this.mapBackendClubToFrontend(club);
-        // Filter matches for the new club
-        this.clubMatches = this.matches.filter(match => 
-          match.homeClubId?.name === club.name || match.awayClubId?.name === club.name
-        );
+        
         // Update club roster selector for the new club
         this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(club._id));
         
@@ -152,6 +150,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         if (this.selectedSeasonId) {
           this.ngrxApiService.loadClubRoster(club._id, this.selectedSeasonId);
         }
+        
+        // Trigger stats processing if we already have matches loaded
+        this.triggerStatsProcessingIfReady();
       }
     });
 
@@ -220,11 +221,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         this.clubMatches = clubMatches;
         this.club = this.mapBackendClubToFrontend(this.backendClub);
         
-        // Recalculate player stats when matches are loaded/updated
-        if (this.signedPlayers.length > 0) {
-          console.log('Recalculating player stats with', this.clubMatches.length, 'matches');
-          this.processPlayerStatsFromMatches(this.signedPlayers);
-        }
+        // Trigger stats processing if all data is ready
+        this.triggerStatsProcessingIfReady();
       }
     });
 
@@ -353,13 +351,21 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.signedPlayers = roster.filter(player => player && player.gamertag);
     console.log('Signed players for', this.backendClub?.name, ':', this.signedPlayers.map(p => p.gamertag));
 
-    // Process skater and goalie stats from matches
-    this.processPlayerStatsFromMatches(roster);
-    
-    // If matches are already loaded, recalculate stats
-    if (this.clubMatches.length > 0) {
-      console.log('Matches already loaded, recalculating player stats with', this.clubMatches.length, 'matches');
-      this.processPlayerStatsFromMatches(roster);
+    // Trigger stats processing if all data is ready
+    this.triggerStatsProcessingIfReady();
+  }
+
+  private triggerStatsProcessingIfReady() {
+    // Check if we have all required data to process stats
+    if (this.backendClub && this.clubMatches.length > 0 && this.signedPlayers.length > 0) {
+      console.log('All data ready, processing player stats');
+      this.processPlayerStatsFromMatches(this.signedPlayers);
+    } else {
+      console.log('Not ready for stats processing:', {
+        hasBackendClub: !!this.backendClub,
+        clubMatchesCount: this.clubMatches.length,
+        signedPlayersCount: this.signedPlayers.length
+      });
     }
   }
 
