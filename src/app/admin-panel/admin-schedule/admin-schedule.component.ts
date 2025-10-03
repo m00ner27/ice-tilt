@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ApiService } from '../../store/services/api.service';
 import { EashlService } from '../../services/eashl.service';
+import { ImageUrlService } from '../../shared/services/image-url.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AppState } from '../../store';
@@ -32,7 +33,8 @@ export class AdminScheduleComponent implements OnInit {
     private api: ApiService,
     private eashlService: EashlService,
     private router: Router,
-    private store: Store<AppState>
+    private store: Store<AppState>,
+    private imageUrlService: ImageUrlService
   ) {}
 
   ngOnInit(): void {
@@ -1087,5 +1089,24 @@ export class AdminScheduleComponent implements OnInit {
     } else {
       alert('No changes to submit.');
     }
+  }
+
+  // Helper method to get the full image URL using the centralized service
+  getImageUrl(logoUrl: string | undefined): string {
+    return this.imageUrlService.getImageUrl(logoUrl);
+  }
+
+  // Handle image loading errors
+  onImageError(event: any): void {
+    console.log('Image failed to load, URL:', event.target.src);
+    
+    // Prevent infinite error loops - if we're already showing the default image, don't change it
+    if (event.target.src.includes('square-default.png')) {
+      console.log('Default image also failed to load, stopping error handling');
+      return;
+    }
+    
+    // Set the fallback image using the image service to ensure correct URL construction
+    event.target.src = this.imageUrlService.getImageUrl(undefined);
   }
 }

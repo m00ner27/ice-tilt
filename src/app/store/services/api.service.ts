@@ -425,7 +425,16 @@ export class ApiService {
   }
 
   getClubEashlGames(clubId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/eashl-games`);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/eashl-games`, { headers });
+      })
+    );
   }
 
   getGameEashlData(gameId: string): Observable<any> {

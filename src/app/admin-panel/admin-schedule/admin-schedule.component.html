@@ -92,13 +92,13 @@
           <td class="px-4 py-3 border-t border-admin-accent">{{ formatDateTime(game.date) }}</td>
           <td class="px-4 py-3 border-t border-admin-accent">
             <div class="flex items-center gap-2">
-              <img [src]="game.homeLogo" alt="Home Logo" class="w-7 h-7 object-contain rounded bg-admin-card" />
+              <img [src]="getImageUrl(game.homeLogo)" alt="Home Logo" class="w-7 h-7 object-contain rounded bg-admin-card" (error)="onImageError($event)" />
               {{ game.homeTeam }}
             </div>
           </td>
           <td class="px-4 py-3 border-t border-admin-accent">
             <div class="flex items-center gap-2">
-              <img [src]="game.awayLogo" alt="Away Logo" class="w-7 h-7 object-contain rounded bg-admin-card" />
+              <img [src]="getImageUrl(game.awayLogo)" alt="Away Logo" class="w-7 h-7 object-contain rounded bg-admin-card" (error)="onImageError($event)" />
               {{ game.awayTeam }}
             </div>
           </td>
