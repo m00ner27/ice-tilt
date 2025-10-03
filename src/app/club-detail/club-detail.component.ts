@@ -205,11 +205,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         id: m._id || m.id, 
         homeTeam: m.homeTeam, 
         awayTeam: m.awayTeam,
-        homeClubId: m.homeClubId,
-        awayClubId: m.awayClubId,
+        homeClub: m.homeClub,
+        awayClub: m.awayClub,
             seasonId: m.seasonId,
-            homeClubIdType: typeof m.homeClubId,
-            awayClubIdType: typeof m.awayClubId
+            homeClubType: typeof m.homeClub,
+            awayClubType: typeof m.awayClub
       })));
           
           // Debug: Show a sample match structure
@@ -223,20 +223,20 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         
         // Filter matches for the current club - be very strict about matching
         let clubMatches = matches.filter(match => {
-          const homeMatch = match.homeClubId?.name === this.backendClub?.name;
-          const awayMatch = match.awayClubId?.name === this.backendClub?.name;
+          const homeMatch = match.homeClub?.name === this.backendClub?.name;
+          const awayMatch = match.awayClub?.name === this.backendClub?.name;
           const homeTeamMatch = match.homeTeam === this.backendClub?.name;
           const awayTeamMatch = match.awayTeam === this.backendClub?.name;
           
-          // Also check if homeClubId or awayClubId are objects with _id property
-          const homeClubIdMatch = match.homeClubId?._id === this.backendClub?._id;
-          const awayClubIdMatch = match.awayClubId?._id === this.backendClub?._id;
+          // Also check if homeClub or awayClub are objects with _id property
+          const homeClubIdMatch = match.homeClub?._id === this.backendClub?._id;
+          const awayClubIdMatch = match.awayClub?._id === this.backendClub?._id;
           
           const isMatch = homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
           
           console.log(`Match ${match._id || match.id}:`, {
-            homeClubId: match.homeClubId?.name || match.homeClubId?._id,
-            awayClubId: match.awayClubId?.name || match.awayClubId?._id,
+            homeClub: match.homeClub?.name || match.homeClub?._id,
+            awayClub: match.awayClub?.name || match.awayClub?._id,
             homeTeam: match.homeTeam,
             awayTeam: match.awayTeam,
             homeMatch,
