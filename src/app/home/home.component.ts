@@ -32,6 +32,7 @@ export class HomeComponent implements OnInit {
   topAssists: AggregatedPlayer[] = [];
   topPoints: AggregatedPlayer[] = [];
   topSavePct: any[] = [];
+  isLoading: boolean = true;
 
   constructor(
     private matchService: MatchService,
@@ -45,6 +46,7 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.matchService.getMatches().subscribe(matches => {
       if (!matches) {
+        this.isLoading = false;
         return;
       }
       
@@ -155,9 +157,7 @@ export class HomeComponent implements OnInit {
         .sort((a, b) => parseFloat(b.savePercentage) - parseFloat(a.savePercentage))
         .slice(0, 5);
       
-
-      
-
+      this.isLoading = false;
     });
   }
 }

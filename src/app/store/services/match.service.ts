@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { CacheService } from '../../shared/services/cache.service';
 
 export interface PlayerMatchStats {
   playerId: number;
@@ -69,7 +70,7 @@ export interface EashlMatch {
 export class MatchService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private cacheService: CacheService) { }
 
   private transformGameData(game: any): EashlMatch {
     const playerStats: PlayerMatchStats[] = [];
@@ -357,8 +358,20 @@ export class MatchService {
   }
 
   getMatches(): Observable<EashlMatch[]> {
+    const cacheKey = 'matches';
+    
+    // Check cache first
+    if (this.cacheService.has(cacheKey)) {
+      return of(this.cacheService.get(cacheKey));
+    }
+
     return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
-      map(games => games.map(this.transformGameData))
+      map(games => {
+        const transformedGames = games.map(this.transformGameData);
+        // Cache for 5 minutes
+        this.cacheService.set(cacheKey, transformedGames, 5);
+        return transformedGames;
+      })
     );
   }
 

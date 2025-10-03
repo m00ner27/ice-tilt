@@ -69,10 +69,14 @@
       <!-- Goals Top 5 -->
       <div class="mb-3">
         <div class="bg-admin-card rounded-lg">
-          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Goals</div>
-          <div class="p-0 rounded-b-lg overflow-hidden">
-            <ul class="divide-y divide-admin-accent">
-              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topGoals; let i = index">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Goals</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topGoals; let i = index">
                 <span class="font-bold mr-2">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
                 <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
@@ -85,10 +89,14 @@
       <!-- Assists Top 5 -->
       <div class="mb-3">
         <div class="bg-admin-card rounded-lg">
-          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Assists</div>
-          <div class="p-0 rounded-b-lg overflow-hidden">
-            <ul class="divide-y divide-admin-accent">
-              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topAssists; let i = index">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Assists</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topAssists; let i = index">
                 <span class="font-bold mr-2">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
                 <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
@@ -101,10 +109,14 @@
       <!-- Points Top 5 -->
       <div class="mb-3">
         <div class="bg-admin-card rounded-lg">
-          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Points</div>
-          <div class="p-0 rounded-b-lg overflow-hidden">
-            <ul class="divide-y divide-admin-accent">
-              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topPoints; let i = index">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Points</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topPoints; let i = index">
                 <span class="font-bold mr-2">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
                 <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
