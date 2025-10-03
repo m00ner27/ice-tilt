@@ -114,6 +114,14 @@ export class ClubStatsService {
             console.log(`Team ${teamKey} first player:`, teamData[0]);
           } else {
             console.log(`Team ${teamKey} keys:`, Object.keys(teamData));
+            // Debug the actual player data structure
+            const playerKeys = Object.keys(teamData);
+            if (playerKeys.length > 0) {
+              const firstPlayerKey = playerKeys[0];
+              console.log(`Team ${teamKey} first player key:`, firstPlayerKey);
+              console.log(`Team ${teamKey} first player data:`, teamData[firstPlayerKey]);
+              console.log(`Team ${teamKey} first player name:`, teamData[firstPlayerKey]?.name);
+            }
           }
         });
 
@@ -135,6 +143,9 @@ export class ClubStatsService {
             // Convert object to array
             teamPlayers = Object.values(teamPlayersData);
             console.log(`Converted team ${teamKey} object to array:`, teamPlayers);
+            console.log(`Converted team ${teamKey} array length:`, teamPlayers.length);
+            console.log(`Converted team ${teamKey} first player:`, teamPlayers[0]);
+            console.log(`Converted team ${teamKey} first player name:`, teamPlayers[0]?.name);
           } else {
             console.log(`Team ${teamKey} is not an array or object, skipping...`);
             continue;
@@ -474,6 +485,9 @@ export class ClubStatsService {
             // Convert object to array
             teamPlayers = Object.values(teamPlayersData);
             console.log(`Stats processing - converted team ${teamKey} object to array:`, teamPlayers);
+            console.log(`Stats processing - converted team ${teamKey} array length:`, teamPlayers.length);
+            console.log(`Stats processing - converted team ${teamKey} first player:`, teamPlayers[0]);
+            console.log(`Stats processing - converted team ${teamKey} first player name:`, teamPlayers[0]?.name);
           } else {
             console.log(`Stats processing - team ${teamKey} is not an array or object, skipping...`);
             continue;
