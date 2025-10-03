@@ -201,7 +201,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       if (this.backendClub) {
         console.log('Filtering matches for club:', this.backendClub.name);
         
-        // Try different filtering approaches
+        // Filter matches for the current club - be very strict about matching
         let clubMatches = matches.filter(match => {
           const homeMatch = match.homeClubId?.name === this.backendClub?.name;
           const awayMatch = match.awayClubId?.name === this.backendClub?.name;
@@ -211,6 +211,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           // Also check if homeClubId or awayClubId are objects with _id property
           const homeClubIdMatch = match.homeClubId?._id === this.backendClub?._id;
           const awayClubIdMatch = match.awayClubId?._id === this.backendClub?._id;
+          
+          const isMatch = homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
           
           console.log(`Match ${match._id || match.id}:`, {
             homeClubId: match.homeClubId?.name || match.homeClubId?._id,
@@ -224,10 +226,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             homeClubIdMatch,
             awayClubIdMatch,
             ourClubId: this.backendClub?._id,
-            ourClubName: this.backendClub?.name
+            ourClubName: this.backendClub?.name,
+            isMatch
           });
           
-          return homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
+          return isMatch;
         });
         
         console.log('Filtered club matches:', clubMatches.length);
@@ -238,6 +241,18 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           homeClubId: m.homeClubId?.name,
           awayClubId: m.awayClubId?.name
         })));
+        
+        // Safety check: If no matches found, log a warning
+        if (clubMatches.length === 0) {
+          console.warn(`No matches found for club: ${this.backendClub?.name}`);
+          console.warn('Available match teams:', matches.map(m => ({ 
+            id: m._id || m.id, 
+            homeTeam: m.homeTeam, 
+            awayTeam: m.awayTeam,
+            homeClubId: m.homeClubId?.name,
+            awayClubId: m.awayClubId?.name
+          })));
+        }
         
         this.clubMatches = clubMatches;
         this.club = this.mapBackendClubToFrontend(this.backendClub);
