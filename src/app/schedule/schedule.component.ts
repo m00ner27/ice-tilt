@@ -237,7 +237,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Set the fallback image using the image service to ensure correct URL construction
-    event.target.src = this.imageUrlService.getImageUrl(undefined);
+    // Set the fallback image - use a path that will be treated as a local asset
+    event.target.src = '/assets/images/square-default.png';
   }
 }
