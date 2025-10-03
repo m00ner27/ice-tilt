@@ -7,6 +7,7 @@ import { takeUntil, filter } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { ClubStatsService, SkaterStats, GoalieStats } from './services/club-stats.service';
 import { MatchHistoryComponent } from './match-history/match-history.component';
 import { ClubHeaderComponent } from './club-header/club-header.component';
 import { ClubStatsGridComponent } from './club-stats-grid/club-stats-grid.component';
@@ -72,8 +73,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       
       // Additional properties for template
       signedPlayers: any[] = [];
-      skaterStats: any[] = [];
-      goalieStats: any[] = [];
+      skaterStats: SkaterStats[] = [];
+      goalieStats: GoalieStats[] = [];
       matches: any[] = [];
       clubMatches: any[] = [];
       
@@ -85,6 +86,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
     private imageUrlService: ImageUrlService,
+    private clubStatsService: ClubStatsService,
     private cdr: ChangeDetectorRef
   ) {
     // Initialize selectors
@@ -432,32 +434,32 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     }
   }
 
-  private processPlayerStatsFromMatches(roster: any[]) {
-    console.log('=== CLUB DETAIL DEBUG ===');
-    console.log('Processing player stats from matches for club:', this.backendClub?.name);
-    console.log('Club matches available:', this.clubMatches.length);
-    console.log('Roster players:', roster.length);
-    console.log('Selected season ID:', this.selectedSeasonId);
-    console.log('Club matches:', this.clubMatches.map(m => ({
-      id: m.id || m._id,
-      homeTeam: m.homeTeam,
-      awayTeam: m.awayTeam,
-      hasEashlData: !!m.eashlData,
-      isManualEntry: m.eashlData?.manualEntry,
-      hasPlayerStats: !!m.playerStats,
-      playerStatsCount: m.playerStats?.length || 0
-    })));
-    console.log('========================');
-    
-    // Clear previous stats before processing new ones
-    this.skaterStats = [];
-    this.goalieStats = [];
-    this.cdr.detectChanges();
-    
-    const playerStatsMap = new Map<string, any>();
-
-    // First, collect all players who played for this team from match data (including unsigned ones)
-    const allPlayersWhoPlayed = new Set<string>();
+      private processPlayerStatsFromMatches(roster: any[]) {
+        console.log('=== CLUB DETAIL DEBUG ===');
+        console.log('Processing player stats from matches for club:', this.backendClub?.name);
+        console.log('Club matches available:', this.clubMatches.length);
+        console.log('Roster players:', roster.length);
+        console.log('Selected season ID:', this.selectedSeasonId);
+        console.log('========================');
+        
+        // Clear previous stats before processing new ones
+        this.skaterStats = [];
+        this.goalieStats = [];
+        this.cdr.detectChanges();
+        
+        // Use the service to process stats
+        const { skaterStats, goalieStats } = this.clubStatsService.processPlayerStatsFromMatches(
+          this.clubMatches,
+          roster,
+          this.backendClub
+        );
+        
+        this.skaterStats = skaterStats;
+        this.goalieStats = goalieStats;
+        
+        console.log('Stats processing complete - triggering UI update');
+        this.cdr.detectChanges();
+      }
     
     this.clubMatches.forEach(match => {
       console.log(`Processing match ${match._id || match.id} for club ${this.backendClub?.name}:`, {
@@ -1262,13 +1264,13 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     });
 
         // Categorize players based on their role
-        // ONLY include players who are on the current roster
+        // Include ALL players who played for this club (not just current roster)
         this.skaterStats = allPlayers.filter(player => 
-          player.role === 'skater' && player.gamesPlayed > 0 && player.isSigned
+          player.role === 'skater' && player.gamesPlayed > 0
         );
         
         this.goalieStats = allPlayers.filter(player => 
-          player.role === 'goalie' && player.gamesPlayed > 0 && player.isSigned
+          player.role === 'goalie' && player.gamesPlayed > 0
         );
     
         console.log('Player categorization:');
@@ -1282,8 +1284,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           onRoster: rosterPlayerNames.has(p.name),
           isSigned: p.isSigned
         })));
-        console.log('Skaters (roster only):', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed, onRoster: rosterPlayerNames.has(s.name), isSigned: s.isSigned })));
-        console.log('Goalies (roster only):', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves, onRoster: rosterPlayerNames.has(g.name), isSigned: g.isSigned })));
+        console.log('Skaters (all who played):', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed, onRoster: rosterPlayerNames.has(s.name), isSigned: s.isSigned })));
+        console.log('Goalies (all who played):', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves, onRoster: rosterPlayerNames.has(g.name), isSigned: g.isSigned })));
     
     console.log('Final skater stats:', this.skaterStats.length, 'players');
     console.log('Final goalie stats:', this.goalieStats.length, 'players');
