@@ -15,7 +15,7 @@
     <select id="seasonSelect" 
             [value]="selectedSeasonId || 'all-seasons'" 
             (change)="onSeasonChange($any($event.target).value)">
-      <option *ngFor="let season of getClubSeasons()" [value]="season._id">
+        <option *ngFor="let season of getClubSeasons(backendClub)" [value]="season._id">
         {{ season.name }}
       </option>
     </select>

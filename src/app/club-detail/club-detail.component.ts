@@ -52,31 +52,31 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private rosterSubscription$ = new Subject<void>();
   
-      // Observable selectors
-      selectedClub$: Observable<Club | null>;
-      allClubs$: Observable<any[]>;
-      matches$: Observable<any[]>;
-      seasons$: Observable<any[]>;
-      clubsLoading$: Observable<boolean>;
-      clubsError$: Observable<any>;
-      clubRoster$: Observable<any[]>;
-      
-      // Local state
-      club: Club | undefined;
-      backendClub: BackendClub | null = null;
-      allClubs: BackendClub[] = [];
-      seasons: any[] = [];
-      selectedSeasonId: string = '';
-      loading: boolean = false;
-      error: string | null = null;
-      currentClubId: string = '';
-      
-      // Additional properties for template
-      signedPlayers: any[] = [];
+  // Observable selectors
+  selectedClub$: Observable<Club | null>;
+  allClubs$: Observable<any[]>;
+  matches$: Observable<any[]>;
+  seasons$: Observable<any[]>;
+  clubsLoading$: Observable<boolean>;
+  clubsError$: Observable<any>;
+  clubRoster$: Observable<any[]>;
+  
+  // Local state
+  club: Club | undefined;
+  backendClub: BackendClub | null = null;
+  allClubs: BackendClub[] = [];
+  seasons: any[] = [];
+  selectedSeasonId: string = '';
+  loading: boolean = false;
+  error: string | null = null;
+  currentClubId: string = '';
+  
+  // Additional properties for template
+  signedPlayers: any[] = [];
       skaterStats: SkaterStats[] = [];
       goalieStats: GoalieStats[] = [];
-      matches: any[] = [];
-      clubMatches: any[] = [];
+  matches: any[] = [];
+  clubMatches: any[] = [];
       
       // Track if we're switching clubs to prevent stale data
       private isSwitchingClubs: boolean = false;
@@ -99,12 +99,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(''));
   }
 
-      ngOnInit(): void {
-        this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
-          const clubId = params['id'];
-          console.log('Route params changed - new clubId:', clubId, 'current clubId:', this.currentClubId);
-          if (clubId && clubId !== this.currentClubId) {
-            console.log('Switching to different club, clearing data');
+  ngOnInit(): void {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const clubId = params['id'];
+      console.log('Route params changed - new clubId:', clubId, 'current clubId:', this.currentClubId);
+      if (clubId && clubId !== this.currentClubId) {
+        console.log('Switching to different club, clearing data');
             console.log('Previous clubId:', this.currentClubId, 'New clubId:', clubId);
             
             // Set flag to prevent stale data processing
@@ -117,11 +117,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             this.clubMatches = [];
             this.cdr.detectChanges();
             
-            // Clear previous club data when switching to a different club
-            this.clearClubData();
-            this.loadClubData(clubId);
-          }
-        });
+        // Clear previous club data when switching to a different club
+        this.clearClubData();
+        this.loadClubData(clubId);
+      }
+    });
     
     this.setupDataSubscriptions();
     
@@ -148,8 +148,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Clear previous data when switching clubs
         if (this.isSwitchingClubs) {
           console.log('Switching clubs - clearing previous data');
-          this.skaterStats = [];
-          this.goalieStats = [];
+        this.skaterStats = [];
+        this.goalieStats = [];
           this.signedPlayers = [];
           this.clubMatches = [];
           this.isSwitchingClubs = false;
@@ -197,29 +197,29 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       }
     });
 
-        // Subscribe to matches and recalculate stats when they change
-        this.matches$.pipe(takeUntil(this.destroy$)).subscribe(matches => {
-          this.matches = matches;
-          console.log('All matches loaded:', matches.length);
-          console.log('First few matches:', matches.slice(0, 3).map(m => ({ 
-            id: m._id || m.id, 
-            homeTeam: m.homeTeam, 
-            awayTeam: m.awayTeam,
-            homeClubId: m.homeClubId,
-            awayClubId: m.awayClubId,
+    // Subscribe to matches and recalculate stats when they change
+    this.matches$.pipe(takeUntil(this.destroy$)).subscribe(matches => {
+      this.matches = matches;
+      console.log('All matches loaded:', matches.length);
+      console.log('First few matches:', matches.slice(0, 3).map(m => ({ 
+        id: m._id || m.id, 
+        homeTeam: m.homeTeam, 
+        awayTeam: m.awayTeam,
+        homeClubId: m.homeClubId,
+        awayClubId: m.awayClubId,
             seasonId: m.seasonId,
             homeClubIdType: typeof m.homeClubId,
             awayClubIdType: typeof m.awayClubId
-          })));
+      })));
           
           // Debug: Show a sample match structure
           if (matches.length > 0) {
             console.log('Sample match structure:', JSON.stringify(matches[0], null, 2));
           }
-          
-          // Filter matches for current club
+      
+      // Filter matches for current club
           if (this.backendClub && !this.isSwitchingClubs) {
-            console.log('Filtering matches for club:', this.backendClub.name);
+        console.log('Filtering matches for club:', this.backendClub.name);
         
         // Filter matches for the current club - be very strict about matching
         let clubMatches = matches.filter(match => {
@@ -434,11 +434,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     }
   }
 
-      private processPlayerStatsFromMatches(roster: any[]) {
+  private processPlayerStatsFromMatches(roster: any[]) {
         console.log('=== CLUB DETAIL DEBUG ===');
-        console.log('Processing player stats from matches for club:', this.backendClub?.name);
-        console.log('Club matches available:', this.clubMatches.length);
-        console.log('Roster players:', roster.length);
+    console.log('Processing player stats from matches for club:', this.backendClub?.name);
+    console.log('Club matches available:', this.clubMatches.length);
+    console.log('Roster players:', roster.length);
         console.log('Selected season ID:', this.selectedSeasonId);
         console.log('========================');
         
@@ -468,8 +468,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     console.log('Image failed to load, URL:', event.target.src);
     if (event.target.src.includes('square-default.png')) {
       console.log('Default image also failed to load, stopping error handling');
-      return;
-    }
+        return;
+      }
     event.target.src = '/assets/images/square-default.png';
   }
 
@@ -486,6 +486,13 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     console.log('ClubDetail: Filtered seasons for club:', filteredSeasons.map(s => ({ id: s._id, name: s.name })));
     
     return filteredSeasons;
+  }
+
+  getSelectedSeasonDivision(): any {
+    if (!this.selectedSeasonId) return null;
+    
+    const selectedSeason = this.seasons.find(season => season._id === this.selectedSeasonId);
+    return selectedSeason?.division || null;
   }
 
   mapBackendClubToFrontend(backendClub: any): any {

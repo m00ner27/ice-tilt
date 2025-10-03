@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 export interface SkaterStats {
-  playerId: string;
+  playerId: number;
   name: string;
   number: number;
   position: string;
@@ -35,7 +35,7 @@ export interface SkaterStats {
 }
 
 export interface GoalieStats {
-  playerId: string;
+  playerId: number;
   name: string;
   number: number;
   position: 'G';
@@ -73,8 +73,6 @@ export class ClubStatsService {
     console.log('Roster players:', roster.length);
     console.log('========================');
     
-    const playerStatsMap = new Map<string, any>();
-
     // First, collect all players who played for this team from match data (including unsigned ones)
     const allPlayersWhoPlayed = new Set<string>();
     
@@ -191,7 +189,7 @@ export class ClubStatsService {
       const playerNumber = player?.number || 0;
 
       const baseSkaterStats: SkaterStats = {
-        playerId: playerId,
+        playerId: parseInt(playerId) || 0,
         name: playerName,
         number: playerNumber,
         position: 'Unknown', // Will be determined by game performance
@@ -221,19 +219,11 @@ export class ClubStatsService {
         faceoffPercentage: 0,
         playerScore: 0,
         penaltyKillCorsiZone: 0,
-        // Goalie-specific stats (set to 0 for skater role)
-        saves: 0,
-        shotsAgainst: 0,
-        goalsAgainst: 0,
-        savePercentage: 0,
-        goalsAgainstAverage: 0,
-        shutouts: 0,
-        otl: 0,
         isSigned: rosterPlayerNames.has(playerName)
       };
 
       const baseGoalieStats: GoalieStats = {
-        playerId: playerId,
+        playerId: parseInt(playerId) || 0,
         name: playerName,
         number: playerNumber,
         position: 'G',
@@ -242,28 +232,6 @@ export class ClubStatsService {
         wins: 0,
         losses: 0,
         otLosses: 0,
-        goals: 0, // Goalies don't score goals
-        assists: 0,
-        points: 0,
-        plusMinus: 0, // Goalies don't have plus/minus
-        shots: 0, // Goalies don't take shots
-        shotPercentage: 0,
-        hits: 0, // Goalies don't hit
-        blockedShots: 0, // Goalies don't block shots
-        pim: 0,
-        ppg: 0, // Goalies don't have power play goals
-        shg: 0, // Goalies don't have short handed goals
-        gwg: 0, // Goalies don't have game winning goals
-        takeaways: 0, // Goalies don't have takeaways
-        giveaways: 0, // Goalies don't have giveaways
-        passes: 0, // Goalies don't have passes
-        passAttempts: 0, // Goalies don't have pass attempts
-        passPercentage: 0,
-        faceoffsWon: 0, // Goalies don't take faceoffs
-        faceoffPercentage: 0,
-        playerScore: 0,
-        penaltyKillCorsiZone: 0, // Goalies don't have PKC
-        // Goalie-specific stats
         saves: 0,
         shotsAgainst: 0,
         goalsAgainst: 0,
@@ -289,7 +257,7 @@ export class ClubStatsService {
 
       if (!initialPlayerStatsMap.has(`${playerName}_skater`)) {
         const baseSkaterStats: SkaterStats = {
-          playerId: playerId,
+          playerId: parseInt(playerId) || 0,
           name: playerName,
           number: playerNumber,
           position: 'Unknown',
@@ -298,7 +266,6 @@ export class ClubStatsService {
           shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, ppg: 0, shg: 0, gwg: 0,
           takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0, faceoffsWon: 0,
           faceoffPercentage: 0, playerScore: 0, penaltyKillCorsiZone: 0,
-          saves: 0, shotsAgainst: 0, goalsAgainst: 0, savePercentage: 0, goalsAgainstAverage: 0, shutouts: 0, otl: 0,
           isSigned: true
         };
         initialPlayerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
@@ -306,15 +273,12 @@ export class ClubStatsService {
 
       if (!initialPlayerStatsMap.has(`${playerName}_goalie`)) {
         const baseGoalieStats: GoalieStats = {
-          playerId: playerId,
+          playerId: parseInt(playerId) || 0,
           name: playerName,
           number: playerNumber,
           position: 'G',
           role: 'goalie',
-          gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0, goals: 0, assists: 0, points: 0, plusMinus: 0,
-          shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, ppg: 0, shg: 0, gwg: 0,
-          takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0, faceoffsWon: 0,
-          faceoffPercentage: 0, playerScore: 0, penaltyKillCorsiZone: 0,
+          gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0,
           saves: 0, shotsAgainst: 0, goalsAgainst: 0, savePercentage: 0, goalsAgainstAverage: 0, shutouts: 0, otl: 0,
           isSigned: true
         };
@@ -322,7 +286,8 @@ export class ClubStatsService {
       }
     });
 
-    const playerStatsMap = initialPlayerStatsMap; // Use the initialized map
+    // Use the initialized map
+    const playerStatsMap = initialPlayerStatsMap;
 
     console.log('Player stats map before processing matches:', Array.from(playerStatsMap.keys()));
 
