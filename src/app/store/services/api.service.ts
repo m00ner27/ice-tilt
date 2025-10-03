@@ -325,7 +325,17 @@ export class ApiService {
 
   // Club roster methods
   getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`).pipe(
+    console.log('ApiService: getClubRoster called for clubId:', clubId, 'seasonId:', seasonId);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`, { headers });
+      }),
       catchError(error => {
         console.error('Error loading club roster:', error);
         throw error;
@@ -335,7 +345,18 @@ export class ApiService {
 
   // Get global club roster (all players signed to the club across all seasons)
   getClubGlobalRoster(clubId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster/global`);
+    console.log('ApiService: getClubGlobalRoster called for clubId:', clubId);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster/global`, { headers });
+      })
+    );
   }
 
   // Add player to club roster
