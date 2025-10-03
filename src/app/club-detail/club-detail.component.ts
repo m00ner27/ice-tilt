@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject } from 'rxjs';
-import { takeUntil, filter } from 'rxjs/operators';
+import { Observable, Subject, combineLatest } from 'rxjs';
+import { takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
@@ -177,8 +177,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           this.ngrxApiService.loadClubRoster(club._id, this.selectedSeasonId);
         }
         
-        // Trigger stats processing if we already have matches loaded
-        this.triggerStatsProcessingIfReady();
+        // Set up combined observable to wait for all data
+        this.setupCombinedDataSubscription();
       }
     });
 
@@ -197,90 +197,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Subscribe to matches and recalculate stats when they change
-    this.matches$.pipe(takeUntil(this.destroy$)).subscribe(matches => {
-      this.matches = matches;
-      console.log('All matches loaded:', matches.length);
-      console.log('First few matches:', matches.slice(0, 3).map(m => ({ 
-        id: m._id || m.id, 
-        homeTeam: m.homeTeam, 
-        awayTeam: m.awayTeam,
-        homeClub: m.homeClub,
-        awayClub: m.awayClub,
-            seasonId: m.seasonId,
-            homeClubType: typeof m.homeClub,
-            awayClubType: typeof m.awayClub
-      })));
-          
-          // Debug: Show a sample match structure
-          if (matches.length > 0) {
-            console.log('Sample match structure:', JSON.stringify(matches[0], null, 2));
-          }
-      
-      // Filter matches for current club
-          if (this.backendClub && !this.isSwitchingClubs) {
-        console.log('Filtering matches for club:', this.backendClub.name);
-        
-        // Filter matches for the current club - be very strict about matching
-        let clubMatches = matches.filter(match => {
-          const homeMatch = match.homeClub?.name === this.backendClub?.name;
-          const awayMatch = match.awayClub?.name === this.backendClub?.name;
-          const homeTeamMatch = match.homeTeam === this.backendClub?.name;
-          const awayTeamMatch = match.awayTeam === this.backendClub?.name;
-          
-          // Also check if homeClub or awayClub are objects with _id property
-          const homeClubIdMatch = match.homeClub?._id === this.backendClub?._id;
-          const awayClubIdMatch = match.awayClub?._id === this.backendClub?._id;
-          
-          const isMatch = homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
-          
-          console.log(`Match ${match._id || match.id}:`, {
-            homeClub: match.homeClub?.name || match.homeClub?._id,
-            awayClub: match.awayClub?.name || match.awayClub?._id,
-            homeTeam: match.homeTeam,
-            awayTeam: match.awayTeam,
-            homeMatch,
-            awayMatch,
-            homeTeamMatch,
-            awayTeamMatch,
-            homeClubIdMatch,
-            awayClubIdMatch,
-            ourClubId: this.backendClub?._id,
-            ourClubName: this.backendClub?.name,
-            isMatch
-          });
-          
-          return isMatch;
-        });
-        
-        console.log('Filtered club matches:', clubMatches.length);
-        console.log('Club matches details:', clubMatches.map(m => ({ 
-          id: m._id || m.id, 
-          homeTeam: m.homeTeam, 
-          awayTeam: m.awayTeam,
-          homeClubId: m.homeClubId?.name,
-          awayClubId: m.awayClubId?.name
-        })));
-        
-        // Safety check: If no matches found, log a warning
-        if (clubMatches.length === 0) {
-          console.warn(`No matches found for club: ${this.backendClub?.name}`);
-          console.warn('Available match teams:', matches.map(m => ({ 
-            id: m._id || m.id, 
-            homeTeam: m.homeTeam, 
-            awayTeam: m.awayTeam,
-            homeClubId: m.homeClubId?.name,
-            awayClubId: m.awayClubId?.name
-          })));
-        }
-        
-        this.clubMatches = clubMatches;
-        this.club = this.mapBackendClubToFrontend(this.backendClub);
-        
-        // Trigger stats processing if all data is ready
-        this.triggerStatsProcessingIfReady();
-      }
-    });
+    // Matches subscription is now handled by the combined data subscription
 
     // Subscribe to loading and error states
     this.clubsLoading$.pipe(takeUntil(this.destroy$)).subscribe(loading => {
@@ -363,8 +280,68 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       filter(roster => roster !== undefined)
     ).subscribe(roster => {
       console.log('Roster subscription triggered for club:', this.backendClub?.name);
-      this.processRosterData(roster);
+      // Roster processing is now handled by the combined data subscription
     });
+  }
+
+  private setupCombinedDataSubscription() {
+    // Create a combined observable that waits for all data to be ready
+    combineLatest([
+      this.selectedClub$,
+      this.matches$,
+      this.clubRoster$
+    ]).pipe(
+      takeUntil(this.destroy$),
+      debounceTime(100), // Small delay to ensure all data is processed
+      filter(([club, matches, roster]) => 
+        club !== null && 
+        matches !== null && 
+        roster !== null && 
+        !this.isSwitchingClubs
+      )
+    ).subscribe(([club, matches, roster]) => {
+      console.log('Combined data subscription triggered:', {
+        hasClub: !!club,
+        matchesCount: matches?.length || 0,
+        rosterCount: roster?.length || 0,
+        isSwitchingClubs: this.isSwitchingClubs
+      });
+      
+      // Process all data when everything is ready
+      this.processAllData(club, matches, roster);
+    });
+  }
+
+  private processAllData(club: any, matches: any[], roster: any[]) {
+    if (!club || !matches || !roster) return;
+    
+    console.log('Processing all data for club:', club.name);
+    
+    // Update local data
+    this.backendClub = club as any;
+    this.matches = matches;
+    this.signedPlayers = roster.filter(player => player && player.gamertag);
+    
+    // Filter matches for current club
+    this.clubMatches = matches.filter(match => {
+      const homeMatch = match.homeClub?.name === club?.name;
+      const awayMatch = match.awayClub?.name === club?.name;
+      const homeTeamMatch = match.homeTeam === club?.name;
+      const awayTeamMatch = match.awayTeam === club?.name;
+      const homeClubIdMatch = match.homeClub?._id === club?._id;
+      const awayClubIdMatch = match.awayClub?._id === club?._id;
+      
+      return homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
+    });
+    
+    console.log('Processed data:', {
+      clubMatches: this.clubMatches.length,
+      signedPlayers: this.signedPlayers.length,
+      clubName: club.name
+    });
+    
+    // Now process stats with all data ready
+    this.processPlayerStatsFromMatches(this.signedPlayers);
   }
 
   // Method to clear club data when switching clubs
@@ -416,11 +393,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
   private triggerStatsProcessingIfReady() {
     // Check if we have all required data to process stats
-    if (this.backendClub && this.clubMatches.length > 0) {
+    if (this.backendClub && this.clubMatches.length > 0 && this.signedPlayers.length > 0) {
       console.log('All data ready, processing player stats');
       // Clear stats before processing new ones
       this.skaterStats = [];
       this.goalieStats = [];
+      this.cdr.detectChanges();
       this.processPlayerStatsFromMatches(this.signedPlayers);
     } else {
       console.log('Not ready for stats processing:', {
