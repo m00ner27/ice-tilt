@@ -1243,28 +1243,29 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         (stats.faceoffsWon / (stats.faceoffsWon + (stats.faceoffsWon || 0))) * 100 : 0;
     });
 
-    // Categorize players based on their role
-    // Include ALL players who played for this club (not just current roster)
-    this.skaterStats = allPlayers.filter(player => 
-      player.role === 'skater' && player.gamesPlayed > 0
-    );
+        // Categorize players based on their role
+        // ONLY include players who are on the current roster
+        this.skaterStats = allPlayers.filter(player => 
+          player.role === 'skater' && player.gamesPlayed > 0 && player.isSigned
+        );
+        
+        this.goalieStats = allPlayers.filter(player => 
+          player.role === 'goalie' && player.gamesPlayed > 0 && player.isSigned
+        );
     
-    this.goalieStats = allPlayers.filter(player => 
-      player.role === 'goalie' && player.gamesPlayed > 0
-    );
-    
-    console.log('Player categorization:');
-    const allPlayersWithGames = allPlayers.filter(p => p.gamesPlayed > 0);
-    console.log('All players with games:', allPlayersWithGames.map(p => ({ 
-      name: p.name, 
-      position: p.position, 
-      gp: p.gamesPlayed,
-      saves: p.saves,
-      shotsAgainst: p.shotsAgainst,
-      onRoster: rosterPlayerNames.has(p.name)
-    })));
-    console.log('Skaters (all who played):', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed, onRoster: rosterPlayerNames.has(s.name) })));
-    console.log('Goalies (all who played):', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves, onRoster: rosterPlayerNames.has(g.name) })));
+        console.log('Player categorization:');
+        const allPlayersWithGames = allPlayers.filter(p => p.gamesPlayed > 0);
+        console.log('All players with games:', allPlayersWithGames.map(p => ({ 
+          name: p.name, 
+          position: p.position, 
+          gp: p.gamesPlayed,
+          saves: p.saves,
+          shotsAgainst: p.shotsAgainst,
+          onRoster: rosterPlayerNames.has(p.name),
+          isSigned: p.isSigned
+        })));
+        console.log('Skaters (roster only):', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed, onRoster: rosterPlayerNames.has(s.name), isSigned: s.isSigned })));
+        console.log('Goalies (roster only):', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves, onRoster: rosterPlayerNames.has(g.name), isSigned: g.isSigned })));
     
     console.log('Final skater stats:', this.skaterStats.length, 'players');
     console.log('Final goalie stats:', this.goalieStats.length, 'players');
