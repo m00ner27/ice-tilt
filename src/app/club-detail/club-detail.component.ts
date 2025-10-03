@@ -182,8 +182,15 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         awayTeam: m.awayTeam,
         homeClubId: m.homeClubId,
         awayClubId: m.awayClubId,
-        seasonId: m.seasonId 
+        seasonId: m.seasonId,
+        homeClubIdType: typeof m.homeClubId,
+        awayClubIdType: typeof m.awayClubId
       })));
+      
+      // Debug: Show a sample match structure
+      if (matches.length > 0) {
+        console.log('Sample match structure:', JSON.stringify(matches[0], null, 2));
+      }
       
       // Filter matches for current club
       if (this.backendClub) {
@@ -196,18 +203,26 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           const homeTeamMatch = match.homeTeam === this.backendClub?.name;
           const awayTeamMatch = match.awayTeam === this.backendClub?.name;
           
+          // Also check if homeClubId or awayClubId are objects with _id property
+          const homeClubIdMatch = match.homeClubId?._id === this.backendClub?._id;
+          const awayClubIdMatch = match.awayClubId?._id === this.backendClub?._id;
+          
           console.log(`Match ${match._id || match.id}:`, {
-            homeClubId: match.homeClubId?.name,
-            awayClubId: match.awayClubId?.name,
+            homeClubId: match.homeClubId?.name || match.homeClubId?._id,
+            awayClubId: match.awayClubId?.name || match.awayClubId?._id,
             homeTeam: match.homeTeam,
             awayTeam: match.awayTeam,
             homeMatch,
             awayMatch,
             homeTeamMatch,
-            awayTeamMatch
+            awayTeamMatch,
+            homeClubIdMatch,
+            awayClubIdMatch,
+            ourClubId: this.backendClub?._id,
+            ourClubName: this.backendClub?.name
           });
           
-          return homeMatch || awayMatch || homeTeamMatch || awayTeamMatch;
+          return homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
         });
         
         console.log('Filtered club matches:', clubMatches.length);
