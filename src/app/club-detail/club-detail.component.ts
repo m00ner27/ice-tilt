@@ -99,6 +99,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       console.log('Route params changed - new clubId:', clubId, 'current clubId:', this.currentClubId);
       if (clubId && clubId !== this.currentClubId) {
         console.log('Switching to different club, clearing data');
+        console.log('Previous clubId:', this.currentClubId, 'New clubId:', clubId);
         // Clear previous club data when switching to a different club
         this.clearClubData();
         this.loadClubData(clubId);
@@ -334,16 +335,19 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.error = null;
     
     console.log('Club data cleared, signedPlayers length:', this.signedPlayers.length);
+    console.log('Stats cleared - skaterStats:', this.skaterStats.length, 'goalieStats:', this.goalieStats.length);
   }
 
   private processRosterData(roster: any[]) {
     console.log('Processing roster data for club:', this.backendClub?.name, 'Roster:', roster);
     
+    // Always clear previous stats when processing new roster data
+    this.skaterStats = [];
+    this.goalieStats = [];
+    
     if (!roster || roster.length === 0) {
       console.log('No roster data, clearing arrays');
       this.signedPlayers = [];
-      this.skaterStats = [];
-      this.goalieStats = [];
       return;
     }
 
@@ -386,6 +390,10 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     })));
     console.log('========================');
     
+    // Clear previous stats before processing new ones
+    this.skaterStats = [];
+    this.goalieStats = [];
+    
     const playerStatsMap = new Map<string, any>();
 
     // First, collect all players who played for this team from match data (including unsigned ones)
@@ -417,7 +425,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         console.log(`Found ${ourPlayers.length} players for ${this.backendClub?.name} in manual entry:`, ourPlayers.map((p: any) => p.name));
         ourPlayers.forEach((playerData: any) => {
           if (playerData && playerData.name) {
-            console.log(`Adding player to allPlayersWhoPlayed: ${playerData.name} (position: ${playerData.position})`);
             allPlayersWhoPlayed.add(playerData.name);
           }
         });
@@ -860,14 +867,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
           const roleSuffix = isGoalie ? '_goalie' : '_skater';
           
-          console.log(`Player ${playerName}: position=${playerData.position}, isGoalie=${isGoalie}, roleSuffix=${roleSuffix}`);
-          
           // Try to find a matching player by name with the correct role
           let matchingKey = null;
           
           if (playerStatsMap.has(`${playerName}${roleSuffix}`)) {
             matchingKey = `${playerName}${roleSuffix}`;
-            console.log(`Found exact match: ${matchingKey}`);
           } else {
             // Try partial match with role suffix
             for (const [key, stats] of playerStatsMap.entries()) {
@@ -883,7 +887,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           if (matchingKey) {
             console.log(`Found matching player: ${playerName} -> ${matchingKey}`);
             const playerStats = playerStatsMap.get(matchingKey);
-            console.log(`Updating stats for ${matchingKey}: gamesPlayed=${playerStats.gamesPlayed} -> ${playerStats.gamesPlayed + 1}, role=${playerStats.role}`);
             playerStats.gamesPlayed++;
             if (won) playerStats.wins++;
             else if (lost) playerStats.losses++;
@@ -1118,7 +1121,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             if (matchingKey) {
               console.log(`Found matching player: ${playerName} -> ${matchingKey}`);
               const playerStats = playerStatsMap.get(matchingKey);
-              console.log(`Updating EASHL stats for ${matchingKey}: gamesPlayed=${playerStats.gamesPlayed} -> ${playerStats.gamesPlayed + 1}, role=${playerStats.role}`);
               playerStats.gamesPlayed++;
               if (won) playerStats.wins++;
               else if (lost) playerStats.losses++;
@@ -1197,17 +1199,13 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
     // Categorize players based on their role
     // Players can appear in both skater and goalie sections if they have stats for both
-    this.skaterStats = allPlayers.filter(player => {
-      const isSkater = player.role === 'skater' && player.gamesPlayed > 0;
-      console.log(`Player ${player.name}: role=${player.role}, gamesPlayed=${player.gamesPlayed}, isSkater=${isSkater}`);
-      return isSkater;
-    });
+    this.skaterStats = allPlayers.filter(player => 
+      player.role === 'skater' && player.gamesPlayed > 0
+    );
     
-    this.goalieStats = allPlayers.filter(player => {
-      const isGoalie = player.role === 'goalie' && player.gamesPlayed > 0;
-      console.log(`Player ${player.name}: role=${player.role}, gamesPlayed=${player.gamesPlayed}, isGoalie=${isGoalie}`);
-      return isGoalie;
-    });
+    this.goalieStats = allPlayers.filter(player => 
+      player.role === 'goalie' && player.gamesPlayed > 0
+    );
     
     console.log('Player categorization:');
     console.log('All players with games:', allPlayers.filter(p => p.gamesPlayed > 0).map(p => ({ 
