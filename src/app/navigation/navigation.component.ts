@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { AuthButtonComponent } from './auth-button/auth-button.component';
 import { AuthService } from '@auth0/auth0-angular';
 import { ApiService } from '../store/services/api.service';
 import { Observable, of } from 'rxjs';
@@ -13,7 +14,7 @@ import { selectIsUserAnyManager } from '../store/managers.selectors';
 @Component({
   selector: 'app-navigation',
   standalone: true,
-  imports: [RouterModule, CommonModule, UserProfileComponent],
+  imports: [RouterModule, CommonModule, UserProfileComponent, AuthButtonComponent],
   templateUrl: './navigation.component.html',
 })
 export class NavigationComponent {

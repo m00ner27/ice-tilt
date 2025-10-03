@@ -25,7 +25,7 @@
             <div class="flex items-center">
                 <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
                     <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
-                    <!-- Login button is now hidden - users must go to /admin to access admin features -->
+                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
                 </ng-container>
                 <ng-template #authLoading>
                     <!-- Optional: placeholder/spinner -->
@@ -55,6 +55,12 @@
                 <!-- TODO: Manager feature temporarily disabled -->
                 <!-- <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
+                
+                <!-- Mobile Auth Section -->
+                <div class="pt-2 border-t border-gray-700">
+                    <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
+                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async)"></app-auth-button>
+                </div>
             </div>
         </div>
     </div>
