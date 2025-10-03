@@ -370,7 +370,18 @@ export class ApiService {
 
   // Get free agents for a specific season
   getFreeAgentsForSeason(seasonId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents?seasonId=${seasonId}`);
+    console.log('ApiService: getFreeAgentsForSeason called for season:', seasonId);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents?seasonId=${seasonId}`, { headers });
+      })
+    );
   }
 
   // Offer methods
@@ -384,19 +395,63 @@ export class ApiService {
     seasonName?: string;
     sentBy: string; 
   }): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/api/offers`, offerData);
+    console.log('ApiService: sendContractOffer called');
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/offers`, offerData, { headers });
+      })
+    );
   }
 
   getInboxOffers(userId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/offers/inbox/${userId}`);
+    console.log('ApiService: getInboxOffers called for userId:', userId);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/offers/inbox/${userId}`, { headers });
+      })
+    );
   }
 
   respondToOffer(offerId: string, status: 'accepted' | 'rejected'): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/api/offers/${offerId}/respond`, { status });
+    console.log('ApiService: respondToOffer called for offerId:', offerId, 'status:', status);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/offers/${offerId}/respond`, { status }, { headers });
+      })
+    );
   }
 
   getUsers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/users`);
+    console.log('ApiService: getUsers called');
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/users`, { headers });
+      })
+    );
   }
 
   // Regions
@@ -409,11 +464,33 @@ export class ApiService {
   }
 
   auth0Sync(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/api/users/auth0-sync`, {});
+    console.log('ApiService: auth0Sync called');
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/users/auth0-sync`, {}, { headers });
+      })
+    );
   }
 
   getCurrentUser(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/users/me`);
+    console.log('ApiService: getCurrentUser called');
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get(`${this.apiUrl}/api/users/me`, { headers });
+      })
+    );
   }
 
   updateCurrentUser(userData: any): Observable<any> {
