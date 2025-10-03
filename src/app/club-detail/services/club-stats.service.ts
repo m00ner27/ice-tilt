@@ -121,14 +121,22 @@ export class ClubStatsService {
 
         // Try to find our team by club name first
         for (const teamKey of teamKeys) {
-          const teamPlayers = match.eashlData.players[teamKey];
+          const teamPlayersData = match.eashlData.players[teamKey];
           console.log(`Checking team ${teamKey} for roster players...`);
-          console.log(`Team ${teamKey} players:`, teamPlayers);
-          console.log(`Team ${teamKey} players type:`, typeof teamPlayers);
-          console.log(`Team ${teamKey} players isArray:`, Array.isArray(teamPlayers));
+          console.log(`Team ${teamKey} players:`, teamPlayersData);
+          console.log(`Team ${teamKey} players type:`, typeof teamPlayersData);
+          console.log(`Team ${teamKey} players isArray:`, Array.isArray(teamPlayersData));
           
-          if (!Array.isArray(teamPlayers)) {
-            console.log(`Team ${teamKey} is not an array, skipping...`);
+          // Convert object to array if needed
+          let teamPlayers: any[];
+          if (Array.isArray(teamPlayersData)) {
+            teamPlayers = teamPlayersData;
+          } else if (typeof teamPlayersData === 'object' && teamPlayersData !== null) {
+            // Convert object to array
+            teamPlayers = Object.values(teamPlayersData);
+            console.log(`Converted team ${teamKey} object to array:`, teamPlayers);
+          } else {
+            console.log(`Team ${teamKey} is not an array or object, skipping...`);
             continue;
           }
           
@@ -184,13 +192,21 @@ export class ClubStatsService {
 
         if (ourTeamKey) {
           console.log(`Collecting players from team ${ourTeamKey} for ${backendClub?.name}:`);
-          const teamPlayers = match.eashlData.players[ourTeamKey];
-          console.log('Team players data:', teamPlayers);
-          console.log('Team players type:', typeof teamPlayers);
-          console.log('Team players isArray:', Array.isArray(teamPlayers));
+          const teamPlayersData = match.eashlData.players[ourTeamKey];
+          console.log('Team players data:', teamPlayersData);
+          console.log('Team players type:', typeof teamPlayersData);
+          console.log('Team players isArray:', Array.isArray(teamPlayersData));
           
-          if (!Array.isArray(teamPlayers)) {
-            console.error(`Team ${ourTeamKey} players is not an array!`, teamPlayers);
+          // Convert object to array if needed
+          let teamPlayers: any[];
+          if (Array.isArray(teamPlayersData)) {
+            teamPlayers = teamPlayersData;
+          } else if (typeof teamPlayersData === 'object' && teamPlayersData !== null) {
+            // Convert object to array
+            teamPlayers = Object.values(teamPlayersData);
+            console.log(`Converted team ${ourTeamKey} object to array:`, teamPlayers);
+          } else {
+            console.error(`Team ${ourTeamKey} players is not an array or object!`, teamPlayersData);
             return;
           }
           
@@ -431,13 +447,21 @@ export class ClubStatsService {
 
         // Try to find our team by roster players first
         for (const teamKey of teamKeys) {
-          const teamPlayers = match.eashlData.players[teamKey];
-          console.log(`Stats processing - checking team ${teamKey}:`, teamPlayers);
-          console.log(`Stats processing - team ${teamKey} type:`, typeof teamPlayers);
-          console.log(`Stats processing - team ${teamKey} isArray:`, Array.isArray(teamPlayers));
+          const teamPlayersData = match.eashlData.players[teamKey];
+          console.log(`Stats processing - checking team ${teamKey}:`, teamPlayersData);
+          console.log(`Stats processing - team ${teamKey} type:`, typeof teamPlayersData);
+          console.log(`Stats processing - team ${teamKey} isArray:`, Array.isArray(teamPlayersData));
           
-          if (!Array.isArray(teamPlayers)) {
-            console.log(`Stats processing - team ${teamKey} is not an array, skipping...`);
+          // Convert object to array if needed
+          let teamPlayers: any[];
+          if (Array.isArray(teamPlayersData)) {
+            teamPlayers = teamPlayersData;
+          } else if (typeof teamPlayersData === 'object' && teamPlayersData !== null) {
+            // Convert object to array
+            teamPlayers = Object.values(teamPlayersData);
+            console.log(`Stats processing - converted team ${teamKey} object to array:`, teamPlayers);
+          } else {
+            console.log(`Stats processing - team ${teamKey} is not an array or object, skipping...`);
             continue;
           }
           
@@ -466,13 +490,21 @@ export class ClubStatsService {
         }
 
         if (ourTeamKey) {
-          const teamPlayers = match.eashlData.players[ourTeamKey];
-          console.log(`Stats processing - processing team ${ourTeamKey} players:`, teamPlayers);
-          console.log(`Stats processing - team ${ourTeamKey} type:`, typeof teamPlayers);
-          console.log(`Stats processing - team ${ourTeamKey} isArray:`, Array.isArray(teamPlayers));
+          const teamPlayersData = match.eashlData.players[ourTeamKey];
+          console.log(`Stats processing - processing team ${ourTeamKey} players:`, teamPlayersData);
+          console.log(`Stats processing - team ${ourTeamKey} type:`, typeof teamPlayersData);
+          console.log(`Stats processing - team ${ourTeamKey} isArray:`, Array.isArray(teamPlayersData));
           
-          if (!Array.isArray(teamPlayers)) {
-            console.error(`Stats processing - team ${ourTeamKey} players is not an array!`, teamPlayers);
+          // Convert object to array if needed
+          let teamPlayers: any[];
+          if (Array.isArray(teamPlayersData)) {
+            teamPlayers = teamPlayersData;
+          } else if (typeof teamPlayersData === 'object' && teamPlayersData !== null) {
+            // Convert object to array
+            teamPlayers = Object.values(teamPlayersData);
+            console.log(`Stats processing - converted team ${ourTeamKey} object to array:`, teamPlayers);
+          } else {
+            console.error(`Stats processing - team ${ourTeamKey} players is not an array or object!`, teamPlayersData);
             return;
           }
           
