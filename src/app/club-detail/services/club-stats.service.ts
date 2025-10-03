@@ -96,20 +96,47 @@ export class ClubStatsService {
         // Process EASHL data - players is an object, not an array
         console.log(`Collecting EASHL players for match ${match._id || match.id}`);
         console.log('EASHL players structure:', match.eashlData.players);
+        console.log('EASHL players type:', typeof match.eashlData.players);
+        console.log('EASHL players isArray:', Array.isArray(match.eashlData.players));
         console.log('Our team name:', backendClub?.name);
 
         const teamKeys = Object.keys(match.eashlData.players);
         console.log('EASHL team keys for collection:', teamKeys);
+        
+        // Debug each team's data structure
+        teamKeys.forEach(teamKey => {
+          const teamData = match.eashlData.players[teamKey];
+          console.log(`Team ${teamKey} data:`, teamData);
+          console.log(`Team ${teamKey} type:`, typeof teamData);
+          console.log(`Team ${teamKey} isArray:`, Array.isArray(teamData));
+          if (Array.isArray(teamData)) {
+            console.log(`Team ${teamKey} length:`, teamData.length);
+            console.log(`Team ${teamKey} first player:`, teamData[0]);
+          } else {
+            console.log(`Team ${teamKey} keys:`, Object.keys(teamData));
+          }
+        });
 
         let ourTeamKey: string | undefined;
 
         // Try to find our team by club name first
         for (const teamKey of teamKeys) {
           const teamPlayers = match.eashlData.players[teamKey];
+          console.log(`Checking team ${teamKey} for roster players...`);
+          console.log(`Team ${teamKey} players:`, teamPlayers);
+          console.log(`Team ${teamKey} players type:`, typeof teamPlayers);
+          console.log(`Team ${teamKey} players isArray:`, Array.isArray(teamPlayers));
+          
+          if (!Array.isArray(teamPlayers)) {
+            console.log(`Team ${teamKey} is not an array, skipping...`);
+            continue;
+          }
+          
           // Check if any player in this team is on our roster
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
             roster.some(rosterPlayer => rosterPlayer.gamertag === player.name)
           );
+          console.log(`Team ${teamKey} contains roster player:`, teamContainsRosterPlayer);
           if (teamContainsRosterPlayer) {
             ourTeamKey = teamKey;
             console.log(`Found our team key for collection: ${ourTeamKey} (has roster player)`);
@@ -158,6 +185,15 @@ export class ClubStatsService {
         if (ourTeamKey) {
           console.log(`Collecting players from team ${ourTeamKey} for ${backendClub?.name}:`);
           const teamPlayers = match.eashlData.players[ourTeamKey];
+          console.log('Team players data:', teamPlayers);
+          console.log('Team players type:', typeof teamPlayers);
+          console.log('Team players isArray:', Array.isArray(teamPlayers));
+          
+          if (!Array.isArray(teamPlayers)) {
+            console.error(`Team ${ourTeamKey} players is not an array!`, teamPlayers);
+            return;
+          }
+          
           console.log('Team players:', teamPlayers.map((p: any) => p.name));
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
             roster.some(rosterPlayer => rosterPlayer.gamertag === player.name)
@@ -168,6 +204,7 @@ export class ClubStatsService {
 
           teamPlayers.forEach((playerData: any) => {
             if (playerData && playerData.name) {
+              console.log('Adding EASHL player to collection:', {name: playerData.name, team: playerData.team, clubname: playerData.clubname, ishome: playerData.ishome});
               allPlayersWhoPlayed.add(playerData.name);
             }
           });
@@ -395,11 +432,22 @@ export class ClubStatsService {
         // Try to find our team by roster players first
         for (const teamKey of teamKeys) {
           const teamPlayers = match.eashlData.players[teamKey];
+          console.log(`Stats processing - checking team ${teamKey}:`, teamPlayers);
+          console.log(`Stats processing - team ${teamKey} type:`, typeof teamPlayers);
+          console.log(`Stats processing - team ${teamKey} isArray:`, Array.isArray(teamPlayers));
+          
+          if (!Array.isArray(teamPlayers)) {
+            console.log(`Stats processing - team ${teamKey} is not an array, skipping...`);
+            continue;
+          }
+          
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
             roster.some(rosterPlayer => rosterPlayer.gamertag === player.name)
           );
+          console.log(`Stats processing - team ${teamKey} contains roster player:`, teamContainsRosterPlayer);
           if (teamContainsRosterPlayer) {
             ourTeamKey = teamKey;
+            console.log(`Stats processing - found our team key: ${ourTeamKey}`);
             break;
           }
         }
@@ -419,6 +467,15 @@ export class ClubStatsService {
 
         if (ourTeamKey) {
           const teamPlayers = match.eashlData.players[ourTeamKey];
+          console.log(`Stats processing - processing team ${ourTeamKey} players:`, teamPlayers);
+          console.log(`Stats processing - team ${ourTeamKey} type:`, typeof teamPlayers);
+          console.log(`Stats processing - team ${ourTeamKey} isArray:`, Array.isArray(teamPlayers));
+          
+          if (!Array.isArray(teamPlayers)) {
+            console.error(`Stats processing - team ${ourTeamKey} players is not an array!`, teamPlayers);
+            return;
+          }
+          
           teamPlayers.forEach((playerData: any) => {
             if (!playerData || !playerData.name) return;
 
