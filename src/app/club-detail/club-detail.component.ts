@@ -100,6 +100,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       if (clubId && clubId !== this.currentClubId) {
         console.log('Switching to different club, clearing data');
         console.log('Previous clubId:', this.currentClubId, 'New clubId:', clubId);
+        // Clear stats immediately when switching clubs
+        this.skaterStats = [];
+        this.goalieStats = [];
         // Clear previous club data when switching to a different club
         this.clearClubData();
         this.loadClubData(clubId);
@@ -376,8 +379,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
   private triggerStatsProcessingIfReady() {
     // Check if we have all required data to process stats
-    if (this.backendClub && this.clubMatches.length > 0 && this.signedPlayers.length > 0) {
+    if (this.backendClub && this.clubMatches.length > 0) {
       console.log('All data ready, processing player stats');
+      // Clear stats before processing new ones
+      this.skaterStats = [];
+      this.goalieStats = [];
       this.processPlayerStatsFromMatches(this.signedPlayers);
     } else {
       console.log('Not ready for stats processing:', {
@@ -385,6 +391,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         clubMatchesCount: this.clubMatches.length,
         signedPlayersCount: this.signedPlayers.length
       });
+      // Clear stats if not ready
+      this.skaterStats = [];
+      this.goalieStats = [];
     }
   }
 
@@ -1217,13 +1226,13 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     });
 
     // Categorize players based on their role
-    // Only include players who are on the club's roster
+    // Include ALL players who played for this club (not just current roster)
     this.skaterStats = allPlayers.filter(player => 
-      player.role === 'skater' && player.gamesPlayed > 0 && rosterPlayerNames.has(player.name)
+      player.role === 'skater' && player.gamesPlayed > 0
     );
     
     this.goalieStats = allPlayers.filter(player => 
-      player.role === 'goalie' && player.gamesPlayed > 0 && rosterPlayerNames.has(player.name)
+      player.role === 'goalie' && player.gamesPlayed > 0
     );
     
     console.log('Player categorization:');
@@ -1236,8 +1245,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       shotsAgainst: p.shotsAgainst,
       onRoster: rosterPlayerNames.has(p.name)
     })));
-    console.log('Skaters (roster only):', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed })));
-    console.log('Goalies (roster only):', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves })));
+    console.log('Skaters (all who played):', this.skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed, onRoster: rosterPlayerNames.has(s.name) })));
+    console.log('Goalies (all who played):', this.goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves, onRoster: rosterPlayerNames.has(g.name) })));
     
     console.log('Final skater stats:', this.skaterStats.length, 'players');
     console.log('Final goalie stats:', this.goalieStats.length, 'players');
