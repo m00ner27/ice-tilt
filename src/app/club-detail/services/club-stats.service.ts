@@ -81,18 +81,20 @@ export class ClubStatsService {
       const isHomeTeam = match.homeClubId?._id === backendClub?._id || match.homeTeam === backendClub?.name;
       const isAwayTeam = match.awayClubId?._id === backendClub?._id || match.awayTeam === backendClub?.name;
 
-      if (match.eashlData?.manualEntry && match.playerStats) {
-        console.log(`Collecting manual entry players for match ${match._id || match.id}`);
+      // Prioritize manual stats over EASHL data since manual stats have proper player names
+      if (match.playerStats && match.playerStats.length > 0) {
+        console.log(`Collecting manual stats players for match ${match._id || match.id}`);
         const ourPlayers = match.playerStats.filter((player: any) => {
           const matches = player.team === backendClub?.name;
           return matches;
         });
         ourPlayers.forEach((playerData: any) => {
           if (playerData && playerData.name) {
+            console.log('Adding manual player to collection:', playerData.name);
             allPlayersWhoPlayed.add(playerData.name);
           }
         });
-      } else if (match.eashlData.players) {
+      } else if (match.eashlData?.players) {
         // Process EASHL data - players is an object, not an array
         console.log(`Collecting EASHL players for match ${match._id || match.id}`);
         console.log('EASHL players structure:', match.eashlData.players);
@@ -399,8 +401,9 @@ export class ClubStatsService {
         otLoss = match.awayScore < match.homeScore && (match.otWin || match.soWin);
       }
 
-      if (match.eashlData?.manualEntry && match.playerStats) {
-        console.log(`Collecting manual entry players for match ${match._id || match.id}`);
+      // Prioritize manual stats over EASHL data since manual stats have proper player names
+      if (match.playerStats && match.playerStats.length > 0) {
+        console.log(`Processing manual stats for match ${match._id || match.id}`);
         const ourPlayers = match.playerStats.filter((player: any) => player.team === backendClub?.name);
         ourPlayers.forEach((playerData: any) => {
           if (!playerData || !playerData.name) return;

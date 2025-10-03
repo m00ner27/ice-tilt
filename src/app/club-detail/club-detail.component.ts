@@ -477,8 +477,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     if (!club || !club.seasons) return [];
     
     // Filter seasons that this club is part of
+    // club.seasons is an array of objects, so we need to check the _id property
     const filteredSeasons = this.seasons.filter(season => 
-      club.seasons.includes(season._id)
+      club.seasons.some((clubSeason: any) => clubSeason._id === season._id)
     );
     
     console.log('ClubDetail: Club season IDs:', club.seasons);
