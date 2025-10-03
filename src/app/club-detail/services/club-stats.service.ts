@@ -158,7 +158,21 @@ export class ClubStatsService {
           // Check if the match object itself has isHomeTeam/isAwayTeam flags
           // This is a more reliable way to determine which team is ours
           for (const teamKey of teamKeys) {
-            const teamPlayers = match.eashlData.players[teamKey];
+            const teamPlayersData = match.eashlData.players[teamKey];
+            
+            // Convert object to array if needed
+            let teamPlayers: any[];
+            if (Array.isArray(teamPlayersData)) {
+              teamPlayers = teamPlayersData;
+            } else if (typeof teamPlayersData === 'object' && teamPlayersData !== null) {
+              // Convert object to array
+              teamPlayers = Object.values(teamPlayersData);
+              console.log(`Fallback - converted team ${teamKey} object to array:`, teamPlayers);
+            } else {
+              console.log(`Fallback - team ${teamKey} is not an array or object, skipping...`);
+              continue;
+            }
+            
             const teamPlayersAreHome = teamPlayers.some((p: any) => p.isHomeTeam === true);
             const teamPlayersAreAway = teamPlayers.some((p: any) => p.isHomeTeam === false);
             console.log(`Team ${teamKey} home/away check: isHomeTeam=${isHomeTeam}, teamPlayersAreHome=${teamPlayersAreHome}, teamPlayersAreAway=${teamPlayersAreAway}`);
