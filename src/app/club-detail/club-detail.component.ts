@@ -364,9 +364,21 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   private processPlayerStatsFromMatches(roster: any[]) {
+    console.log('=== CLUB DETAIL DEBUG ===');
     console.log('Processing player stats from matches for club:', this.backendClub?.name);
     console.log('Club matches available:', this.clubMatches.length);
     console.log('Roster players:', roster.length);
+    console.log('Selected season ID:', this.selectedSeasonId);
+    console.log('Club matches:', this.clubMatches.map(m => ({
+      id: m.id || m._id,
+      homeTeam: m.homeTeam,
+      awayTeam: m.awayTeam,
+      hasEashlData: !!m.eashlData,
+      isManualEntry: m.eashlData?.manualEntry,
+      hasPlayerStats: !!m.playerStats,
+      playerStatsCount: m.playerStats?.length || 0
+    })));
+    console.log('========================');
     
     const playerStatsMap = new Map<string, any>();
 
@@ -391,9 +403,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       if (match.eashlData.manualEntry && match.playerStats) {
         console.log(`Collecting manual entry players for match ${match._id || match.id}`);
         console.log('Manual entry playerStats:', match.playerStats);
-        const ourPlayers = match.playerStats.filter((player: any) => 
-          player.team === this.backendClub?.name
-        );
+        const ourPlayers = match.playerStats.filter((player: any) => {
+          const matches = player.team === this.backendClub?.name;
+          console.log(`Player ${player.name}: team="${player.team}" vs club="${this.backendClub?.name}" = ${matches}`);
+          return matches;
+        });
         console.log(`Found ${ourPlayers.length} players for ${this.backendClub?.name} in manual entry:`, ourPlayers.map((p: any) => p.name));
         ourPlayers.forEach((playerData: any) => {
           if (playerData && playerData.name) {
