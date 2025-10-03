@@ -417,6 +417,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         console.log(`Found ${ourPlayers.length} players for ${this.backendClub?.name} in manual entry:`, ourPlayers.map((p: any) => p.name));
         ourPlayers.forEach((playerData: any) => {
           if (playerData && playerData.name) {
+            console.log(`Adding player to allPlayersWhoPlayed: ${playerData.name} (position: ${playerData.position})`);
             allPlayersWhoPlayed.add(playerData.name);
           }
         });
@@ -816,6 +817,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
     // Process matches to calculate stats
     console.log('Processing', this.clubMatches.length, 'club matches for stats calculation');
+    console.log('Player stats map before processing matches:', Array.from(playerStatsMap.keys()));
     this.clubMatches.forEach((match, index) => {
       console.log(`Match ${index + 1}:`, {
         id: match._id || match.id,
@@ -858,11 +860,14 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
           const roleSuffix = isGoalie ? '_goalie' : '_skater';
           
+          console.log(`Player ${playerName}: position=${playerData.position}, isGoalie=${isGoalie}, roleSuffix=${roleSuffix}`);
+          
           // Try to find a matching player by name with the correct role
           let matchingKey = null;
           
           if (playerStatsMap.has(`${playerName}${roleSuffix}`)) {
             matchingKey = `${playerName}${roleSuffix}`;
+            console.log(`Found exact match: ${matchingKey}`);
           } else {
             // Try partial match with role suffix
             for (const [key, stats] of playerStatsMap.entries()) {
@@ -878,6 +883,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           if (matchingKey) {
             console.log(`Found matching player: ${playerName} -> ${matchingKey}`);
             const playerStats = playerStatsMap.get(matchingKey);
+            console.log(`Updating stats for ${matchingKey}: gamesPlayed=${playerStats.gamesPlayed} -> ${playerStats.gamesPlayed + 1}, role=${playerStats.role}`);
             playerStats.gamesPlayed++;
             if (won) playerStats.wins++;
             else if (lost) playerStats.losses++;
@@ -1112,6 +1118,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             if (matchingKey) {
               console.log(`Found matching player: ${playerName} -> ${matchingKey}`);
               const playerStats = playerStatsMap.get(matchingKey);
+              console.log(`Updating EASHL stats for ${matchingKey}: gamesPlayed=${playerStats.gamesPlayed} -> ${playerStats.gamesPlayed + 1}, role=${playerStats.role}`);
               playerStats.gamesPlayed++;
               if (won) playerStats.wins++;
               else if (lost) playerStats.losses++;
@@ -1190,13 +1197,17 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
     // Categorize players based on their role
     // Players can appear in both skater and goalie sections if they have stats for both
-    this.skaterStats = allPlayers.filter(player => 
-      player.role === 'skater' && player.gamesPlayed > 0
-    );
+    this.skaterStats = allPlayers.filter(player => {
+      const isSkater = player.role === 'skater' && player.gamesPlayed > 0;
+      console.log(`Player ${player.name}: role=${player.role}, gamesPlayed=${player.gamesPlayed}, isSkater=${isSkater}`);
+      return isSkater;
+    });
     
-    this.goalieStats = allPlayers.filter(player => 
-      player.role === 'goalie' && player.gamesPlayed > 0
-    );
+    this.goalieStats = allPlayers.filter(player => {
+      const isGoalie = player.role === 'goalie' && player.gamesPlayed > 0;
+      console.log(`Player ${player.name}: role=${player.role}, gamesPlayed=${player.gamesPlayed}, isGoalie=${isGoalie}`);
+      return isGoalie;
+    });
     
     console.log('Player categorization:');
     console.log('All players with games:', allPlayers.filter(p => p.gamesPlayed > 0).map(p => ({ 
