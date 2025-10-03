@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -81,7 +81,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private cdr: ChangeDetectorRef
   ) {
     // Initialize selectors
     this.selectedClub$ = this.store.select(ClubsSelectors.selectSelectedClub);
@@ -103,6 +104,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Clear stats immediately when switching clubs
         this.skaterStats = [];
         this.goalieStats = [];
+        this.cdr.detectChanges();
         // Clear previous club data when switching to a different club
         this.clearClubData();
         this.loadClubData(clubId);
@@ -417,6 +419,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Clear previous stats before processing new ones
     this.skaterStats = [];
     this.goalieStats = [];
+    this.cdr.detectChanges();
     
     const playerStatsMap = new Map<string, any>();
 
@@ -1251,6 +1254,10 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     console.log('Final skater stats:', this.skaterStats.length, 'players');
     console.log('Final goalie stats:', this.goalieStats.length, 'players');
     console.log('Goalie stats details:', this.goalieStats);
+    
+    // Force change detection to update the UI
+    console.log('Stats processing complete - triggering UI update');
+    this.cdr.detectChanges();
     
     // Debug: Check if goalies have any stats
     if (this.goalieStats.length > 0) {
