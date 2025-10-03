@@ -168,6 +168,18 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   processMatchData(): void {
     if (!this.match) return;
 
+    // Debug logging
+    console.log('=== MATCH DETAIL DEBUG ===');
+    console.log('Match ID:', this.match.id);
+    console.log('Home Team:', this.match.homeTeam);
+    console.log('Away Team:', this.match.awayTeam);
+    console.log('Home Score:', this.match.homeScore);
+    console.log('Away Score:', this.match.awayScore);
+    console.log('Player Stats Count:', this.match.playerStats?.length || 0);
+    console.log('Player Stats:', this.match.playerStats);
+    console.log('EASHL Data:', this.match.eashlData);
+    console.log('========================');
+
     // Check if this is a merged game
     this.isMergedGame = this.match.eashlMatchId?.includes('+') || false;
     
@@ -233,18 +245,24 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       };
 
       // Determine which team the player belongs to
+      console.log(`Player: ${playerStat.name}, Team: "${playerStat.team}", Home Team: "${this.match.homeTeam}", Away Team: "${this.match.awayTeam}"`);
+      
       if (playerStat.team === this.match.homeTeam) {
+        console.log(`  -> Adding to HOME team`);
         if (playerStat.position === 'G' || playerStat.position === 'goalie') {
           this.homeTeamGoalies.push(statDisplay);
         } else {
           this.homeTeamPlayers.push(statDisplay);
         }
       } else if (playerStat.team === this.match.awayTeam) {
+        console.log(`  -> Adding to AWAY team`);
         if (playerStat.position === 'G' || playerStat.position === 'goalie') {
           this.awayTeamGoalies.push(statDisplay);
         } else {
           this.awayTeamPlayers.push(statDisplay);
         }
+      } else {
+        console.log(`  -> NO MATCH! Player team "${playerStat.team}" doesn't match home "${this.match.homeTeam}" or away "${this.match.awayTeam}"`);
       }
     });
   }
