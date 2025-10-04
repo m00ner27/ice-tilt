@@ -12,7 +12,7 @@ export class ImageUrlService {
    * @param defaultImage - Default image to return if logoUrl is null/undefined
    * @returns Full URL to the image
    */
-  getImageUrl(logoUrl: string | undefined, defaultImage: string = 'assets/images/square-default.png'): string {
+  getImageUrl(logoUrl: string | undefined, defaultImage: string = 'assets/images/1ithlwords.png'): string {
     // Always use the production backend URL for images
     const BACKEND_URL = 'https://ice-tilt-backend.onrender.com';
     
@@ -52,7 +52,7 @@ export class ImageUrlService {
   /**
    * Get image URL with error handling - returns default image if the original fails to load
    */
-  getImageUrlWithFallback(logoUrl: string | undefined, defaultImage: string = 'assets/images/square-default.png'): string {
+getImageUrlWithFallback(logoUrl: string | undefined, defaultImage: string = 'assets/images/1ithlwords.png'): string {
     const imageUrl = this.getImageUrl(logoUrl, defaultImage);
     
     // If it's the default image, return it directly
@@ -71,7 +71,7 @@ export class ImageUrlService {
    * @param defaultImage - Default image to return if club not found
    * @returns Full URL to the club logo
    */
-  getClubLogoUrl(clubName: string, allClubs: any[], defaultImage: string = 'assets/images/square-default.png'): string {
+  getClubLogoUrl(clubName: string, allClubs: any[], defaultImage: string = 'assets/images/1ithlwords.png'): string {
     const club = allClubs.find(club => club.name === clubName);
     
     if (club?.logoUrl) {

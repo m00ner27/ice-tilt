@@ -57,7 +57,7 @@ export class PlayerProfileComponent implements OnInit {
     }
     
     console.log('No logo found for', clubName, '- using default');
-    return 'assets/images/square-default.png';
+    return 'assets/images/1ithlwords.png';
   }
 
   // Method to get all clubs the player has played for
