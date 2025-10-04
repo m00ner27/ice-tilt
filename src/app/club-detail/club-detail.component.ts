@@ -452,16 +452,27 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   getClubSeasons(club: any): any[] {
-    if (!club || !club.seasons) return [];
+    if (!club || !club.seasons || !this.seasons) {
+      console.log('ClubDetail: No club, club seasons, or all seasons available');
+      return [];
+    }
+    
+    // Extract season IDs from club seasons, handling both object and string formats
+    const clubSeasonIds = club.seasons.map((clubSeason: any) => {
+      // Handle both object and string seasonId formats
+      return typeof clubSeason.seasonId === 'object' && clubSeason.seasonId._id 
+        ? clubSeason.seasonId._id 
+        : clubSeason.seasonId;
+    });
+    
+    console.log('ClubDetail: Club season IDs:', clubSeasonIds);
+    console.log('ClubDetail: All seasons:', this.seasons.map(s => ({ id: s._id, name: s.name })));
     
     // Filter seasons that this club is part of
-    // club.seasons is an array of objects, so we need to check the _id property
     const filteredSeasons = this.seasons.filter(season => 
-      club.seasons.some((clubSeason: any) => clubSeason._id === season._id)
+      clubSeasonIds.includes(season._id)
     );
     
-    console.log('ClubDetail: Club season IDs:', club.seasons);
-    console.log('ClubDetail: All seasons:', this.seasons);
     console.log('ClubDetail: Filtered seasons for club:', filteredSeasons.map(s => ({ id: s._id, name: s.name })));
     
     return filteredSeasons;
