@@ -176,6 +176,20 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     this.homeTeamGoalies = [];
     this.awayTeamGoalies = [];
 
+    // Debug: Log the raw EASHL data structure
+    console.log('=== RAW EASHL DATA DEBUG ===');
+    console.log('Match EASHL Data:', this.match.eashlData);
+    if (this.match.eashlData?.clubs) {
+      console.log('EASHL Clubs:', this.match.eashlData.clubs);
+      console.log('Club IDs in EASHL data:', Object.keys(this.match.eashlData.clubs));
+    }
+    if (this.match.eashlData?.players) {
+      console.log('EASHL Players:', this.match.eashlData.players);
+      console.log('Player Club IDs in EASHL data:', Object.keys(this.match.eashlData.players));
+    }
+    console.log('Match Player Stats:', this.match.playerStats);
+    console.log('=== END RAW EASHL DATA DEBUG ===');
+
     // Check for manual stats first
     if (this.match.eashlData && this.match.eashlData.manualEntry) {
       this.processManualStats();

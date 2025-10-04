@@ -305,12 +305,29 @@ export class MatchService {
         });
       };
 
+      console.log('=== MATCH SERVICE DEBUG ===');
+      console.log('Home EASHL Club ID:', homeEashlClubId);
+      console.log('Away EASHL Club ID:', awayEashlClubId);
+      console.log('Available player club IDs in EASHL data:', Object.keys(game.eashlData.players));
+      console.log('Home club data exists:', !!(homeEashlClubId && game.eashlData.players[homeEashlClubId]));
+      console.log('Away club data exists:', !!(awayEashlClubId && game.eashlData.players[awayEashlClubId]));
+      
       if (homeEashlClubId && game.eashlData.players[homeEashlClubId]) {
+        console.log('Processing home team players for:', game.homeClubId.name);
         processTeamPlayers(game.eashlData.players[homeEashlClubId], game.homeClubId.name);
+      } else {
+        console.log('Skipping home team - no EASHL club ID or player data');
       }
+      
       if (awayEashlClubId && game.eashlData.players[awayEashlClubId]) {
+        console.log('Processing away team players for:', game.awayClubId.name);
         processTeamPlayers(game.eashlData.players[awayEashlClubId], game.awayClubId.name);
+      } else {
+        console.log('Skipping away team - no EASHL club ID or player data');
+        console.log('Away EASHL Club ID:', awayEashlClubId);
+        console.log('Available player club IDs:', Object.keys(game.eashlData.players));
       }
+      console.log('=== END MATCH SERVICE DEBUG ===');
     }
 
     // Determine scores
