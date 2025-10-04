@@ -326,6 +326,19 @@ export class MatchService {
         console.log('Skipping away team - no EASHL club ID or player data');
         console.log('Away EASHL Club ID:', awayEashlClubId);
         console.log('Available player club IDs:', Object.keys(game.eashlData.players));
+        
+        // Check if there's a different club ID that might be the away team
+        const availableClubIds = Object.keys(game.eashlData.players);
+        const homeClubId = homeEashlClubId;
+        const otherClubId = availableClubIds.find(id => id !== homeClubId);
+        
+        if (otherClubId) {
+          console.log('Found alternative club ID for away team:', otherClubId);
+          console.log('Processing away team players with alternative club ID for:', game.awayClubId.name);
+          processTeamPlayers(game.eashlData.players[otherClubId], game.awayClubId.name);
+        } else {
+          console.log('No alternative club ID found for away team');
+        }
       }
       console.log('=== END MATCH SERVICE DEBUG ===');
     }
