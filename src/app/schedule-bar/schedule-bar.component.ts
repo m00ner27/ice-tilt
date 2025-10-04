@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 @Component({
   selector: 'app-schedule-bar',
@@ -15,7 +15,10 @@ export class ScheduleBarComponent implements OnInit {
   matches: EashlMatch[] = [];
   upcomingMatches: EashlMatch[] = [];
 
-  constructor(private matchService: MatchService) {}
+  constructor(
+    private matchService: MatchService,
+    private imageUrlService: ImageUrlService
+  ) {}
 
   ngOnInit() {
     this.matchService.getMatches().subscribe(data => {
@@ -60,24 +63,9 @@ export class ScheduleBarComponent implements OnInit {
     });
   }
 
-  // Method to get the full image URL
+  // Method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
 
   isFinal(match: EashlMatch): boolean {

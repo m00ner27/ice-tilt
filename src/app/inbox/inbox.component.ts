@@ -7,7 +7,7 @@ import { Observable, Subject } from 'rxjs';
 import { takeUntil, switchMap } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
 import * as UsersSelectors from '../store/users.selectors';
@@ -49,7 +49,8 @@ export class InboxComponent implements OnInit, OnDestroy {
   constructor(
     private auth: AuthService,
     private store: Store<AppState>,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
     this.inboxOffers$ = this.store.select(UsersSelectors.selectInboxOffers);
@@ -135,21 +136,6 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/square-default.png';
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
 }

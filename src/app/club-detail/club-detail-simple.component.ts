@@ -12,7 +12,7 @@ import { ClubStatsGridComponent } from './club-stats-grid/club-stats-grid.compon
 import { ClubRosterTablesComponent } from './club-roster-tables/club-roster-tables.component';
 import { ClubStatLegendComponent } from './club-stat-legend/club-stat-legend.component';
 import { Club } from '../store/models/models/club.interface';
-import { environment } from '../../environments/environment';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -69,7 +69,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private store: Store<AppState>,
-    private ngrxApiService: NgRxApiService
+    private ngrxApiService: NgRxApiService,
+    private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
     this.selectedClub$ = this.store.select(ClubsSelectors.selectSelectedClub);
@@ -144,19 +145,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/1ithlwords.png';
-    }
-    
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
 
   // Additional methods for club detail functionality would go here
