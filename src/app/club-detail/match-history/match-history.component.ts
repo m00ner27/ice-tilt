@@ -23,6 +23,11 @@ export class MatchHistoryComponent {
       return 'assets/images/1ithlwords.png';
     }
     
+    // If it's a base64 data URL, return as is (new uploads)
+    if (logoUrl.startsWith('data:')) {
+      return logoUrl;
+    }
+    
     // If it's already a full URL, return as is
     if (logoUrl.startsWith('http')) {
       return logoUrl;
