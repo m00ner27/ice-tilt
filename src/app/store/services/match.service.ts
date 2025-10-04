@@ -321,14 +321,24 @@ export class MatchService {
       const homeEashlClubId = game.homeClubId?.eashlClubId;
       const awayEashlClubId = game.awayClubId?.eashlClubId;
 
+      // Get home team score
       if (homeEashlClubId && game.eashlData.clubs[homeEashlClubId]) {
         homeScore = parseInt(game.eashlData.clubs[homeEashlClubId].score);
       }
+      
+      // Get away team score - try multiple methods
       if (awayEashlClubId && game.eashlData.clubs[awayEashlClubId]) {
-        // The EA API gives the opponent's score on the home club's data
-        const homeClubData = game.eashlData.clubs[homeEashlClubId];
-        if (homeClubData && homeClubData.opponentClubId === awayEashlClubId) {
-           awayScore = parseInt(homeClubData.opponentScore);
+        // Method 1: Try to get away team's own score
+        const awayClubData = game.eashlData.clubs[awayEashlClubId];
+        if (awayClubData && awayClubData.score) {
+          awayScore = parseInt(awayClubData.score);
+        }
+        // Method 2: If not available, get from home club's opponent score
+        else if (homeEashlClubId && game.eashlData.clubs[homeEashlClubId]) {
+          const homeClubData = game.eashlData.clubs[homeEashlClubId];
+          if (homeClubData && homeClubData.opponentClubId === awayEashlClubId && homeClubData.opponentScore) {
+            awayScore = parseInt(homeClubData.opponentScore);
+          }
         }
       }
     }

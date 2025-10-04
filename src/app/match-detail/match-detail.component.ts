@@ -233,18 +233,29 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       };
 
       // Determine which team the player belongs to
+      console.log('Regular stats team matching:', {
+        playerTeam: playerStat.team,
+        homeTeam: this.match.homeTeam,
+        awayTeam: this.match.awayTeam,
+        playerName: playerStat.name
+      });
+      
       if (playerStat.team === this.match.homeTeam) {
         if (playerStat.position === 'G' || playerStat.position === 'goalie') {
           this.homeTeamGoalies.push(statDisplay);
         } else {
           this.homeTeamPlayers.push(statDisplay);
         }
+        console.log('Added to home team:', playerStat.name);
       } else if (playerStat.team === this.match.awayTeam) {
         if (playerStat.position === 'G' || playerStat.position === 'goalie') {
           this.awayTeamGoalies.push(statDisplay);
         } else {
           this.awayTeamPlayers.push(statDisplay);
         }
+        console.log('Added to away team:', playerStat.name);
+      } else {
+        console.log('Player team does not match either team:', playerStat.name, playerStat.team);
       }
     });
   }
@@ -263,7 +274,16 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         const isHomeTeam = player.team === this.match.homeTeam;
         const isAwayTeam = player.team === this.match.awayTeam;
         
+        console.log('Player team matching:', {
+          playerTeam: player.team,
+          homeTeam: this.match.homeTeam,
+          awayTeam: this.match.awayTeam,
+          isHomeTeam,
+          isAwayTeam
+        });
+        
         if (!isHomeTeam && !isAwayTeam) {
+          console.log('Skipping player - team does not match:', player.name, player.team);
           return; // Skip if team doesn't match
         }
         
