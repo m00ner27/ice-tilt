@@ -44,6 +44,11 @@ export class NavigationComponent {
       this.auth.isAuthenticated$
     ]).pipe(
       map(([isAdminPasswordVerified, isAuthenticated]) => {
+        console.log('Login button visibility check:', {
+          isAdminPasswordVerified,
+          isAuthenticated,
+          shouldShow: isAdminPasswordVerified && !isAuthenticated
+        });
         return isAdminPasswordVerified && !isAuthenticated;
       })
     );
@@ -51,6 +56,12 @@ export class NavigationComponent {
 
   toggleMenu() {
     this.isMenuCollapsed = !this.isMenuCollapsed;
+  }
+
+  // Method to clear admin password verification (for debugging)
+  clearAdminPassword() {
+    this.adminPasswordService.resetAdminPasswordVerification();
+    console.log('Admin password verification cleared');
   }
 
 }
