@@ -6,7 +6,7 @@ import { AuthButtonComponent } from './auth-button/auth-button.component';
 import { AuthService } from '@auth0/auth0-angular';
 import { ApiService } from '../store/services/api.service';
 import { AdminPasswordService } from '../services/admin-password.service';
-import { Observable, of } from 'rxjs';
+import { Observable, of, combineLatest } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store';
@@ -37,7 +37,16 @@ export class NavigationComponent {
       })
     );
     this.isManager$ = this.store.select(selectIsUserAnyManager);
-    this.shouldShowLoginButton$ = this.adminPasswordService.isAdminPasswordVerified$;
+    
+    // Show login button only if admin password is verified AND user is not authenticated
+    this.shouldShowLoginButton$ = combineLatest([
+      this.adminPasswordService.isAdminPasswordVerified$,
+      this.auth.isAuthenticated$
+    ]).pipe(
+      map(([isAdminPasswordVerified, isAuthenticated]) => {
+        return isAdminPasswordVerified && !isAuthenticated;
+      })
+    );
   }
 
   toggleMenu() {
