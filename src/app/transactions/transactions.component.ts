@@ -64,7 +64,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     combineLatest([
       this.apiService.getSeasons(),
       this.apiService.getClubs(),
-      this.transactionsService.getTransactions(this.currentPage, this.pageSize)
+      this.transactionsService.getTransactions(this.currentPage, this.pageSize, this.selectedSeason, this.selectedClub)
     ]).pipe(takeUntil(this.destroy$))
     .subscribe({
       next: ([seasons, clubs, transactionData]) => {
@@ -149,7 +149,8 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.updateFilteredClubs();
     // Reset club selection when season changes
     this.selectedClub = 'All';
-    this.applyFilters();
+    // Reload data with the new season filter
+    this.loadPage(1);
   }
 
   onClubChange() {
@@ -157,7 +158,8 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     if (this.selectedClub !== 'All' && !this.filteredClubs.some(club => club.name === this.selectedClub)) {
       this.selectedClub = 'All';
     }
-    this.applyFilters();
+    // Reload data with the new club filter
+    this.loadPage(1);
   }
 
   applyFilters() {
@@ -224,7 +226,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.currentPage = page;
     this.loading = true;
     
-    this.transactionsService.getTransactions(this.currentPage, this.pageSize)
+    this.transactionsService.getTransactions(this.currentPage, this.pageSize, this.selectedSeason, this.selectedClub)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (transactionData) => {

@@ -12,8 +12,15 @@ export class TransactionsService {
 
   constructor(private http: HttpClient) { }
 
-  getTransactions(page: number = 1, limit: number = 50): Observable<{transactions: Transaction[], pagination: any}> {
-    return this.http.get<{transactions: Transaction[], pagination: any}>(`${this.apiUrl}/api/transactions?page=${page}&limit=${limit}`);
+  getTransactions(page: number = 1, limit: number = 50, seasonName?: string, clubName?: string): Observable<{transactions: Transaction[], pagination: any}> {
+    let url = `${this.apiUrl}/api/transactions?page=${page}&limit=${limit}`;
+    if (seasonName && seasonName !== 'All') {
+      url += `&seasonName=${encodeURIComponent(seasonName)}`;
+    }
+    if (clubName && clubName !== 'All') {
+      url += `&clubName=${encodeURIComponent(clubName)}`;
+    }
+    return this.http.get<{transactions: Transaction[], pagination: any}>(url);
   }
 
   getClubsWithTransactions(seasonName: string): Observable<string[]> {
