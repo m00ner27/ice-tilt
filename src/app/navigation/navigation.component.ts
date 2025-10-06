@@ -6,8 +6,8 @@ import { AuthButtonComponent } from './auth-button/auth-button.component';
 import { AuthService } from '@auth0/auth0-angular';
 import { ApiService } from '../store/services/api.service';
 import { AdminPasswordService } from '../services/admin-password.service';
-import { Observable, of, combineLatest } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store';
 import { selectIsUserAnyManager } from '../store/managers.selectors';
@@ -38,17 +38,12 @@ export class NavigationComponent {
     );
     this.isManager$ = this.store.select(selectIsUserAnyManager);
     
-    // Show login button only if admin password is verified AND user is not authenticated
+    // Keep login button logic but it's hidden with CSS
     this.shouldShowLoginButton$ = combineLatest([
       this.adminPasswordService.isAdminPasswordVerified$,
       this.auth.isAuthenticated$
     ]).pipe(
       map(([isAdminPasswordVerified, isAuthenticated]) => {
-        console.log('Login button visibility check:', {
-          isAdminPasswordVerified,
-          isAuthenticated,
-          shouldShow: isAdminPasswordVerified && !isAuthenticated
-        });
         return isAdminPasswordVerified && !isAuthenticated;
       })
     );
@@ -56,12 +51,6 @@ export class NavigationComponent {
 
   toggleMenu() {
     this.isMenuCollapsed = !this.isMenuCollapsed;
-  }
-
-  // Method to clear admin password verification (for debugging)
-  clearAdminPassword() {
-    this.adminPasswordService.resetAdminPasswordVerification();
-    console.log('Admin password verification cleared');
   }
 
 }
