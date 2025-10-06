@@ -67,7 +67,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       this.apiService.getSeasons(),
       this.apiService.getClubs(),
       this.transactionsService.getTransactions(this.currentPage, this.pageSize),
-      this.transactionsService.getTransactions(1, 1000) // Load all transactions for filtering
+      this.transactionsService.getTransactions(1, 10000) // Load all transactions for filtering
     ]).pipe(takeUntil(this.destroy$))
     .subscribe({
       next: ([seasons, clubs, transactionData, allTransactionsData]) => {
@@ -75,6 +75,8 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         this.allClubs = clubs;
         this.allTransactions = transactionData.transactions;
         this.allTransactionsForFiltering = allTransactionsData.transactions;
+        console.log('Loaded transactions for filtering:', this.allTransactionsForFiltering.length);
+        console.log('Unique clubs in filtering data:', [...new Set(this.allTransactionsForFiltering.map(t => t.clubName))]);
         this.currentPage = transactionData.pagination.currentPage;
         this.totalPages = transactionData.pagination.totalPages;
         this.totalTransactions = transactionData.pagination.totalTransactions;
