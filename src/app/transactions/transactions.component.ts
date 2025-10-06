@@ -35,6 +35,9 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   hasPrevPage: boolean = false;
   pageSize: number = 50;
   
+  // All transactions for filtering (not paginated)
+  allTransactionsForFiltering: Transaction[] = [];
+  
   // Make Math available in template
   Math = Math;
   
@@ -63,13 +66,15 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     combineLatest([
       this.apiService.getSeasons(),
       this.apiService.getClubs(),
-      this.transactionsService.getTransactions(this.currentPage, this.pageSize)
+      this.transactionsService.getTransactions(this.currentPage, this.pageSize),
+      this.transactionsService.getTransactions(1, 1000) // Load all transactions for filtering
     ]).pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: ([seasons, clubs, transactionData]) => {
+      next: ([seasons, clubs, transactionData, allTransactionsData]) => {
         this.seasons = seasons;
         this.allClubs = clubs;
         this.allTransactions = transactionData.transactions;
+        this.allTransactionsForFiltering = allTransactionsData.transactions;
         this.currentPage = transactionData.pagination.currentPage;
         this.totalPages = transactionData.pagination.totalPages;
         this.totalTransactions = transactionData.pagination.totalTransactions;
@@ -118,12 +123,13 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   updateFilteredClubs() {
     if (this.selectedSeason === 'All') {
+      // Show all clubs when "All Seasons" is selected
       this.filteredClubs = [...this.allClubs].sort((a, b) => a.name.localeCompare(b.name));
     } else {
       // Filter clubs that have transactions in the selected season
       const clubsInSeason = new Set<string>();
       
-      this.allTransactions
+      this.allTransactionsForFiltering
         .filter(transaction => transaction.seasonName === this.selectedSeason)
         .forEach(transaction => {
           clubsInSeason.add(transaction.clubName);
