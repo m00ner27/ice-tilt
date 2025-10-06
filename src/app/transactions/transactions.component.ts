@@ -135,9 +135,14 @@ export class TransactionsComponent implements OnInit, OnDestroy {
           clubsInSeason.add(transaction.clubName);
         });
       
+      console.log('Clubs with transactions in season', this.selectedSeason, ':', Array.from(clubsInSeason));
+      console.log('All clubs from API:', this.allClubs.map(c => c.name));
+      
       this.filteredClubs = this.allClubs
         .filter(club => clubsInSeason.has(club.name))
         .sort((a, b) => a.name.localeCompare(b.name));
+        
+      console.log('Filtered clubs for dropdown:', this.filteredClubs.map(c => c.name));
     }
   }
 
@@ -168,9 +173,15 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
     // Filter by club
     if (this.selectedClub !== 'All') {
+      console.log('Filtering by club:', this.selectedClub);
+      console.log('Available club names in transactions:', [...new Set(this.allTransactions.map(t => t.clubName))]);
+      console.log('Transactions before club filter:', filteredTransactions.length);
+      
       filteredTransactions = filteredTransactions.filter(
         transaction => transaction.clubName === this.selectedClub
       );
+      
+      console.log('Transactions after club filter:', filteredTransactions.length);
     }
 
     // Sort by date (newest first)
