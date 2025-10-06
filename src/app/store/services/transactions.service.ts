@@ -16,6 +16,10 @@ export class TransactionsService {
     return this.http.get<{transactions: Transaction[], pagination: any}>(`${this.apiUrl}/api/transactions?page=${page}&limit=${limit}`);
   }
 
+  getClubsWithTransactions(seasonName: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/api/transactions/clubs/${encodeURIComponent(seasonName)}`);
+  }
+
   createTransaction(transaction: Omit<Transaction, '_id' | 'date'>): Observable<Transaction> {
     return this.http.post<Transaction>(`${this.apiUrl}/api/transactions`, transaction);
   }

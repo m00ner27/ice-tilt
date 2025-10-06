@@ -35,8 +35,6 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   hasPrevPage: boolean = false;
   pageSize: number = 50;
   
-  // All transactions for filtering (not paginated)
-  allTransactionsForFiltering: Transaction[] = [];
   
   // Make Math available in template
   Math = Math;
@@ -66,17 +64,13 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     combineLatest([
       this.apiService.getSeasons(),
       this.apiService.getClubs(),
-      this.transactionsService.getTransactions(this.currentPage, this.pageSize),
-      this.transactionsService.getTransactions(1, 10000) // Load all transactions for filtering
+      this.transactionsService.getTransactions(this.currentPage, this.pageSize)
     ]).pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: ([seasons, clubs, transactionData, allTransactionsData]) => {
+      next: ([seasons, clubs, transactionData]) => {
         this.seasons = seasons;
         this.allClubs = clubs;
         this.allTransactions = transactionData.transactions;
-        this.allTransactionsForFiltering = allTransactionsData.transactions;
-        console.log('Loaded transactions for filtering:', this.allTransactionsForFiltering.length);
-        console.log('Unique clubs in filtering data:', [...new Set(this.allTransactionsForFiltering.map(t => t.clubName))]);
         this.currentPage = transactionData.pagination.currentPage;
         this.totalPages = transactionData.pagination.totalPages;
         this.totalTransactions = transactionData.pagination.totalTransactions;
@@ -128,23 +122,26 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       // Show all clubs when "All Seasons" is selected
       this.filteredClubs = [...this.allClubs].sort((a, b) => a.name.localeCompare(b.name));
     } else {
-      // Filter clubs that have transactions in the selected season
-      const clubsInSeason = new Set<string>();
-      
-      this.allTransactionsForFiltering
-        .filter(transaction => transaction.seasonName === this.selectedSeason)
-        .forEach(transaction => {
-          clubsInSeason.add(transaction.clubName);
+      // Use the efficient API call to get clubs with transactions in this season
+      this.transactionsService.getClubsWithTransactions(this.selectedSeason)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (clubsInSeason) => {
+            console.log('Clubs with transactions in season', this.selectedSeason, ':', clubsInSeason);
+            console.log('All clubs from API:', this.allClubs.map(c => c.name));
+            
+            this.filteredClubs = this.allClubs
+              .filter(club => clubsInSeason.includes(club.name))
+              .sort((a, b) => a.name.localeCompare(b.name));
+              
+            console.log('Filtered clubs for dropdown:', this.filteredClubs.map(c => c.name));
+          },
+          error: (error) => {
+            console.error('Error loading clubs with transactions:', error);
+            // Fallback to showing all clubs
+            this.filteredClubs = [...this.allClubs].sort((a, b) => a.name.localeCompare(b.name));
+          }
         });
-      
-      console.log('Clubs with transactions in season', this.selectedSeason, ':', Array.from(clubsInSeason));
-      console.log('All clubs from API:', this.allClubs.map(c => c.name));
-      
-      this.filteredClubs = this.allClubs
-        .filter(club => clubsInSeason.has(club.name))
-        .sort((a, b) => a.name.localeCompare(b.name));
-        
-      console.log('Filtered clubs for dropdown:', this.filteredClubs.map(c => c.name));
     }
   }
 
