@@ -85,6 +85,14 @@
                      class="text-2xl"></i>
                 </div>
                 
+                <!-- Club Logo -->
+                <div class="flex-shrink-0 mr-3">
+                  <img [src]="getClubLogoUrl(transaction.clubName)" 
+                       [alt]="transaction.clubName + ' logo'"
+                       class="w-8 h-8 rounded-full object-cover"
+                       (error)="onLogoError($event)">
+                </div>
+                
                 <!-- Transaction Details -->
                 <div class="flex-1">
                   <div class="flex items-center space-x-2 mb-1">
@@ -111,14 +119,45 @@
                   </div>
                 </div>
               </div>
-              
-              <!-- Club Logo (if available) -->
-              <div *ngIf="transaction.clubLogoUrl" class="flex-shrink-0">
-                <img [src]="transaction.clubLogoUrl" 
-                     [alt]="transaction.clubName + ' logo'"
-                     class="w-12 h-12 rounded-lg object-cover">
-              </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div *ngIf="!isPreview && transactions.length > 0" class="bg-admin-card rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-400">
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalTransactions) }} of {{ totalTransactions }} transactions
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <!-- Previous Button -->
+            <button 
+              (click)="prevPage()" 
+              [disabled]="!hasPrevPage"
+              class="px-3 py-2 text-sm font-medium text-white bg-admin-accent rounded-md hover:bg-admin-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              Previous
+            </button>
+            
+            <!-- Page Numbers -->
+            <div class="flex items-center space-x-1">
+              <button 
+                *ngFor="let page of getPageNumbers()" 
+                (click)="goToPage(page)"
+                [class]="page === currentPage ? 'bg-admin-primary text-white' : 'bg-admin-hover text-gray-300 hover:bg-admin-accent'"
+                class="px-3 py-2 text-sm font-medium rounded-md transition-colors">
+                {{ page }}
+              </button>
+            </div>
+            
+            <!-- Next Button -->
+            <button 
+              (click)="nextPage()" 
+              [disabled]="!hasNextPage"
+              class="px-3 py-2 text-sm font-medium text-white bg-admin-accent rounded-md hover:bg-admin-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              Next
+            </button>
           </div>
         </div>
       </div>

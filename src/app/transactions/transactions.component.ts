@@ -27,6 +27,17 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   loading: boolean = true;
   error: string | null = null;
   
+  // Pagination properties
+  currentPage: number = 1;
+  totalPages: number = 1;
+  totalTransactions: number = 0;
+  hasNextPage: boolean = false;
+  hasPrevPage: boolean = false;
+  pageSize: number = 50;
+  
+  // Make Math available in template
+  Math = Math;
+  
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -52,13 +63,18 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     combineLatest([
       this.apiService.getSeasons(),
       this.apiService.getClubs(),
-      this.transactionsService.getTransactions()
+      this.transactionsService.getTransactions(this.currentPage, this.pageSize)
     ]).pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: ([seasons, clubs, transactions]) => {
+      next: ([seasons, clubs, transactionData]) => {
         this.seasons = seasons;
         this.allClubs = clubs;
-        this.allTransactions = transactions;
+        this.allTransactions = transactionData.transactions;
+        this.currentPage = transactionData.pagination.currentPage;
+        this.totalPages = transactionData.pagination.totalPages;
+        this.totalTransactions = transactionData.pagination.totalTransactions;
+        this.hasNextPage = transactionData.pagination.hasNextPage;
+        this.hasPrevPage = transactionData.pagination.hasPrevPage;
         this.updateFilteredClubs();
         this.applyFilters();
         this.loading = false;
@@ -82,11 +98,16 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   private handleRosterUpdate(event: any) {
     // Reload transactions when roster changes occur
-    this.transactionsService.getTransactions()
+    this.transactionsService.getTransactions(this.currentPage, this.pageSize)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (transactions) => {
-          this.allTransactions = transactions;
+        next: (transactionData) => {
+          this.allTransactions = transactionData.transactions;
+          this.currentPage = transactionData.pagination.currentPage;
+          this.totalPages = transactionData.pagination.totalPages;
+          this.totalTransactions = transactionData.pagination.totalTransactions;
+          this.hasNextPage = transactionData.pagination.hasNextPage;
+          this.hasPrevPage = transactionData.pagination.hasPrevPage;
           this.applyFilters();
         },
         error: (error) => {
@@ -180,6 +201,97 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  // Pagination methods
+  loadPage(page: number) {
+    this.currentPage = page;
+    this.loading = true;
+    
+    this.transactionsService.getTransactions(this.currentPage, this.pageSize)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (transactionData) => {
+          this.allTransactions = transactionData.transactions;
+          this.currentPage = transactionData.pagination.currentPage;
+          this.totalPages = transactionData.pagination.totalPages;
+          this.totalTransactions = transactionData.pagination.totalTransactions;
+          this.hasNextPage = transactionData.pagination.hasNextPage;
+          this.hasPrevPage = transactionData.pagination.hasPrevPage;
+          this.applyFilters();
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error loading page:', error);
+          this.error = 'Failed to load page';
+          this.loading = false;
+        }
+      });
+  }
+
+  nextPage() {
+    if (this.hasNextPage) {
+      this.loadPage(this.currentPage + 1);
+    }
+  }
+
+  prevPage() {
+    if (this.hasPrevPage) {
+      this.loadPage(this.currentPage - 1);
+    }
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.loadPage(page);
+    }
+  }
+
+  // Helper methods for template
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  }
+
+  getClubLogoUrl(clubName: string): string {
+    const club = this.allClubs.find(c => c.name === clubName);
+    if (club?.logoUrl) {
+      // Use ImageUrlService logic for consistent URL handling
+      if (club.logoUrl.startsWith('data:')) {
+        return club.logoUrl; // Base64 data URL
+      }
+      if (club.logoUrl.startsWith('http')) {
+        return club.logoUrl; // Full URL
+      }
+      if (club.logoUrl.startsWith('assets/')) {
+        return club.logoUrl; // Local asset
+      }
+      if (club.logoUrl.startsWith('/uploads/')) {
+        return `https://ice-tilt-backend.onrender.com${club.logoUrl}`;
+      }
+      if (club.logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
+        return `https://ice-tilt-backend.onrender.com/uploads/${club.logoUrl}`;
+      }
+      return club.logoUrl;
+    }
+    return 'assets/images/1ithlwords.png'; // Default fallback
+  }
+
+  onLogoError(event: any): void {
+    console.log('Logo failed to load, URL:', event.target.src);
+    event.target.src = 'assets/images/1ithlwords.png';
   }
 
 }
