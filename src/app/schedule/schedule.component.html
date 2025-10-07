@@ -1,5 +1,6 @@
-<div class="p-5 max-w-7xl mx-auto text-white">
-  <h1 *ngIf="!isPreview" class="text-center mb-5 text-4xl font-bold">Game Schedule</h1>
+<div class="text-white" [class.p-3]="!isPreview" [class.sm:p-5]="!isPreview" [class.max-w-7xl]="!isPreview" [class.mx-auto]="!isPreview" [class.transactions-section]="isPreview">
+  <div *ngIf="isPreview" class="container">
+    <h1 *ngIf="!isPreview" class="text-center mb-5 text-4xl font-bold">Game Schedule</h1>
   
   <!-- Filter options -->
   <div *ngIf="!isPreview" class="mb-5 flex flex-wrap justify-start gap-4">
@@ -168,41 +169,41 @@
     </div>
 
     <!-- Mobile Card View -->
-    <div class="md:hidden space-y-3 p-4">
-      <div *ngFor="let match of filteredMatches" class="bg-admin-hover rounded-lg p-4">
+    <div class="md:hidden space-y-3" [class.p-2]="!isPreview" [class.sm:p-4]="!isPreview">
+      <div *ngFor="let match of filteredMatches" class="bg-admin-hover rounded-lg p-3 sm:p-4">
         <!-- Date Row -->
         <div class="text-center mb-3">
           <span class="text-admin-primary font-semibold text-sm">{{ formatDate(match.date) }}</span>
         </div>
         
         <!-- Teams and Score Row -->
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-3 gap-2">
           <!-- Home Team -->
-          <div class="flex items-center space-x-2 flex-1 justify-end">
-            <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-sm">{{ match.homeTeam }}</a>
-            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-6 h-6 object-contain rounded" (error)="onImageError($event)">
+          <div class="flex items-center space-x-1 sm:space-x-2 flex-1 justify-end min-w-0">
+            <a [routerLink]="['/clubs', match.homeClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-xs sm:text-sm truncate">{{ match.homeTeam }}</a>
+            <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="w-5 h-5 sm:w-6 sm:h-6 object-contain rounded flex-shrink-0" (error)="onImageError($event)">
             <span *ngIf="getResultClass(match, match.homeTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
             <span *ngIf="getResultClass(match, match.homeTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
           </div>
           
           <!-- Score -->
-          <div class="mx-4 text-center">
-            <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="text-gray-400 font-semibold text-sm">VS</span>
-            <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="font-semibold text-lg">{{ match.homeScore }} - {{ match.awayScore }}</span>
+          <div class="mx-2 sm:mx-4 text-center flex-shrink-0">
+            <span *ngIf="match.homeScore === 0 && match.awayScore === 0" class="text-gray-400 font-semibold text-xs sm:text-sm">VS</span>
+            <span *ngIf="!(match.homeScore === 0 && match.awayScore === 0)" class="font-semibold text-base sm:text-lg">{{ match.homeScore }} - {{ match.awayScore }}</span>
           </div>
           
           <!-- Away Team -->
-          <div class="flex items-center space-x-2 flex-1 justify-start">
+          <div class="flex items-center space-x-1 sm:space-x-2 flex-1 justify-start min-w-0">
             <span *ngIf="getResultClass(match, match.awayTeam) === 'win'" class="text-green-500 font-bold text-xs">W</span>
             <span *ngIf="getResultClass(match, match.awayTeam) === 'loss'" class="text-red-500 font-bold text-xs">L</span>
-            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-6 h-6 object-contain rounded" (error)="onImageError($event)">
-            <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-sm">{{ match.awayTeam }}</a>
+            <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="w-5 h-5 sm:w-6 sm:h-6 object-contain rounded flex-shrink-0" (error)="onImageError($event)">
+            <a [routerLink]="['/clubs', match.awayClub?._id]" class="text-white font-medium hover:text-admin-primary transition-colors text-xs sm:text-sm truncate">{{ match.awayTeam }}</a>
           </div>
         </div>
         
         <!-- Details Button -->
         <div class="text-center">
-          <a [routerLink]="['/match', match.id]" class="inline-block px-4 py-2 bg-gradient-to-r from-admin-secondary to-blue-700 text-white text-xs font-medium rounded-md transition-all duration-300 border border-blue-700 shadow-md hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md">
+          <a [routerLink]="['/match', match.id]" class="inline-block px-3 sm:px-4 py-2 bg-gradient-to-r from-admin-secondary to-blue-700 text-white text-xs font-medium rounded-md transition-all duration-300 border border-blue-700 shadow-md hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md">
             View Details
           </a>
         </div>
@@ -231,5 +232,6 @@
       <p>* Click on column headers to sort</p>
       <p>* Click "View Details" to see match statistics</p>
     </div>
+  </div>
   </div>
 </div>

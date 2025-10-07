@@ -1,6 +1,6 @@
 .club-detail-container {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 10px;
+  max-width: 1400px;
   margin: 0 auto;
   color: white;
 }
@@ -88,8 +88,15 @@ app-match-history {
 }
 
 /* Responsive design */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .club-detail-container {
     padding: 5px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .club-detail-container {
+    padding: 2px;
   }
 }

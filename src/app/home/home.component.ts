@@ -127,29 +127,29 @@ export class HomeComponent implements OnInit {
       
       // Top 5 goals (all-time leaders)
       this.topGoals = Object.values(playerMap)
-        .filter(p => p.position !== 'G' && p.goals > 0)
+        .filter(p => p.position !== 'goalie' && p.goals > 0)
         .sort((a, b) => b.goals - a.goals)
         .slice(0, 5);
       
       // Top 5 assists (all-time leaders)
       this.topAssists = Object.values(playerMap)
-        .filter(p => p.position !== 'G' && p.assists > 0)
+        .filter(p => p.position !== 'goalie' && p.assists > 0)
         .sort((a, b) => b.assists - a.assists)
         .slice(0, 5);
       
       // Top 5 points (all-time leaders)
       this.topPoints = Object.values(playerMap)
-        .filter(p => p.position !== 'G' && p.points > 0)
+        .filter(p => p.position !== 'goalie' && p.points > 0)
         .sort((a, b) => b.points - a.points)
         .slice(0, 5);
       
       // Check for goalies
-      const allGoalies = Object.values(playerMap).filter(p => p.position === 'G');
+      const allGoalies = Object.values(playerMap).filter(p => p.position === 'goalie');
       
       
       // Top 5 save percentage (all-time leaders, minimum 1 shot against)
       this.topSavePct = Object.values(playerMap)
-        .filter(p => p.position === 'G' && (p.shotsAgainst || 0) >= 1)
+        .filter(p => p.position === 'goalie' && (p.shotsAgainst || 0) >= 1)
         .map(g => ({
           ...g,
           savePercentage: ((g.saves || 0) / (g.shotsAgainst || 1)).toFixed(3)

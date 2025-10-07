@@ -47,4 +47,36 @@
   .min-w-48 {
     min-width: 100%;
   }
+  
+  /* Optimize transaction items for mobile */
+  .transactions-section .container {
+    padding: 0 0.5rem;
+  }
+  
+  /* Make transaction cards use full width */
+  .bg-admin-card {
+    margin: 0;
+  }
+  
+  /* Reduce padding on mobile for more space */
+  .p-3 {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Further optimize for very small screens */
+  .transactions-section .container {
+    padding: 0 0.25rem;
+  }
+  
+  /* Smaller padding for very small screens */
+  .p-3 {
+    padding: 0.5rem;
+  }
+  
+  /* Ensure text doesn't get cut off */
+  .truncate {
+    max-width: 200px;
+  }
 }

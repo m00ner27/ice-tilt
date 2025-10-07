@@ -68,6 +68,12 @@
   gap: 8px;
 }
 
+@media (max-width: 768px) {
+  .club-name-logo {
+    justify-content: center;
+  }
+}
+
 .scores-section {
   display: flex;
   align-items: center;
@@ -76,6 +82,14 @@
   min-width: 200px;
   height: 40px;
   justify-self: center;
+}
+
+@media (max-width: 768px) {
+  .scores-section {
+    gap: 20px;
+    min-width: 120px;
+    height: 30px;
+  }
 }
 
 .home-score {
@@ -116,6 +130,12 @@
 .club-name {
   font-size: 1.2em;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .club-name {
+    display: none;
+  }
 }
 
 .club-score {
@@ -363,7 +383,7 @@ h4:has(+ .table-container .goalie-table) {
   font-weight: 600;
   border-bottom: 2px solid #3498db;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .goalie-table td {
@@ -371,7 +391,7 @@ h4:has(+ .table-container .goalie-table) {
   text-align: center;
   border-bottom: 1px solid #34495e;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .goalie-table tbody tr:hover {
@@ -475,21 +495,18 @@ h4:has(+ .table-container .goalie-table) {
   }
 
   .match-clubs {
-    flex-direction: row;
     gap: 15px;
-    flex-wrap: wrap;
-    justify-content: space-around;
   }
 
   .club {
-    flex: 1;
-    min-width: 120px;
+    flex: none;
+    min-width: 80px;
     gap: 8px;
   }
 
   .club-logo {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
 
   .club-name {
@@ -498,6 +515,49 @@ h4:has(+ .table-container .goalie-table) {
 
   .club-score {
     font-size: 1.5em;
+  }
+}
+
+@media (max-width: 480px) {
+  .match-clubs {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .home-club {
+    justify-self: auto;
+    order: 1;
+  }
+
+  .away-club {
+    justify-self: auto;
+    order: 3;
+  }
+
+  .scores-section {
+    order: 2;
+    gap: 15px;
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .club {
+    min-width: 50px;
+    gap: 2px;
+    flex: 1;
+    max-width: 80px;
+  }
+
+  .club-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .home-score, .away-score {
+    font-size: 1.2rem;
   }
 
 
@@ -592,14 +652,14 @@ h4:has(+ .table-container .goalie-table) {
 
   /* Goalie table responsive adjustments */
   .goalie-table {
-    font-size: 0.4rem !important;
+    font-size: 0.7rem !important;
     min-width: 0 !important;
     max-width: 100% !important;
   }
   
   .goalie-table th, .goalie-table td {
-    padding: 1px !important;
-    font-size: 0.4rem !important;
+    padding: 4px 2px !important;
+    font-size: 0.7rem !important;
     white-space: nowrap;
   }
   
@@ -644,14 +704,14 @@ h4:has(+ .table-container .goalie-table) {
   
   /* Goalie table - force all columns to fit on very small screens */
   .goalie-table {
-    font-size: 0.5rem !important;
+    font-size: 0.7rem !important;
     min-width: 0 !important;
     max-width: 100% !important;
   }
   
   .goalie-table th, .goalie-table td {
-    padding: 1px !important;
-    font-size: 0.5rem !important;
+    padding: 3px 1px !important;
+    font-size: 0.7rem !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

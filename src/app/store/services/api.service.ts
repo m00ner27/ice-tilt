@@ -326,16 +326,10 @@ export class ApiService {
   // Club roster methods
   getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
     console.log('ApiService: getClubRoster called for clubId:', clubId, 'seasonId:', seasonId);
-    return this.auth.getAccessTokenSilently({
-      authorizationParams: { audience: environment.apiAudience }
-    }).pipe(
-      switchMap(token => {
-        const headers = new HttpHeaders({
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        });
-        return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`, { headers });
-      }),
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`, { headers }).pipe(
       catchError(error => {
         console.error('Error loading club roster:', error);
         throw error;

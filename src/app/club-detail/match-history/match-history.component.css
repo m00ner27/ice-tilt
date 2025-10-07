@@ -1,9 +1,16 @@
 .match-history-container {
   margin-top: 30px;
   background-color: #1a252f;
-  padding: 20px;
+  padding: 15px;
   border-radius: 8px;
   border: 1px solid #34495e;
+}
+
+@media (max-width: 768px) {
+  .match-history-container {
+    margin-top: 20px;
+    padding: 10px;
+  }
 }
 
 .match-history-header {
@@ -45,13 +52,20 @@
 .match-card {
   display: flex;
   flex-direction: column;
-  padding: 15px;
+  padding: 12px;
   border-radius: 6px;
-  border-left: 5px solid;
+  border-left: 4px solid;
   background-color: #2c3e50;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   position: relative;
+}
+
+@media (max-width: 768px) {
+  .match-card {
+    padding: 10px;
+    border-left: 3px solid;
+  }
 }
 
 .match-card:hover {
@@ -77,12 +91,29 @@
   color: #ccc;
   font-size: 0.9em;
   margin-bottom: 8px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .match-date {
+    font-size: 0.8em;
+    margin-bottom: 6px;
+  }
 }
 
 .match-details {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .match-details {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
 }
 
 .opponent {
@@ -91,6 +122,15 @@
   font-weight: 600;
   font-size: 1.1em;
   color: white;
+  min-width: 0;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .opponent {
+    font-size: 1em;
+    justify-content: center;
+  }
 }
 
 .opponent-logo {
@@ -98,6 +138,15 @@
   height: 24px;
   margin-right: 8px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .opponent-logo {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+  }
 }
 
 .vs {
@@ -114,26 +163,36 @@
   font-weight: 700;
   font-size: 1.2em;
   color: white;
+  justify-content: center;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .score {
+    font-size: 1.1em;
+    gap: 6px;
+    order: 1;
+  }
 }
 
 .score-logo {
   width: 28px;
   height: 28px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .score-logo {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .score-separator {
   margin: 0 4px;
 }
 
-.location-badge {
-  background-color: #34495e;
-  color: #ccc;
-  font-size: 0.8em;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-}
 
 .no-matches {
   text-align: center;
@@ -149,6 +208,15 @@
   margin-top: 8px;
   font-weight: 500;
   transition: color 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .view-details {
+    text-align: center;
+    margin-top: 6px;
+    font-size: 0.75em;
+    order: 3;
+  }
 }
 
 .match-card:hover .view-details {

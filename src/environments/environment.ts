@@ -1,11 +1,15 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000',
-  apiAudience: 'http://localhost:3000',
+  apiUrl: 'http://localhost:3001', // Primary API URL - will fallback to 3000 if 3001 is not available
+  apiAudience: 'https://ice-tilt-backend.onrender.com', // Use production audience for Auth0
   apiAllowedList: [
     // Public endpoints that don't require authentication
     {
       uri: 'http://localhost:3000/api/seasons',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/seasons',
       allowAnonymous: true
     },
     // Clubs - GET requests are public, but PUT/POST/DELETE require auth
@@ -14,7 +18,15 @@ export const environment = {
       allowAnonymous: true
     },
     {
+      uri: 'http://localhost:3001/api/clubs',
+      allowAnonymous: true
+    },
+    {
       uri: 'http://localhost:3000/api/clubs/*',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/clubs/*',
       allowAnonymous: true
     },
     {
@@ -22,7 +34,15 @@ export const environment = {
       allowAnonymous: true
     },
     {
+      uri: 'http://localhost:3001/api/clubs/*/roster*',
+      allowAnonymous: true
+    },
+    {
       uri: 'http://localhost:3000/api/clubs/*/roster',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/clubs/*/roster',
       allowAnonymous: true
     },
     // More specific patterns for club roster endpoints
@@ -31,7 +51,15 @@ export const environment = {
       allowAnonymous: true
     },
     {
+      uri: 'http://localhost:3001/api/clubs/*/roster?*',
+      allowAnonymous: true
+    },
+    {
       uri: 'http://localhost:3000/api/games',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/games',
       allowAnonymous: true
     },
     {
@@ -39,7 +67,15 @@ export const environment = {
       allowAnonymous: true
     },
     {
+      uri: 'http://localhost:3001/api/games/*',
+      allowAnonymous: true
+    },
+    {
       uri: 'http://localhost:3000/api/divisions',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/divisions',
       allowAnonymous: true
     },
     {
@@ -47,12 +83,24 @@ export const environment = {
       allowAnonymous: true
     },
     {
+      uri: 'http://localhost:3001/api/player-profiles',
+      allowAnonymous: true
+    },
+    {
       uri: 'http://localhost:3000/api/regions',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/regions',
       allowAnonymous: true
     },
     // Player stats endpoints - public for viewing
     {
       uri: 'http://localhost:3000/api/skater-data',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/skater-data',
       allowAnonymous: true
     },
     // Standings and stats endpoints - public for viewing
@@ -61,7 +109,15 @@ export const environment = {
       allowAnonymous: true
     },
     {
+      uri: 'http://localhost:3001/api/standings',
+      allowAnonymous: true
+    },
+    {
       uri: 'http://localhost:3000/api/standings/*',
+      allowAnonymous: true
+    },
+    {
+      uri: 'http://localhost:3001/api/standings/*',
       allowAnonymous: true
     },
     {
@@ -69,7 +125,17 @@ export const environment = {
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3000',
+          audience: 'https://ice-tilt-backend.onrender.com',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3001/api/upload',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'https://ice-tilt-backend.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
@@ -80,7 +146,17 @@ export const environment = {
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3000',
+          audience: 'https://ice-tilt-backend.onrender.com',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3001/api/users/*',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'https://ice-tilt-backend.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
@@ -90,7 +166,17 @@ export const environment = {
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3000',
+          audience: 'https://ice-tilt-backend.onrender.com',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3001/api/offers/*',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'https://ice-tilt-backend.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
@@ -101,7 +187,17 @@ export const environment = {
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3000',
+          audience: 'https://ice-tilt-backend.onrender.com',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3001/api/admins',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'https://ice-tilt-backend.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
@@ -111,7 +207,17 @@ export const environment = {
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3000',
+          audience: 'https://ice-tilt-backend.onrender.com',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3001/api/admins/*',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'https://ice-tilt-backend.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
@@ -122,7 +228,17 @@ export const environment = {
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3000',
+          audience: 'https://ice-tilt-backend.onrender.com',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3001/api/managers',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'https://ice-tilt-backend.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }
@@ -132,7 +248,17 @@ export const environment = {
       allowAnonymous: false,
       tokenOptions: {
         authorizationParams: {
-          audience: 'http://localhost:3000',
+          audience: 'https://ice-tilt-backend.onrender.com',
+          scope: 'openid profile email offline_access'
+        }
+      }
+    },
+    {
+      uri: 'http://localhost:3001/api/managers/*',
+      allowAnonymous: false,
+      tokenOptions: {
+        authorizationParams: {
+          audience: 'https://ice-tilt-backend.onrender.com',
           scope: 'openid profile email offline_access'
         }
       }

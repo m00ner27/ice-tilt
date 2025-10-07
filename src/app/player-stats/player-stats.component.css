@@ -293,6 +293,12 @@ td.player-name.sticky-column {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .player-name-text {
+    font-size: 0.85em;
+  }
+}
+
 @media (max-width: 768px) {
   .player-stats-table th,
   .player-stats-table td {
@@ -301,11 +307,25 @@ td.player-name.sticky-column {
   }
   
   .player-name {
-    min-width: 200px;
+    min-width: 120px;
+    width: 120px;
+    max-width: 120px;
+  }
+  
+  .player-name.sticky-column,
+  th.player-name.sticky-column {
+    left: 50px !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+  }
+  
+  .player-name-text {
+    font-size: 0.75em;
   }
 
   .team-cell {
-    min-width: 100px;
+    min-width: 80px;
   }
   
   .team-logo {
@@ -322,6 +342,45 @@ td.player-name.sticky-column {
   .legend-item {
     flex-direction: column;
     gap: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-stats-table th,
+  .player-stats-table td {
+    padding: 6px 8px;
+    font-size: 0.8em;
+  }
+  
+  .player-name {
+    min-width: 100px;
+    width: 100px;
+    max-width: 100px;
+  }
+  
+  .player-name.sticky-column,
+  th.player-name.sticky-column {
+    left: 50px !important;
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+  }
+  
+  .team-cell {
+    min-width: 80px;
+  }
+  
+  .player-logo {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .player-name-container {
+    gap: 4px;
+  }
+  
+  .player-name-text {
+    font-size: 0.65em;
   }
 }
 

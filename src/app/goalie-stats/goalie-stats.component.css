@@ -348,9 +348,66 @@ th.goalie-name.sticky-column {
     font-size: 0.9em;
   }
   
+  .goalie-name {
+    min-width: 140px;
+    width: 140px;
+    max-width: 140px;
+  }
+  
+  .goalie-name.sticky-column,
+  th.goalie-name.sticky-column {
+    left: 50px !important;
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+  }
+  
+  .team-cell {
+    min-width: 80px;
+  }
+  
   .legend-item {
     flex-direction: column;
     gap: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .goalie-stats-table th,
+  .goalie-stats-table td {
+    padding: 6px 8px;
+    font-size: 0.8em;
+  }
+  
+  .goalie-name {
+    min-width: 120px;
+    width: 120px;
+    max-width: 120px;
+  }
+  
+  .goalie-name.sticky-column,
+  th.goalie-name.sticky-column {
+    left: 50px !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+  }
+  
+  .team-cell {
+    min-width: 80px;
+  }
+  
+  .goalie-logo {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .goalie-name-container {
+    gap: 4px;
+  }
+  
+  .goalie-name-text {
+    font-size: 0.75em;
   }
 }
   

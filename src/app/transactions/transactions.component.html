@@ -76,45 +76,95 @@
                class="bg-admin-card last:rounded-b-lg hover:bg-admin-hover transition-colors"
                [class.border-b]="i < transactions.length - 1"
                [class.border-admin-accent]="i < transactions.length - 1">
-            <div class="p-4 flex items-center justify-between">
-              <div class="flex items-center space-x-4">
-                <!-- Transaction Icon -->
-                <div class="flex-shrink-0">
-                  <i [class]="getTransactionIcon(transaction.transactionType)" 
-                     [class]="getTransactionClass(transaction.transactionType)"
-                     class="text-2xl"></i>
-                </div>
-                
-                <!-- Club Logo -->
-                <div class="flex-shrink-0 mr-3">
-                  <img [src]="getClubLogoUrl(transaction.clubName)" 
-                       [alt]="transaction.clubName + ' logo'"
-                       class="w-8 h-8 rounded-full object-cover"
-                       (error)="onLogoError($event)">
-                </div>
-                
-                <!-- Transaction Details -->
-                <div class="flex-1">
-                  <div class="flex items-center space-x-2 mb-1">
-                    <span class="text-white font-semibold">{{ transaction.playerName }}</span>
-                    <span [class]="getTransactionClass(transaction.transactionType)" 
-                          class="text-sm font-medium px-2 py-1 rounded">
-                      {{ getTransactionText(transaction.transactionType) }}
-                    </span>
+            <div class="p-3 sm:p-4">
+              <!-- Mobile Layout -->
+              <div class="block sm:hidden">
+                <div class="flex items-start space-x-3 mb-3">
+                  <!-- Transaction Icon -->
+                  <div class="flex-shrink-0">
+                    <i [class]="getTransactionIcon(transaction.transactionType)" 
+                       [class]="getTransactionClass(transaction.transactionType)"
+                       class="text-xl"></i>
                   </div>
                   
-                  <div class="flex items-center space-x-4 text-sm text-gray-400">
-                    <div class="flex items-center space-x-1">
-                      <i class="fas fa-building text-admin-primary"></i>
-                      <span>{{ transaction.clubName }}</span>
+                  <!-- Club Logo -->
+                  <div class="flex-shrink-0">
+                    <img [src]="getClubLogoUrl(transaction.clubName)" 
+                         [alt]="transaction.clubName + ' logo'"
+                         class="w-6 h-6 rounded-full object-cover"
+                         (error)="onLogoError($event)">
+                  </div>
+                  
+                  <!-- Player Name and Status -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2 mb-1">
+                      <span class="text-white font-semibold text-sm truncate">{{ transaction.playerName }}</span>
+                      <span [class]="getTransactionClass(transaction.transactionType)" 
+                            class="text-xs font-medium px-2 py-1 rounded flex-shrink-0">
+                        {{ getTransactionText(transaction.transactionType) }}
+                      </span>
                     </div>
-                    <div class="flex items-center space-x-1">
-                      <i class="fas fa-calendar text-admin-primary"></i>
-                      <span>{{ transaction.seasonName }}</span>
+                  </div>
+                </div>
+                
+                <!-- Details Row -->
+                <div class="grid grid-cols-1 gap-2 text-xs text-gray-400">
+                  <div class="flex items-center space-x-2">
+                    <i class="fas fa-building text-admin-primary w-3"></i>
+                    <span class="truncate">{{ transaction.clubName }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <i class="fas fa-calendar text-admin-primary w-3"></i>
+                    <span>{{ transaction.seasonName }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <i class="fas fa-clock text-admin-primary w-3"></i>
+                    <span>{{ formatDate(transaction.date) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Desktop Layout -->
+              <div class="hidden sm:flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                  <!-- Transaction Icon -->
+                  <div class="flex-shrink-0">
+                    <i [class]="getTransactionIcon(transaction.transactionType)" 
+                       [class]="getTransactionClass(transaction.transactionType)"
+                       class="text-2xl"></i>
+                  </div>
+                  
+                  <!-- Club Logo -->
+                  <div class="flex-shrink-0 mr-3">
+                    <img [src]="getClubLogoUrl(transaction.clubName)" 
+                         [alt]="transaction.clubName + ' logo'"
+                         class="w-8 h-8 rounded-full object-cover"
+                         (error)="onLogoError($event)">
+                  </div>
+                  
+                  <!-- Transaction Details -->
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-1">
+                      <span class="text-white font-semibold">{{ transaction.playerName }}</span>
+                      <span [class]="getTransactionClass(transaction.transactionType)" 
+                            class="text-sm font-medium px-2 py-1 rounded">
+                        {{ getTransactionText(transaction.transactionType) }}
+                      </span>
                     </div>
-                    <div class="flex items-center space-x-1">
-                      <i class="fas fa-clock text-admin-primary"></i>
-                      <span>{{ formatDate(transaction.date) }}</span>
+                    
+                    <div class="flex items-center space-x-4 text-sm text-gray-400">
+                      <div class="flex items-center space-x-1">
+                        <i class="fas fa-building text-admin-primary"></i>
+                        <span>{{ transaction.clubName }}</span>
+                      </div>
+                      <div class="flex items-center space-x-1">
+                        <i class="fas fa-calendar text-admin-primary"></i>
+                        <span>{{ transaction.seasonName }}</span>
+                      </div>
+                      <div class="flex items-center space-x-1">
+                        <i class="fas fa-clock text-admin-primary"></i>
+                        <span>{{ formatDate(transaction.date) }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -73,11 +73,11 @@
 
 
 <!-- Stats Leaders Section -->
-<section class="mt-4 text-white p-5">
-  <div class="container mx-auto px-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<section class="mt-4 text-white p-3 sm:p-5">
+  <div class="container mx-auto px-2 sm:px-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
       <!-- Goals Top 5 -->
-      <div class="mb-3">
+      <div class="mb-3 w-full">
         <div class="bg-admin-card rounded-lg">
         <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Goals</div>
         <div class="p-0 rounded-b-lg overflow-hidden">
@@ -87,17 +87,17 @@
           </div>
           <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
             <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topGoals; let i = index">
-                <span class="font-bold mr-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
-                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
-                <span class="ml-auto text-2xl font-bold">{{ p.goals }}</span>
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.goals }}</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <!-- Assists Top 5 -->
-      <div class="mb-3">
+      <div class="mb-3 w-full">
         <div class="bg-admin-card rounded-lg">
         <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Assists</div>
         <div class="p-0 rounded-b-lg overflow-hidden">
@@ -107,17 +107,17 @@
           </div>
           <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
             <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topAssists; let i = index">
-                <span class="font-bold mr-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
-                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
-                <span class="ml-auto text-2xl font-bold">{{ p.assists }}</span>
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.assists }}</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <!-- Points Top 5 -->
-      <div class="mb-3">
+      <div class="mb-3 w-full">
         <div class="bg-admin-card rounded-lg">
         <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Points</div>
         <div class="p-0 rounded-b-lg overflow-hidden">
@@ -127,26 +127,26 @@
           </div>
           <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
             <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topPoints; let i = index">
-                <span class="font-bold mr-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
-                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
-                <span class="ml-auto text-2xl font-bold">{{ p.points }}</span>
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.points }}</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <!-- Save % Top 5 (Goalies) -->
-      <div class="mb-3">
+      <div class="mb-3 w-full">
         <div class="bg-admin-card rounded-lg">
           <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Save %</div>
           <div class="p-0 rounded-b-lg overflow-hidden">
             <ul class="divide-y divide-admin-accent">
               <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topSavePct; let i = index">
-                <span class="font-bold mr-2">#{{ i + 1 }}</span>
-                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-8 h-8 rounded-full object-cover mr-2">
-                <a [routerLink]="['/players', p.playerId]" class="text-white hover:text-admin-primary transition-colors cursor-pointer flex-1"><strong>{{ p.name }}</strong></a>
-                <span class="ml-auto text-2xl font-bold">{{ p.savePercentage }}</span>
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.savePercentage }}</span>
               </li>
             </ul>
           </div>
@@ -161,6 +161,6 @@
 
 
 <!-- Schedule Section -->
-<section class="schedule-section mt-4">
-    <div class="container">
+<!-- Schedule Section -->
+    <div class="container mx-auto px-2 sm:px-4">
       <app-schedule [isPreview]="true"></app-schedule>
