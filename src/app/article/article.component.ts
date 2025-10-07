@@ -36,6 +36,9 @@ export class ArticleComponent implements OnInit {
       case 'new-season-begins':
         this.loadNewSeasonArticle();
         break;
+      case 'signing-up-free-agents':
+        this.loadSigningUpArticle();
+        break;
       default:
         this.loadDefaultArticle();
         break;
@@ -65,6 +68,27 @@ export class ArticleComponent implements OnInit {
       <p>We have big plans for the future of this site, including sign in functionality, player profiles, managerial permissions, and more. </p>
       
       <p>Thank you for your patience and support as we've worked to bring this vision to life. We can't wait to see how you all use and enjoy the new platform!</p>
+    `;
+  }
+
+  loadSigningUpArticle(): void {
+    this.articleTitle = '📝 Signing Up & Free Agents';
+    this.articleDate = 'October 7, 2025';
+    this.articleImage = 'assets/images/hockey-fight.jpg';
+    this.articleLead = 'Everything you need to know about joining the ITHL and finding a club to play for.';
+    this.articleAuthor = 'ITHL Staff';
+    this.articleBody = `
+      <h2>Player Sign-Up Process</h2>
+      <p>At this time, players do not need to sign up individually. If a manager would like to add a player to their roster, they simply need to create a support ticket in Discord to request the addition.</p>
+      
+      <h2>Free Agents</h2>
+      <p>For free agents, there is also no individual sign-up process right now. Currently, we don't have functionality on the website to display free agents, but we plan to implement new features soon to help players connect with clubs more easily.</p>
+      
+      <h2>How to Find a Club</h2>
+      <p>If you're looking for a club, head over to <strong>#free-agents</strong> and post your information, or check out <strong>#scouting-discords</strong> to find clubs that are recruiting.</p>
+      
+      <h2>What's Coming Soon</h2>
+      <p>We're working on new features to make it easier for players to connect with clubs and for managers to find the right players for their teams. Stay tuned for updates!</p>
     `;
   }
 
