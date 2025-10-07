@@ -13,8 +13,12 @@ export class AdminPasswordService {
   constructor() {
     // Check if admin password was previously verified in this session
     const stored = sessionStorage.getItem('adminPasswordVerified');
+    console.log('AdminPasswordService - Initializing, stored value:', stored);
     if (stored === 'true') {
       this.isAdminPasswordVerifiedSubject.next(true);
+      console.log('AdminPasswordService - Password verification restored from session');
+    } else {
+      console.log('AdminPasswordService - No password verification found in session');
     }
   }
 
@@ -25,9 +29,13 @@ export class AdminPasswordService {
    */
   verifyAdminPassword(password: string): boolean {
     const isCorrect = password === this.ADMIN_PASSWORD;
+    console.log('AdminPasswordService - Verifying password:', password, 'Correct:', isCorrect);
     if (isCorrect) {
       this.isAdminPasswordVerifiedSubject.next(true);
       sessionStorage.setItem('adminPasswordVerified', 'true');
+      console.log('AdminPasswordService - Password verified and stored in session');
+    } else {
+      console.log('AdminPasswordService - Password incorrect');
     }
     return isCorrect;
   }

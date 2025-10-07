@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../store/services/api.service';
+import { AuthService } from '@auth0/auth0-angular';
+import { AdminPasswordService } from '../../services/admin-password.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -16,14 +18,39 @@ export class AdminDashboardComponent implements OnInit {
   games: any[] = [];
   usersCount = 0;
   recentActivity: any[] = [];
+  isAuthenticated = false;
+  authError = false;
 
   constructor(
     private api: ApiService,
-    private router: Router
+    private router: Router,
+    public auth: AuthService,
+    private adminPasswordService: AdminPasswordService
   ) {}
 
   ngOnInit() {
+    // Check authentication state
+    this.auth.isAuthenticated$.subscribe(isAuth => {
+      this.isAuthenticated = isAuth;
+      console.log('Admin Dashboard - User authenticated:', isAuth);
+    });
+    
     this.loadDashboardData();
+  }
+
+  login() {
+    this.auth.loginWithRedirect({
+      authorizationParams: {
+        audience: 'https://api.ithl.com', // Update with your actual audience
+        scope: 'openid profile email offline_access'
+      }
+    });
+  }
+
+  logoutFromAdmin() {
+    // Reset admin password verification and redirect to home
+    this.adminPasswordService.resetAdminPasswordVerification();
+    this.router.navigate(['/home']);
   }
 
   loadDashboardData() {
@@ -74,6 +101,9 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading users:', error);
+        // Set a default value if authentication fails
+        this.usersCount = 0;
+        this.authError = true;
       }
     });
 

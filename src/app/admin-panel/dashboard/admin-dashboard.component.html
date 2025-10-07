@@ -1,4 +1,36 @@
 <div class="p-6">
+  <!-- Authentication Error Alert -->
+  <div *ngIf="authError && !isAuthenticated" class="bg-red-600 text-white p-4 rounded-lg mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="font-semibold">Authentication Required</h3>
+        <p class="text-sm">You need to be logged in to access admin features. Click the button below to login.</p>
+      </div>
+      <button 
+        (click)="login()" 
+        class="bg-white text-red-600 px-4 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors"
+      >
+        Login
+      </button>
+    </div>
+  </div>
+
+  <!-- Admin Logout Button -->
+  <div *ngIf="isAuthenticated" class="bg-blue-600 text-white p-4 rounded-lg mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="font-semibold">Admin Panel Active</h3>
+        <p class="text-sm">You are currently logged into the admin panel. Use the profile dropdown in the top-right to logout completely, or click below to exit admin view.</p>
+      </div>
+      <button 
+        (click)="logoutFromAdmin()" 
+        class="bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors"
+      >
+        Exit Admin View
+      </button>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="bg-admin-card rounded-xl p-6 shadow-lg flex items-center gap-4">
       <i class="fas fa-calendar text-3xl text-admin-primary"></i>

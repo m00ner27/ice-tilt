@@ -24,7 +24,7 @@
             <!-- Right Aligned Auth Section -->
             <div class="flex items-center">
                 <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
-                    <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
+                    <app-user-profile *ngIf="(auth.isAuthenticated$ | async) && (isInAdminPanel$ | async) && (adminPasswordService.isAdminPasswordVerified$ | async)"></app-user-profile>
                     <app-auth-button *ngIf="!(auth.isAuthenticated$ | async) && (shouldShowLoginButton$ | async)" class="hidden"></app-auth-button>
                 </ng-container>
                 <ng-template #authLoading>
@@ -58,7 +58,7 @@
                 
                 <!-- Mobile Auth Section -->
                 <div class="pt-2 border-t border-gray-700">
-                    <app-user-profile *ngIf="auth.isAuthenticated$ | async"></app-user-profile>
+                    <app-user-profile *ngIf="(auth.isAuthenticated$ | async) && (isInAdminPanel$ | async) && (adminPasswordService.isAdminPasswordVerified$ | async)"></app-user-profile>
                     <app-auth-button *ngIf="!(auth.isAuthenticated$ | async) && (shouldShowLoginButton$ | async)" class="hidden"></app-auth-button>
                 </div>
             </div>

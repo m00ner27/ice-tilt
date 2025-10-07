@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { AuthButtonComponent } from './auth-button/auth-button.component';
@@ -7,7 +7,7 @@ import { AuthService } from '@auth0/auth0-angular';
 import { ApiService } from '../store/services/api.service';
 import { AdminPasswordService } from '../services/admin-password.service';
 import { Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '../store';
 import { selectIsUserAnyManager } from '../store/managers.selectors';
@@ -23,13 +23,23 @@ export class NavigationComponent {
   isAdmin$: Observable<boolean>;
   isManager$: Observable<boolean>;
   shouldShowLoginButton$: Observable<boolean>;
+  isInAdminPanel$: Observable<boolean>;
   
   constructor(
     public auth: AuthService, 
     private api: ApiService, 
     private store: Store<AppState>,
-    private adminPasswordService: AdminPasswordService
+    public adminPasswordService: AdminPasswordService,
+    private router: Router
   ) {
+    // Debug authentication state
+    this.auth.isAuthenticated$.subscribe(isAuth => {
+      console.log('Navigation - User authenticated:', isAuth);
+    });
+    
+    this.auth.user$.subscribe(user => {
+      console.log('Navigation - User data:', user);
+    });
     this.isAdmin$ = this.auth.isAuthenticated$.pipe(
       map(isAuth => {
         if (!isAuth) return false;
@@ -47,6 +57,21 @@ export class NavigationComponent {
         return isAdminPasswordVerified && !isAuthenticated;
       })
     );
+
+    // Check if current route is in admin panel
+    this.isInAdminPanel$ = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map((event: NavigationEnd) => {
+        const isAdminRoute = event.url.startsWith('/admin') || event.url.startsWith('/admin-password');
+        console.log('Navigation check - URL:', event.url, 'Is admin route:', isAdminRoute);
+        return isAdminRoute;
+      })
+    );
+
+    // Check if admin password is verified
+    this.adminPasswordService.isAdminPasswordVerified$.subscribe(isVerified => {
+      console.log('Navigation - Admin password verified:', isVerified);
+    });
   }
 
   toggleMenu() {
