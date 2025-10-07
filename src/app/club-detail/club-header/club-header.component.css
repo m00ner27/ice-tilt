@@ -54,6 +54,8 @@
   align-items: center;
   min-width: 120px;
   text-align: center;
+  flex-shrink: 0;
+  max-width: 100%;
 }
 
 .record-box .stat-label {
@@ -111,14 +113,17 @@
   }
 
   .header-center {
-    flex-direction: row;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   .header-center h1 {
-    font-size: 2em;
+    font-size: 1.5em;
     margin-bottom: 0.5rem;
+    text-align: center;
+    word-break: break-word;
   }
 
   .header-right {
@@ -145,12 +150,15 @@
   }
 
   .header-center h1 {
-    font-size: 2em;
+    font-size: 1.3em;
+    line-height: 1.2;
   }
   
   .record-box {
-    min-width: 120px;
+    min-width: 100px;
     padding: 4px 8px;
+    margin-top: 0.5rem;
+    flex-shrink: 0;
   }
   
   .record-box .stat-value {
@@ -178,7 +186,8 @@
   }
 
   .header-center h1 {
-    font-size: 2em;
+    font-size: 1.2em;
+    line-height: 1.1;
   }
 
   .record-box {
@@ -211,7 +220,8 @@
   }
 
   .header-center h1 {
-    font-size: 2em;
+    font-size: 1.1em;
+    line-height: 1.0;
   }
 
   .record-box {

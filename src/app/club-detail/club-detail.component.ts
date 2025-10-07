@@ -340,6 +340,13 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       clubName: club.name
     });
     
+    // Recalculate club stats now that we have matches data
+    if (this.club) {
+      const calculatedStats = this.calculateClubStats(club._id, matches);
+      this.club.stats = calculatedStats;
+      console.log('Updated club stats:', calculatedStats);
+    }
+    
     // Now process stats with all data ready
     this.processPlayerStatsFromMatches(this.signedPlayers);
   }
@@ -488,8 +495,23 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   mapBackendClubToFrontend(backendClub: any): any {
     if (!backendClub) return null;
     
-    // Calculate stats from matches
-    const calculatedStats = this.calculateClubStats(backendClub._id);
+    // Calculate stats from matches - use this.matches if available, otherwise return empty stats
+    const calculatedStats = this.matches && this.matches.length > 0 
+      ? this.calculateClubStats(backendClub._id, this.matches)
+      : {
+          wins: 0,
+          losses: 0,
+          otLosses: 0,
+          points: 0,
+          gamesPlayed: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          winPercentage: 0,
+          goalDifferential: 0,
+          streakCount: 0,
+          streakType: '-' as 'W' | 'L' | 'OTL' | '-',
+          lastTen: []
+        };
     
     return {
       ...backendClub,
@@ -500,9 +522,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     };
   }
 
-  calculateClubStats(clubId: string): any {
+  calculateClubStats(clubId: string, matches: any[] = this.matches): any {
     // Filter matches for this club
-    const clubMatches = this.matches.filter(match => 
+    const clubMatches = matches.filter(match => 
       match.homeTeam === this.backendClub?.name || match.awayTeam === this.backendClub?.name
     );
 

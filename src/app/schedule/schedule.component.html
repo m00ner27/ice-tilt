@@ -1,5 +1,5 @@
 <div class="text-white" [class.p-3]="!isPreview" [class.sm:p-5]="!isPreview" [class.max-w-7xl]="!isPreview" [class.mx-auto]="!isPreview" [class.transactions-section]="isPreview">
-  <div *ngIf="isPreview" class="container">
+  <div [class.container]="isPreview">
     <h1 *ngIf="!isPreview" class="text-center mb-5 text-4xl font-bold">Game Schedule</h1>
   
   <!-- Filter options -->
@@ -232,6 +232,5 @@
       <p>* Click on column headers to sort</p>
       <p>* Click "View Details" to see match statistics</p>
     </div>
-  </div>
   </div>
 </div>

@@ -69,10 +69,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     // Subscribe to data changes
     this.setupDataSubscriptions();
     
-    // If in preview mode, set default season to show all matches
-    if (this.isPreview) {
-      this.filterSeason = '';
-    }
+    // Set default season to show all matches
+    this.filterSeason = '';
   }
 
   ngOnDestroy() {
@@ -108,14 +106,20 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   updateTeamOptions(): void {
-    if (!this.seasons.length || !this.allClubs.length) {
+    if (!this.allClubs.length) {
       this.teamOptions = [];
+      return;
+    }
+
+    // If no season is selected, show all clubs
+    if (!this.filterSeason || !this.seasons.length) {
+      this.teamOptions = this.allClubs.map(club => club.name).sort();
       return;
     }
 
     const selectedSeason = this.seasons.find(s => s._id === this.filterSeason);
     if (!selectedSeason) {
-      this.teamOptions = [];
+      this.teamOptions = this.allClubs.map(club => club.name).sort();
       return;
     }
 
@@ -132,6 +136,11 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   applyFiltersAndSort(): void {
     this.matches$.pipe(takeUntil(this.destroy$)).subscribe((matches: any[]) => {
+      console.log('=== SCHEDULE COMPONENT DEBUG ===');
+      console.log('Raw matches received:', matches.length);
+      console.log('Filter season:', this.filterSeason);
+      console.log('Filter team:', this.filterTeam);
+      
       let filtered = [...matches];
 
       // Apply team filter
@@ -139,11 +148,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
         filtered = filtered.filter(match => 
           match.homeTeam === this.filterTeam || match.awayTeam === this.filterTeam
         );
+        console.log('After team filter:', filtered.length);
       }
 
       // Apply season filter
       if (this.filterSeason) {
         filtered = filtered.filter(match => match.seasonId === this.filterSeason);
+        console.log('After season filter:', filtered.length);
       }
 
       // Apply sorting
@@ -164,6 +175,8 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       });
 
       this.filteredMatches = filtered;
+      console.log('Final filtered matches:', this.filteredMatches.length);
+      console.log('=== END SCHEDULE COMPONENT DEBUG ===');
     });
   }
 
