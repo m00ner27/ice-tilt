@@ -14,6 +14,9 @@ export class AdminPasswordService {
     // Check if admin password was previously verified in this session
     const stored = sessionStorage.getItem('adminPasswordVerified');
     console.log('AdminPasswordService - Initializing, stored value:', stored);
+    console.log('AdminPasswordService - Current URL:', window.location.href);
+    console.log('AdminPasswordService - User agent:', navigator.userAgent);
+    
     if (stored === 'true') {
       this.isAdminPasswordVerifiedSubject.next(true);
       console.log('AdminPasswordService - Password verification restored from session');

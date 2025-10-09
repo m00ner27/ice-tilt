@@ -4,7 +4,16 @@ export const environment = {
   apiUrl: 'https://ice-tilt-backend.onrender.com',
   apiAudience: 'https://ice-tilt-backend.onrender.com',
   apiAllowedList: [
-    // Only include protected endpoints that require authentication
+    // Public endpoints that don't require authentication
+    {
+      uri: 'https://ice-tilt-backend.onrender.com/api/seasons',
+      allowAnonymous: true
+    },
+    {
+      uri: 'https://ice-tilt-backend.onrender.com/api/clubs',
+      allowAnonymous: true
+    },
+    // Protected endpoints that require authentication
     {
       uri: 'https://ice-tilt-backend.onrender.com/api/users/*',
       allowAnonymous: false,
