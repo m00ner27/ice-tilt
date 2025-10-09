@@ -40,7 +40,7 @@
       <div class="flex flex-col gap-3">
         <div class="bg-admin-hover rounded-lg p-4 flex justify-between items-center hover:bg-admin-accent transition-colors" *ngFor="let club of clubs">
           <div class="flex items-center gap-3">
-            <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="w-10 h-10 object-contain rounded bg-admin-card">
+            <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="w-10 h-10 object-contain rounded bg-admin-card" (error)="onImageError($event)">
             <div>
               <h4 class="text-white font-medium mb-1">{{ club.name }}</h4>
             </div>

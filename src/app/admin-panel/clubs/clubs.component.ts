@@ -6,6 +6,7 @@ import { EashlService } from '../../services/eashl.service';
 import { TransactionsService } from '../../store/services/transactions.service';
 import { RosterUpdateService } from '../../store/services/roster-update.service';
 import { ImageUrlService } from '../../shared/services/image-url.service';
+import { AuthService } from '@auth0/auth0-angular';
 import { environment } from '../../../environments/environment';
 import { REGIONS } from '../../shared';
 import { Subscription } from 'rxjs';
@@ -106,6 +107,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     private transactionsService: TransactionsService,
     private rosterUpdateService: RosterUpdateService,
     private imageUrlService: ImageUrlService,
+    private auth: AuthService,
     private store: Store<AppState>
   ) {
     // Initialize store selectors
@@ -406,25 +408,34 @@ export class ClubsComponent implements OnInit, OnDestroy {
     const file: File = event.target.files[0];
     if (file) {
       this.uploadingLogo = true;
+      
       this.api.uploadFile(file).subscribe({
         next: (res) => {
           this.clubForm.patchValue({ logo: res.url });
           this.logoPreview = this.imageUrlService.getImageUrl(res.url);
           this.uploadingLogo = false;
         },
-        error: () => {
+        error: (error) => {
+          console.error('Upload failed:', error);
           this.uploadingLogo = false;
         }
       });
+      
       // Show local preview while uploading
       const reader = new FileReader();
-      reader.onload = e => this.logoPreview = reader.result;
+      reader.onload = e => {
+        this.logoPreview = reader.result;
+      };
       reader.readAsDataURL(file);
     }
   }
 
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl);
+  }
+
+  onImageError(event: any): void {
+    event.target.src = 'assets/images/1ithlwords.png';
   }
 
   getLogoPreviewUrl(): string {
@@ -481,6 +492,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
         eashlClubId: form.eashlClubId
       };
       
+      
       this.api.addClub(clubData).subscribe({
         next: (newClub) => {
           this.clubs.push(newClub);
@@ -497,7 +509,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
   editClub(club: Club): void {
     this.editingClub = club;
     this.isAddingClub = true;
-    this.logoPreview = this.imageUrlService.getImageUrl(club.logoUrl);
     
     // Ensure season controls are added
     this.addSeasonControls();
@@ -513,6 +524,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
       region: club.region,
       eashlClubId: club.eashlClubId
     });
+    
     
     // Set season and division values
     if (club.seasons && club.seasons.length > 0) {
@@ -537,6 +549,9 @@ export class ClubsComponent implements OnInit, OnDestroy {
       });
     }
     
+    // Set the logo preview after form is populated
+    this.logoPreview = this.imageUrlService.getImageUrl(club.logoUrl);
+    
     // Mark form as touched to trigger validation
     this.clubForm.markAllAsTouched();
   }
@@ -546,6 +561,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
       console.error('No club selected for editing');
       return;
     }
+    
     
     if (!this.clubForm.valid) {
       console.error('Form is not valid');
@@ -588,7 +604,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
         if (idx > -1) this.clubs[idx] = updatedClub;
         this.clubs.sort((a, b) => a.name.localeCompare(b.name));
-        this.cancelClubForm();
+        
+        // Show success message and close form after a brief delay
+        alert('Club updated successfully!');
+        setTimeout(() => {
+          this.cancelClubForm();
+        }, 1000);
       },
       error: (error) => {
         console.error('Error updating club:', error);

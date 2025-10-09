@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3001', // Primary API URL - will fallback to 3000 if 3001 is not available
+  apiUrl: 'https://ice-tilt-backend.onrender.com', // Use production backend for uploads
   apiAudience: 'https://ice-tilt-backend.onrender.com', // Use production audience for Auth0
   apiAllowedList: [
     // Public endpoints that don't require authentication
