@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ApiService } from '../../store/services/api.service';
 import { AuthService } from '@auth0/auth0-angular';
 import { AdminPasswordService } from '../../services/admin-password.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -41,7 +42,7 @@ export class AdminDashboardComponent implements OnInit {
   login() {
     this.auth.loginWithRedirect({
       authorizationParams: {
-        audience: 'https://api.ithl.com', // Update with your actual audience
+        audience: environment.apiAudience,
         scope: 'openid profile email offline_access'
       }
     });
