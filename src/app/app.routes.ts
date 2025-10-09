@@ -39,7 +39,7 @@ export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },
   { path: 'schedule', component: ScheduleComponent },
-  { path: 'free-agents', component: FreeAgentsComponent },
+  { path: 'free-agents', component: FreeAgentsComponent, canActivate: [authGuard] },
   { path: 'players', component: PlayersComponent },
   { path: 'players/:id', component: PlayerProfileComponent },
   { path: 'player-stats', component: PlayerStatsComponent },

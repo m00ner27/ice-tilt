@@ -5,6 +5,15 @@ export const environment = {
   apiAllowedList: [
     // Public endpoints that don't require authentication
     {
+      uri: 'https://ice-tilt-backend.onrender.com/api/seasons',
+      allowAnonymous: true
+    },
+    {
+      uri: 'https://ice-tilt-backend.onrender.com/api/clubs',
+      allowAnonymous: true
+    },
+    // Legacy localhost endpoints (for development)
+    {
       uri: 'http://localhost:3000/api/seasons',
       allowAnonymous: true
     },
@@ -12,7 +21,6 @@ export const environment = {
       uri: 'http://localhost:3001/api/seasons',
       allowAnonymous: true
     },
-    // Clubs - GET requests are public, but PUT/POST/DELETE require auth
     {
       uri: 'http://localhost:3000/api/clubs',
       allowAnonymous: true

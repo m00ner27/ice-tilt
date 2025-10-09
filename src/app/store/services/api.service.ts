@@ -386,17 +386,7 @@ export class ApiService {
   // Get free agents for a specific season
   getFreeAgentsForSeason(seasonId: string): Observable<any[]> {
     console.log('ApiService: getFreeAgentsForSeason called for season:', seasonId);
-    return this.auth.getAccessTokenSilently({
-      authorizationParams: { audience: environment.apiAudience }
-    }).pipe(
-      switchMap(token => {
-        const headers = new HttpHeaders({
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        });
-        return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents?seasonId=${seasonId}`, { headers });
-      })
-    );
+    return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents?seasonId=${seasonId}`);
   }
 
   // Offer methods
