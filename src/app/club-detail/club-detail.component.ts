@@ -14,6 +14,7 @@ import { ClubStatsGridComponent } from './club-stats-grid/club-stats-grid.compon
 import { ClubRosterTablesComponent } from './club-roster-tables/club-roster-tables.component';
 import { ClubStatLegendComponent } from './club-stat-legend/club-stat-legend.component';
 import { Club } from '../store/models/models/club.interface';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 // Import selectors and actions
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -44,7 +45,7 @@ interface Season {
 @Component({
   selector: 'app-club-detail-simple',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatchHistoryComponent, ClubHeaderComponent, ClubStatsGridComponent, ClubRosterTablesComponent, ClubStatLegendComponent],
+  imports: [CommonModule, RouterModule, MatchHistoryComponent, ClubHeaderComponent, ClubStatsGridComponent, ClubRosterTablesComponent, ClubStatLegendComponent, AdSenseComponent],
   templateUrl: './club-detail.component.html',
   styleUrls: ['./club-detail.component.css']
 })
@@ -78,8 +79,21 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   matches: any[] = [];
   clubMatches: any[] = [];
       
-      // Track if we're switching clubs to prevent stale data
-      private isSwitchingClubs: boolean = false;
+  // Track if we're switching clubs to prevent stale data
+  private isSwitchingClubs: boolean = false;
+
+  // AdSense configuration
+  rectangleAdConfig: AdSenseConfig = {
+    adSlot: '8840984486', // Your actual ad unit ID
+    adFormat: 'rectangle',
+    adStyle: {
+      display: 'block',
+      width: '300px',
+      height: '250px'
+    },
+    responsive: true,
+    className: 'rectangle-ad'
+  };
 
   constructor(
     private route: ActivatedRoute,

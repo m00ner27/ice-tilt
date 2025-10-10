@@ -5,6 +5,7 @@ import { EashlMatch, MatchService } from '../store/services/match.service';
 import { TransactionsComponent } from '../transactions/transactions.component';
 import { ScheduleComponent } from '../schedule/schedule.component';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 interface AggregatedPlayer {
   playerId: number;
@@ -25,7 +26,7 @@ interface AggregatedPlayer {
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  imports: [CommonModule, RouterModule, TransactionsComponent, ScheduleComponent]
+  imports: [CommonModule, RouterModule, TransactionsComponent, ScheduleComponent, AdSenseComponent]
 })
 export class HomeComponent implements OnInit {
   topGoals: AggregatedPlayer[] = [];
@@ -33,6 +34,26 @@ export class HomeComponent implements OnInit {
   topPoints: AggregatedPlayer[] = [];
   topSavePct: any[] = [];
   isLoading: boolean = true;
+
+  // AdSense configurations
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486', // Your actual banner ad unit ID
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
+
+  rectangleAdConfig: AdSenseConfig = {
+    adSlot: '8840984486', // Using same ad unit for now - you can create another later
+    adFormat: 'rectangle',
+    adStyle: {
+      display: 'block',
+      width: '300px',
+      height: '250px'
+    },
+    responsive: true,
+    className: 'rectangle-ad'
+  };
 
   constructor(
     private matchService: MatchService,

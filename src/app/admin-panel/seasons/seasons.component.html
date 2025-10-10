@@ -126,7 +126,7 @@
             <div class="space-y-2">
               <input type="file" accept="image/*" (change)="onDivisionLogoFileChange($event)" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
               <div *ngIf="divisionLogoPreview" class="flex items-center gap-3">
-                <img [src]="divisionLogoPreview" alt="Logo Preview" class="w-16 h-16 object-contain rounded">
+                <img [src]="getImageUrl(divisionLogoPreview)" alt="Logo Preview" class="w-16 h-16 object-contain rounded">
                 <span *ngIf="uploadingDivisionLogo" class="text-admin-primary text-sm">Uploading...</span>
               </div>
             </div>

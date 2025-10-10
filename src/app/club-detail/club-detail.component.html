@@ -28,6 +28,9 @@
 
   <app-club-stats-grid [club]="club"></app-club-stats-grid>
 
+  <!-- AdSense Rectangle Ad -->
+  <app-adsense [config]="rectangleAdConfig"></app-adsense>
+
   <!-- Add a loading state -->
   <div class="loading-stats" *ngIf="club && !club.stats">
     Calculating team statistics...

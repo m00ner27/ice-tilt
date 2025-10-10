@@ -59,5 +59,9 @@ export const environment = {
   auth0: {
     domain: 'dev-51tl555qz78d354r.us.auth0.com',
     clientId: 'WgWpaLK0yww0VSuHQuvcKBAUWPCJcO4e'
+  },
+  adsense: {
+    publisherId: 'ca-pub-5927679330958800', // Your actual AdSense publisher ID
+    enabled: true // Enable ads in production
   }
 };
