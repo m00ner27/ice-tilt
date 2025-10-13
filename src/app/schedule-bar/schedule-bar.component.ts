@@ -36,8 +36,19 @@ export class ScheduleBarComponent implements OnInit {
       return;
     }
     
+    // Get current date and yesterday's date (start of day)
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Set time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0);
+    yesterday.setHours(0, 0, 0, 0);
+    
     console.log('ScheduleBarComponent filtering matches:', {
       totalMatches: this.matches.length,
+      today: today.toISOString(),
+      yesterday: yesterday.toISOString(),
       matchDates: this.matches.map(m => ({ 
         id: m.id, 
         date: m.date, 
@@ -47,9 +58,16 @@ export class ScheduleBarComponent implements OnInit {
       }))
     });
     
+    // Filter matches to only include today and yesterday
     this.upcomingMatches = this.matches
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by oldest first
-      .slice(-10); // Take the last 10 games (most recent on the right)
+      .filter(match => {
+        const matchDate = new Date(match.date);
+        matchDate.setHours(0, 0, 0, 0); // Set to start of day for comparison
+        
+        // Include matches from today or yesterday
+        return matchDate.getTime() === today.getTime() || matchDate.getTime() === yesterday.getTime();
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Sort by oldest first
     
     console.log('ScheduleBarComponent filtered matches:', {
       upcomingCount: this.upcomingMatches.length,
