@@ -383,43 +383,50 @@ export class StandingsComponent implements OnInit, OnDestroy {
       const awayTeam = standingsMap.get(awayClubId);
 
       if (homeTeam && awayTeam) {
-        // Update games played
-        homeTeam.gamesPlayed++;
-        awayTeam.gamesPlayed++;
+        // Only count games that have been played (have EASHL data or actual scores > 0)
+        const hasBeenPlayed = game.eashlData && game.eashlData.matchId || 
+                             (homeScore > 0 || awayScore > 0) ||
+                             (game.isOvertime || game.isShootout);
 
-        // Update goals
-        homeTeam.goalsFor += homeScore;
-        homeTeam.goalsAgainst += awayScore;
-        awayTeam.goalsFor += awayScore;
-        awayTeam.goalsAgainst += homeScore;
+        if (hasBeenPlayed) {
+          // Update games played only for completed games
+          homeTeam.gamesPlayed++;
+          awayTeam.gamesPlayed++;
 
-        // Update wins/losses and points, considering overtime
-        if (homeScore > awayScore) {
-          homeTeam.wins++;
-          homeTeam.points += 2;
-          
-          // Check if losing team gets OTL point
-          if (game.isOvertime) {
-            awayTeam.otLosses++;
-            awayTeam.points += 1; // 1 point for OTL
+          // Update goals
+          homeTeam.goalsFor += homeScore;
+          homeTeam.goalsAgainst += awayScore;
+          awayTeam.goalsFor += awayScore;
+          awayTeam.goalsAgainst += homeScore;
+
+          // Update wins/losses and points, considering overtime
+          if (homeScore > awayScore) {
+            homeTeam.wins++;
+            homeTeam.points += 2;
+            
+            // Check if losing team gets OTL point
+            if (game.isOvertime) {
+              awayTeam.otLosses++;
+              awayTeam.points += 1; // 1 point for OTL
+            } else {
+              awayTeam.losses++;
+            }
+          } else if (awayScore > homeScore) {
+            awayTeam.wins++;
+            awayTeam.points += 2;
+            
+            // Check if losing team gets OTL point
+            if (game.isOvertime) {
+              homeTeam.otLosses++;
+              homeTeam.points += 1; // 1 point for OTL
+            } else {
+              homeTeam.losses++;
+            }
           } else {
-            awayTeam.losses++;
+            // Tie game - both teams get 1 point (shouldn't happen in hockey but just in case)
+            homeTeam.points += 1;
+            awayTeam.points += 1;
           }
-        } else if (awayScore > homeScore) {
-          awayTeam.wins++;
-          awayTeam.points += 2;
-          
-          // Check if losing team gets OTL point
-          if (game.isOvertime) {
-            homeTeam.otLosses++;
-            homeTeam.points += 1; // 1 point for OTL
-          } else {
-            homeTeam.losses++;
-          }
-        } else {
-          // Tie game - both teams get 1 point (shouldn't happen in hockey but just in case)
-          homeTeam.points += 1;
-          awayTeam.points += 1;
         }
       }
     });
