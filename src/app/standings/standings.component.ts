@@ -384,7 +384,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
 
       if (homeTeam && awayTeam) {
         // Only count games that have been played (have EASHL data or actual scores > 0)
-        const hasBeenPlayed = game.eashlData && game.eashlData.matchId || 
+        const hasBeenPlayed = game.eashlData && (game.eashlData as any).matchId || 
                              (homeScore > 0 || awayScore > 0) ||
                              (game.isOvertime || game.isShootout);
 
