@@ -258,12 +258,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     }
   }
 
-  goToDay(dayIndex: number): void {
-    if (dayIndex >= 0 && dayIndex < this.availableDays.length) {
-      this.currentDayIndex = dayIndex;
-      this.currentDay = this.availableDays[this.currentDayIndex];
-    }
-  }
 
   formatDayHeader(dayString: string): string {
     const date = new Date(dayString);

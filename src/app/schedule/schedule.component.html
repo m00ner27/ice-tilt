@@ -77,18 +77,6 @@
       </button>
     </div>
     
-    <!-- Day Pills -->
-    <div class="flex flex-wrap gap-2 justify-center">
-      <button 
-        *ngFor="let day of availableDays; let i = index"
-        (click)="goToDay(i)"
-        [class]="i === currentDayIndex ? 
-          'px-4 py-2 rounded-full bg-blue-600 text-white font-medium' : 
-          'px-4 py-2 rounded-full bg-admin-card text-white hover:bg-admin-hover transition-colors'"
-      >
-        {{ formatDayHeader(day) }}
-      </button>
-    </div>
   </div>
   
   <!-- No matches found -->
