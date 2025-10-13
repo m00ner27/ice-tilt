@@ -42,6 +42,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   sortCriteria: 'date' | 'homeTeam' | 'awayTeam' = 'date';
   sortDirection: 'asc' | 'desc' = 'desc';
   
+  // Day-based pagination
+  matchesByDay: { [key: string]: any[] } = {};
+  availableDays: string[] = [];
+  currentDayIndex: number = 0;
+  currentDay: string = '';
+  
   // Track unique teams and seasons for filter dropdowns
   teamOptions: string[] = [];
   seasons: any[] = [];
@@ -175,9 +181,108 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       });
 
       this.filteredMatches = filtered;
+      this.groupMatchesByDay();
       console.log('Final filtered matches:', this.filteredMatches.length);
       console.log('=== END SCHEDULE COMPONENT DEBUG ===');
     });
+  }
+
+  groupMatchesByDay(): void {
+    this.matchesByDay = {};
+    this.availableDays = [];
+
+    // Group matches by day
+    this.filteredMatches.forEach(match => {
+      const matchDate = new Date(match.date);
+      const dayKey = matchDate.toDateString(); // e.g., "Mon Jan 15 2024"
+      
+      if (!this.matchesByDay[dayKey]) {
+        this.matchesByDay[dayKey] = [];
+      }
+      this.matchesByDay[dayKey].push(match);
+    });
+
+    // Sort days chronologically
+    this.availableDays = Object.keys(this.matchesByDay).sort((a, b) => {
+      return new Date(a).getTime() - new Date(b).getTime();
+    });
+
+    // Set current day to today or the first available day
+    this.setCurrentDayToToday();
+  }
+
+  setCurrentDayToToday(): void {
+    const today = new Date().toDateString();
+    
+    // Try to find today's matches
+    const todayIndex = this.availableDays.findIndex(day => day === today);
+    
+    if (todayIndex !== -1) {
+      // Today has matches, show today
+      this.currentDayIndex = todayIndex;
+    } else {
+      // Today has no matches, find the closest day
+      const todayTime = new Date().getTime();
+      let closestIndex = 0;
+      let closestDiff = Math.abs(new Date(this.availableDays[0]).getTime() - todayTime);
+      
+      for (let i = 1; i < this.availableDays.length; i++) {
+        const diff = Math.abs(new Date(this.availableDays[i]).getTime() - todayTime);
+        if (diff < closestDiff) {
+          closestDiff = diff;
+          closestIndex = i;
+        }
+      }
+      
+      this.currentDayIndex = closestIndex;
+    }
+    
+    this.currentDay = this.availableDays[this.currentDayIndex] || '';
+  }
+
+  getCurrentDayMatches(): any[] {
+    return this.matchesByDay[this.currentDay] || [];
+  }
+
+  goToPreviousDay(): void {
+    if (this.currentDayIndex > 0) {
+      this.currentDayIndex--;
+      this.currentDay = this.availableDays[this.currentDayIndex];
+    }
+  }
+
+  goToNextDay(): void {
+    if (this.currentDayIndex < this.availableDays.length - 1) {
+      this.currentDayIndex++;
+      this.currentDay = this.availableDays[this.currentDayIndex];
+    }
+  }
+
+  goToDay(dayIndex: number): void {
+    if (dayIndex >= 0 && dayIndex < this.availableDays.length) {
+      this.currentDayIndex = dayIndex;
+      this.currentDay = this.availableDays[this.currentDayIndex];
+    }
+  }
+
+  formatDayHeader(dayString: string): string {
+    const date = new Date(dayString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
   }
 
   onTeamFilterChange(team: string): void {

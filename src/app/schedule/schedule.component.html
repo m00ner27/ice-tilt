@@ -48,8 +48,56 @@
     <p>Loading schedule...</p>
   </div>
   
+  <!-- Day Navigation -->
+  <div *ngIf="!matchesLoading$ | async && availableDays.length > 0" class="mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <button 
+        (click)="goToPreviousDay()" 
+        [disabled]="currentDayIndex === 0"
+        class="px-4 py-2 rounded-md bg-admin-card text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-admin-hover transition-colors"
+        [class.cursor-not-allowed]="currentDayIndex === 0"
+      >
+        ← Previous Day
+      </button>
+      
+      <h2 class="text-2xl font-bold text-center">
+        {{ formatDayHeader(currentDay) }}
+        <span class="text-sm font-normal text-gray-300">
+          ({{ getCurrentDayMatches().length }} {{ getCurrentDayMatches().length === 1 ? 'game' : 'games' }})
+        </span>
+      </h2>
+      
+      <button 
+        (click)="goToNextDay()" 
+        [disabled]="currentDayIndex === availableDays.length - 1"
+        class="px-4 py-2 rounded-md bg-admin-card text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-admin-hover transition-colors"
+        [class.cursor-not-allowed]="currentDayIndex === availableDays.length - 1"
+      >
+        Next Day →
+      </button>
+    </div>
+    
+    <!-- Day Pills -->
+    <div class="flex flex-wrap gap-2 justify-center">
+      <button 
+        *ngFor="let day of availableDays; let i = index"
+        (click)="goToDay(i)"
+        [class]="i === currentDayIndex ? 
+          'px-4 py-2 rounded-full bg-blue-600 text-white font-medium' : 
+          'px-4 py-2 rounded-full bg-admin-card text-white hover:bg-admin-hover transition-colors'"
+      >
+        {{ formatDayHeader(day) }}
+      </button>
+    </div>
+  </div>
+  
+  <!-- No matches found -->
+  <div *ngIf="!matchesLoading$ | async && availableDays.length === 0" class="text-center text-white py-10 text-xl">
+    <p>No matches found for the selected filters.</p>
+  </div>
+  
   <!-- Schedule table -->
-  <div *ngIf="!(matchesLoading$ | async) && filteredMatches.length > 0" class="rounded-lg bg-admin-card">
+  <div *ngIf="!(matchesLoading$ | async) && getCurrentDayMatches().length > 0" class="rounded-lg bg-admin-card">
     <!-- Desktop Table View (lg and larger) -->
     <div class="hidden lg:block overflow-x-auto rounded-lg">
       <table class="w-full border-collapse bg-admin-card text-white text-sm rounded-lg overflow-hidden">
@@ -75,7 +123,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let match of filteredMatches" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
+          <tr *ngFor="let match of getCurrentDayMatches()" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
             <td class="px-3 py-3 text-left font-semibold text-admin-primary whitespace-nowrap">
               {{ formatDate(match.date) }}
             </td>
@@ -134,7 +182,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let match of filteredMatches" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
+          <tr *ngFor="let match of getCurrentDayMatches()" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
             <td class="px-2 py-3 text-center font-semibold text-admin-primary text-xs">
               <div class="whitespace-nowrap">{{ formatDateMobile(match.date) }}</div>
             </td>
