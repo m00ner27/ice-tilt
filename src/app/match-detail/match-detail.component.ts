@@ -234,6 +234,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         passAttempts: playerStat.passAttempts || 0,
         passPercentage: playerStat.passPercentage || 0,
         faceoffsWon: playerStat.faceoffsWon || 0,
+        faceoffsLost: playerStat.faceoffsLost || 0,
         faceoffPercentage: playerStat.faceoffPercentage || 0,
         playerScore: playerStat.playerScore || 0,
         penaltyKillCorsiZone: playerStat.penaltyKillCorsiZone || 0,

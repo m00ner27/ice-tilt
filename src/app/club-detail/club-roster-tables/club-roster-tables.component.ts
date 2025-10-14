@@ -31,6 +31,7 @@ interface SkaterStats {
   passAttempts?: number;
   passPercentage?: number;
   faceoffsWon?: number;
+  faceoffsLost?: number;
   faceoffPercentage?: number;
   playerScore?: number;
   penaltyKillCorsiZone?: number;

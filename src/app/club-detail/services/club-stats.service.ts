@@ -28,6 +28,7 @@ export interface SkaterStats {
   passAttempts: number;
   passPercentage: number;
   faceoffsWon: number;
+  faceoffsLost: number;
   faceoffPercentage: number;
   playerScore: number;
   penaltyKillCorsiZone: number;
@@ -296,6 +297,7 @@ export class ClubStatsService {
         passAttempts: 0,
         passPercentage: 0,
         faceoffsWon: 0,
+        faceoffsLost: 0,
         faceoffPercentage: 0,
         playerScore: 0,
         penaltyKillCorsiZone: 0,
@@ -345,7 +347,7 @@ export class ClubStatsService {
           gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0, goals: 0, assists: 0, points: 0, plusMinus: 0,
           shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, ppg: 0, shg: 0, gwg: 0,
           takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0, faceoffsWon: 0,
-          faceoffPercentage: 0, playerScore: 0, penaltyKillCorsiZone: 0,
+          faceoffsLost: 0, faceoffPercentage: 0, playerScore: 0, penaltyKillCorsiZone: 0,
           isSigned: true
         };
         initialPlayerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
@@ -458,12 +460,13 @@ export class ClubStatsService {
               playerStats.passes += playerData.passes || 0;
               playerStats.passAttempts += playerData.passAttempts || 0;
               playerStats.faceoffsWon += playerData.faceoffsWon || 0;
+              playerStats.faceoffsLost += playerData.faceoffsLost || 0;
               playerStats.playerScore += playerData.playerScore || 0;
               playerStats.penaltyKillCorsiZone += playerData.penaltyKillCorsiZone || 0;
               playerStats.shotPercentage = playerStats.shots > 0 ? (playerStats.goals / playerStats.shots) * 100 : 0;
               playerStats.passPercentage = playerStats.passAttempts > 0 ? (playerStats.passes / playerStats.passAttempts) * 100 : 0;
-              playerStats.faceoffPercentage = (playerStats.faceoffsWon + (playerStats.faceoffsWon || 0)) > 0 ? 
-                (playerStats.faceoffsWon / (playerStats.faceoffsWon + (playerStats.faceoffsWon || 0))) * 100 : 0;
+              const totalFaceoffs = playerStats.faceoffsWon + playerStats.faceoffsLost;
+              playerStats.faceoffPercentage = totalFaceoffs > 0 ? (playerStats.faceoffsWon / totalFaceoffs) * 100 : 0;
             }
           }
         });
@@ -592,12 +595,13 @@ export class ClubStatsService {
                 playerStats.passes += playerData.passes || 0;
                 playerStats.passAttempts += playerData.passAttempts || 0;
                 playerStats.faceoffsWon += playerData.faceoffsWon || 0;
+                playerStats.faceoffsLost += playerData.faceoffsLost || 0;
                 playerStats.playerScore += playerData.playerScore || 0;
                 playerStats.penaltyKillCorsiZone += playerData.penaltyKillCorsiZone || 0;
                 playerStats.shotPercentage = playerStats.shots > 0 ? (playerStats.goals / playerStats.shots) * 100 : 0;
                 playerStats.passPercentage = playerStats.passAttempts > 0 ? (playerStats.passes / playerStats.passAttempts) * 100 : 0;
-                playerStats.faceoffPercentage = (playerStats.faceoffsWon + (playerStats.faceoffsWon || 0)) > 0 ? 
-                  (playerStats.faceoffsWon / (playerStats.faceoffsWon + (playerStats.faceoffsWon || 0))) * 100 : 0;
+                const totalFaceoffs = playerStats.faceoffsWon + playerStats.faceoffsLost;
+                playerStats.faceoffPercentage = totalFaceoffs > 0 ? (playerStats.faceoffsWon / totalFaceoffs) * 100 : 0;
               }
             }
           });
@@ -611,8 +615,8 @@ export class ClubStatsService {
     const allPlayers = Array.from(playerStatsMap.values()).map(stats => {
       stats.shotPercentage = stats.shots > 0 ? (stats.goals / stats.shots) * 100 : 0;
       stats.passPercentage = stats.passAttempts > 0 ? (stats.passes / stats.passAttempts) * 100 : 0;
-      stats.faceoffPercentage = (stats.faceoffsWon + (stats.faceoffsWon || 0)) > 0 ? 
-        (stats.faceoffsWon / (stats.faceoffsWon + (stats.faceoffsWon || 0))) * 100 : 0;
+      const totalFaceoffs = stats.faceoffsWon + stats.faceoffsLost;
+      stats.faceoffPercentage = totalFaceoffs > 0 ? (stats.faceoffsWon / totalFaceoffs) * 100 : 0;
       return stats;
     });
 
