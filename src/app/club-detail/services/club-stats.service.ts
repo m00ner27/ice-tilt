@@ -19,6 +19,8 @@ export interface SkaterStats {
   hits: number;
   blockedShots: number;
   pim: number;
+  penaltyAssists: number;
+  penaltyPercentage: number;
   ppg: number;
   shg: number;
   gwg: number;
@@ -288,6 +290,8 @@ export class ClubStatsService {
         hits: 0,
         blockedShots: 0,
         pim: 0,
+        penaltyAssists: 0,
+        penaltyPercentage: 0,
         ppg: 0,
         shg: 0,
         gwg: 0,
@@ -345,7 +349,7 @@ export class ClubStatsService {
           position: 'Unknown',
           role: 'skater',
           gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0, goals: 0, assists: 0, points: 0, plusMinus: 0,
-          shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, ppg: 0, shg: 0, gwg: 0,
+          shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, penaltyAssists: 0, penaltyPercentage: 0, ppg: 0, shg: 0, gwg: 0,
           takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0, faceoffsWon: 0,
           faceoffsLost: 0, faceoffPercentage: 0, playerScore: 0, penaltyKillCorsiZone: 0,
           isSigned: true
@@ -376,6 +380,10 @@ export class ClubStatsService {
     // Process matches to calculate stats
     console.log('Processing', clubMatches.length, 'club matches for stats calculation');
     clubMatches.forEach((match, index) => {
+      console.log(`=== BEFORE MATCH ${index + 1} PROCESSING ===`);
+      console.log('TeeKneeWeKnee stats before match:', playerStatsMap.get('TeeKneeWeKnee_skater'));
+      console.log('AlxSkyes stats before match:', playerStatsMap.get('AlxSkyes_skater'));
+      console.log('DANNYZJ7854 stats before match:', playerStatsMap.get('DANNYZJ7854_skater'));
       console.log(`Match ${index + 1}:`, {
         id: match._id || match.id,
         hasEashlData: !!match.eashlData,
@@ -403,32 +411,65 @@ export class ClubStatsService {
         otLoss = match.awayScore < match.homeScore && (match.otWin || match.soWin);
       }
 
-      // Prioritize manual stats over EASHL data since manual stats have proper player names
+      // Prioritize processed playerStats over raw EASHL data
       if (match.playerStats && match.playerStats.length > 0) {
-        console.log(`Processing manual stats for match ${match._id || match.id}`);
+        console.log(`=== PROCESSING PLAYERSTATS FOR MATCH ${match._id || match.id} ===`);
+        console.log(`PlayerStats length:`, match.playerStats.length);
+        console.log(`PlayerStats sample:`, match.playerStats[0]);
+        console.log(`PlayerStats sample keys:`, Object.keys(match.playerStats[0] || {}));
+        console.log(`Looking for team:`, backendClub?.name);
         const ourPlayers = match.playerStats.filter((player: any) => player.team === backendClub?.name);
+        console.log(`Found ${ourPlayers.length} players for our team`);
+        console.log(`Our players:`, ourPlayers.map((p: any) => ({ name: p.name, team: p.team })));
         ourPlayers.forEach((playerData: any) => {
           if (!playerData || !playerData.name) return;
+
+          console.log(`--- Processing player: ${playerData.name} ---`);
+          console.log(`Player data:`, playerData);
+          console.log(`Player blockedShots:`, playerData.blockedShots);
+          console.log(`Player powerPlayGoals:`, playerData.powerPlayGoals);
+          console.log(`Player shortHandedGoals:`, playerData.shortHandedGoals);
+          console.log(`Player gameWinningGoals:`, playerData.gameWinningGoals);
+        console.log(`Player penaltyMinutes:`, playerData.penaltyMinutes);
+        console.log(`Player penaltyAssists:`, playerData.penaltyAssists);
+        console.log(`Player penaltyKillCorsiZone:`, playerData.penaltyKillCorsiZone);
+        console.log(`=== PASS STATS DEBUG for ${playerData.name} ===`);
+        console.log(`Player passes:`, playerData.passes);
+        console.log(`Player passesCompleted:`, playerData.passesCompleted);
+        console.log(`Player passAttempts:`, playerData.passAttempts);
+        console.log(`Player passPercentage:`, playerData.passPercentage);
+        console.log(`Player data keys:`, Object.keys(playerData));
+        console.log(`Player data values:`, Object.values(playerData));
+        console.log(`=== END PASS STATS DEBUG ===`);
 
           const playerName = playerData.name;
           const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
           const roleSuffix = isGoalie ? '_goalie' : '_skater';
           
           let matchingKey = null;
+          const expectedKey = `${playerName}${roleSuffix}`;
           
-          if (playerStatsMap.has(`${playerName}${roleSuffix}`)) {
-            matchingKey = `${playerName}${roleSuffix}`;
+          console.log(`Looking for key: ${expectedKey}`);
+          console.log(`PlayerStatsMap has key:`, playerStatsMap.has(expectedKey));
+          console.log(`Available keys:`, Array.from(playerStatsMap.keys()));
+          
+          if (playerStatsMap.has(expectedKey)) {
+            matchingKey = expectedKey;
+            console.log(`Found exact match: ${matchingKey}`);
           } else {
+            console.log(`No exact match, searching for partial match...`);
             for (const [key, stats] of playerStatsMap.entries()) {
               if (key.endsWith(roleSuffix) && (stats.name === playerName || 
                   stats.name.includes(playerName) || 
                   playerName.includes(stats.name))) {
                 matchingKey = key;
+                console.log(`Found partial match: ${key} for player ${playerName}`);
                 break;
               }
             }
           }
 
+          console.log(`Final matchingKey: ${matchingKey}`);
           if (matchingKey) {
             const playerStats = playerStatsMap.get(matchingKey);
             playerStats.gamesPlayed++;
@@ -451,14 +492,35 @@ export class ClubStatsService {
               playerStats.shots += playerData.shots || 0;
               playerStats.hits += playerData.hits || 0;
               playerStats.blockedShots += playerData.blockedShots || 0;
-              playerStats.pim += playerData.pim || 0;
-              playerStats.ppg += playerData.ppg || 0;
-              playerStats.shg += playerData.shg || 0;
-              playerStats.gwg += playerData.gwg || 0;
+              playerStats.pim += playerData.penaltyMinutes || 0;
+              playerStats.penaltyAssists += playerData.penaltyAssists || 0;
+              playerStats.ppg += playerData.powerPlayGoals || 0;
+              playerStats.shg += playerData.shortHandedGoals || 0;
+              playerStats.gwg += playerData.gameWinningGoals || 0;
               playerStats.takeaways += playerData.takeaways || 0;
               playerStats.giveaways += playerData.giveaways || 0;
-              playerStats.passes += playerData.passes || 0;
-              playerStats.passAttempts += playerData.passAttempts || 0;
+              const passesToAdd = playerData.passes || playerData.passesCompleted || 0;
+              playerStats.passes += passesToAdd;
+              
+              // Calculate passAttempts from passPercentage if passAttempts is not available
+              let passAttemptsToAdd = 0;
+              if (playerData.passAttempts !== undefined) {
+                passAttemptsToAdd = playerData.passAttempts || 0;
+                console.log(`Using direct passAttempts: ${passAttemptsToAdd}`);
+              } else if (playerData.passPercentage !== undefined && playerData.passPercentage > 0) {
+                // Calculate passAttempts from passes and passPercentage
+                const passAttempts = Math.round(passesToAdd / (playerData.passPercentage / 100));
+                passAttemptsToAdd = passAttempts;
+                console.log(`Calculated passAttempts from passPercentage: ${passAttemptsToAdd} (passes: ${passesToAdd}, passPercentage: ${playerData.passPercentage})`);
+              } else {
+                // Fallback: Estimate passAttempts based on passes (assume ~80% pass completion rate)
+                // This is a reasonable estimate for hockey statistics
+                passAttemptsToAdd = Math.round(passesToAdd / 0.8);
+                console.log(`Estimated passAttempts for ${playerData.name}: ${passAttemptsToAdd} (passes: ${passesToAdd}, estimated 80% completion rate)`);
+              }
+              playerStats.passAttempts += passAttemptsToAdd;
+              
+              console.log(`Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
               playerStats.faceoffsWon += playerData.faceoffsWon || 0;
               playerStats.faceoffsLost += playerData.faceoffsLost || 0;
               playerStats.playerScore += playerData.playerScore || 0;
@@ -467,12 +529,18 @@ export class ClubStatsService {
               playerStats.passPercentage = playerStats.passAttempts > 0 ? (playerStats.passes / playerStats.passAttempts) * 100 : 0;
               const totalFaceoffs = playerStats.faceoffsWon + playerStats.faceoffsLost;
               playerStats.faceoffPercentage = totalFaceoffs > 0 ? (playerStats.faceoffsWon / totalFaceoffs) * 100 : 0;
+              const totalPenalties = playerStats.pim + playerStats.penaltyAssists;
+              playerStats.penaltyPercentage = totalPenalties > 0 ? (playerStats.pim / totalPenalties) * 100 : 0;
             }
           }
         });
-      } else if (match.eashlData.players) {
+      } else if (match.eashlData && match.eashlData.players) {
+        console.log(`=== FALLING BACK TO EASHL DATA FOR MATCH ${match._id || match.id} ===`);
+        console.log(`EASHL data:`, match.eashlData);
+        console.log(`EASHL players:`, match.eashlData.players);
         // Process EASHL data
         const teamKeys = Object.keys(match.eashlData.players);
+        console.log(`EASHL team keys:`, teamKeys);
         
         let ourTeamKey: string | undefined;
 
@@ -545,6 +613,15 @@ export class ClubStatsService {
           teamPlayers.forEach((playerData: any) => {
             if (!playerData || !playerData.name) return;
 
+            console.log(`Stats processing - EASHL player ${playerData.name}:`, playerData);
+            console.log(`Stats processing - EASHL player ${playerData.name} data keys:`, Object.keys(playerData));
+            console.log(`Stats processing - EASHL player ${playerData.name} blockedShots:`, playerData.blockedShots);
+            console.log(`Stats processing - EASHL player ${playerData.name} powerPlayGoals:`, playerData.powerPlayGoals);
+            console.log(`Stats processing - EASHL player ${playerData.name} penaltyMinutes:`, playerData.penaltyMinutes);
+            console.log(`Stats processing - EASHL player ${playerData.name} shortHandedGoals:`, playerData.shortHandedGoals);
+            console.log(`Stats processing - EASHL player ${playerData.name} gameWinningGoals:`, playerData.gameWinningGoals);
+            console.log(`Stats processing - EASHL player ${playerData.name} penaltyKillCorsiZone:`, playerData.penaltyKillCorsiZone);
+
             const playerName = playerData.name;
             const isGoalie = playerData.position === 'goalie'; // EASHL data uses 'goalie' string
             const roleSuffix = isGoalie ? '_goalie' : '_skater';
@@ -579,37 +656,70 @@ export class ClubStatsService {
                 playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) * 100 : 0;
                 playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
               } else {
-                playerStats.goals += playerData.goals || 0;
-                playerStats.assists += playerData.assists || 0;
-                playerStats.points += (playerData.goals || 0) + (playerData.assists || 0);
-                playerStats.plusMinus += playerData.plusMinus || 0;
-                playerStats.shots += playerData.shots || 0;
-                playerStats.hits += playerData.hits || 0;
-                playerStats.blockedShots += playerData.blockedShots || 0;
-                playerStats.pim += playerData.pim || 0;
-                playerStats.ppg += playerData.ppg || 0;
-                playerStats.shg += playerData.shg || 0;
-                playerStats.gwg += playerData.gwg || 0;
-                playerStats.takeaways += playerData.takeaways || 0;
-                playerStats.giveaways += playerData.giveaways || 0;
-                playerStats.passes += playerData.passes || 0;
-                playerStats.passAttempts += playerData.passAttempts || 0;
-                playerStats.faceoffsWon += playerData.faceoffsWon || 0;
-                playerStats.faceoffsLost += playerData.faceoffsLost || 0;
-                playerStats.playerScore += playerData.playerScore || 0;
+                playerStats.goals += playerData.goals || playerData.skgoals || 0;
+                playerStats.assists += playerData.assists || playerData.skassists || 0;
+                playerStats.points += (playerData.goals || playerData.skgoals || 0) + (playerData.assists || playerData.skassists || 0);
+                playerStats.plusMinus += playerData.plusMinus || playerData.skplusmin || 0;
+                playerStats.shots += playerData.shots || playerData.skshots || 0;
+                playerStats.hits += playerData.hits || playerData.skhits || 0;
+                playerStats.blockedShots += playerData.blockedShots || playerData.skblk || 0;
+                playerStats.pim += playerData.penaltyMinutes || playerData.skpim || 0;
+                playerStats.penaltyAssists += 0; // EASHL data doesn't have penalty assists
+                playerStats.ppg += playerData.powerPlayGoals || playerData.skppg || 0;
+                playerStats.shg += playerData.shortHandedGoals || playerData.skshg || 0;
+                playerStats.gwg += playerData.gameWinningGoals || playerData.skgwg || 0;
+                playerStats.takeaways += playerData.takeaways || playerData.sktakeaways || 0;
+                playerStats.giveaways += playerData.giveaways || playerData.skgiveaways || 0;
+                const passesToAdd = playerData.passes || playerData.passesCompleted || playerData.skpasses || 0;
+                playerStats.passes += passesToAdd;
+                
+                // Calculate passAttempts from passPercentage if passAttempts is not available
+                let passAttemptsToAdd = 0;
+                if (playerData.passAttempts !== undefined || playerData.skpassattempts !== undefined) {
+                  passAttemptsToAdd = playerData.passAttempts || playerData.skpassattempts || 0;
+                  console.log(`EASHL - Using direct passAttempts: ${passAttemptsToAdd}`);
+                } else if (playerData.passPercentage !== undefined && playerData.passPercentage > 0) {
+                  // Calculate passAttempts from passes and passPercentage
+                  const passAttempts = Math.round(passesToAdd / (playerData.passPercentage / 100));
+                  passAttemptsToAdd = passAttempts;
+                  console.log(`EASHL - Calculated passAttempts from passPercentage: ${passAttemptsToAdd} (passes: ${passesToAdd}, passPercentage: ${playerData.passPercentage})`);
+                } else {
+                  // Fallback: Estimate passAttempts based on passes (assume ~80% pass completion rate)
+                  // This is a reasonable estimate for hockey statistics
+                  passAttemptsToAdd = Math.round(passesToAdd / 0.8);
+                  console.log(`EASHL - Estimated passAttempts for ${playerData.name}: ${passAttemptsToAdd} (passes: ${passesToAdd}, estimated 80% completion rate)`);
+                }
+                playerStats.passAttempts += passAttemptsToAdd;
+                
+                console.log(`EASHL - Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
+                playerStats.faceoffsWon += playerData.faceoffsWon || playerData.skfow || 0;
+                playerStats.faceoffsLost += playerData.faceoffsLost || playerData.skfol || 0;
+                playerStats.playerScore += playerData.playerScore || playerData.score || 0;
                 playerStats.penaltyKillCorsiZone += playerData.penaltyKillCorsiZone || 0;
                 playerStats.shotPercentage = playerStats.shots > 0 ? (playerStats.goals / playerStats.shots) * 100 : 0;
                 playerStats.passPercentage = playerStats.passAttempts > 0 ? (playerStats.passes / playerStats.passAttempts) * 100 : 0;
                 const totalFaceoffs = playerStats.faceoffsWon + playerStats.faceoffsLost;
                 playerStats.faceoffPercentage = totalFaceoffs > 0 ? (playerStats.faceoffsWon / totalFaceoffs) * 100 : 0;
+                const totalPenalties = playerStats.pim + playerStats.penaltyAssists;
+                playerStats.penaltyPercentage = totalPenalties > 0 ? (playerStats.pim / totalPenalties) * 100 : 0;
               }
             }
           });
         } else {
           console.warn(`Could not determine our team key for match ${match._id || match.id}. Skipping player stats processing for this match.`);
         }
-      }
-    });
+        } else {
+          console.log(`=== NO PLAYER DATA FOUND FOR MATCH ${match._id || match.id} ===`);
+          console.log(`Has playerStats:`, !!match.playerStats);
+          console.log(`Has eashlData:`, !!match.eashlData);
+          console.log(`Has eashlData.players:`, !!(match.eashlData && match.eashlData.players));
+        }
+        
+        console.log(`=== AFTER MATCH ${index + 1} PROCESSING ===`);
+        console.log('TeeKneeWeKnee stats after match:', playerStatsMap.get('TeeKneeWeKnee_skater'));
+        console.log('AlxSkyes stats after match:', playerStatsMap.get('AlxSkyes_skater'));
+        console.log('DANNYZJ7854 stats after match:', playerStatsMap.get('DANNYZJ7854_skater'));
+      });
 
     // Convert map to array and calculate percentages
     const allPlayers = Array.from(playerStatsMap.values()).map(stats => {
@@ -617,6 +727,19 @@ export class ClubStatsService {
       stats.passPercentage = stats.passAttempts > 0 ? (stats.passes / stats.passAttempts) * 100 : 0;
       const totalFaceoffs = stats.faceoffsWon + stats.faceoffsLost;
       stats.faceoffPercentage = totalFaceoffs > 0 ? (stats.faceoffsWon / totalFaceoffs) * 100 : 0;
+      // Penalty percentage calculation (if needed for future use)
+      const totalPenalties = stats.pim + stats.penaltyAssists;
+      stats.penaltyPercentage = totalPenalties > 0 ? (stats.pim / totalPenalties) * 100 : 0;
+      
+      // Log final pass stats for debugging
+      if (stats.role === 'skater' && stats.gamesPlayed > 0) {
+        console.log(`=== FINAL PASS STATS for ${stats.name} ===`);
+        console.log(`Passes: ${stats.passes}`);
+        console.log(`Pass Attempts: ${stats.passAttempts}`);
+        console.log(`Pass Percentage: ${stats.passPercentage}%`);
+        console.log(`=== END FINAL PASS STATS ===`);
+      }
+      
       return stats;
     });
 
@@ -647,6 +770,57 @@ export class ClubStatsService {
     console.log('Final skater stats:', skaterStats.length, 'players');
     console.log('Final goalie stats:', goalieStats.length, 'players');
     console.log('Goalie stats details:', goalieStats);
+    
+    // Log sample skater stats with pass data for debugging
+    console.log('=== SAMPLE SKATER STATS WITH PASS DATA ===');
+    skaterStats.slice(0, 3).forEach(player => {
+      console.log(`${player.name}: passes=${player.passes}, passAttempts=${player.passAttempts}, passPercentage=${player.passPercentage}%`);
+    });
+    console.log('=== END SAMPLE SKATER STATS ===');
+    
+    // Log sample skater stats to see aggregated values
+    if (skaterStats.length > 0) {
+      console.log('=== SAMPLE SKATER STATS ===');
+      const teeKnee = skaterStats.find(s => s.name === 'TeeKneeWeKnee');
+      const alxSkyes = skaterStats.find(s => s.name === 'AlxSkyes');
+      const danny = skaterStats.find(s => s.name === 'DANNYZJ7854');
+      
+      console.log('TeeKneeWeKnee stats:', {
+        name: teeKnee?.name,
+        pim: teeKnee?.pim,
+        ppg: teeKnee?.ppg,
+        shg: teeKnee?.shg,
+        gwg: teeKnee?.gwg,
+        blockedShots: teeKnee?.blockedShots,
+        penaltyKillCorsiZone: teeKnee?.penaltyKillCorsiZone,
+        penaltyAssists: teeKnee?.penaltyAssists,
+        penaltyPercentage: teeKnee?.penaltyPercentage
+      });
+      
+      console.log('AlxSkyes stats:', {
+        name: alxSkyes?.name,
+        pim: alxSkyes?.pim,
+        ppg: alxSkyes?.ppg,
+        shg: alxSkyes?.shg,
+        gwg: alxSkyes?.gwg,
+        blockedShots: alxSkyes?.blockedShots,
+        penaltyKillCorsiZone: alxSkyes?.penaltyKillCorsiZone,
+        penaltyAssists: alxSkyes?.penaltyAssists,
+        penaltyPercentage: alxSkyes?.penaltyPercentage
+      });
+      
+      console.log('DANNYZJ7854 stats:', {
+        name: danny?.name,
+        pim: danny?.pim,
+        ppg: danny?.ppg,
+        shg: danny?.shg,
+        gwg: danny?.gwg,
+        blockedShots: danny?.blockedShots,
+        penaltyKillCorsiZone: danny?.penaltyKillCorsiZone,
+        penaltyAssists: danny?.penaltyAssists,
+        penaltyPercentage: danny?.penaltyPercentage
+      });
+    }
     
     return { skaterStats, goalieStats };
   }

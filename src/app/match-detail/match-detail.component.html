@@ -85,6 +85,7 @@
             <th>TK</th>
             <th>GV</th>
             <th>P</th>
+            <th>PA</th>
             <th>P%</th>
             <th>FOW</th>
             <th>FOL</th>
@@ -113,8 +114,9 @@
             <td>{{ player.gameWinningGoals || 0 }}</td>
             <td>{{ player.takeaways || 0 }}</td>
             <td>{{ player.giveaways || 0 }}</td>
-            <td>{{ player.passes || 0 }}</td>
-            <td>{{ player.passPercentage ? (player.passPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+            <td>{{ player.penaltyMinutes || 0 }}</td>
+            <td>{{ player.penaltyAssists || 0 }}</td>
+            <td>{{ player.penaltyPercentage ? (player.penaltyPercentage | number:'1.1-1') + '%' : '0%' }}</td>
             <td>{{ player.faceoffsWon || 0 }}</td>
             <td>{{ player.faceoffsLost || 0 }}</td>
             <td>{{ player.faceoffPercentage ? (player.faceoffPercentage | number:'1.1-1') + '%' : '0%' }}</td>
@@ -198,6 +200,7 @@
             <th>TK</th>
             <th>GV</th>
             <th>P</th>
+            <th>PA</th>
             <th>P%</th>
             <th>FOW</th>
             <th>FOL</th>
@@ -226,8 +229,9 @@
             <td>{{ player.gameWinningGoals || 0 }}</td>
             <td>{{ player.takeaways || 0 }}</td>
             <td>{{ player.giveaways || 0 }}</td>
-            <td>{{ player.passes || 0 }}</td>
-            <td>{{ player.passPercentage ? (player.passPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+            <td>{{ player.penaltyMinutes || 0 }}</td>
+            <td>{{ player.penaltyAssists || 0 }}</td>
+            <td>{{ player.penaltyPercentage ? (player.penaltyPercentage | number:'1.1-1') + '%' : '0%' }}</td>
             <td>{{ player.faceoffsWon || 0 }}</td>
             <td>{{ player.faceoffsLost || 0 }}</td>
             <td>{{ player.faceoffPercentage ? (player.faceoffPercentage | number:'1.1-1') + '%' : '0%' }}</td>
@@ -289,9 +293,9 @@
       <span class="legend-abbr">PKCZ</span> - Penalty Kill Clear Zones
     </div>
     <div class="legend-item">
-      <span class="legend-abbr">PA</span> - Pass Attempts
-      <span class="legend-abbr">P</span> - Passes
-      <span class="legend-abbr">P%</span> - Pass Percentage
+      <span class="legend-abbr">P</span> - Penalty Minutes
+      <span class="legend-abbr">PA</span> - Penalty Assists
+      <span class="legend-abbr">P%</span> - Penalty Percentage
       <span class="legend-abbr">FOW</span> - Faceoffs Won
       <span class="legend-abbr">FOL</span> - Faceoffs Lost
       <span class="legend-abbr">FO%</span> - Faceoff Percentage

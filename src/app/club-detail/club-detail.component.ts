@@ -439,6 +439,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     console.log('Club matches available:', this.clubMatches.length);
     console.log('Roster players:', roster.length);
         console.log('Selected season ID:', this.selectedSeasonId);
+        console.log('Sample match data:', this.clubMatches[0]);
+        console.log('Sample match has playerStats:', !!this.clubMatches[0]?.playerStats);
+        console.log('Sample match playerStats length:', this.clubMatches[0]?.playerStats?.length);
         console.log('========================');
         
         // Clear previous stats before processing new ones
@@ -457,6 +460,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         this.goalieStats = goalieStats;
         
         console.log('Stats processing complete - triggering UI update');
+        console.log('=== CLUB DETAIL COMPONENT - SKATER STATS ===');
+        this.skaterStats.slice(0, 3).forEach(player => {
+          console.log(`${player.name}: passes=${player.passes}, passAttempts=${player.passAttempts}, passPercentage=${player.passPercentage}%`);
+        });
+        console.log('=== END CLUB DETAIL COMPONENT - SKATER STATS ===');
         this.cdr.detectChanges();
       }
   getImageUrl(logoUrl: string | undefined): string {

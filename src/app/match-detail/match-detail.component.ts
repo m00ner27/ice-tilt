@@ -29,6 +29,8 @@ interface PlayerStatDisplay {
   blockedShots?: number;
   pim?: number;
   penaltyMinutes?: number;
+  penaltyAssists?: number;
+  penaltyPercentage?: number;
   ppg?: number;
   powerPlayGoals?: number;
   shg?: number;
@@ -225,6 +227,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         hits: playerStat.hits || 0,
         blockedShots: playerStat.blockedShots || 0,
         pim: playerStat.pim || 0,
+        penaltyAssists: playerStat.penaltyAssists || 0,
+        penaltyPercentage: (playerStat.pim || 0) + (playerStat.penaltyAssists || 0) > 0 ? 
+          ((playerStat.pim || 0) / ((playerStat.pim || 0) + (playerStat.penaltyAssists || 0)) * 100) : 0,
         ppg: playerStat.ppg || 0,
         shg: playerStat.shg || 0,
         gwg: playerStat.gwg || 0,
@@ -318,6 +323,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           hits: isGoaliePlayer ? 0 : (player.hits || 0), // Goalies don't hit
           blockedShots: isGoaliePlayer ? 0 : (player.blockedShots || 0), // Goalies don't block shots
           pim: player.penaltyMinutes || 0,
+          penaltyAssists: isGoaliePlayer ? 0 : (player.penaltyAssists || 0),
+          penaltyPercentage: isGoaliePlayer ? 0 : ((player.penaltyMinutes || 0) + (player.penaltyAssists || 0) > 0 ? 
+            ((player.penaltyMinutes || 0) / ((player.penaltyMinutes || 0) + (player.penaltyAssists || 0)) * 100) : 0),
           ppg: isGoaliePlayer ? 0 : (player.powerPlayGoals || 0),
           shg: isGoaliePlayer ? 0 : (player.shortHandedGoals || 0),
           gwg: isGoaliePlayer ? 0 : (player.gameWinningGoals || 0),

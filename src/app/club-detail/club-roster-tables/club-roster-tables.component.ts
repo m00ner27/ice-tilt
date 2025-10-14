@@ -22,6 +22,8 @@ interface SkaterStats {
   hits?: number;
   blockedShots?: number;
   pim?: number;
+  penaltyAssists?: number;
+  penaltyPercentage?: number;
   ppg?: number;
   shg?: number;
   gwg?: number;
