@@ -594,10 +594,16 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           wins++;
           lastTenResults.push('W');
         } else if (ourScore < opponentScore) {
-          losses++;
-          lastTenResults.push('L');
+          // Check if this was an overtime/shootout loss
+          if (match.isOvertime || match.isShootout) {
+            otLosses++;
+            lastTenResults.push('OTL');
+          } else {
+            losses++;
+            lastTenResults.push('L');
+          }
         } else {
-          // Only count as OTL if it was actually an overtime/shootout game
+          // Tied score - check if it was overtime/shootout
           if (match.isOvertime || match.isShootout) {
             otLosses++;
             lastTenResults.push('OTL');
