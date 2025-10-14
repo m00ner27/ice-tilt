@@ -194,10 +194,19 @@ export class AdminScheduleComponent implements OnInit {
 
   loadEashlGames(game: any) {
     console.log('--- Loading EASHL Games for ---', game);
-    if (game.eashlGames && game.eashlGames.length > 0) {
-      console.log('Games already loaded, skipping fetch.');
-      return;
-    }
+    console.log('Game ID:', game._id);
+    console.log('Current eashlGames:', game.eashlGames);
+    console.log('eashlGames length:', game.eashlGames?.length);
+    
+    // Temporarily disable caching to debug the issue
+    // if (game.eashlGames && game.eashlGames.length > 0) {
+    //   console.log('Games already loaded, skipping fetch.');
+    //   return;
+    // }
+    
+    // Clear cache and force reload
+    console.log('Clearing cache and loading fresh EASHL games...');
+    game.eashlGames = [];
 
     const homeId = game.homeClubId?._id || game.homeClubId;
     const awayId = game.awayClubId?._id || game.awayClubId;
@@ -360,12 +369,17 @@ export class AdminScheduleComponent implements OnInit {
 
   loadEashlGamesForMerge(primaryGame: any) {
     console.log('=== LOADING EASHL GAMES FOR MERGE ===');
+    console.log('Primary Game ID:', primaryGame._id);
+    console.log('Primary Game:', primaryGame);
     
     const homeId = primaryGame.homeClubId?._id || primaryGame.homeClubId;
     const awayId = primaryGame.awayClubId?._id || primaryGame.awayClubId;
 
     const homeClub = this.clubs.find(c => c._id === homeId);
     const awayClub = this.clubs.find(c => c._id === awayId);
+    
+    console.log('Home Club:', homeClub);
+    console.log('Away Club:', awayClub);
     
     if (!homeClub?.eashlClubId || !awayClub?.eashlClubId) {
       alert('One or both clubs missing EASHL Club ID. Cannot load games for merging.');
@@ -434,6 +448,17 @@ export class AdminScheduleComponent implements OnInit {
           `).join('')}
         </div>
         
+        <!-- Overtime Selection -->
+        <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+          <label style="display: flex; align-items: center; cursor: pointer; font-weight: 500; color: #333;">
+            <input type="checkbox" id="mergeOvertime" style="margin-right: 10px; transform: scale(1.2);">
+            <span>⚡ This was an Overtime Game</span>
+          </label>
+          <div style="font-size: 12px; color: #666; margin-left: 26px; margin-top: 5px;">
+            Check this if the merged game went to overtime
+          </div>
+        </div>
+        
         <div style="text-align: right;">
           <button onclick="window.mergeCancel()" style="margin-right: 10px; padding: 8px 16px; border: 1px solid #ccc; background: #f5f5f5; cursor: pointer;">Cancel</button>
           <button onclick="window.mergeEashlGames()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer;">Merge Selected Games</button>
@@ -466,6 +491,10 @@ export class AdminScheduleComponent implements OnInit {
         alert('Please select exactly 2 EASHL games to merge.');
         return;
       }
+      
+      // Get overtime selection
+      const overtimeCheckbox = document.getElementById('mergeOvertime') as HTMLInputElement;
+      const isOvertime = overtimeCheckbox ? overtimeCheckbox.checked : false;
       
       // Format the selected EASHL games to extract scores
       const selectedGames = eashlGames
@@ -505,7 +534,7 @@ export class AdminScheduleComponent implements OnInit {
       delete (window as any).mergeCancel;
       delete (window as any).mergeEashlGames;
       
-      this.confirmEashlMerge(primaryGame, selectedGames);
+      this.confirmEashlMerge(primaryGame, selectedGames, isOvertime);
     };
   }
 
@@ -759,22 +788,24 @@ export class AdminScheduleComponent implements OnInit {
     return `Home: ${homeGoals} | Away: ${awayGoals}`;
   }
 
-  confirmEashlMerge(primaryGame: any, selectedEashlGames: any[]) {
+  confirmEashlMerge(primaryGame: any, selectedEashlGames: any[], isOvertime: boolean = false) {
     const gameList = selectedEashlGames.map((game, index) => 
       `EASHL Game ${index + 1}: ${this.formatEashlGameLabel(game, primaryGame)}`
     ).join('\n');
     
+    const overtimeText = isOvertime ? '\n⚡ This will be marked as an Overtime Game' : '';
+    
     const confirmMessage = `Are you sure you want to merge these EASHL games?\n\n` +
       `Primary Game: ${primaryGame.homeTeam} vs ${primaryGame.awayTeam}\n` +
       `${gameList}\n\n` +
-      `This will create one complete game record with merged EASHL data from ${selectedEashlGames.length} games.`;
+      `This will create one complete game record with merged EASHL data from ${selectedEashlGames.length} games.${overtimeText}`;
 
     if (confirm(confirmMessage)) {
-      this.performEashlMerge(primaryGame._id, selectedEashlGames);
+      this.performEashlMerge(primaryGame._id, selectedEashlGames, isOvertime);
     }
   }
 
-  performEashlMerge(primaryGameId: string, selectedEashlGames: any[]) {
+  performEashlMerge(primaryGameId: string, selectedEashlGames: any[], isOvertime: boolean = false) {
     // Actually merge the EASHL data from multiple games
     if (selectedEashlGames.length < 2) {
       alert('Please select at least 2 EASHL games to merge.');
@@ -782,6 +813,7 @@ export class AdminScheduleComponent implements OnInit {
     }
     
     console.log('Merging EASHL games:', selectedEashlGames.map(game => game.matchId));
+    console.log('Overtime game:', isOvertime);
     
     // First, extract and combine the scores from the selected EASHL games
     console.log('Extracting scores from EASHL games...');
@@ -838,6 +870,7 @@ export class AdminScheduleComponent implements OnInit {
       score: combinedScore,
       homeTeamScore: combinedScore.home,
       awayTeamScore: combinedScore.away,
+      isOvertime: isOvertime, // Include the overtime flag
       eashlData: combinedEashlData // Include the combined player statistics
     };
     
@@ -854,7 +887,8 @@ export class AdminScheduleComponent implements OnInit {
           const updatedGame = {
             ...this.games[gameIndex],
             eashlMatchId: mergedMatchIds,
-            status: 'pending_stats'
+            status: 'pending_stats',
+            isOvertime: isOvertime
           };
           console.log('Updated game after EASHL merge:', updatedGame);
           this.games[gameIndex] = updatedGame;
@@ -872,6 +906,7 @@ export class AdminScheduleComponent implements OnInit {
             homeTeamScore: combinedScore.home,
             awayTeamScore: combinedScore.away,
             status: 'completed',
+            isOvertime: isOvertime, // Include the overtime flag
             eashlData: combinedEashlData // Include the combined player statistics locally
           };
           
