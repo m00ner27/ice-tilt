@@ -17,7 +17,10 @@
           </div>
         </div>
         <div class="game-status">
-          <span *ngIf="isFinal(match); else timeDisplay">FINAL</span>
+          <span *ngIf="isFinal(match); else timeDisplay">
+            FINAL
+            <span *ngIf="match.isOvertime" class="overtime-indicator">OT</span>
+          </span>
           <ng-template #timeDisplay>
             <span>{{ match.date | date: 'h:mm a' }}</span>
           </ng-template>
