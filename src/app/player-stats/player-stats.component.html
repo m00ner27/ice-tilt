@@ -67,7 +67,10 @@
               <th [className]="getColumnSortClass('passPercentage')" (click)="onSortColumn('passPercentage')">P%</th>
               <th [className]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
               <th [className]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
+              <th [className]="getColumnSortClass('interceptions')" (click)="onSortColumn('interceptions')">INT</th>
+              <th [className]="getColumnSortClass('timeOnIce')" (click)="onSortColumn('timeOnIce')">TOI</th>
               <th [className]="getColumnSortClass('penaltyKillCorsiZone')" (click)="onSortColumn('penaltyKillCorsiZone')">PKCZ</th>
+              <th [className]="getColumnSortClass('penaltyAssists')" (click)="onSortColumn('penaltyAssists')">PA</th>
             </tr>
           </thead>
           <tbody>
@@ -106,7 +109,10 @@
               <td>{{ player.passPercentage }}%</td>
               <td>{{ player.faceoffsWon }}</td>
               <td>{{ player.faceoffPercentage }}%</td>
+              <td>{{ player.interceptions }}</td>
+              <td>{{ player.timeOnIce }}</td>
               <td>{{ player.penaltyKillCorsiZone }}</td>
+              <td>{{ player.penaltyAssists }}</td>
             </tr>
           </tbody>
         </table>
@@ -149,6 +155,12 @@
         <span class="legend-abbr">P%</span> - Pass Percentage
         <span class="legend-abbr">FOW</span> - Faceoffs Won
         <span class="legend-abbr">FO%</span> - Faceoff Percentage
+        <span class="legend-abbr">INT</span> - Interceptions
+        <span class="legend-abbr">TOI</span> - Time on Ice
+      </div>
+      <div class="legend-item">
+        <span class="legend-abbr">PKCZ</span> - Penalty Kill Corsi Zone
+        <span class="legend-abbr">PEN</span> - Penalty Assists
       </div>
     </div>
   </div>

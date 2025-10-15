@@ -128,7 +128,7 @@ export class PlayerStatsService {
               stats.hits! += Number(playerData.skhits) || 0;
               stats.takeaways! += Number(playerData.sktakeaways) || 0;
               stats.giveaways! += Number(playerData.skgiveaways) || 0;
-              stats.blockedShots! += Number(playerData.skbs) || 0;
+              stats.blockedShots! += Number(playerData.skblk) || 0;
               
               // Extract pass statistics
               stats.passAttempts! += Number(playerData.skpassattempts) || 0;
@@ -142,9 +142,11 @@ export class PlayerStatsService {
               
               // Extract goalie stats
               stats.savePercentage = Number(playerData.glsavepct) || 0;
-              stats.goalsAgainst! += Number(playerData.glga) || 0;
+              const goalsAgainst = Number(playerData.glga) || 0;
+              stats.goalsAgainst! += goalsAgainst;
               stats.goalsAgainstAverage = Number(playerData.glgaa) || 0;
-              stats.shutouts! += Number(playerData.glsoperiods) || 0;
+              // Calculate shutouts based on goals against (0 goals = 1 shutout)
+              stats.shutouts! += (goalsAgainst === 0) ? 1 : 0;
               
               // Calculate faceoff percentage
               if (playerData.skfow && playerData.skfol) {

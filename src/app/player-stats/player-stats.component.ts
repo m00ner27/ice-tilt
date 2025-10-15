@@ -47,26 +47,44 @@ interface PlayerStats {
   points: number;
   plusMinus: number;
   
+  // Basic stats
   shots: number; // Shots on goal
   hits: number; // Hits
   blockedShots: number; // Blocked shots
   penaltyMinutes: number; // Penalty minutes
-  // Additional stats from EASHL data
+  timeOnIce: string; // Time on ice
+  
+  // Special situation goals
   powerPlayGoals: number; // PPG
   shortHandedGoals: number; // SHG
   gameWinningGoals: number; // GWG
+  
+  // Possession stats
   takeaways: number;
   giveaways: number;
+  interceptions: number; // New stat from EA
+  
+  // Passing stats
   passAttempts: number;
   passes: number;
   passPercentage: number;
+  
+  // Shooting stats
   shotPercentage: number;
-  playerScore: number; // Overall player performance score
-  possession: number; // Time of possession
+  
+  // Faceoff stats
   faceoffsWon: number;
   faceoffsLost: number;
   faceoffPercentage: number;
+  
+  // Advanced stats
+  playerScore: number; // Overall player performance score
+  possession: number; // Time of possession
   penaltyKillCorsiZone: number; // PKCZ - Penalty Kill Corsi Zone
+  
+  // Additional EA stats
+  penaltyAssists: number; // Penalty assists (if tracked)
+  
   division?: string;
 }
 
@@ -359,21 +377,24 @@ export class PlayerStatsComponent implements OnInit {
                   hits: 0,
                   blockedShots: 0,
                   penaltyMinutes: 0,
+                  timeOnIce: '0:00',
                   powerPlayGoals: 0,
                   shortHandedGoals: 0,
                   gameWinningGoals: 0,
                   takeaways: 0,
                   giveaways: 0,
+                  interceptions: 0,
                   passAttempts: 0,
                   passes: 0,
                   passPercentage: 0,
                   shotPercentage: 0,
-                  playerScore: 0,
-                  possession: 0,
                   faceoffsWon: 0,
                   faceoffsLost: 0,
                   faceoffPercentage: 0,
-                  penaltyKillCorsiZone: 0
+                  playerScore: 0,
+                  possession: 0,
+                  penaltyKillCorsiZone: 0,
+                  penaltyAssists: 0
                 };
                 statsMap.set(playerKey, existingStats);
               }
@@ -390,11 +411,13 @@ export class PlayerStatsComponent implements OnInit {
               existingStats.hits += parseInt(playerData.hits) || 0;
               existingStats.blockedShots += parseInt(playerData.blockedShots) || 0;
               existingStats.penaltyMinutes += parseInt(playerData.penaltyMinutes) || 0;
+              existingStats.timeOnIce = playerData.timeOnIce || '0:00';
               existingStats.powerPlayGoals += parseInt(playerData.powerPlayGoals) || 0;
               existingStats.shortHandedGoals += parseInt(playerData.shortHandedGoals) || 0;
               existingStats.gameWinningGoals += parseInt(playerData.gameWinningGoals) || 0;
               existingStats.takeaways += parseInt(playerData.takeaways) || 0;
               existingStats.giveaways += parseInt(playerData.giveaways) || 0;
+              existingStats.interceptions += parseInt(playerData.interceptions) || 0;
               existingStats.passAttempts += parseInt(playerData.passAttempts) || 0;
               existingStats.passes += parseInt(playerData.passes) || 0;
               existingStats.playerScore += parseInt(playerData.score) || 0;
@@ -402,6 +425,7 @@ export class PlayerStatsComponent implements OnInit {
               existingStats.faceoffsWon += parseInt(playerData.faceoffsWon) || 0;
               existingStats.faceoffsLost += parseInt(playerData.faceoffsLost) || 0;
               existingStats.penaltyKillCorsiZone += parseInt(playerData.penaltyKillCorsiZone) || 0;
+              existingStats.penaltyAssists += parseInt(playerData.penaltyAssists) || 0;
             });
           }
         } else {
@@ -423,43 +447,47 @@ export class PlayerStatsComponent implements OnInit {
                     return; // Skip goalies or players without position
                   }
 
+
                   const playerIdNum = parseInt(playerId);
                   let existingStats = statsMap.get(playerIdNum);
 
                   if (!existingStats) {
-                    existingStats = {
-                      playerId: playerIdNum,
-                      name: playerData.playername || 'Unknown',
-                      team: teamName,
-                      teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
-                      number: parseInt(playerData.jerseynum) || 0,
-                      position: this.formatPosition(playerData.position),
-                      division: teamDivisionMap.get(teamName) || 'Unknown',
-                      gamesPlayed: 0,
-                      goals: 0,
-                      assists: 0,
-                      points: 0,
-                      plusMinus: 0,
-                      shots: 0,
-                      hits: 0,
-                      blockedShots: 0,
-                      penaltyMinutes: 0,
-                      powerPlayGoals: 0,
-                      shortHandedGoals: 0,
-                      gameWinningGoals: 0,
-                      takeaways: 0,
-                      giveaways: 0,
-                      passAttempts: 0,
-                      passes: 0,
-                      passPercentage: 0,
-                      shotPercentage: 0,
-                      playerScore: 0,
-                      possession: 0,
-                      faceoffsWon: 0,
-                      faceoffsLost: 0,
-                      faceoffPercentage: 0,
-                      penaltyKillCorsiZone: 0
-                    };
+                existingStats = {
+                  playerId: playerIdNum,
+                  name: playerData.playername || 'Unknown',
+                  team: teamName,
+                  teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
+                  number: parseInt(playerData.jerseynum) || 0,
+                  position: this.formatPosition(playerData.position),
+                  division: teamDivisionMap.get(teamName) || 'Unknown',
+                  gamesPlayed: 0,
+                  goals: 0,
+                  assists: 0,
+                  points: 0,
+                  plusMinus: 0,
+                  shots: 0,
+                  hits: 0,
+                  blockedShots: 0,
+                  penaltyMinutes: 0,
+                  timeOnIce: playerData.sktoi || '0:00',
+                  powerPlayGoals: 0,
+                  shortHandedGoals: 0,
+                  gameWinningGoals: 0,
+                  takeaways: 0,
+                  giveaways: 0,
+                  interceptions: 0,
+                  passAttempts: 0,
+                  passes: 0,
+                  passPercentage: 0,
+                  shotPercentage: 0,
+                  faceoffsWon: 0,
+                  faceoffsLost: 0,
+                  faceoffPercentage: 0,
+                  playerScore: 0,
+                  possession: 0,
+                  penaltyKillCorsiZone: 0,
+                  penaltyAssists: 0
+                };
                     statsMap.set(playerIdNum, existingStats);
                   }
 
@@ -474,19 +502,24 @@ export class PlayerStatsComponent implements OnInit {
                   
                   existingStats.shots += parseInt(playerData.skshots) || 0;
                   existingStats.hits += parseInt(playerData.skhits) || 0;
-                  existingStats.blockedShots += parseInt(playerData.skblk) || 0;
+                  existingStats.blockedShots += parseInt(playerData.skbs) || 0;
                   existingStats.penaltyMinutes += parseInt(playerData.skpim) || 0;
+                  existingStats.timeOnIce = playerData.sktoi || '0:00';
                   existingStats.powerPlayGoals += parseInt(playerData.skppg) || 0;
                   existingStats.shortHandedGoals += parseInt(playerData.skshg) || 0;
                   existingStats.gameWinningGoals += parseInt(playerData.skgwg) || 0;
                   existingStats.takeaways += parseInt(playerData.sktakeaways) || 0;
                   existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
+                  existingStats.interceptions += parseInt(playerData.skinterceptions) || 0;
                   existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
                   existingStats.passes += parseInt(playerData.skpasses) || 0;
                   existingStats.playerScore += parseInt(playerData.score) || 0;
                   existingStats.possession += parseInt(playerData.skpossession) || 0;
                   existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
                   existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+                  existingStats.penaltyKillCorsiZone += parseInt(playerData.skpkc) || 0;
+                  // Penalty assists not available in EASHL data
+                  existingStats.penaltyAssists += 0;
                 });
               }
             });
@@ -607,21 +640,24 @@ export class PlayerStatsComponent implements OnInit {
                 hits: 0,
                 blockedShots: 0,
                 penaltyMinutes: 0,
+                timeOnIce: '0:00',
                 powerPlayGoals: 0,
                 shortHandedGoals: 0,
                 gameWinningGoals: 0,
                 takeaways: 0,
                 giveaways: 0,
+                interceptions: 0,
                 passAttempts: 0,
                 passes: 0,
                 passPercentage: 0,
                 shotPercentage: 0,
-                playerScore: 0,
-                possession: 0,
                 faceoffsWon: 0,
                 faceoffsLost: 0,
                 faceoffPercentage: 0,
-                penaltyKillCorsiZone: 0
+                playerScore: 0,
+                possession: 0,
+                penaltyKillCorsiZone: 0,
+                penaltyAssists: 0
               };
               statsMap.set(playerKey, existingStats);
             }
@@ -638,17 +674,21 @@ export class PlayerStatsComponent implements OnInit {
             existingStats.hits += parseInt(playerData.skhits) || 0;
             existingStats.blockedShots += parseInt(playerData.skblk) || 0;
             existingStats.penaltyMinutes += parseInt(playerData.skpim) || 0;
+            existingStats.timeOnIce = playerData.sktoi || '0:00';
             existingStats.powerPlayGoals += parseInt(playerData.skppg) || 0;
             existingStats.shortHandedGoals += parseInt(playerData.skshg) || 0;
             existingStats.gameWinningGoals += parseInt(playerData.skgwg) || 0;
             existingStats.takeaways += parseInt(playerData.sktakeaways) || 0;
             existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
+            existingStats.interceptions += parseInt(playerData.skint) || 0;
             existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
             existingStats.passes += parseInt(playerData.skpasses) || 0;
             existingStats.playerScore += parseInt(playerData.score) || 0;
             existingStats.possession += parseInt(playerData.skpossession) || 0;
             existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
             existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+            existingStats.penaltyKillCorsiZone += parseInt(playerData.skpkc) || 0;
+            existingStats.penaltyAssists += 0 // Penalty assists not available in EASHL data;
             
             existingStats.team = teamName;
             existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
@@ -699,21 +739,24 @@ export class PlayerStatsComponent implements OnInit {
                     hits: 0,
                     blockedShots: 0,
                     penaltyMinutes: 0,
+                    timeOnIce: playerData.sktoi || '0:00',
                     powerPlayGoals: 0,
                     shortHandedGoals: 0,
                     gameWinningGoals: 0,
                     takeaways: 0,
                     giveaways: 0,
+                    interceptions: 0,
                     passAttempts: 0,
                     passes: 0,
                     passPercentage: 0,
                     shotPercentage: 0,
-                    playerScore: 0,
-                    possession: 0,
                     faceoffsWon: 0,
                     faceoffsLost: 0,
                     faceoffPercentage: 0,
-                    penaltyKillCorsiZone: 0
+                    playerScore: 0,
+                    possession: 0,
+                    penaltyKillCorsiZone: 0,
+                    penaltyAssists: 0
                   };
                   statsMap.set(playerIdNum, existingStats);
                 }
@@ -724,7 +767,26 @@ export class PlayerStatsComponent implements OnInit {
                 existingStats.points = existingStats.goals + existingStats.assists;
                 existingStats.plusMinus += parseInt(playerData.skplusmin) || 0;
                 
-                
+                // Process all available EASHL stats
+                existingStats.shots += parseInt(playerData.skshots) || 0;
+                existingStats.hits += parseInt(playerData.skhits) || 0;
+                existingStats.blockedShots += parseInt(playerData.skblk) || 0;
+                existingStats.penaltyMinutes += parseInt(playerData.skpim) || 0;
+                existingStats.timeOnIce = playerData.sktoi || '0:00';
+                existingStats.powerPlayGoals += parseInt(playerData.skppg) || 0;
+                existingStats.shortHandedGoals += parseInt(playerData.skshg) || 0;
+                existingStats.gameWinningGoals += parseInt(playerData.skgwg) || 0;
+                existingStats.takeaways += parseInt(playerData.sktakeaways) || 0;
+                existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
+                existingStats.interceptions += parseInt(playerData.skint) || 0;
+                existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
+                existingStats.passes += parseInt(playerData.skpasses) || 0;
+                existingStats.playerScore += parseInt(playerData.score) || 0;
+                existingStats.possession += parseInt(playerData.skpossession) || 0;
+                existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
+                existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+                existingStats.penaltyKillCorsiZone += parseInt(playerData.skpkc) || 0;
+                existingStats.penaltyAssists += 0 // Penalty assists not available in EASHL data;
                 
                 existingStats.team = teamName;
                 existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
@@ -853,6 +915,18 @@ export class PlayerStatsComponent implements OnInit {
         case 'faceoffPercentage':
           comparison = a.faceoffPercentage - b.faceoffPercentage;
           break;
+        case 'interceptions':
+          comparison = a.interceptions - b.interceptions;
+          break;
+        case 'timeOnIce':
+          // Convert time format to minutes for comparison
+          const timeA = this.parseTimeToMinutes(a.timeOnIce);
+          const timeB = this.parseTimeToMinutes(b.timeOnIce);
+          comparison = timeA - timeB;
+          break;
+        case 'penaltyAssists':
+          comparison = a.penaltyAssists - b.penaltyAssists;
+          break;
         default:
           comparison = a.points - b.points;
       }
@@ -917,5 +991,21 @@ export class PlayerStatsComponent implements OnInit {
     
     // Set the fallback image - use a path that will be treated as a local asset
     event.target.src = '/assets/images/square-default.png';
+  }
+
+  // Helper method to parse time format (e.g., "15:30") to total minutes
+  private parseTimeToMinutes(timeStr: string): number {
+    if (!timeStr || timeStr === '0:00' || timeStr === 'N/A') {
+      return 0;
+    }
+    
+    const parts = timeStr.split(':');
+    if (parts.length === 2) {
+      const minutes = parseInt(parts[0]) || 0;
+      const seconds = parseInt(parts[1]) || 0;
+      return minutes + (seconds / 60);
+    }
+    
+    return 0;
   }
 }
