@@ -513,7 +513,7 @@ export class GoalieStatsComponent implements OnInit {
                     glgaType: typeof playerData.glga,
                     glgaParsed: parseInt(playerData.glga),
                     goalsAgainstThisGame: goalsAgainstThisGame,
-                    shutouts: shutouts,
+                    glshutout: playerData.glshutout,
                     fullData: playerData
                   });
                 }
