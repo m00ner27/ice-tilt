@@ -66,11 +66,9 @@
               <th [className]="getColumnSortClass('passes')" (click)="onSortColumn('passes')">P</th>
               <th [className]="getColumnSortClass('passPercentage')" (click)="onSortColumn('passPercentage')">P%</th>
               <th [className]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
+              <th [className]="getColumnSortClass('faceoffsLost')" (click)="onSortColumn('faceoffsLost')">FOL</th>
               <th [className]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
               <th [className]="getColumnSortClass('interceptions')" (click)="onSortColumn('interceptions')">INT</th>
-              <th [className]="getColumnSortClass('timeOnIce')" (click)="onSortColumn('timeOnIce')">TOI</th>
-              <th [className]="getColumnSortClass('penaltyKillCorsiZone')" (click)="onSortColumn('penaltyKillCorsiZone')">PKCZ</th>
-              <th [className]="getColumnSortClass('penaltyAssists')" (click)="onSortColumn('penaltyAssists')">PA</th>
             </tr>
           </thead>
           <tbody>
@@ -108,11 +106,9 @@
               <td>{{ player.passes }}</td>
               <td>{{ player.passPercentage }}%</td>
               <td>{{ player.faceoffsWon }}</td>
+              <td>{{ player.faceoffsLost }}</td>
               <td>{{ player.faceoffPercentage }}%</td>
               <td>{{ player.interceptions }}</td>
-              <td>{{ player.timeOnIce }}</td>
-              <td>{{ player.penaltyKillCorsiZone }}</td>
-              <td>{{ player.penaltyAssists }}</td>
             </tr>
           </tbody>
         </table>
@@ -147,20 +143,15 @@
         <span class="legend-abbr">PPG</span> - Power Play Goals
         <span class="legend-abbr">SHG</span> - Short Handed Goals
         <span class="legend-abbr">GWG</span> - Game Winning Goals
-        <span class="legend-abbr">PKCZ</span> - Penalty Kill Corsi Zone
       </div>
       <div class="legend-item">
         <span class="legend-abbr">PA</span> - Pass Attempts
         <span class="legend-abbr">P</span> - Passes
         <span class="legend-abbr">P%</span> - Pass Percentage
         <span class="legend-abbr">FOW</span> - Faceoffs Won
+        <span class="legend-abbr">FOL</span> - Faceoffs Lost
         <span class="legend-abbr">FO%</span> - Faceoff Percentage
         <span class="legend-abbr">INT</span> - Interceptions
-        <span class="legend-abbr">TOI</span> - Time on Ice
-      </div>
-      <div class="legend-item">
-        <span class="legend-abbr">PKCZ</span> - Penalty Kill Corsi Zone
-        <span class="legend-abbr">PEN</span> - Penalty Assists
       </div>
     </div>
   </div>
