@@ -41,6 +41,7 @@ interface PlayerStats {
   teamLogo?: string;
   number: number;
   position: string;
+  positionCounts: { [position: string]: number }; // Track position frequency
   gamesPlayed: number;
   goals: number;
   assists: number;
@@ -367,6 +368,7 @@ export class PlayerStatsComponent implements OnInit {
                   teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
                   number: 0, // Manual stats don't have jersey numbers
                   position: this.formatPosition(playerData.position),
+                  positionCounts: { [this.formatPosition(playerData.position)]: 1 },
                   division: teamDivisionMap.get(teamName) || 'Unknown',
                   gamesPlayed: 0,
                   goals: 0,
@@ -400,6 +402,12 @@ export class PlayerStatsComponent implements OnInit {
               }
 
               existingStats.gamesPlayed++;
+              
+              // Track position frequency and update to most common position
+              const currentPos = this.formatPosition(playerData.position);
+              existingStats.positionCounts[currentPos] = (existingStats.positionCounts[currentPos] || 0) + 1;
+              existingStats.position = this.getMostCommonPosition(existingStats.positionCounts);
+              
               existingStats.goals += parseInt(playerData.goals) || 0;
               existingStats.assists += parseInt(playerData.assists) || 0;
               existingStats.points = existingStats.goals + existingStats.assists;
@@ -459,6 +467,7 @@ export class PlayerStatsComponent implements OnInit {
                   teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
                   number: parseInt(playerData.jerseynum) || 0,
                   position: this.formatPosition(playerData.position),
+                  positionCounts: { [this.formatPosition(playerData.position)]: 1 },
                   division: teamDivisionMap.get(teamName) || 'Unknown',
                   gamesPlayed: 0,
                   goals: 0,
@@ -492,6 +501,12 @@ export class PlayerStatsComponent implements OnInit {
                   }
 
                   existingStats.gamesPlayed++;
+                  
+                  // Track position frequency and update to most common position
+                  const currentPos = this.formatPosition(playerData.position);
+                  existingStats.positionCounts[currentPos] = (existingStats.positionCounts[currentPos] || 0) + 1;
+                  existingStats.position = this.getMostCommonPosition(existingStats.positionCounts);
+                  
                   existingStats.goals += parseInt(playerData.skgoals) || 0;
                   existingStats.assists += parseInt(playerData.skassists) || 0;
                   existingStats.points += (parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0);
@@ -630,6 +645,7 @@ export class PlayerStatsComponent implements OnInit {
                 teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
                 number: 0, // Manual stats don't have jersey numbers
                 position: this.formatPosition(playerData.position),
+                positionCounts: { [this.formatPosition(playerData.position)]: 1 },
                 division: teamDivisionMap.get(teamName) || 'Unknown',
                 gamesPlayed: 0,
                 goals: 0,
@@ -663,6 +679,12 @@ export class PlayerStatsComponent implements OnInit {
             }
 
             existingStats.gamesPlayed++;
+            
+            // Track position frequency and update to most common position
+            const currentPos = this.formatPosition(playerData.position);
+            existingStats.positionCounts[currentPos] = (existingStats.positionCounts[currentPos] || 0) + 1;
+            existingStats.position = this.getMostCommonPosition(existingStats.positionCounts);
+            
             existingStats.goals += parseInt(playerData.skgoals) || 0;
             existingStats.assists += parseInt(playerData.skassists) || 0;
             existingStats.points = existingStats.goals + existingStats.assists;
@@ -729,6 +751,7 @@ export class PlayerStatsComponent implements OnInit {
                     teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
                     number: parseInt(playerData.jerseynum) || 0,
                     position: this.formatPosition(playerData.position),
+                    positionCounts: { [this.formatPosition(playerData.position)]: 1 },
                     division: teamDivisionMap.get(teamName) || 'Unknown',
                     gamesPlayed: 0,
                     goals: 0,
@@ -762,6 +785,12 @@ export class PlayerStatsComponent implements OnInit {
                 }
 
                 existingStats.gamesPlayed++;
+                
+                // Track position frequency and update to most common position
+                const currentPos = this.formatPosition(playerData.position);
+                existingStats.positionCounts[currentPos] = (existingStats.positionCounts[currentPos] || 0) + 1;
+                existingStats.position = this.getMostCommonPosition(existingStats.positionCounts);
+                
                 existingStats.goals += parseInt(playerData.skgoals) || 0;
                 existingStats.assists += parseInt(playerData.skassists) || 0;
                 existingStats.points = existingStats.goals + existingStats.assists;
@@ -972,6 +1001,20 @@ export class PlayerStatsComponent implements OnInit {
     };
     const key = position.toLowerCase().replace(/\s/g, '');
     return positionMap[key] || position;
+  }
+
+  private getMostCommonPosition(positionCounts: { [position: string]: number }): string {
+    let mostCommon = '';
+    let maxCount = 0;
+    
+    for (const [position, count] of Object.entries(positionCounts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommon = position;
+      }
+    }
+    
+    return mostCommon || 'Unknown';
   }
 
   // Helper method to get the full image URL using the centralized service
