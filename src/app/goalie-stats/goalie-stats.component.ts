@@ -494,13 +494,15 @@ export class GoalieStatsComponent implements OnInit {
                 }
 
                 const goalsAgainstThisGame = parseInt(playerData.glga) || 0;
+                // Use EA's shutout field if available, otherwise calculate based on goals against
+                const shutouts = parseInt(playerData.glso) || ((goalsAgainstThisGame === 0) ? 1 : 0);
                 
                 console.log(`Processing EASHL goalie ${playerData.playername}:`, {
                   glsaves: playerData.glsaves,
                   glshots: playerData.glshots,
                   glga: playerData.glga,
                   goalsAgainstThisGame: goalsAgainstThisGame,
-                  glso: playerData.glso,
+                  shutouts: shutouts,
                   glso: playerData.glso,
                   glsoType: typeof playerData.glso
                 });
@@ -513,7 +515,7 @@ export class GoalieStatsComponent implements OnInit {
                     glgaType: typeof playerData.glga,
                     glgaParsed: parseInt(playerData.glga),
                     goalsAgainstThisGame: goalsAgainstThisGame,
-                    glso: playerData.glso,
+                    shutouts: shutouts,
                     fullData: playerData
                   });
                 }
@@ -522,8 +524,8 @@ export class GoalieStatsComponent implements OnInit {
                 existingStats.saves += parseInt(playerData.glsaves) || 0;
                 existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
-                // Use shutouts from EASHL data
-                existingStats.shutouts += parseInt(playerData.glso) || 0;
+                // Calculate shutouts based on goals against (0 goals = 1 shutout)
+                existingStats.shutouts += shutouts;
                 existingStats.team = teamName;
                 existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
                 existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
@@ -842,8 +844,10 @@ export class GoalieStatsComponent implements OnInit {
                 existingStats.saves += parseInt(playerData.glsaves) || 0;
                 existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
-                // Use shutouts from EASHL data
-                existingStats.shutouts += parseInt(playerData.glso) || 0;
+                // Use EA's shutout field if available, otherwise calculate based on goals against
+                const goalsAgainstThisGame = parseInt(playerData.glga) || 0;
+                const shutouts = parseInt(playerData.glso) || ((goalsAgainstThisGame === 0) ? 1 : 0);
+                existingStats.shutouts += shutouts;
                 existingStats.team = teamName;
                 existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
                 existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
