@@ -32,6 +32,7 @@ export interface SkaterStats {
   faceoffsWon: number;
   faceoffsLost: number;
   faceoffPercentage: number;
+  interceptions: number;
   playerScore: number;
   penaltyKillCorsiZone: number;
   isSigned: boolean;
@@ -303,6 +304,7 @@ export class ClubStatsService {
         faceoffsWon: 0,
         faceoffsLost: 0,
         faceoffPercentage: 0,
+        interceptions: 0,
         playerScore: 0,
         penaltyKillCorsiZone: 0,
         isSigned: rosterPlayerNames.has(playerName)
@@ -350,8 +352,8 @@ export class ClubStatsService {
           role: 'skater',
           gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0, goals: 0, assists: 0, points: 0, plusMinus: 0,
           shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, penaltyAssists: 0, penaltyPercentage: 0, ppg: 0, shg: 0, gwg: 0,
-          takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0, faceoffsWon: 0,
-          faceoffsLost: 0, faceoffPercentage: 0, playerScore: 0, penaltyKillCorsiZone: 0,
+          takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0,           faceoffsWon: 0,
+          faceoffsLost: 0, faceoffPercentage: 0, interceptions: 0, playerScore: 0, penaltyKillCorsiZone: 0,
           isSigned: true
         };
         initialPlayerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
@@ -481,7 +483,8 @@ export class ClubStatsService {
               playerStats.saves += playerData.saves || 0;
               playerStats.shotsAgainst += playerData.shotsAgainst || 0;
               playerStats.goalsAgainst += playerData.goalsAgainst || 0;
-              playerStats.shutouts += (playerData.goalsAgainst === 0 && playerData.gamesPlayed > 0) ? 1 : 0;
+              // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
+playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
               playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) * 100 : 0;
               playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
             } else {
@@ -523,6 +526,7 @@ export class ClubStatsService {
               console.log(`Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
               playerStats.faceoffsWon += playerData.faceoffsWon || 0;
               playerStats.faceoffsLost += playerData.faceoffsLost || 0;
+              playerStats.interceptions += playerData.interceptions || 0;
               playerStats.playerScore += playerData.playerScore || 0;
               playerStats.penaltyKillCorsiZone += playerData.penaltyKillCorsiZone || 0;
               playerStats.shotPercentage = playerStats.shots > 0 ? (playerStats.goals / playerStats.shots) * 100 : 0;
@@ -652,7 +656,8 @@ export class ClubStatsService {
                 playerStats.saves += playerData.saves || 0;
                 playerStats.shotsAgainst += playerData.shotsAgainst || 0;
                 playerStats.goalsAgainst += playerData.goalsAgainst || 0;
-                playerStats.shutouts += (playerData.goalsAgainst === 0 && playerData.gamesPlayed > 0) ? 1 : 0;
+                // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
+playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
                 playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) * 100 : 0;
                 playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
               } else {
@@ -694,6 +699,7 @@ export class ClubStatsService {
                 console.log(`EASHL - Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
                 playerStats.faceoffsWon += playerData.faceoffsWon || playerData.skfow || 0;
                 playerStats.faceoffsLost += playerData.faceoffsLost || playerData.skfol || 0;
+                playerStats.interceptions += playerData.interceptions || playerData.skinterceptions || 0;
                 playerStats.playerScore += playerData.playerScore || playerData.score || 0;
                 playerStats.penaltyKillCorsiZone += playerData.penaltyKillCorsiZone || 0;
                 playerStats.shotPercentage = playerStats.shots > 0 ? (playerStats.goals / playerStats.shots) * 100 : 0;
