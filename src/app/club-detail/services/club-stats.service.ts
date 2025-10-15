@@ -63,6 +63,26 @@ export interface GoalieStats {
 })
 export class ClubStatsService {
 
+  private findPlayerInEashlData(eashlData: any, playerName: string, clubName: string): any {
+    if (!eashlData || !eashlData.players) return null;
+    
+    const teamKeys = Object.keys(eashlData.players);
+    for (const teamKey of teamKeys) {
+      const teamPlayersData = eashlData.players[teamKey];
+      const playersArray = Array.isArray(teamPlayersData) ? teamPlayersData : Object.values(teamPlayersData);
+      
+      const player = playersArray.find((p: any) => 
+        p.playername === playerName || p.name === playerName
+      );
+      
+      if (player) {
+        return player;
+      }
+    }
+    
+    return null;
+  }
+
   /**
    * Process player stats from matches for a club
    */
@@ -494,7 +514,25 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
               playerStats.plusMinus += playerData.plusMinus || 0;
               playerStats.shots += playerData.shots || 0;
               playerStats.hits += playerData.hits || 0;
-              playerStats.blockedShots += playerData.blockedShots || 0;
+              
+              // Try to get blocked shots from EASHL data if playerStats has 0
+              let blockedShots = parseInt(playerData.blockedShots) || 0;
+              if (blockedShots === 0 && match.eashlData && match.eashlData.players) {
+                // Look for this player in EASHL data
+                const eashlPlayer = this.findPlayerInEashlData(match.eashlData, playerData.name, backendClub?.name);
+                if (eashlPlayer) {
+                  blockedShots = parseInt(eashlPlayer.skbs) || 0;
+                  if (playerData.name && playerData.name.includes('Liskoilija')) {
+                    console.log('🔍 LISKOILIJA EASHL BLOCKED SHOTS:', {
+                      name: playerData.name,
+                      playerStatsBlockedShots: playerData.blockedShots,
+                      eashlSkbs: eashlPlayer.skbs,
+                      finalBlockedShots: blockedShots
+                    });
+                  }
+                }
+              }
+              playerStats.blockedShots += blockedShots;
               playerStats.pim += playerData.penaltyMinutes || 0;
               playerStats.penaltyAssists += playerData.penaltyAssists || 0;
               playerStats.ppg += playerData.powerPlayGoals || 0;
@@ -526,7 +564,26 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
               console.log(`Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
               playerStats.faceoffsWon += playerData.faceoffsWon || 0;
               playerStats.faceoffsLost += playerData.faceoffsLost || 0;
-              playerStats.interceptions += playerData.interceptions || 0;
+              
+              // Try to get interceptions from EASHL data if playerStats has 0
+              let interceptions = parseInt(playerData.interceptions) || 0;
+              if (interceptions === 0 && match.eashlData && match.eashlData.players) {
+                // Look for this player in EASHL data
+                const eashlPlayer = this.findPlayerInEashlData(match.eashlData, playerData.name, backendClub?.name);
+                if (eashlPlayer) {
+                  interceptions = parseInt(eashlPlayer.skint) || parseInt(eashlPlayer.skinterceptions) || 0;
+                  if (playerData.name && playerData.name.includes('Liskoilija')) {
+                    console.log('🔍 LISKOILIJA EASHL INTERCEPTIONS:', {
+                      name: playerData.name,
+                      playerStatsInterceptions: playerData.interceptions,
+                      eashlSkint: eashlPlayer.skint,
+                      eashlSkinterceptions: eashlPlayer.skinterceptions,
+                      finalInterceptions: interceptions
+                    });
+                  }
+                }
+              }
+              playerStats.interceptions += interceptions;
               playerStats.playerScore += playerData.playerScore || 0;
               playerStats.penaltyKillCorsiZone += playerData.penaltyKillCorsiZone || 0;
               playerStats.shotPercentage = playerStats.shots > 0 ? (playerStats.goals / playerStats.shots) * 100 : 0;
@@ -540,6 +597,7 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
         });
       } else if (match.eashlData && match.eashlData.players) {
         console.log(`=== FALLING BACK TO EASHL DATA FOR MATCH ${match._id || match.id} ===`);
+        console.log('🔍 EASHL FALLBACK PROCESSING STARTED - playerStats had no meaningful blocked shots/interceptions data');
         console.log(`EASHL data:`, match.eashlData);
         console.log(`EASHL players:`, match.eashlData.players);
         // Process EASHL data
@@ -597,6 +655,17 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
 
         if (ourTeamKey) {
           const teamPlayersData = match.eashlData.players[ourTeamKey];
+          console.log('🔍 EASHL TEAM DATA DEBUG:', {
+            ourTeamKey,
+            teamPlayersCount: teamPlayersData?.length || 0,
+            samplePlayer: teamPlayersData?.[0] ? {
+              name: teamPlayersData[0].playername,
+              skbs: teamPlayersData[0].skbs,
+              skint: teamPlayersData[0].skint,
+              skinterceptions: teamPlayersData[0].skinterceptions,
+              skblk: teamPlayersData[0].skblk
+            } : null
+          });
           console.log(`Stats processing - processing team ${ourTeamKey} players:`, teamPlayersData);
           console.log(`Stats processing - team ${ourTeamKey} type:`, typeof teamPlayersData);
           console.log(`Stats processing - team ${ourTeamKey} isArray:`, Array.isArray(teamPlayersData));
@@ -612,6 +681,20 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
           } else {
             console.error(`Stats processing - team ${ourTeamKey} players is not an array or object!`, teamPlayersData);
             return;
+          }
+          
+          // Check if Liskoilija is in this team's data
+          const liskoilijaPlayer = teamPlayers.find(p => p.playername && p.playername.includes('Liskoilija'));
+          if (liskoilijaPlayer) {
+            console.log('🔍 FOUND LISKOILIJA IN EASHL DATA:', {
+              name: liskoilijaPlayer.playername,
+              skbs: liskoilijaPlayer.skbs,
+              skint: liskoilijaPlayer.skint,
+              skinterceptions: liskoilijaPlayer.skinterceptions,
+              skblk: liskoilijaPlayer.skblk
+            });
+          } else {
+            console.log('🔍 LISKOILIJA NOT FOUND IN THIS TEAM');
           }
           
           teamPlayers.forEach((playerData: any) => {
@@ -667,7 +750,18 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
                 playerStats.plusMinus += playerData.plusMinus || playerData.skplusmin || 0;
                 playerStats.shots += playerData.shots || playerData.skshots || 0;
                 playerStats.hits += playerData.hits || playerData.skhits || 0;
-                playerStats.blockedShots += playerData.blockedShots || playerData.skbs || 0;
+                const blockedShotsToAdd = parseInt(playerData.blockedShots) || parseInt(playerData.skbs) || 0;
+                playerStats.blockedShots += blockedShotsToAdd;
+                if (playerData.name && playerData.name.includes('Liskoilija')) {
+                  console.log('🔍 LISKOILIJA BLOCKED SHOTS DEBUG:', {
+                    name: playerData.name,
+                    blockedShots: playerData.blockedShots,
+                    skbs: playerData.skbs,
+                    skblk: playerData.skblk,
+                    added: blockedShotsToAdd,
+                    total: playerStats.blockedShots
+                  });
+                }
                 playerStats.pim += playerData.penaltyMinutes || playerData.skpim || 0;
                 playerStats.penaltyAssists += 0; // EASHL data doesn't have penalty assists
                 playerStats.ppg += playerData.powerPlayGoals || playerData.skppg || 0;
@@ -699,7 +793,18 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
                 console.log(`EASHL - Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
                 playerStats.faceoffsWon += playerData.faceoffsWon || playerData.skfow || 0;
                 playerStats.faceoffsLost += playerData.faceoffsLost || playerData.skfol || 0;
-                playerStats.interceptions += playerData.interceptions || playerData.skint || 0;
+                const interceptionsToAdd = parseInt(playerData.interceptions) || parseInt(playerData.skint) || 0;
+                playerStats.interceptions += interceptionsToAdd;
+                if (playerData.name && playerData.name.includes('Liskoilija')) {
+                  console.log('🔍 LISKOILIJA INTERCEPTIONS DEBUG:', {
+                    name: playerData.name,
+                    interceptions: playerData.interceptions,
+                    skint: playerData.skint,
+                    skinterceptions: playerData.skinterceptions,
+                    added: interceptionsToAdd,
+                    total: playerStats.interceptions
+                  });
+                }
                 playerStats.playerScore += playerData.playerScore || playerData.score || 0;
                 playerStats.penaltyKillCorsiZone += playerData.penaltyKillCorsiZone || playerData.skpkc || 0;
                 playerStats.shotPercentage = playerStats.shots > 0 ? (playerStats.goals / playerStats.shots) * 100 : 0;
