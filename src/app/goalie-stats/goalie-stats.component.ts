@@ -500,7 +500,7 @@ export class GoalieStatsComponent implements OnInit {
                   glshots: playerData.glshots,
                   glga: playerData.glga,
                   goalsAgainstThisGame: goalsAgainstThisGame,
-                  glshutout: playerData.glshutout,
+                  glso: playerData.glso,
                   glso: playerData.glso,
                   glsoType: typeof playerData.glso
                 });
@@ -513,7 +513,7 @@ export class GoalieStatsComponent implements OnInit {
                     glgaType: typeof playerData.glga,
                     glgaParsed: parseInt(playerData.glga),
                     goalsAgainstThisGame: goalsAgainstThisGame,
-                    glshutout: playerData.glshutout,
+                    glso: playerData.glso,
                     fullData: playerData
                   });
                 }
@@ -523,7 +523,7 @@ export class GoalieStatsComponent implements OnInit {
                 existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
                 // Use shutouts from EASHL data
-                existingStats.shutouts += parseInt(playerData.glshutout) || 0;
+                existingStats.shutouts += parseInt(playerData.glso) || 0;
                 existingStats.team = teamName;
                 existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
                 existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
@@ -843,7 +843,7 @@ export class GoalieStatsComponent implements OnInit {
                 existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
                 // Use shutouts from EASHL data
-                existingStats.shutouts += parseInt(playerData.glshutout) || 0;
+                existingStats.shutouts += parseInt(playerData.glso) || 0;
                 existingStats.team = teamName;
                 existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
                 existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
