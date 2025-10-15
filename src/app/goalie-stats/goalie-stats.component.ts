@@ -83,6 +83,7 @@ export class GoalieStatsComponent implements OnInit {
   ) { }
   
   ngOnInit(): void {
+    console.log('🔍 GOALIE STATS COMPONENT INITIALIZED');
     this.loadInitialData();
   }
 
@@ -287,6 +288,7 @@ export class GoalieStatsComponent implements OnInit {
   }
   
   aggregateGoalieStats(matches: EashlMatch[], teamDivisionMap: Map<string, string>): void {
+    console.log('🔍 AGGREGATE GOALIE STATS CALLED with', matches.length, 'matches');
     const statsMap = new Map<string, GoalieStats>();
     const teamLogoMap = new Map<string, string | undefined>();
 
@@ -491,11 +493,37 @@ export class GoalieStatsComponent implements OnInit {
                   statsMap.set(playerKey, existingStats);
                 }
 
+                const goalsAgainstThisGame = parseInt(playerData.glga) || 0;
+                
+                console.log(`Processing EASHL goalie ${playerData.playername}:`, {
+                  glsaves: playerData.glsaves,
+                  glshots: playerData.glshots,
+                  glga: playerData.glga,
+                  goalsAgainstThisGame: goalsAgainstThisGame,
+                  glshutout: playerData.glshutout,
+                  glso: playerData.glso,
+                  glsoType: typeof playerData.glso
+                });
+                
+                // Special debug for Vxxlle-_- to see what's happening
+                if (playerData.playername && playerData.playername.includes('Vxxlle')) {
+                  console.log('🔍 VXXLLE DEBUG:', {
+                    name: playerData.playername,
+                    glga: playerData.glga,
+                    glgaType: typeof playerData.glga,
+                    glgaParsed: parseInt(playerData.glga),
+                    goalsAgainstThisGame: goalsAgainstThisGame,
+                    shutouts: shutouts,
+                    fullData: playerData
+                  });
+                }
+
                 existingStats.gamesPlayed++;
                 existingStats.saves += parseInt(playerData.glsaves) || 0;
                 existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
-                existingStats.shutouts += parseInt(playerData.glsoperiods) || 0;
+                // Use shutouts from EASHL data
+                existingStats.shutouts += parseInt(playerData.glshutout) || 0;
                 existingStats.team = teamName;
                 existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
                 existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
@@ -630,8 +658,21 @@ export class GoalieStatsComponent implements OnInit {
             console.log(`Updating home goalie stats for ${player.gamertag}:`, {
               saves: player.saves,
               shotsAgainst: player.shotsAgainst,
-              goalsAgainst: player.goalsAgainst
+              goalsAgainst: player.goalsAgainst,
+              shutout: player.shutout
             });
+            
+            // Special debug for Vxxlle
+            if (player.gamertag && player.gamertag.includes('Vxxlle')) {
+              console.log('🔍 VXXLLE HOME GOALIE DEBUG:', {
+                name: player.gamertag,
+                saves: player.saves,
+                shotsAgainst: player.shotsAgainst,
+                goalsAgainst: player.goalsAgainst,
+                shutout: player.shutout,
+                fullData: player
+              });
+            }
             
             existingStats.gamesPlayed++;
             existingStats.saves += parseInt(player.saves) || 0;
@@ -711,8 +752,21 @@ export class GoalieStatsComponent implements OnInit {
             console.log(`Updating away goalie stats for ${player.gamertag}:`, {
               saves: player.saves,
               shotsAgainst: player.shotsAgainst,
-              goalsAgainst: player.goalsAgainst
+              goalsAgainst: player.goalsAgainst,
+              shutout: player.shutout
             });
+            
+            // Special debug for Vxxlle
+            if (player.gamertag && player.gamertag.includes('Vxxlle')) {
+              console.log('🔍 VXXLLE AWAY GOALIE DEBUG:', {
+                name: player.gamertag,
+                saves: player.saves,
+                shotsAgainst: player.shotsAgainst,
+                goalsAgainst: player.goalsAgainst,
+                shutout: player.shutout,
+                fullData: player
+              });
+            }
             
             existingStats.gamesPlayed++;
             existingStats.saves += parseInt(player.saves) || 0;
@@ -788,7 +842,8 @@ export class GoalieStatsComponent implements OnInit {
                 existingStats.saves += parseInt(playerData.glsaves) || 0;
                 existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
-                existingStats.shutouts += parseInt(playerData.glsoperiods) || 0;
+                // Use shutouts from EASHL data
+                existingStats.shutouts += parseInt(playerData.glshutout) || 0;
                 existingStats.team = teamName;
                 existingStats.teamLogo = teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png';
                 existingStats.division = teamDivisionMap.get(teamName) || existingStats.division;
@@ -807,8 +862,15 @@ export class GoalieStatsComponent implements OnInit {
       team: g.team,
       gamesPlayed: g.gamesPlayed,
       saves: g.saves,
-      shotsAgainst: g.shotsAgainst
+      shotsAgainst: g.shotsAgainst,
+      shutouts: g.shutouts
     })));
+    
+    // Special debug for Vxxlle
+    const vxxlleStats = Array.from(statsMap.values()).find(g => g.name.includes('Vxxlle'));
+    if (vxxlleStats) {
+      console.log('🔍 VXXLLE FINAL STATS:', vxxlleStats);
+    }
     
     // Calculate derived stats for each goalie
     statsMap.forEach(goalie => {
