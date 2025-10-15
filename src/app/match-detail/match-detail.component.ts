@@ -45,6 +45,7 @@ interface PlayerStatDisplay {
   faceoffsWon?: number;
   faceoffsLost?: number;
   faceoffPercentage?: number;
+  interceptions?: number;
   playerScore?: number;
   penaltyKillCorsiZone?: number;
   wins?: number;
@@ -206,11 +207,18 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (!this.match.playerStats || this.match.playerStats.length === 0) {
+    // Check if we have player stats or need to process EASHL data
+    if (this.match.playerStats && this.match.playerStats.length > 0) {
+      this.processPlayerStats();
+    } else if (this.match.eashlData && this.match.eashlData.players) {
+      this.processEashlData();
+    } else {
       this.noStatsMessage = 'No detailed player statistics are available for this game.';
       return;
     }
-    
+  }
+
+  processPlayerStats(): void {
     this.match.playerStats.forEach((playerStat: any) => {
       const statDisplay: PlayerStatDisplay = {
         playerId: playerStat.playerId || 0,
@@ -230,9 +238,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         penaltyAssists: playerStat.penaltyAssists || 0,
         penaltyPercentage: (playerStat.pim || 0) + (playerStat.penaltyAssists || 0) > 0 ? 
           ((playerStat.pim || 0) / ((playerStat.pim || 0) + (playerStat.penaltyAssists || 0)) * 100) : 0,
-        ppg: playerStat.ppg || 0,
-        shg: playerStat.shg || 0,
-        gwg: playerStat.gwg || 0,
+        ppg: playerStat.powerPlayGoals || 0,
+        shg: playerStat.shortHandedGoals || 0,
+        gwg: playerStat.gameWinningGoals || 0,
         takeaways: playerStat.takeaways || 0,
         giveaways: playerStat.giveaways || 0,
         passes: playerStat.passes || 0,
@@ -242,6 +250,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         faceoffsLost: playerStat.faceoffsLost || 0,
         faceoffPercentage: (playerStat.faceoffsWon || 0) + (playerStat.faceoffsLost || 0) > 0 ? 
           ((playerStat.faceoffsWon || 0) / ((playerStat.faceoffsWon || 0) + (playerStat.faceoffsLost || 0)) * 100) : 0,
+        interceptions: playerStat.interceptions || 0,
         playerScore: playerStat.playerScore || 0,
         penaltyKillCorsiZone: playerStat.penaltyKillCorsiZone || 0,
         wins: playerStat.wins || 0,
@@ -278,6 +287,98 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       } else {
         console.log('Player team does not match either team:', playerStat.name, playerStat.team);
       }
+    });
+  }
+
+  processEashlData(): void {
+    console.log('Processing EASHL data for match detail');
+    
+    if (!this.match.eashlData || !this.match.eashlData.players) {
+      this.noStatsMessage = 'No EASHL player data available for this game.';
+      return;
+    }
+
+    // Get team IDs from EASHL data
+    const homeClubId = this.match.homeClub?.eashlClubId;
+    const awayClubId = this.match.awayClub?.eashlClubId;
+    
+    if (!homeClubId || !awayClubId) {
+      this.noStatsMessage = 'Team information not available for this game.';
+      return;
+    }
+
+    // Process players from both teams
+    const teamIds = [homeClubId.toString(), awayClubId.toString()];
+    
+    teamIds.forEach(teamId => {
+      const teamPlayers = this.match.eashlData.players[teamId];
+      if (!teamPlayers) return;
+
+      const playersArray = Array.isArray(teamPlayers) ? teamPlayers : Object.values(teamPlayers);
+      
+      playersArray.forEach((playerData: any) => {
+        const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
+        const isHomeTeam = teamId === homeClubId.toString();
+        
+        const statDisplay: PlayerStatDisplay = {
+          playerId: playerData.playerId || 0,
+          name: playerData.playername || playerData.name || 'Unknown Player',
+          number: playerData.number || 0,
+          position: this.getPositionAbbreviation(playerData.position || 'Unknown'),
+          gamesPlayed: 1,
+          goals: isGoalie ? 0 : (parseInt(playerData.skgoals) || 0),
+          assists: isGoalie ? 0 : (parseInt(playerData.skassists) || 0),
+          points: isGoalie ? (parseInt(playerData.skassists) || 0) : 
+            ((parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0)),
+          plusMinus: isGoalie ? 0 : (parseInt(playerData.skplusmin) || 0),
+          shots: isGoalie ? 0 : (parseInt(playerData.skshots) || 0),
+          shotPercentage: isGoalie ? 0 : 
+            (parseInt(playerData.skshots) > 0 ? ((parseInt(playerData.skgoals) || 0) / parseInt(playerData.skshots) * 100) : 0),
+          hits: isGoalie ? 0 : (parseInt(playerData.skhits) || 0),
+          blockedShots: isGoalie ? 0 : (parseInt(playerData.skbs) || 0),
+          pim: parseInt(playerData.skpim) || 0,
+          penaltyAssists: isGoalie ? 0 : 0, // Not available in EASHL data
+          penaltyPercentage: 0, // Not applicable for EASHL data
+          ppg: isGoalie ? 0 : (parseInt(playerData.skppg) || 0),
+          shg: isGoalie ? 0 : (parseInt(playerData.skshg) || 0),
+          gwg: isGoalie ? 0 : (parseInt(playerData.skgwg) || 0),
+          takeaways: isGoalie ? 0 : (parseInt(playerData.sktakeaways) || 0),
+          giveaways: isGoalie ? 0 : (parseInt(playerData.skgiveaways) || 0),
+          passes: isGoalie ? 0 : (parseInt(playerData.skpasses) || 0),
+          passAttempts: isGoalie ? 0 : (parseInt(playerData.skpassattempts) || 0),
+          passPercentage: isGoalie ? 0 : 
+            (parseInt(playerData.skpassattempts) > 0 ? ((parseInt(playerData.skpasses) || 0) / parseInt(playerData.skpassattempts) * 100) : 0),
+          faceoffsWon: isGoalie ? 0 : (parseInt(playerData.skfow) || 0),
+          faceoffsLost: isGoalie ? 0 : (parseInt(playerData.skfol) || 0),
+          faceoffPercentage: isGoalie ? 0 : 
+            ((parseInt(playerData.skfow) || 0) + (parseInt(playerData.skfol) || 0) > 0 ? 
+              ((parseInt(playerData.skfow) || 0) / ((parseInt(playerData.skfow) || 0) + (parseInt(playerData.skfol) || 0)) * 100) : 0),
+          interceptions: isGoalie ? 0 : (parseInt(playerData.skint) || 0),
+          playerScore: parseInt(playerData.score) || 0,
+          penaltyKillCorsiZone: isGoalie ? 0 : (parseInt(playerData.skpkc) || 0),
+          // Goalie-specific stats
+          saves: isGoalie ? (parseInt(playerData.glsaves) || 0) : 0,
+          shotsAgainst: isGoalie ? (parseInt(playerData.glshots) || 0) : 0,
+          savePercentage: isGoalie ? 
+            (parseInt(playerData.glshots) > 0 ? ((parseInt(playerData.glsaves) || 0) / parseInt(playerData.glshots)) : 0) : 0,
+          goalsAgainst: isGoalie ? (parseInt(playerData.glga) || 0) : 0
+        };
+
+        // Add to appropriate team
+        if (isHomeTeam) {
+          if (isGoalie) {
+            this.homeTeamGoalies.push(statDisplay);
+          } else {
+            this.homeTeamPlayers.push(statDisplay);
+          }
+        } else {
+          if (isGoalie) {
+            this.awayTeamGoalies.push(statDisplay);
+          } else {
+            this.awayTeamPlayers.push(statDisplay);
+          }
+        }
+      });
     });
   }
 
@@ -338,6 +439,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           passAttempts: isGoaliePlayer ? 0 : (player.passAttempts || 0),
           passes: isGoaliePlayer ? 0 : (player.passesCompleted || 0),
           passPercentage: isGoaliePlayer ? 0 : (player.passAttempts > 0 ? ((player.passesCompleted || 0) / player.passAttempts * 100) : 0),
+          interceptions: isGoaliePlayer ? 0 : (player.interceptions || 0),
           playerScore: this.calculatePlayerScore(player),
           // Goalie-specific stats
           saves: isGoaliePlayer ? (player.saves || 0) : 0,
