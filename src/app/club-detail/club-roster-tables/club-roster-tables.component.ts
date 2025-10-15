@@ -35,6 +35,7 @@ interface SkaterStats {
   faceoffsWon?: number;
   faceoffsLost?: number;
   faceoffPercentage?: number;
+  interceptions?: number;
   playerScore?: number;
   penaltyKillCorsiZone?: number;
   isSigned?: boolean;
