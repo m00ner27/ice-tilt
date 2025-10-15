@@ -40,11 +40,11 @@
             <tr>
               <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">RANK</th>
               <th (click)="onSortColumn('teamName')" [ngClass]="getColumnSortClass('teamName')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm w-24 sm:w-32">CLUB</th>
-              <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">PTS</th>
               <th (click)="onSortColumn('gamesPlayed')" [ngClass]="getColumnSortClass('gamesPlayed')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">GP</th>
               <th (click)="onSortColumn('wins')" [ngClass]="getColumnSortClass('wins')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">W</th>
               <th (click)="onSortColumn('losses')" [ngClass]="getColumnSortClass('losses')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">L</th>
               <th (click)="onSortColumn('otLosses')" [ngClass]="getColumnSortClass('otLosses')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">OTL</th>
+              <th (click)="onSortColumn('points')" [ngClass]="getColumnSortClass('points')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">PTS</th>
               <th (click)="onSortColumn('goalsFor')" [ngClass]="getColumnSortClass('goalsFor')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">GF</th>
               <th (click)="onSortColumn('goalsAgainst')" [ngClass]="getColumnSortClass('goalsAgainst')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">GA</th>
               <th (click)="onSortColumn('goalDifferential')" [ngClass]="getColumnSortClass('goalDifferential')" class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm">DIFF</th>
@@ -67,11 +67,11 @@
                   </span>
                 </div>
               </td>
-              <td class="text-center p-2 sm:p-3 font-semibold text-xs sm:text-sm">{{ team.points }}</td>
               <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.gamesPlayed }}</td>
               <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.wins }}</td>
               <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.losses }}</td>
               <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.otLosses }}</td>
+              <td class="text-center p-2 sm:p-3 font-semibold text-xs sm:text-sm">{{ team.points }}</td>
               <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.goalsFor }}</td>
               <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.goalsAgainst }}</td>
               <td class="text-center p-2 sm:p-3 text-xs sm:text-sm" [ngClass]="{'text-green-500': team.goalDifferential > 0, 'text-red-500': team.goalDifferential < 0}">
