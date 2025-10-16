@@ -77,10 +77,12 @@ export class AddGamesComponent implements OnInit {
   loadDivisions() {
     this.api.getDivisions().subscribe({
       next: (divisions) => {
-        this.divisions = divisions.sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
+        // Create a new array to avoid read-only property errors
+        this.divisions = [...(divisions || [])].sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
       },
       error: (error) => {
         console.error('Error loading divisions:', error);
+        this.divisions = [];
       }
     });
   }
@@ -88,7 +90,8 @@ export class AddGamesComponent implements OnInit {
   loadClubs() {
     this.api.getClubs().subscribe({
       next: (clubs) => {
-        this.clubs = (clubs || []).sort((a, b) => a.name.localeCompare(b.name));
+        // Create a new array to avoid read-only property errors
+        this.clubs = [...(clubs || [])].sort((a, b) => a.name.localeCompare(b.name));
       },
       error: (error) => {
         console.error('Error loading clubs:', error);
