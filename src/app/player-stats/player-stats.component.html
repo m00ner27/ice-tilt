@@ -60,6 +60,7 @@
               <th [className]="getColumnSortClass('powerPlayGoals')" (click)="onSortColumn('powerPlayGoals')">PPG</th>
               <th [className]="getColumnSortClass('shortHandedGoals')" (click)="onSortColumn('shortHandedGoals')">SHG</th>
               <th [className]="getColumnSortClass('gameWinningGoals')" (click)="onSortColumn('gameWinningGoals')">GWG</th>
+              <th [className]="getColumnSortClass('interceptions')" (click)="onSortColumn('interceptions')">INT</th>
               <th [className]="getColumnSortClass('takeaways')" (click)="onSortColumn('takeaways')">TK</th>
               <th [className]="getColumnSortClass('giveaways')" (click)="onSortColumn('giveaways')">GV</th>
               <th [className]="getColumnSortClass('passAttempts')" (click)="onSortColumn('passAttempts')">PA</th>
@@ -68,7 +69,6 @@
               <th [className]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
               <th [className]="getColumnSortClass('faceoffsLost')" (click)="onSortColumn('faceoffsLost')">FOL</th>
               <th [className]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
-              <th [className]="getColumnSortClass('interceptions')" (click)="onSortColumn('interceptions')">INT</th>
             </tr>
           </thead>
           <tbody>
@@ -100,6 +100,7 @@
               <td>{{ player.powerPlayGoals }}</td>
               <td>{{ player.shortHandedGoals }}</td>
               <td>{{ player.gameWinningGoals }}</td>
+              <td>{{ player.interceptions }}</td>
               <td>{{ player.takeaways }}</td>
               <td>{{ player.giveaways }}</td>
               <td>{{ player.passAttempts }}</td>
@@ -108,7 +109,6 @@
               <td>{{ player.faceoffsWon }}</td>
               <td>{{ player.faceoffsLost }}</td>
               <td>{{ player.faceoffPercentage }}%</td>
-              <td>{{ player.interceptions }}</td>
             </tr>
           </tbody>
         </table>

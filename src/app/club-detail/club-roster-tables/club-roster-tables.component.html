@@ -59,6 +59,7 @@
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">PPG</th>
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">SHG</th>
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">GWG</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">INT</th>
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">TK</th>
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">GV</th>
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">P</th>
@@ -67,7 +68,6 @@
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">FOW</th>
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">FOL</th>
         <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">FO%</th>
-        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">INT</th>
       </tr>
     </thead>
     <tbody>
@@ -94,6 +94,7 @@
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.ppg || 0 }}</td>
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.shg || 0 }}</td>
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.gwg || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.interceptions || 0 }}</td>
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.takeaways || 0 }}</td>
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.giveaways || 0 }}</td>
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.passes || 0 }}</td>
@@ -102,7 +103,6 @@
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.faceoffsWon || 0 }}</td>
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.faceoffsLost || 0 }}</td>
         <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.faceoffPercentage || 0 | number:'1.1-1' }}%</td>
-        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.interceptions || 0 }}</td>
       </tr>
       <tr *ngIf="skaterStats.length === 0" class="border-t border-admin-accent">
         <td colspan="25" class="px-4 py-8 text-center text-gray-400 italic">No skater statistics available</td>
