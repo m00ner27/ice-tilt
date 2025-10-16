@@ -97,11 +97,22 @@
   border-right: 2px solid #34495e !important;
 }
 
-/* Rank column - sticky at left edge */
+/* Ensure sticky columns work in both header and body */
+th.sticky-column,
+td.sticky-column {
+  position: sticky !important;
+}
+
+/* Specific sticky positioning for table cells */
+.goalie-stats-table td.sticky-column,
+.goalie-stats-table th.sticky-column {
+  position: sticky !important;
+}
+
+/* Rank column - sticky at left edge and top */
 .goalie-stats-table .rank-column,
-th.rank-column,
-td.rank-column,
-.sticky-column.rank-column {
+.goalie-stats-table th.rank-column,
+.goalie-stats-table td.rank-column {
   position: sticky !important;
   left: 0 !important;
   top: 0 !important;
@@ -116,19 +127,32 @@ td.rank-column,
 }
 
 /* Ensure rank header has same styling as other headers */
-th.rank-column {
+.goalie-stats-table th.rank-column {
+  position: sticky !important;
+  left: 0 !important;
+  top: 0 !important;
   background-color: #34495e !important;
   color: white !important;
   text-align: center !important;
   padding: 8px 4px !important;
   z-index: 30 !important;
+  border-right: 2px solid #34495e !important;
 }
 
-/* Goalie name column - sticky after rank */
+/* Ensure rank body cells have proper background */
+td.rank-column {
+  background-color: #1a252f !important;
+}
+
+/* Ensure rank header has proper background when sticky */
+th.rank-column {
+  background-color: #34495e !important;
+}
+
+/* Goalie name column - sticky after rank and at top */
 .goalie-stats-table .goalie-name.sticky-column,
-th.goalie-name.sticky-column,
-td.goalie-name.sticky-column,
-.sticky-column.goalie-name {
+.goalie-stats-table th.goalie-name.sticky-column,
+.goalie-stats-table td.goalie-name.sticky-column {
   position: sticky !important;
   left: 50px !important;
   top: 0 !important;
@@ -141,12 +165,26 @@ td.goalie-name.sticky-column,
 }
 
 /* Ensure goalie name header has same styling as other headers */
-th.goalie-name.sticky-column {
+.goalie-stats-table th.goalie-name.sticky-column {
+  position: sticky !important;
+  left: 50px !important;
+  top: 0 !important;
   background-color: #34495e !important;
   color: white !important;
   text-align: center !important;
   padding: 8px 12px !important;
   z-index: 29 !important;
+  border-right: 2px solid #34495e !important;
+}
+
+/* Ensure goalie name body cells have proper background */
+td.goalie-name.sticky-column {
+  background-color: #1a252f !important;
+}
+
+/* Ensure goalie name header has proper background when sticky */
+th.goalie-name.sticky-column {
+  background-color: #34495e !important;
 }
 
 .goalie-stats-table th:hover {
