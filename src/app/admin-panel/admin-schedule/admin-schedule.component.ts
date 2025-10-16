@@ -158,37 +158,51 @@ export class AdminScheduleComponent implements OnInit {
 
   loadClubsAndGames(): void {
     console.log('=== Loading clubs and games ===');
-    this.api.getClubs().subscribe(clubs => {
-      this.clubs = clubs;
-      console.log('Clubs loaded:', clubs.length);
-      this.api.getGames().subscribe(games => {
-        console.log('Games loaded from API:', games.length);
-        this.games = games.map(game => {
-          // Ensure that homeClubId and awayClubId are objects before accessing their properties
-          const homeId = game.homeClubId?._id || game.homeClubId;
-          const awayId = game.awayClubId?._id || game.awayClubId;
+    this.api.getClubs().subscribe({
+      next: (clubs) => {
+        this.clubs = clubs || [];
+        console.log('Clubs loaded:', this.clubs.length);
+        this.api.getGames().subscribe({
+          next: (games) => {
+            console.log('Games loaded from API:', games?.length || 0);
+            this.games = (games || []).map(game => {
+              // Ensure that homeClubId and awayClubId are objects before accessing their properties
+              const homeId = game.homeClubId?._id || game.homeClubId;
+              const awayId = game.awayClubId?._id || game.awayClubId;
 
-          const homeClub = this.clubs.find(c => c._id === homeId);
-          const awayClub = this.clubs.find(c => c._id === awayId);
-          
-          const mapped = {
-            ...game,
-            homeTeam: homeClub ? homeClub.name : 'Unknown',
-            awayTeam: awayClub ? awayClub.name : 'Unknown',
-            homeLogo: homeClub ? homeClub.logoUrl : '',
-            awayLogo: awayClub ? awayClub.logoUrl : '',
-            selectedFileOrAction: '',
-            eashlGames: []
-          };
-          return mapped;
+              const homeClub = this.clubs.find(c => c._id === homeId);
+              const awayClub = this.clubs.find(c => c._id === awayId);
+              
+              const mapped = {
+                ...game,
+                homeTeam: homeClub ? homeClub.name : 'Unknown',
+                awayTeam: awayClub ? awayClub.name : 'Unknown',
+                homeLogo: homeClub ? homeClub.logoUrl : '',
+                awayLogo: awayClub ? awayClub.logoUrl : '',
+                selectedFileOrAction: '',
+                eashlGames: []
+              };
+              return mapped;
+            });
+            this.games.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            this.applyFilter();
+            this.calculateUnlinkedCount();
+            console.log('Mapped games with clubs:', this.games.length);
+            console.log('Games with eashlMatchId:', this.games.filter(g => g.eashlMatchId).length);
+            console.log('Games without eashlMatchId:', this.games.filter(g => !g.eashlMatchId).length);
+          },
+          error: (error) => {
+            console.error('Error loading games:', error);
+            this.games = [];
+            this.applyFilter();
+            this.calculateUnlinkedCount();
+          }
         });
-        this.games.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        this.applyFilter();
-        this.calculateUnlinkedCount();
-        console.log('Mapped games with clubs:', this.games.length);
-        console.log('Games with eashlMatchId:', this.games.filter(g => g.eashlMatchId).length);
-        console.log('Games without eashlMatchId:', this.games.filter(g => !g.eashlMatchId).length);
-      });
+      },
+      error: (error) => {
+        console.error('Error loading clubs:', error);
+        this.clubs = [];
+      }
     });
   }
 

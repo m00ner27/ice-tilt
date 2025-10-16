@@ -68,19 +68,23 @@ export class PlayersComponent implements OnInit, OnDestroy {
   loadClubs() {
     this.apiService.getClubs().subscribe({
       next: (clubs) => {
-        console.log('Loaded clubs:', clubs.length);
-        console.log('Sample club structure:', clubs[0]);
-        console.log('Sample club seasons:', clubs[0].seasons);
-        if (clubs[0].seasons && clubs[0].seasons.length > 0) {
-          console.log('First season structure:', clubs[0].seasons[0]);
-          if (clubs[0].seasons[0].roster) {
-            console.log('First season roster:', clubs[0].seasons[0].roster);
+        const clubsArray = clubs || [];
+        console.log('Loaded clubs:', clubsArray.length);
+        if (clubsArray.length > 0) {
+          console.log('Sample club structure:', clubsArray[0]);
+          console.log('Sample club seasons:', clubsArray[0].seasons);
+          if (clubsArray[0].seasons && clubsArray[0].seasons.length > 0) {
+            console.log('First season structure:', clubsArray[0].seasons[0]);
+            if (clubsArray[0].seasons[0].roster) {
+              console.log('First season roster:', clubsArray[0].seasons[0].roster);
+            }
           }
         }
-        this.clubs = clubs;
+        this.clubs = clubsArray;
       },
       error: (error) => {
         console.error('Error loading clubs:', error);
+        this.clubs = [];
       }
     });
   }
@@ -88,10 +92,10 @@ export class PlayersComponent implements OnInit, OnDestroy {
   loadSeasons() {
     this.apiService.getSeasons().subscribe({
       next: (seasons) => {
-        this.seasons = seasons;
+        this.seasons = seasons || [];
         // Auto-select the first season if available
-        if (seasons.length > 0) {
-          this.selectedSeasonId = seasons[0]._id;
+        if (this.seasons.length > 0) {
+          this.selectedSeasonId = this.seasons[0]._id;
           // Load club rosters after a short delay to ensure clubs are loaded
           setTimeout(() => {
             this.loadClubRosters();
@@ -100,6 +104,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading seasons:', error);
+        this.seasons = [];
       }
     });
   }

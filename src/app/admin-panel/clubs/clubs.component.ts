@@ -264,46 +264,65 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   loadData(): void {
-    this.api.getSeasons().subscribe(seasons => {
-      this.seasons = seasons;
-      
-      // Load all divisions for all seasons
-      this.api.getDivisions().subscribe(divisions => {
-        this.divisions = divisions.sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
+    this.api.getSeasons().subscribe({
+      next: (seasons) => {
+        this.seasons = seasons || [];
         
-        // Add season controls to form after seasons are loaded
-        this.addSeasonControls();
-      });
-      
-      // Auto-select the first season by default
-      if (seasons.length > 0) {
-        this.selectedSeasonId = seasons[0]._id;
-        // Load clubs for the first season
-        this.loadClubsForSeason(seasons[0]._id);
-        // Load free agents for the first season
-        this.loadFreeAgentsForSeason(seasons[0]._id);
+        // Load all divisions for all seasons
+        this.api.getDivisions().subscribe({
+          next: (divisions) => {
+            this.divisions = (divisions || []).sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
+            
+            // Add season controls to form after seasons are loaded
+            this.addSeasonControls();
+          },
+          error: (error) => {
+            console.error('Error loading divisions:', error);
+            this.divisions = [];
+            this.addSeasonControls();
+          }
+        });
+        
+        // Auto-select the first season by default
+        if (this.seasons.length > 0) {
+          this.selectedSeasonId = this.seasons[0]._id;
+          // Load clubs for the first season
+          this.loadClubsForSeason(this.seasons[0]._id);
+          // Load free agents for the first season
+          this.loadFreeAgentsForSeason(this.seasons[0]._id);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading seasons:', error);
+        this.seasons = [];
       }
     });
   }
 
   private loadClubsForSeason(seasonId: string): void {
     // Load all clubs and filter by season
-    this.api.getClubs().subscribe(allClubs => {
-      // Filter clubs that are active in this season
-      this.clubs = allClubs.filter(club => 
-        club.seasons && club.seasons.some((season: any) => {
-          // Handle both object and string seasonId formats
-          if (typeof season.seasonId === 'object' && season.seasonId._id) {
-            return season.seasonId._id === seasonId;
-          } else if (typeof season.seasonId === 'string') {
-            return season.seasonId === seasonId;
-          }
-          return false;
-        })
-      ).sort((a, b) => a.name.localeCompare(b.name));
+    this.api.getClubs().subscribe({
+      next: (allClubs) => {
+        // Filter clubs that are active in this season
+        this.clubs = (allClubs || []).filter(club => 
+          club.seasons && club.seasons.some((season: any) => {
+            // Handle both object and string seasonId formats
+            if (typeof season.seasonId === 'object' && season.seasonId._id) {
+              return season.seasonId._id === seasonId;
+            } else if (typeof season.seasonId === 'string') {
+              return season.seasonId === seasonId;
+            }
+            return false;
+          })
+        ).sort((a, b) => a.name.localeCompare(b.name));
 
-      // Load all rosters for proper filtering
-      this.loadAllRostersForFiltering(seasonId);
+        // Load all rosters for proper filtering
+        this.loadAllRostersForFiltering(seasonId);
+      },
+      error: (error) => {
+        console.error('Error loading clubs for season:', error);
+        this.clubs = [];
+      }
     });
   }
 

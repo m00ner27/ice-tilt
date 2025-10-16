@@ -88,10 +88,11 @@ export class AddGamesComponent implements OnInit {
   loadClubs() {
     this.api.getClubs().subscribe({
       next: (clubs) => {
-        this.clubs = clubs.sort((a, b) => a.name.localeCompare(b.name));
+        this.clubs = (clubs || []).sort((a, b) => a.name.localeCompare(b.name));
       },
       error: (error) => {
         console.error('Error loading clubs:', error);
+        this.clubs = [];
       }
     });
   }
