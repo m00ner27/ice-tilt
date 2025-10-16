@@ -1,4 +1,12 @@
-<div class="schedule-bar-container" *ngIf="upcomingMatches.length > 0">
+<!-- Loading state -->
+<div class="schedule-bar-container" *ngIf="isLoading">
+  <div class="text-center p-3">
+    <p class="text-muted">Loading schedule...</p>
+  </div>
+</div>
+
+<!-- Matches found -->
+<div class="schedule-bar-container" *ngIf="!isLoading && upcomingMatches.length > 0">
   <div class="schedule-bar-scroll">
     <a routerLink="/match/{{match.id}}" class="game-card-link" *ngFor="let match of upcomingMatches">
       <div class="game-card">
@@ -30,7 +38,8 @@
   </div>
 </div>
 
-<div class="schedule-bar-container" *ngIf="upcomingMatches.length === 0">
+<!-- No matches found -->
+<div class="schedule-bar-container" *ngIf="!isLoading && upcomingMatches.length === 0">
   <div class="text-center p-3">
     <p class="text-muted">No matches found</p>
   </div>

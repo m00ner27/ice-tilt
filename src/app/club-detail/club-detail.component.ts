@@ -72,6 +72,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   error: string | null = null;
   currentClubId: string = '';
   
+  // Progressive loading states
+  clubLoaded: boolean = false;
+  matchesLoaded: boolean = false;
+  rosterLoaded: boolean = false;
+  
   // Additional properties for template
   signedPlayers: any[] = [];
       skaterStats: SkaterStats[] = [];
@@ -247,9 +252,15 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Update the club roster selector with the current club ID
     this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(clubId));
     
-    // Load club using NgRx
+    // Load only essential data first - just the specific club
     this.ngrxApiService.loadClub(clubId);
-    this.ngrxApiService.loadClubs();
+    
+    // Load other data in parallel (non-blocking)
+    this.loadAdditionalDataInBackground();
+  }
+
+  private loadAdditionalDataInBackground() {
+    // Load seasons and matches in parallel without blocking the UI
     this.ngrxApiService.loadSeasons();
     this.ngrxApiService.loadMatches();
   }
@@ -312,70 +323,105 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   private setupCombinedDataSubscription() {
-    // Create a combined observable that waits for all data to be ready
+    // Show club immediately when it loads
+    this.selectedClub$.pipe(
+      takeUntil(this.destroy$),
+      filter(club => club !== null && !this.isSwitchingClubs)
+    ).subscribe(club => {
+      if (club) {
+        console.log('Club loaded immediately:', club.name);
+        this.loading = false; // Show club header immediately
+        this.processClubData(club);
+      }
+    });
+
+    // Load additional data progressively
     combineLatest([
-      this.selectedClub$,
       this.matches$,
       this.clubRoster$
     ]).pipe(
       takeUntil(this.destroy$),
-      debounceTime(100), // Small delay to ensure all data is processed
-      filter(([club, matches, roster]) => 
-        club !== null && 
+      debounceTime(50), // Reduced delay
+      filter(([matches, roster]) => 
         matches !== null && 
         roster !== null && 
         !this.isSwitchingClubs
       )
-    ).subscribe(([club, matches, roster]) => {
-      console.log('Combined data subscription triggered:', {
-        hasClub: !!club,
+    ).subscribe(([matches, roster]) => {
+      console.log('Additional data loaded:', {
         matchesCount: matches?.length || 0,
-        rosterCount: roster?.length || 0,
-        isSwitchingClubs: this.isSwitchingClubs
+        rosterCount: roster?.length || 0
       });
       
-      // Process all data when everything is ready
-      this.processAllData(club, matches, roster);
+      // Process additional data without blocking UI
+      this.processAdditionalData(matches, roster);
     });
   }
 
-  private processAllData(club: any, matches: any[], roster: any[]) {
-    if (!club || !matches || !roster) return;
+  private processClubData(club: any) {
+    if (!club) return;
     
-    console.log('Processing all data for club:', club.name);
+    console.log('Processing club data immediately:', club.name);
+    
+    // Update local data immediately
+    this.backendClub = club as any;
+    this.club = this.mapBackendClubToFrontend(club);
+    this.clubLoaded = true;
+    
+    // Set up roster subscription for the new club
+    this.setupRosterSubscription();
+    
+    // Reset season selection for the new club
+    this.selectedSeasonId = '';
+    
+    // Trigger season selection now that we have the club data
+    this.selectSeasonForClub();
+  }
+
+  private processAdditionalData(matches: any[], roster: any[]) {
+    if (!matches || !roster || !this.backendClub) return;
+    
+    console.log('Processing additional data for club:', this.backendClub.name);
     
     // Update local data
-    this.backendClub = club as any;
     this.matches = matches;
+    this.matchesLoaded = true;
     this.signedPlayers = roster.filter(player => player && player.gamertag);
+    this.rosterLoaded = true;
     
     // Filter matches for current club
     this.clubMatches = matches.filter(match => {
-      const homeMatch = match.homeClub?.name === club?.name;
-      const awayMatch = match.awayClub?.name === club?.name;
-      const homeTeamMatch = match.homeTeam === club?.name;
-      const awayTeamMatch = match.awayTeam === club?.name;
-      const homeClubIdMatch = match.homeClub?._id === club?._id;
-      const awayClubIdMatch = match.awayClub?._id === club?._id;
+      const homeMatch = match.homeClub?.name === this.backendClub?.name;
+      const awayMatch = match.awayClub?.name === this.backendClub?.name;
+      const homeTeamMatch = match.homeTeam === this.backendClub?.name;
+      const awayTeamMatch = match.awayTeam === this.backendClub?.name;
+      const homeClubIdMatch = match.homeClub?._id === this.backendClub?._id;
+      const awayClubIdMatch = match.awayClub?._id === this.backendClub?._id;
       
       return homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
     });
     
-    console.log('Processed data:', {
+    console.log('Processed additional data:', {
       clubMatches: this.clubMatches.length,
       signedPlayers: this.signedPlayers.length,
-      clubName: club.name
+      clubName: this.backendClub.name
     });
     
     // Recalculate club stats now that we have matches data
     if (this.club) {
-      const calculatedStats = this.calculateClubStats(club._id, matches);
+      const calculatedStats = this.calculateClubStats(this.backendClub._id, matches);
       this.club.stats = calculatedStats;
       console.log('Updated club stats:', calculatedStats);
     }
     
     // Now process stats with all data ready
     this.processPlayerStatsFromMatches(this.signedPlayers);
+  }
+
+  private processAllData(club: any, matches: any[], roster: any[]) {
+    // This method is now deprecated - using progressive loading instead
+    this.processClubData(club);
+    this.processAdditionalData(matches, roster);
   }
 
   // Method to clear club data when switching clubs
@@ -398,6 +444,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.selectedSeasonId = '';
     this.currentClubId = '';
     this.loading = false;
+    
+    // Reset loading states
+    this.clubLoaded = false;
+    this.matchesLoaded = false;
+    this.rosterLoaded = false;
     this.error = null;
     
     console.log('Club data cleared, signedPlayers length:', this.signedPlayers.length);

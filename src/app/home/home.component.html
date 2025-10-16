@@ -85,7 +85,10 @@
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
             <p class="mt-2">Loading stats...</p>
           </div>
-          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
             <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topGoals; let i = index">
                 <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
@@ -105,7 +108,10 @@
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
             <p class="mt-2">Loading stats...</p>
           </div>
-          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
             <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topAssists; let i = index">
                 <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
@@ -125,7 +131,10 @@
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
             <p class="mt-2">Loading stats...</p>
           </div>
-          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading">
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
             <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topPoints; let i = index">
                 <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
@@ -141,7 +150,14 @@
         <div class="bg-admin-card rounded-lg">
           <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Save %</div>
           <div class="p-0 rounded-b-lg overflow-hidden">
-            <ul class="divide-y divide-admin-accent">
+            <div *ngIf="isLoading" class="p-4 text-center text-white">
+              <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              <p class="mt-2">Loading stats...</p>
+            </div>
+            <div *ngIf="hasError" class="p-4 text-center text-red-400">
+              <p>Failed to load player stats. Please try again later.</p>
+            </div>
+            <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
               <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topSavePct; let i = index">
                 <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
                 <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
@@ -159,13 +175,12 @@
 <!-- AdSense Banner Ad -->
 <app-adsense [config]="bannerAdConfig"></app-adsense>
 
-<!-- Recent Transactions Section -->
-<app-transactions [isPreview]="true"></app-transactions>
 
 <!-- AdSense Rectangle Ad -->
-<app-adsense [config]="rectangleAdConfig"></app-adsense>
+<div id="ads-section" class="min-h-32">
+  <div *ngIf="!showAds" class="p-8 text-center text-gray-400">
+    <div class="inline-block animate-pulse">Loading ads...</div>
+  </div>
+  <app-adsense [config]="rectangleAdConfig" *ngIf="showAds"></app-adsense>
+</div>
 
-<!-- Schedule Section -->
-<!-- Schedule Section -->
-    <div class="container mx-auto px-2 sm:px-4">
-      <app-schedule [isPreview]="true"></app-schedule>

@@ -137,7 +137,7 @@ export class PlayerStatsComponent implements OnInit {
       next: ({ matches, seasons, clubs }) => {
         this.allMatches = matches;
         this.allClubs = clubs;
-        this.seasons = seasons.sort((a, b) => {
+        this.seasons = [...seasons].sort((a, b) => {
           const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
           const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
           return dateB - dateA;
@@ -566,7 +566,7 @@ export class PlayerStatsComponent implements OnInit {
       this.groupedStats = [{
         division: 'All Seasons',
         divisionData: undefined, // No specific division for All Seasons
-        stats: allPlayerStats.sort((a, b) => b.points - a.points || b.goals - a.goals)
+        stats: [...allPlayerStats].sort((a, b) => b.points - a.points || b.goals - a.goals)
       }];
       
       this.applyDivisionFilter();
@@ -844,7 +844,7 @@ export class PlayerStatsComponent implements OnInit {
       return { 
         division, 
         divisionData,
-        stats: stats.sort((a, b) => b.points - a.points || b.goals - a.goals) 
+        stats: [...stats].sort((a, b) => b.points - a.points || b.goals - a.goals) 
       };
     }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
     

@@ -94,11 +94,8 @@ export class PlayersComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.buildCountryEmojiMap();
     
-    // Load data using NgRx
-    this.ngrxApiService.loadSeasons();
-    this.ngrxApiService.loadClubs();
+    // Load data using NgRx (only load what's needed)
     this.ngrxApiService.loadUsers();
-    this.ngrxApiService.loadMatches();
     
     // Subscribe to data changes
     this.setupDataSubscriptions();

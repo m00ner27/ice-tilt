@@ -321,42 +321,24 @@ export class MatchService {
         });
       };
 
-      console.log('=== MATCH SERVICE DEBUG ===');
-      console.log('Home EASHL Club ID:', homeEashlClubId);
-      console.log('Away EASHL Club ID:', awayEashlClubId);
-      console.log('Available player club IDs in EASHL data:', Object.keys(game.eashlData.players));
-      console.log('Home club data exists:', !!(homeEashlClubId && game.eashlData.players[homeEashlClubId]));
-      console.log('Away club data exists:', !!(awayEashlClubId && game.eashlData.players[awayEashlClubId]));
-      
+      // Process home team players
       if (homeEashlClubId && game.eashlData.players[homeEashlClubId]) {
-        console.log('Processing home team players for:', game.homeClubId.name);
         processTeamPlayers(game.eashlData.players[homeEashlClubId], game.homeClubId.name);
-      } else {
-        console.log('Skipping home team - no EASHL club ID or player data');
       }
       
+      // Process away team players
       if (awayEashlClubId && game.eashlData.players[awayEashlClubId]) {
-        console.log('Processing away team players for:', game.awayClubId.name);
         processTeamPlayers(game.eashlData.players[awayEashlClubId], game.awayClubId.name);
       } else {
-        console.log('Skipping away team - no EASHL club ID or player data');
-        console.log('Away EASHL Club ID:', awayEashlClubId);
-        console.log('Available player club IDs:', Object.keys(game.eashlData.players));
-        
         // Check if there's a different club ID that might be the away team
         const availableClubIds = Object.keys(game.eashlData.players);
         const homeClubId = homeEashlClubId;
         const otherClubId = availableClubIds.find(id => id !== homeClubId);
         
         if (otherClubId) {
-          console.log('Found alternative club ID for away team:', otherClubId);
-          console.log('Processing away team players with alternative club ID for:', game.awayClubId.name);
           processTeamPlayers(game.eashlData.players[otherClubId], game.awayClubId.name);
-        } else {
-          console.log('No alternative club ID found for away team');
         }
       }
-      console.log('=== END MATCH SERVICE DEBUG ===');
     }
 
     // Determine scores

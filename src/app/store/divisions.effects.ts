@@ -23,7 +23,7 @@ export class DivisionsEffects {
         ofType(DivisionsActions.loadDivisions),
         mergeMap(() =>
           this.apiService.getDivisions().pipe(
-            map(divisions => DivisionsActions.loadDivisionsSuccess({ divisions })),
+            map(divisions => DivisionsActions.loadDivisionsSuccess({ divisions: divisions || [] })),
             catchError(error => of(DivisionsActions.loadDivisionsFailure({ error })))
           )
         )

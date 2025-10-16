@@ -67,7 +67,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Load data using NgRx
+    // Load data using NgRx (only when this component is actually visited)
     this.ngrxApiService.loadMatches();
     this.ngrxApiService.loadClubs();
     this.ngrxApiService.loadSeasons();

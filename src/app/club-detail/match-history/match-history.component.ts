@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { EashlMatch, ClubInfo } from '../../store/services/match.service';
-import { environment } from '../../../environments/environment';
+import { ImageUrlService } from '../../shared/services/image-url.service';
 
 @Component({
   selector: 'app-match-history',
@@ -15,31 +15,14 @@ export class MatchHistoryComponent {
   @Input() matches: EashlMatch[] = [];
   @Input() teamName: string = '';
   
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private imageUrlService: ImageUrlService
+  ) { }
 
-  // Method to get the full image URL
+  // Method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
-    if (!logoUrl) {
-      return 'assets/images/1ithlwords.png';
-    }
-    
-    // If it's a base64 data URL, return as is (new uploads)
-    if (logoUrl.startsWith('data:')) {
-      return logoUrl;
-    }
-    
-    // If it's already a full URL, return as is
-    if (logoUrl.startsWith('http')) {
-      return logoUrl;
-    }
-    
-    // If it's a relative path starting with /uploads, prepend the API URL
-    if (logoUrl.startsWith('/uploads/')) {
-      return `${environment.apiUrl}${logoUrl}`;
-    }
-    
-    // Otherwise, assume it's a local asset
-    return logoUrl;
+    return this.imageUrlService.getImageUrl(logoUrl);
   }
   
   // Navigate to match detail page

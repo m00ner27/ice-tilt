@@ -31,7 +31,7 @@ export class MatchesEffects {
         ofType(MatchesActions.loadMatches),
         mergeMap(() =>
           this.matchService.getMatches().pipe(
-            map(matches => MatchesActions.loadMatchesSuccess({ matches })),
+            map(matches => MatchesActions.loadMatchesSuccess({ matches: matches || [] })),
             catchError(error => of(MatchesActions.loadMatchesFailure({ error })))
           )
         )

@@ -7,7 +7,7 @@
     <select 
       id="seasonSelect" 
       [(ngModel)]="selectedSeasonId" 
-      (change)="onSeasonChange()"
+      (change)="onSeasonChange(selectedSeasonId)"
       class="px-2 sm:px-3 py-1 sm:py-2 bg-admin-hover text-white rounded text-xs sm:text-sm cursor-pointer focus:outline-none focus:border-admin-primary"
     >
       <option *ngFor="let season of (seasons$ | async)" [value]="season._id">
@@ -21,20 +21,28 @@
     <p>Loading standings...</p>
   </div>
 
+
+
   <!-- Error state -->
   <div *ngIf="seasonsError$ | async as error" class="text-center text-red-500 py-8 bg-red-500/10 rounded-lg my-5">
     <p>{{ error }}</p>
   </div>
 
   <!-- Standings by Division -->
-  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length > 0" class="mb-8">
+  <div *ngIf="!isLoading && divisionStandings.length > 0" class="mb-8">
     <div *ngFor="let divisionStanding of divisionStandings" class="mb-8">
       <h2 class="text-white text-lg sm:text-2xl mb-4 p-2 sm:p-3 bg-admin-accent rounded-lg border-l-4 border-admin-primary flex items-center gap-2 sm:gap-3">
         <img *ngIf="divisionStanding.division.logoUrl" [src]="getImageUrl(divisionStanding.division.logoUrl)" [alt]="divisionStanding.division.name + ' logo'" class="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded" (error)="onImageError($event)">
         {{ divisionStanding.division.name }}
       </h2>
       
-      <div class="w-full overflow-x-auto">
+      <!-- Check if all teams have 0 games played -->
+      <div *ngIf="hasNoCompletedGames(divisionStanding.standings)" class="text-center text-white py-8 bg-admin-card rounded-lg mb-5">
+        <p class="text-lg mb-2">No games have been played yet in this division.</p>
+        <p class="text-sm opacity-80">Standings will appear once games are completed and scores are recorded.</p>
+      </div>
+      
+      <div class="w-full overflow-x-auto" *ngIf="!hasNoCompletedGames(divisionStanding.standings)">
         <table class="w-full bg-admin-card text-white border-collapse mb-5 text-sm sm:text-base" style="border-collapse: separate; border-spacing: 0;">
           <thead class="bg-admin-accent">
             <tr>
@@ -86,9 +94,10 @@
   </div>
   
   <!-- No standings data message -->
-  <div *ngIf="!(seasonsLoading$ | async) && !(seasonsError$ | async) && divisionStandings.length === 0" class="text-center text-white py-10 text-lg">
+  <div *ngIf="!isLoading && dataLoaded && divisionStandings.length === 0" class="text-center text-white py-10 text-lg">
     <p>No standings data available for {{ getSelectedSeasonName() }}.</p>
   </div>
+  
   
   <!-- Legend -->
   <div class="mt-8 p-4 bg-admin-card rounded-lg text-white">
@@ -108,4 +117,4 @@
       <p>* 2 points for a win, 1 point for an overtime loss, 0 for a regulation loss</p>
     </div>
   </div>
-</div> 
+</div>

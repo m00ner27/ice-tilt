@@ -23,7 +23,7 @@ export class SeasonsEffects {
         ofType(SeasonsActions.loadSeasons),
         mergeMap(() =>
           this.apiService.getSeasons().pipe(
-            map(seasons => SeasonsActions.loadSeasonsSuccess({ seasons })),
+            map(seasons => SeasonsActions.loadSeasonsSuccess({ seasons: seasons || [] })),
             catchError(error => of(SeasonsActions.loadSeasonsFailure({ error })))
           )
         )

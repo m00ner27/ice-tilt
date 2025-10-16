@@ -23,8 +23,8 @@ export const seasonsReducer = createReducer(
   on(SeasonsActions.loadSeasons, (state) => ({ ...state, loading: true, error: null })),
   on(SeasonsActions.loadSeasonsSuccess, (state, { seasons }) => ({ 
     ...state, 
-    seasons, 
-    activeSeason: seasons.find(s => s.isActive) || null,
+    seasons: seasons || [], 
+    activeSeason: (seasons || []).find(s => s.isActive) || null,
     loading: false, 
     error: null 
   })),

@@ -29,7 +29,7 @@ export class ClubsEffects {
         ofType(ClubsActions.loadClubs),
         mergeMap(() =>
           this.apiService.getClubs().pipe(
-            map(clubs => ClubsActions.loadClubsSuccess({ clubs })),
+            map(clubs => ClubsActions.loadClubsSuccess({ clubs: clubs || [] })),
             catchError(error => of(ClubsActions.loadClubsFailure({ error })))
           )
         )

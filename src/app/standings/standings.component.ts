@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject, combineLatest } from 'rxjs';
+import { Observable, Subject, combineLatest, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
+import { MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
@@ -116,12 +117,14 @@ export class StandingsComponent implements OnInit, OnDestroy {
   divisionStandings: any[] = [];
   sortColumn: string = 'points';
   sortDirection: 'asc' | 'desc' = 'desc';
-  isLoading: boolean = true;
+  isLoading: boolean = true; // Start with loading true
+  dataLoaded: boolean = false; // Track if data has been loaded at least once
 
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
     private apiService: ApiService,
+    private matchService: MatchService,
     private imageUrlService: ImageUrlService,
     private route: ActivatedRoute,
     private router: Router
@@ -136,34 +139,19 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Check for season query parameter first
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      if (params['season']) {
-        this.selectedSeasonId = params['season'];
-      }
-    });
-
-    // Load data using NgRx
-    this.ngrxApiService.loadSeasons();
-    this.ngrxApiService.loadClubs();
-    this.ngrxApiService.loadMatches();
-    this.ngrxApiService.loadDivisions();
+    console.log('Standings component initialized');
     
-    // Subscribe to data changes
+    // Set up data subscriptions first
     this.setupDataSubscriptions();
     
-    // Also load data directly as backup immediately
+    // Load seasons first, then load data directly
+    this.loadSeasons();
     this.loadDataDirectly();
     
     // Listen for storage events (when admin panel makes changes)
     window.addEventListener('storage', (event) => {
       if (event.key === 'admin-data-updated') {
         // Force a complete refresh of all data
-        this.ngrxApiService.loadMatches();
-        this.ngrxApiService.loadClubs();
-        this.ngrxApiService.loadDivisions();
-        
-        // Force a direct API call immediately to get the latest data
         this.loadDataDirectly();
       }
     });
@@ -174,33 +162,25 @@ export class StandingsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+
+  // Load matches when season changes
+  onSeasonChange(seasonId: string) {
+    this.selectedSeasonId = seasonId;
+    this.isLoading = true;
+    this.divisionStandings = []; // Clear existing standings
+    
+    // Load season-specific data
+    this.loadSeasonSpecificData();
+  }
+
   private setupDataSubscriptions() {
-    // Subscribe to seasons
+    // Subscribe to seasons for the dropdown
     this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
+      console.log('Seasons loaded:', seasons?.length);
       if (seasons.length > 0 && !this.selectedSeasonId) {
         this.selectedSeasonId = seasons[0]._id;
-        this.loadSeasonData();
-      }
-    });
-
-    // Subscribe to clubs, matches, and divisions for season data
-    combineLatest([
-      this.clubs$,
-      this.matches$,
-      this.divisions$
-    ]).pipe(takeUntil(this.destroy$)).subscribe(([clubs, matches, divisions]) => {
-      
-      // Only update if we don't have better data from direct API calls
-      // The direct API data is more reliable and complete
-      if (this.games.length === 0 || matches.some(m => m.score && m.score.home !== undefined && m.score.away !== undefined)) {
-        this.clubs = clubs;
-        this.games = matches;
-        this.divisions = divisions;
-        
-        // Only recalculate standings when data changes, don't reload season data
-        if (this.selectedSeasonId) {
-          this.calculateStandings();
-        }
+        console.log('Auto-selected season:', this.selectedSeasonId);
+        this.loadSeasonSpecificData();
       }
     });
   }
@@ -209,36 +189,70 @@ export class StandingsComponent implements OnInit, OnDestroy {
     this.ngrxApiService.loadSeasons();
   }
 
-  onSeasonChange(): void {
-    // Update URL with the selected season
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { season: this.selectedSeasonId },
-      queryParamsHandling: 'merge'
-    });
+
+  loadDataDirectly(): void {
+    console.log('Loading data directly from API...');
+    this.isLoading = true; // Ensure loading state is set
     
-    this.loadSeasonData();
+    // First load seasons to get the current season
+    this.apiService.getSeasons().subscribe({
+      next: (seasons) => {
+        if (seasons && seasons.length > 0) {
+          // Auto-select first season if none selected
+          if (!this.selectedSeasonId) {
+            this.selectedSeasonId = seasons[0]._id;
+            console.log('Auto-selected season:', this.selectedSeasonId);
+          }
+          
+          // Now load season-specific data
+          this.loadSeasonSpecificData();
+        } else {
+          this.isLoading = false;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading seasons:', error);
+        this.isLoading = false;
+      }
+    });
   }
 
-  // Direct API call to get fresh data (used when NgRx store isn't updated)
-  loadDataDirectly(): void {
-    // Load all data in parallel for faster loading
-    Promise.all([
-      this.apiService.getGames().toPromise(),
-      this.apiService.getClubs().toPromise(),
-      this.apiService.getDivisions().toPromise()
-    ]).then(([games, clubs, divisions]) => {
-      
-      this.games = games || [];
-      this.clubs = clubs || [];
-      this.divisions = divisions || [];
+  loadSeasonSpecificData(): void {
+    if (!this.selectedSeasonId) {
       this.isLoading = false;
-      
-      if (this.selectedSeasonId) {
+      return;
+    }
+
+    console.log(`Loading data for season: ${this.selectedSeasonId}`);
+    this.isLoading = true; // Set loading state
+    
+    // Load only season-specific data in parallel
+    forkJoin({
+      games: this.apiService.getGamesBySeason(this.selectedSeasonId),
+      clubs: this.apiService.getClubsBySeason(this.selectedSeasonId),
+      divisions: this.apiService.getDivisionsBySeason(this.selectedSeasonId)
+    }).subscribe({
+      next: ({ games, clubs, divisions }) => {
+        console.log('Season-specific data loaded:', { 
+          games: games?.length, 
+          clubs: clubs?.length, 
+          divisions: divisions?.length 
+        });
+        
+        // Clear existing data to prevent accumulation
+        this.games = games || [];
+        this.clubs = clubs || [];
+        this.divisions = divisions || [];
+        this.divisionStandings = []; // Clear existing standings
+        
+        this.isLoading = false;
+        
         this.calculateStandings();
+      },
+      error: (error) => {
+        console.error('Error loading season-specific data:', error);
+        this.isLoading = false;
       }
-    }).catch(error => {
-      console.error('Error loading data directly:', error);
     });
   }
 
@@ -252,37 +266,49 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   calculateStandings(): void {
+    this.isLoading = true;
+    
+    // Clear existing standings to prevent duplicates
+    this.divisionStandings = [];
+    
+    // Pre-filter games for the current season only
     const seasonGames = this.games.filter(game => game.seasonId === this.selectedSeasonId);
     
-    this.divisionStandings = [];
-
     // Group games by division
     const gamesByDivision = new Map<string, Game[]>();
-    this.games.forEach(game => {
-      if (game.seasonId === this.selectedSeasonId) {
-        // Handle games with undefined divisionId by assigning them to the first division for this season
-        let divisionId = game.divisionId;
-        if (!divisionId && this.divisions.length > 0) {
-          const firstDivision = this.divisions.find(d => d.seasonId === this.selectedSeasonId);
-          if (firstDivision) {
-            divisionId = firstDivision._id;
-          }
+    const firstDivision = this.divisions.find(d => d.seasonId === this.selectedSeasonId);
+    
+    seasonGames.forEach(game => {
+      // Handle games with undefined divisionId by assigning them to the first division for this season
+      let divisionId = game.divisionId;
+      if (!divisionId && firstDivision) {
+        divisionId = firstDivision._id;
+      }
+      
+      if (divisionId) {
+        if (!gamesByDivision.has(divisionId)) {
+          gamesByDivision.set(divisionId, []);
         }
-        
-        if (divisionId) {
-          if (!gamesByDivision.has(divisionId)) {
-            gamesByDivision.set(divisionId, []);
-          }
-          gamesByDivision.get(divisionId)!.push(game);
-        }
+        gamesByDivision.get(divisionId)!.push(game);
       }
     });
-    
 
     // Calculate standings for each division, sorted by order
-    const sortedDivisions = this.divisions
+    // First, deduplicate divisions by ID to prevent duplicates
+    const uniqueDivisions = new Map<string, Division>();
+    this.divisions
       .filter(division => division.seasonId === this.selectedSeasonId)
+      .forEach(division => {
+        if (!uniqueDivisions.has(division._id)) {
+          uniqueDivisions.set(division._id, division);
+        }
+      });
+    
+    // Convert to array and sort by order
+    const sortedDivisions = Array.from(uniqueDivisions.values())
       .sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    console.log(`Processing ${sortedDivisions.length} unique divisions for season ${this.selectedSeasonId}`);
     
     sortedDivisions.forEach(division => {
       const divisionGames = gamesByDivision.get(division._id) || [];
@@ -295,21 +321,32 @@ export class StandingsComponent implements OnInit, OnDestroy {
         });
       }
     });
+    
+    console.log(`Created ${this.divisionStandings.length} division standings`);
+    this.isLoading = false;
+    this.dataLoaded = true; // Mark that data has been loaded at least once
   }
 
   calculateDivisionStandings(games: Game[], division: Division): TeamStanding[] {
-    
     const standingsMap = new Map<string, TeamStanding>();
 
+    // Pre-cache club lookups for faster access
+    const clubMap = new Map<string, Club>();
+    this.clubs.forEach(club => clubMap.set(club._id, club));
+
     // Filter clubs that belong to the current division for the selected season
-    const clubsInDivision = this.clubs.filter(club => {
+    let clubsInDivision = this.clubs.filter(club => {
       const isInDivision = club.seasons.some((s: any) => {
-        const seasonId = s.seasonId._id || s.seasonId; // Handle both object and string formats
+        const seasonId = s.seasonId._id || s.seasonId;
         return seasonId === this.selectedSeasonId && s.divisionIds && s.divisionIds.includes(division._id);
       });
       return isInDivision;
     });
     
+    // Fallback: If no clubs found through season data, try to get all clubs
+    if (clubsInDivision.length === 0) {
+      clubsInDivision = this.clubs;
+    }
 
     // Initialize standings for the clubs in this division
     clubsInDivision.forEach(club => {
@@ -329,83 +366,53 @@ export class StandingsComponent implements OnInit, OnDestroy {
       });
     });
 
-    // If no clubs are in the division, no need to process games
     if (clubsInDivision.length === 0) {
       return [];
     }
 
-    // Calculate stats from games
+    // Process games with optimized score extraction
     let gamesWithScores = 0;
-    let manualEntryGames = 0;
-    let eashlGames = 0;
     
-    games.forEach((game, index) => {
-      // Check for scores in multiple possible locations
+    for (const game of games) {
+      // Optimized score extraction - try most common patterns first
       let homeScore: number | undefined;
       let awayScore: number | undefined;
       
-      // First try game.score (for EASHL data)
-      if (game.score && typeof game.score.home !== 'undefined' && typeof game.score.away !== 'undefined') {
+      // Try direct score properties first (most common)
+      if (typeof (game as any).homeScore !== 'undefined' && typeof (game as any).awayScore !== 'undefined') {
+        homeScore = (game as any).homeScore;
+        awayScore = (game as any).awayScore;
+      }
+      // Try game.score (EASHL data)
+      else if (game.score?.home !== undefined && game.score?.away !== undefined) {
         homeScore = game.score.home;
         awayScore = game.score.away;
       }
-      // Then try game.homeTeamScore/game.awayTeamScore (for manual entries)
+      // Try homeTeamScore/awayTeamScore (manual entries)
       else if (typeof game.homeTeamScore !== 'undefined' && typeof game.awayTeamScore !== 'undefined') {
         homeScore = game.homeTeamScore;
         awayScore = game.awayTeamScore;
       }
-      // Finally try eashlData scores (fallback)
-      else if (game.eashlData?.clubs) {
-        const homeClubId = typeof game.homeClubId === 'object' ? (game.homeClubId as any)._id : game.homeClubId;
-        const awayClubId = typeof game.awayClubId === 'object' ? (game.awayClubId as any)._id : game.awayClubId;
-        
-        if (homeClubId && game.eashlData.clubs[homeClubId]?.goals !== undefined) {
-          homeScore = game.eashlData.clubs[homeClubId].goals;
-        }
-        if (awayClubId && game.eashlData.clubs[awayClubId]?.goals !== undefined) {
-          awayScore = game.eashlData.clubs[awayClubId].goals;
-        }
-      }
-      
-      // Skip games without valid scores
-      if (typeof homeScore === 'undefined' || typeof awayScore === 'undefined') {
-        return;
+      // Skip if no valid scores found
+      else {
+        continue;
       }
 
       gamesWithScores++;
       
-      // Debug logging for manual entries
-      if (game.eashlData?.manualEntry) {
-        manualEntryGames++;
-        console.log(`Processing manual entry game ${game._id}:`, {
-          homeTeam: typeof game.homeClubId === 'object' ? (game.homeClubId as Club).name : 'Unknown',
-          awayTeam: typeof game.awayClubId === 'object' ? (game.awayClubId as Club).name : 'Unknown',
-          homeScore,
-          awayScore,
-          homeTeamScore: game.homeTeamScore,
-          awayTeamScore: game.awayTeamScore
-        });
-      } else {
-        eashlGames++;
-      }
-      
-      const homeTeamName = typeof game.homeClubId === 'object' && game.homeClubId ? (game.homeClubId as Club).name : 'Unknown';
-      const awayTeamName = typeof game.awayClubId === 'object' && game.awayClubId ? (game.awayClubId as Club).name : 'Unknown';
-      // Extract club IDs from objects if needed
+      // Extract team info efficiently
       const homeClubId = typeof game.homeClubId === 'object' ? (game.homeClubId as any)._id : game.homeClubId;
       const awayClubId = typeof game.awayClubId === 'object' ? (game.awayClubId as any)._id : game.awayClubId;
       
       const homeTeam = standingsMap.get(homeClubId);
       const awayTeam = standingsMap.get(awayClubId);
 
-      if (homeTeam && awayTeam) {
-        // Only count games that have been played (have EASHL data or actual scores > 0)
-        const hasBeenPlayed = game.eashlData && (game.eashlData as any).matchId || 
-                             (homeScore > 0 || awayScore > 0) ||
-                             (game.isOvertime || (game as any).isShootout);
+      if (homeTeam && awayTeam && homeScore !== undefined && awayScore !== undefined) {
+        // Check if game has been played (simplified logic)
+        const hasBeenPlayed = (game.eashlData as any)?.matchId || (homeScore > 0 || awayScore > 0) || game.isOvertime;
 
         if (hasBeenPlayed) {
-          // Update games played only for completed games
+          // Update games played
           homeTeam.gamesPlayed++;
           awayTeam.gamesPlayed++;
 
@@ -415,15 +422,14 @@ export class StandingsComponent implements OnInit, OnDestroy {
           awayTeam.goalsFor += awayScore;
           awayTeam.goalsAgainst += homeScore;
 
-          // Update wins/losses and points, considering overtime
+          // Update wins/losses and points
           if (homeScore > awayScore) {
             homeTeam.wins++;
             homeTeam.points += 2;
             
-            // Check if losing team gets OTL point
             if (game.isOvertime) {
               awayTeam.otLosses++;
-              awayTeam.points += 1; // 1 point for OTL
+              awayTeam.points += 1;
             } else {
               awayTeam.losses++;
             }
@@ -431,36 +437,25 @@ export class StandingsComponent implements OnInit, OnDestroy {
             awayTeam.wins++;
             awayTeam.points += 2;
             
-            // Check if losing team gets OTL point
             if (game.isOvertime) {
               homeTeam.otLosses++;
-              homeTeam.points += 1; // 1 point for OTL
+              homeTeam.points += 1;
             } else {
               homeTeam.losses++;
             }
           } else {
-            // Tie game - both teams get 1 point (shouldn't happen in hockey but just in case)
+            // Tie game
             homeTeam.points += 1;
             awayTeam.points += 1;
           }
         }
       }
-    });
-
+    }
 
     // Calculate derived stats
     standingsMap.forEach(team => {
       team.goalDifferential = team.goalsFor - team.goalsAgainst;
       team.winPercentage = team.gamesPlayed > 0 ? team.wins / team.gamesPlayed : 0;
-    });
-    
-    // Debug summary
-    console.log(`Standings calculation summary:`, {
-      totalGames: games.length,
-      gamesWithScores,
-      manualEntryGames,
-      eashlGames,
-      teamsInStandings: standingsMap.size
     });
 
     // Convert to array and sort
@@ -550,12 +545,17 @@ export class StandingsComponent implements OnInit, OnDestroy {
 
   // Handle image loading errors
   onImageError(event: any): void {
-    console.error('Image failed to load:', event.target.src);
+    
     event.target.src = 'assets/images/1ithlwords.png';
   }
 
   // Helper method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl, 'assets/images/1ithlwords.png');
+  }
+
+  // Helper method to check if all teams in a division have 0 games played
+  hasNoCompletedGames(standings: TeamStanding[]): boolean {
+    return standings.every(team => team.gamesPlayed === 0);
   }
 }

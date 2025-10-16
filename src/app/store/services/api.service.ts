@@ -6,6 +6,7 @@ import { tap, catchError, switchMap } from 'rxjs/operators';
 import { Game } from '../models/models/match.interface';
 import { User } from '../users.actions';
 import { AuthService } from '@auth0/auth0-angular';
+import { CacheService } from '../../shared/services/cache.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,8 @@ export class ApiService {
 
   constructor(
     private http: HttpClient,
-    private auth: AuthService
+    private auth: AuthService,
+    private cacheService: CacheService
   ) { 
     // Add request interceptor to track all HTTP requests
   }
@@ -89,7 +91,8 @@ export class ApiService {
 
   // Season data methods
   getSeasons(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/seasons`).pipe(
+    const cacheKey = 'seasons';
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/seasons`).pipe(
       catchError(error => {
         console.error('=== API SERVICE: getSeasons Error ===');
         console.error('Error:', error);
@@ -98,6 +101,8 @@ export class ApiService {
         throw error;
       })
     );
+    
+    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
   }
 
   addSeason(seasonData: any): Observable<any> {
@@ -124,11 +129,23 @@ export class ApiService {
 
   // Division data methods
   getDivisions(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/divisions`);
+    const cacheKey = 'divisions';
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/divisions`);
+    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
   }
 
   getDivisionsBySeason(seasonId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/divisions/season/${seasonId}`);
+    const cacheKey = `divisions-season-${seasonId}`;
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/divisions/season/${seasonId}`).pipe(
+      catchError(error => {
+        console.error('=== API SERVICE: getDivisionsBySeason Error ===');
+        console.error('Error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      })
+    );
+    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
   }
 
   addDivision(divisionData: any): Observable<any> {
@@ -155,7 +172,9 @@ export class ApiService {
 
   // Club data methods
   getClubs(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/clubs`);
+    const cacheKey = 'clubs';
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/clubs`);
+    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
   }
 
   getClubById(clubId: string): Observable<any> {
@@ -203,7 +222,17 @@ export class ApiService {
   }
 
   getClubsBySeason(seasonId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/season/${seasonId}`);
+    const cacheKey = `clubs-season-${seasonId}`;
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/clubs/season/${seasonId}`).pipe(
+      catchError(error => {
+        console.error('=== API SERVICE: getClubsBySeason Error ===');
+        console.error('Error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      })
+    );
+    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
   }
 
   // File upload method
@@ -237,7 +266,8 @@ export class ApiService {
   }
 
   getGames(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
+    const cacheKey = 'games';
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
       catchError(error => {
         console.error('=== API SERVICE: getGames Error ===');
         console.error('Error:', error);
@@ -246,10 +276,49 @@ export class ApiService {
         throw error;
       })
     );
+    
+    return this.cacheService.getOrFetch(cacheKey, observable, 5 * 60 * 1000); // Cache for 5 minutes (games change more frequently)
+  }
+
+  // Cache invalidation methods
+  invalidateGamesCache(): void {
+    this.cacheService.invalidate('games');
+  }
+
+  invalidateClubsCache(): void {
+    this.cacheService.invalidate('clubs');
+  }
+
+  invalidateSeasonsCache(): void {
+    this.cacheService.invalidate('seasons');
+  }
+
+  invalidateDivisionsCache(): void {
+    this.cacheService.invalidate('divisions');
+  }
+
+  // Invalidate all caches (useful for admin operations)
+  invalidateAllCaches(): void {
+    this.cacheService.clear();
+  }
+
+  // Get cache statistics for debugging
+  getCacheStats(): any {
+    return this.cacheService.getStats();
   }
 
   getGamesBySeason(seasonId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/games/season/${seasonId}`);
+    const cacheKey = `games-season-${seasonId}`;
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/games/season/${seasonId}`).pipe(
+      catchError(error => {
+        console.error('=== API SERVICE: getGamesBySeason Error ===');
+        console.error('Error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        throw error;
+      })
+    );
+    return this.cacheService.getOrFetch(cacheKey, observable, 5 * 60 * 1000); // Cache for 5 minutes
   }
 
   deleteGame(gameId: string): Observable<any> {
@@ -386,7 +455,17 @@ export class ApiService {
   // Get free agents for a specific season
   getFreeAgentsForSeason(seasonId: string): Observable<any[]> {
     console.log('ApiService: getFreeAgentsForSeason called for season:', seasonId);
-    return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents?seasonId=${seasonId}`);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/users/free-agents?seasonId=${seasonId}`, { headers });
+      })
+    );
   }
 
   // Offer methods

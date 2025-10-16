@@ -83,8 +83,6 @@ export class PlayerStatsService {
       return stats;
     }
 
-    console.log('Found matches for player:', playerId, 'gamertag:', gamertag, 'Count:', playerMatches.length);
-
     // Calculate stats from the matches
     playerMatches.forEach(match => {
       if (!match.eashlData || !match.eashlData.players) {
@@ -96,25 +94,6 @@ export class PlayerStatsService {
         if (typeof clubPlayers === 'object' && clubPlayers !== null) {
           Object.values(clubPlayers).forEach((playerData: any) => {
             if (gamertag && playerData && playerData.playername === gamertag) {
-              console.log('Found player data:', playerData);
-              console.log('Raw skater stats:', {
-                skgoals: playerData.skgoals,
-                skassists: playerData.skassists,
-                skplusmin: playerData.skplusmin,
-                skpim: playerData.skpim,
-                skshots: playerData.skshots,
-                skhits: playerData.skhits,
-                sktakeaways: playerData.sktakeaways,
-                skgiveaways: playerData.skgiveaways,
-                skpassattempts: playerData.skpassattempts,
-                skpasses: playerData.skpasses,
-                skpasspct: playerData.skpasspct,
-                score: playerData.score,
-                skpossession: playerData.skpossession,
-                toi: playerData.toi,
-                toiseconds: playerData.toiseconds,
-                skshotpct: playerData.skshotpct
-              });
               
               // Extract skater stats
               stats.goals! += Number(playerData.skgoals) || 0;
