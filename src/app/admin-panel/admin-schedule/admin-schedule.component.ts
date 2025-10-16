@@ -39,6 +39,14 @@ export class AdminScheduleComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadClubsAndGames();
+    
+    // Listen for storage events to refresh data when clubs are updated
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'admin-data-updated') {
+        console.log('Admin data updated, refreshing clubs and games...');
+        this.loadClubsAndGames();
+      }
+    });
   }
 
   setFilter(filter: 'all' | 'linked' | 'unlinked'): void {
@@ -162,6 +170,14 @@ export class AdminScheduleComponent implements OnInit {
       next: (clubs) => {
         this.clubs = clubs || [];
         console.log('Clubs loaded:', this.clubs.length);
+        
+        // Log EASHL club IDs for debugging
+        this.clubs.forEach(club => {
+          if (club.name === 'Kilmarnock Thunder') {
+            console.log('Kilmarnock Thunder EASHL ID:', club.eashlClubId);
+          }
+        });
+        
         this.api.getGames().subscribe({
           next: (games) => {
             console.log('Games loaded from API:', games?.length || 0);
@@ -238,13 +254,19 @@ export class AdminScheduleComponent implements OnInit {
 
     const homeGames$ = this.eashlService.getClubMatches(homeClub.eashlClubId).pipe(
       catchError(err => {
-        console.error(`Failed to load games for ${homeClub.name}`, err);
+        console.error(`Failed to load games for ${homeClub.name} (EASHL ID: ${homeClub.eashlClubId})`, err);
+        if (err.status === 404) {
+          console.error(`EASHL Club ID ${homeClub.eashlClubId} not found. Please verify the EASHL Club ID is correct.`);
+        }
         return of([]);
       })
     );
     const awayGames$ = this.eashlService.getClubMatches(awayClub.eashlClubId).pipe(
       catchError(err => {
-        console.error(`Failed to load games for ${awayClub.name}`, err);
+        console.error(`Failed to load games for ${awayClub.name} (EASHL ID: ${awayClub.eashlClubId})`, err);
+        if (err.status === 404) {
+          console.error(`EASHL Club ID ${awayClub.eashlClubId} not found. Please verify the EASHL Club ID is correct.`);
+        }
         return of([]);
       })
     );
@@ -265,9 +287,9 @@ export class AdminScheduleComponent implements OnInit {
         return uniqueGames.map(match => {
           const clubDetails = match.clubs[homeClub.eashlClubId];
           const opponentDetails = clubDetails ? match.clubs[clubDetails.opponentClubId] : null;
-          const opponentName = opponentDetails ? opponentDetails.details.name : 'Unknown';
+          const opponentName = opponentDetails?.details?.name || 'Unknown';
           const score = clubDetails ? `${clubDetails.score} - ${clubDetails.opponentScore}` : 'N/A';
-          const timeAgo = match.timeAgo.number + ' ' + match.timeAgo.unit + ' ago';
+          const timeAgo = match.timeAgo?.number + ' ' + match.timeAgo?.unit + ' ago' || 'Unknown time';
           
           // Extract the actual score values for later use
           const homeScore = clubDetails ? parseInt(clubDetails.score) : 0;
@@ -755,9 +777,9 @@ export class AdminScheduleComponent implements OnInit {
       const clubDetails = eashlGame.clubs[homeClub.eashlClubId];
       if (clubDetails) {
         const opponentDetails = eashlGame.clubs[clubDetails.opponentClubId];
-        const opponentName = opponentDetails ? opponentDetails.details.name : 'Unknown';
+        const opponentName = opponentDetails?.details?.name || 'Unknown';
         const score = clubDetails ? `${clubDetails.score} - ${clubDetails.opponentScore}` : 'N/A';
-        const timeAgo = eashlGame.timeAgo.number + ' ' + eashlGame.timeAgo.unit + ' ago';
+        const timeAgo = eashlGame.timeAgo?.number + ' ' + eashlGame.timeAgo?.unit + ' ago' || 'Unknown time';
         
         // Get goal scorers for better identification
         const goalScorers = this.getGoalScorers(eashlGame, homeClub.eashlClubId, clubDetails.opponentClubId);
