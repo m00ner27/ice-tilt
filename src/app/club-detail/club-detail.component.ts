@@ -76,7 +76,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   clubLoaded: boolean = false;
   matchesLoaded: boolean = false;
   rosterLoaded: boolean = false;
-  statsProcessing: boolean = false;
   
   // Additional properties for template
   signedPlayers: any[] = [];
@@ -512,20 +511,17 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Clear previous stats before processing new ones
         this.skaterStats = [];
         this.goalieStats = [];
-        this.statsProcessing = true;
         this.cdr.detectChanges();
         
-        // Process stats in background to prevent UI blocking
-        setTimeout(() => {
-          const { skaterStats, goalieStats } = this.clubStatsService.processPlayerStatsFromMatches(
-            this.clubMatches,
-            roster,
-            this.backendClub
-          );
-          
-          this.skaterStats = skaterStats;
-          this.goalieStats = goalieStats;
-          this.statsProcessing = false;
+        // Use the service to process stats
+        const { skaterStats, goalieStats } = this.clubStatsService.processPlayerStatsFromMatches(
+          this.clubMatches,
+          roster,
+          this.backendClub
+        );
+        
+        this.skaterStats = skaterStats;
+        this.goalieStats = goalieStats;
         
         console.log('Stats processing complete - triggering UI update');
         console.log('=== CLUB DETAIL COMPONENT - SKATER STATS ===');
@@ -544,10 +540,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         });
         console.log('=== END CLUB DETAIL COMPONENT - GOALIE STATS ===');
         this.cdr.detectChanges();
-        }, 0);
       }
-  }
-
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl);
   }
@@ -556,8 +549,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     console.log('Image failed to load, URL:', event.target.src);
     if (event.target.src.includes('square-default.png')) {
       console.log('Default image also failed to load, stopping error handling');
-      return;
-    }
+        return;
+      }
     event.target.src = '/assets/images/square-default.png';
   }
 

@@ -1,13 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatchService, EashlMatch } from '../store/services/match.service';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service'; // Import ApiService
-import { forkJoin, Subject, BehaviorSubject } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
 import { ImageUrlService } from '../shared/services/image-url.service';
-import { SkeletonLoaderComponent } from '../components/skeleton-loader/skeleton-loader.component';
 
 // Define interfaces for Season and Division
 interface Season {
@@ -101,15 +99,11 @@ interface GroupedPlayerStats {
 @Component({
   selector: 'app-player-stats',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, SkeletonLoaderComponent], // Add FormsModule
+  imports: [CommonModule, RouterModule, FormsModule], // Add FormsModule
   templateUrl: './player-stats.component.html',
   styleUrl: './player-stats.component.css'
 })
-export class PlayerStatsComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  private statsCache = new Map<string, GroupedPlayerStats[]>();
-  private dataLoaded$ = new BehaviorSubject<boolean>(false);
-  
+export class PlayerStatsComponent implements OnInit {
   allMatches: EashlMatch[] = [];
   allClubs: Club[] = []; // Store clubs with type
   divisions: Division[] = [];
@@ -120,7 +114,6 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   selectedDivisionId: string = 'all-divisions';
   
   isLoading: boolean = true;
-  isProcessingStats: boolean = false;
   sortColumn: string = 'points'; // Default sort by points
   sortDirection: 'asc' | 'desc' = 'desc'; // Default sort direction
   
@@ -134,19 +127,16 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     this.loadInitialData();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   loadInitialData(): void {
     this.isLoading = true;
-    
-    // Load seasons first (fastest)
-    this.apiService.getSeasons().pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (seasons) => {
+    forkJoin({
+      matches: this.matchService.getMatches(),
+      seasons: this.apiService.getSeasons(),
+      clubs: this.apiService.getClubs()
+    }).subscribe({
+      next: ({ matches, seasons, clubs }) => {
+        this.allMatches = matches;
+        this.allClubs = clubs;
         this.seasons = [...seasons].sort((a, b) => {
           const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
           const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
@@ -155,58 +145,25 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
         
         if (this.seasons.length > 0) {
           this.selectedSeasonId = 'all-seasons'; // Default to "All Seasons"
-        }
-        
-        // Show UI immediately after seasons load
-        this.isLoading = false;
-        this.dataLoaded$.next(true);
-      },
-      error: (err) => {
-        console.error('Failed to load seasons', err);
-        this.isLoading = false;
-      }
-    });
-
-    // Load matches and clubs in parallel (heavier data)
-    forkJoin({
-      matches: this.matchService.getMatches(),
-      clubs: this.apiService.getClubs()
-    }).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: ({ matches, clubs }) => {
-        this.allMatches = matches;
-        this.allClubs = clubs;
-        
-        // Load stats after data is ready
-        if (this.selectedSeasonId) {
-          this.loadStatsForSeason();
+          this.loadStatsForSeason(); // Initial stat load
+        } else {
+          this.isLoading = false;
         }
       },
       error: (err) => {
-        console.error('Failed to load matches and clubs', err);
+        console.error('Failed to load initial data', err);
+        this.isLoading = false;
       }
     });
   }
   
   onSeasonChange(): void {
     this.selectedDivisionId = 'all-divisions'; // Reset division filter when season changes
-    this.loadStatsForSeasonDebounced();
+    this.loadStatsForSeason();
   }
 
   onDivisionChange(): void {
     this.applyDivisionFilter();
-  }
-
-  private loadStatsForSeasonDebounced(): void {
-    // Debounce to prevent multiple rapid calls
-    this.dataLoaded$.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.loadStatsForSeason();
-    });
   }
 
   loadStatsForSeason(): void {
@@ -215,66 +172,35 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Check cache first
-    const cacheKey = `${this.selectedSeasonId}-${this.allMatches.length}`;
-    if (this.statsCache.has(cacheKey)) {
-      console.log('Using cached stats for:', cacheKey);
-      this.groupedStats = this.statsCache.get(cacheKey)!;
-      this.applyDivisionFilter();
-      return;
-    }
-    
-    this.isProcessingStats = true;
+    this.isLoading = true;
     
     // If "All Seasons" is selected, load all divisions and process all matches
     if (this.selectedSeasonId === 'all-seasons') {
-      this.apiService.getDivisions().pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
+      this.apiService.getDivisions().subscribe({
         next: (divisions) => {
           this.divisions = divisions;
-          this.processStatsWithCache(cacheKey);
+          this.filterAndAggregateStats();
+          this.isLoading = false;
         },
         error: (err) => {
           console.error('Failed to load all divisions', err);
-          this.isProcessingStats = false;
+          this.isLoading = false;
         }
       });
     } else {
       // Load divisions for specific season
-      this.apiService.getDivisionsBySeason(this.selectedSeasonId).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
+      this.apiService.getDivisionsBySeason(this.selectedSeasonId).subscribe({
         next: (divisions) => {
           this.divisions = divisions;
-          this.processStatsWithCache(cacheKey);
+          this.filterAndAggregateStats();
+          this.isLoading = false;
         },
         error: (err) => {
           console.error(`Failed to load divisions for season ${this.selectedSeasonId}`, err);
-          this.isProcessingStats = false;
+          this.isLoading = false;
         }
       });
     }
-  }
-
-  private processStatsWithCache(cacheKey: string): void {
-    // Use setTimeout to prevent blocking the UI
-    setTimeout(() => {
-      this.filterAndAggregateStats();
-      
-      // Cache the results
-      this.statsCache.set(cacheKey, [...this.groupedStats]);
-      
-      // Limit cache size to prevent memory issues
-      if (this.statsCache.size > 10) {
-        const firstKey = this.statsCache.keys().next().value;
-        if (firstKey) {
-          this.statsCache.delete(firstKey);
-        }
-      }
-      
-      this.isProcessingStats = false;
-    }, 0);
   }
 
   filterAndAggregateStats(): void {

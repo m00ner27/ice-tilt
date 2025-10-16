@@ -532,8 +532,14 @@ export class ClubsComponent implements OnInit, OnDestroy {
     // Ensure season controls are added
     this.addSeasonControls();
     
-    // Reset form first to clear any previous state
-    this.clubForm.reset();
+    // Reset form first to clear any previous state with default values
+    this.clubForm.reset({
+      name: '',
+      logo: '',
+      color: '#ffffff',
+      region: '',
+      eashlClubId: ''
+    });
     
     // Set basic form values
     this.clubForm.patchValue({
@@ -584,6 +590,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     
     if (!this.clubForm.valid) {
       console.error('Form is not valid');
+      console.error('Form errors:', this.getFormErrors());
       this.clubForm.markAllAsTouched();
       return;
     }
@@ -618,11 +625,30 @@ export class ClubsComponent implements OnInit, OnDestroy {
       eashlClubId: form.eashlClubId
     };
     
+    console.log('=== CLUB UPDATE DEBUG ===');
+    console.log('Form values:', form);
+    console.log('EASHL Club ID from form:', form.eashlClubId);
+    console.log('Update object:', updated);
+    
     this.api.updateClub(updated).subscribe({
       next: (updatedClub) => {
+        console.log('Club update response:', updatedClub);
+        console.log('Updated EASHL Club ID:', updatedClub.eashlClubId);
+        
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
-        if (idx > -1) this.clubs[idx] = updatedClub;
+        if (idx > -1) {
+          this.clubs[idx] = updatedClub;
+          console.log('Updated club in local array:', this.clubs[idx]);
+        }
         this.clubs.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // Force a complete reload of clubs to ensure we have the latest data
+        this.loadData();
+        
+        // Trigger storage event to notify other components
+        const timestamp = Date.now().toString();
+        localStorage.setItem('admin-data-updated', timestamp);
+        console.log('Triggered admin data update event:', timestamp);
         
         // Show success message and close form after a brief delay
         alert('Club updated successfully!');
@@ -646,10 +672,27 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   cancelClubForm(): void {
-    this.clubForm.reset();
+    this.clubForm.reset({
+      name: '',
+      logo: '',
+      color: '#000000', // Provide a default hex color
+      region: '',
+      eashlClubId: ''
+    });
     this.editingClub = null;
     this.isAddingClub = false;
     this.logoPreview = null;
+  }
+
+  getFormErrors(): any {
+    const errors: any = {};
+    Object.keys(this.clubForm.controls).forEach(key => {
+      const control = this.clubForm.get(key);
+      if (control && control.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
   }
 
   addSeasonControls(): void {
@@ -989,16 +1032,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   // ---------- Debug helpers ----------
-  getFormErrors(): any {
-    const errors: any = {};
-    Object.keys(this.clubForm.controls).forEach(key => {
-      const control = this.clubForm.get(key);
-      if (control && control.errors) {
-        errors[key] = control.errors;
-      }
-    });
-    return errors;
-  }
   
   // Free agents management methods
   onFreeAgentSearchChange(): void {

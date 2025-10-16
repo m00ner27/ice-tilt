@@ -3,12 +3,7 @@
 
   <!-- Loading Indicator -->
   <div *ngIf="isLoading" class="loading-container">
-    <p>Loading seasons...</p>
-  </div>
-
-  <!-- Processing Stats Indicator -->
-  <div *ngIf="isProcessingStats && !isLoading" class="loading-container">
-    <p>Processing player statistics...</p>
+    <p>Loading stats...</p>
   </div>
 
   <!-- Main Content -->
@@ -33,10 +28,6 @@
     </div>
 
     <!-- Stats Tables per Division -->
-    <div *ngIf="isProcessingStats && !isLoading" class="division-group">
-      <app-skeleton-loader type="table" [count]="10" containerClass="w-full"></app-skeleton-loader>
-    </div>
-    
     <div *ngFor="let group of filteredGroupedStats" class="division-group">
       <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
         <img *ngIf="group.divisionData?.logoUrl" 

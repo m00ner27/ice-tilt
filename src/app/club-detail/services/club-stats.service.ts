@@ -62,7 +62,6 @@ export interface GoalieStats {
   providedIn: 'root'
 })
 export class ClubStatsService {
-  private statsCache = new Map<string, { skaterStats: SkaterStats[], goalieStats: GoalieStats[] }>();
 
   private findPlayerInEashlData(eashlData: any, playerName: string, clubName: string): any {
     if (!eashlData || !eashlData.players) return null;
@@ -92,15 +91,6 @@ export class ClubStatsService {
     roster: any[],
     backendClub: any
   ): { skaterStats: SkaterStats[], goalieStats: GoalieStats[] } {
-    // Create cache key based on club ID, matches count, and roster count
-    const cacheKey = `${backendClub?._id}-${clubMatches.length}-${roster.length}`;
-    
-    // Check cache first
-    if (this.statsCache.has(cacheKey)) {
-      console.log('Using cached stats for club:', backendClub?.name);
-      return this.statsCache.get(cacheKey)!;
-    }
-    
     console.log('=== CLUB STATS SERVICE DEBUG ===');
     console.log('Processing player stats from matches for club:', backendClub?.name);
     console.log('Club matches available:', clubMatches.length);
@@ -943,18 +933,6 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
       });
     }
     
-    // Cache the results
-    const result = { skaterStats, goalieStats };
-    this.statsCache.set(cacheKey, result);
-    
-    // Limit cache size to prevent memory issues
-    if (this.statsCache.size > 20) {
-      const firstKey = this.statsCache.keys().next().value;
-      if (firstKey) {
-        this.statsCache.delete(firstKey);
-      }
-    }
-    
-    return result;
+    return { skaterStats, goalieStats };
   }
 }
