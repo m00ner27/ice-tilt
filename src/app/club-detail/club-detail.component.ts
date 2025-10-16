@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable, Subject, combineLatest } from 'rxjs';
-import { takeUntil, filter, debounceTime } from 'rxjs/operators';
+import { takeUntil, filter, debounceTime, take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
@@ -97,6 +97,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
     private imageUrlService: ImageUrlService,
@@ -151,6 +152,18 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  goBack(): void {
+    // Get the season from query parameters if available
+    this.route.queryParams.pipe(take(1)).subscribe(params => {
+      const season = params['season'];
+      if (season) {
+        this.router.navigate(['/standings'], { queryParams: { season: season } });
+      } else {
+        this.router.navigate(['/standings']);
+      }
+    });
   }
 
   private setupDataSubscriptions() {

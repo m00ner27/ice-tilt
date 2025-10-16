@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '../../store';
 import { selectPlayersState } from '../../store/players.selectors';
@@ -10,7 +11,7 @@ import { ApiService } from '../../store/services/api.service';
 @Component({
   selector: 'app-players',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './players.component.html'
 })
 export class PlayersComponent implements OnInit, OnDestroy {
@@ -23,6 +24,12 @@ export class PlayersComponent implements OnInit, OnDestroy {
   sortBy: 'name' | 'season' = 'name';
   sortOrder: 'asc' | 'desc' = 'asc';
   playerClubMap: { [playerId: string]: string } = {}; // Map player ID to club name
+  
+  // Search and pagination properties
+  searchTerm: string = '';
+  currentPage: number = 1;
+  itemsPerPage: number = 12; // Show 12 players per page (4 rows of 3)
+  
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -120,28 +127,9 @@ export class PlayersComponent implements OnInit, OnDestroy {
   }
 
   getSortedPlayers(): any[] {
-    let sorted = [...this.players];
-    
-    if (this.sortBy === 'name') {
-      sorted.sort((a, b) => {
-        const nameA = a.gamertag || '';
-        const nameB = b.gamertag || '';
-        return this.sortOrder === 'asc' 
-          ? nameA.localeCompare(nameB)
-          : nameB.localeCompare(nameA);
-      });
-    } else if (this.sortBy === 'season') {
-      sorted.sort((a, b) => {
-        const clubA = this.getPlayerClubForSeason(a) || '';
-        const clubB = this.getPlayerClubForSeason(b) || '';
-        
-        return this.sortOrder === 'asc' 
-          ? clubA.localeCompare(clubB)
-          : clubB.localeCompare(clubA);
-      });
-    }
-    
-    return sorted;
+    // This method is now deprecated in favor of getFilteredPlayers()
+    // Keeping it for backward compatibility but it now uses the new filtering logic
+    return this.getFilteredPlayers();
   }
 
   setSortBy(sortBy: 'name' | 'season') {
@@ -151,11 +139,13 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.sortBy = sortBy;
       this.sortOrder = 'asc';
     }
+    this.currentPage = 1; // Reset to first page when sorting changes
   }
 
   onSeasonChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     this.selectedSeasonId = target.value || null;
+    this.currentPage = 1; // Reset to first page when season changes
     if (this.selectedSeasonId) {
       this.loadClubRosters();
     }
@@ -199,5 +189,103 @@ export class PlayersComponent implements OnInit, OnDestroy {
       console.log('Delete player:', playerId);
       this.store.dispatch(deletePlayer({ playerId }));
     }
+  }
+
+  // Search functionality
+  onSearchChange() {
+    this.currentPage = 1; // Reset to first page when searching
+  }
+
+  clearSearch() {
+    this.searchTerm = '';
+    this.currentPage = 1; // Reset to first page when clearing search
+  }
+
+  getFilteredPlayers(): any[] {
+    let filtered = [...this.players];
+    
+    // Apply search filter
+    if (this.searchTerm.trim()) {
+      const searchLower = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(player => {
+        const gamertag = (player.gamertag || '').toLowerCase();
+        const psnId = (player.psnId || '').toLowerCase();
+        const xboxGamertag = (player.xboxGamertag || '').toLowerCase();
+        
+        return gamertag.includes(searchLower) || 
+               psnId.includes(searchLower) || 
+               xboxGamertag.includes(searchLower);
+      });
+    }
+    
+    // Apply sorting
+    if (this.sortBy === 'name') {
+      filtered.sort((a, b) => {
+        const nameA = a.gamertag || '';
+        const nameB = b.gamertag || '';
+        return this.sortOrder === 'asc' 
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      });
+    } else if (this.sortBy === 'season') {
+      filtered.sort((a, b) => {
+        const clubA = this.getPlayerClubForSeason(a) || '';
+        const clubB = this.getPlayerClubForSeason(b) || '';
+        
+        return this.sortOrder === 'asc' 
+          ? clubA.localeCompare(clubB)
+          : clubB.localeCompare(clubA);
+      });
+    }
+    
+    return filtered;
+  }
+
+  // Pagination functionality
+  getPaginatedPlayers(): any[] {
+    const filtered = this.getFilteredPlayers();
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.getFilteredPlayers().length / this.itemsPerPage);
+  }
+
+  getPageNumbers(): number[] {
+    const totalPages = this.getTotalPages();
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const start = Math.max(1, this.currentPage - 2);
+      const end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.getTotalPages()) {
+      this.currentPage = page;
+    }
+  }
+
+  getStartIndex(): number {
+    return (this.currentPage - 1) * this.itemsPerPage;
+  }
+
+  getEndIndex(): number {
+    const filtered = this.getFilteredPlayers();
+    return Math.min(this.getStartIndex() + this.itemsPerPage, filtered.length);
   }
 }

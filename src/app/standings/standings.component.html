@@ -63,7 +63,7 @@
                     (error)="onImageError($event)"
                   />
                   <span class="font-medium text-xs sm:text-sm truncate min-w-0">
-                    <a [routerLink]="['/clubs', team.teamId]" class="text-white hover:text-admin-primary transition-colors">{{ team.teamName }}</a>
+                    <a [routerLink]="['/clubs', team.teamId]" [queryParams]="{season: selectedSeasonId}" class="text-white hover:text-admin-primary transition-colors">{{ team.teamName }}</a>
                   </span>
                 </div>
               </td>

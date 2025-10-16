@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable, Subject, combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -122,7 +122,9 @@ export class StandingsComponent implements OnInit, OnDestroy {
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
     private apiService: ApiService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     // Initialize selectors
     this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
@@ -134,6 +136,13 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Check for season query parameter first
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['season']) {
+        this.selectedSeasonId = params['season'];
+      }
+    });
+
     // Load data using NgRx
     this.ngrxApiService.loadSeasons();
     this.ngrxApiService.loadClubs();
@@ -201,6 +210,13 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   onSeasonChange(): void {
+    // Update URL with the selected season
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { season: this.selectedSeasonId },
+      queryParamsHandling: 'merge'
+    });
+    
     this.loadSeasonData();
   }
 

@@ -7,7 +7,7 @@
 </div>
 
 <div class="club-detail-container" *ngIf="club && !loading && !error">
-  <button class="back-button" routerLink="/clubs">← Back to Clubs</button>
+  <button class="back-button" (click)="goBack()">← Back to Standings</button>
   
   <!-- Season Selector -->
   <div class="season-selector" *ngIf="seasons.length > 0">
