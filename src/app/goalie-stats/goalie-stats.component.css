@@ -100,7 +100,8 @@
 /* Rank column - sticky at left edge */
 .goalie-stats-table .rank-column,
 th.rank-column,
-td.rank-column {
+td.rank-column,
+.sticky-column.rank-column {
   position: sticky !important;
   left: 0 !important;
   top: 0 !important;
@@ -126,7 +127,8 @@ th.rank-column {
 /* Goalie name column - sticky after rank */
 .goalie-stats-table .goalie-name.sticky-column,
 th.goalie-name.sticky-column,
-td.goalie-name.sticky-column {
+td.goalie-name.sticky-column,
+.sticky-column.goalie-name {
   position: sticky !important;
   left: 50px !important;
   top: 0 !important;
