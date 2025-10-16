@@ -36,6 +36,11 @@
     Calculating team statistics...
   </div>
 
+  <!-- Stats processing indicator -->
+  <div class="loading-stats" *ngIf="statsProcessing">
+    Processing player statistics...
+  </div>
+
   <app-club-roster-tables 
     [signedPlayers]="signedPlayers"
     [skaterStats]="skaterStats"
