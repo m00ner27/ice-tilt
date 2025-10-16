@@ -1,6 +1,11 @@
 <div class="max-w-lg mx-auto my-10 bg-admin-card rounded-xl p-8 shadow-lg">
   <h2 class="text-2xl font-bold text-admin-primary mb-6 text-center">Add Game</h2>
-  <form [formGroup]="gameForm" (ngSubmit)="submitGame()" class="space-y-4">
+  
+  <div *ngIf="!dataLoaded" class="text-center py-4">
+    <div class="text-admin-text">Loading data...</div>
+  </div>
+  
+  <form [formGroup]="gameForm" (ngSubmit)="submitGame()" class="space-y-4" [class.opacity-50]="!dataLoaded" [class.pointer-events-none]="!dataLoaded">
     <div>
       <label class="block text-admin-text mb-2 font-medium">Season</label>
       <select formControlName="season" (change)="onSeasonChange()" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../store/services/api.service';
 
 interface Season {
@@ -41,6 +42,7 @@ export class AddGamesComponent implements OnInit {
   filteredDivisions: Division[] = [];
   filteredClubs: Club[] = [];
   gameForm: FormGroup;
+  dataLoaded = false;
 
   constructor(
     private fb: FormBuilder,
@@ -58,9 +60,29 @@ export class AddGamesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadSeasons();
-    this.loadDivisions();
-    this.loadClubs();
+    this.loadAllData();
+  }
+
+  loadAllData() {
+    // Load all data in parallel and wait for all to complete
+    forkJoin({
+      seasons: this.api.getSeasons(),
+      divisions: this.api.getDivisions(),
+      clubs: this.api.getClubs()
+    }).subscribe({
+      next: (data) => {
+        console.log('All data loaded:', data);
+        this.seasons = [...(data.seasons || [])];
+        this.divisions = [...(data.divisions || [])].sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
+        this.clubs = [...(data.clubs || [])].sort((a, b) => a.name.localeCompare(b.name));
+        this.dataLoaded = true;
+        console.log('Data loading complete. Seasons:', this.seasons.length, 'Divisions:', this.divisions.length, 'Clubs:', this.clubs.length);
+      },
+      error: (error) => {
+        console.error('Error loading data:', error);
+        this.dataLoaded = true; // Still set to true to allow form interaction
+      }
+    });
   }
 
   loadSeasons() {
@@ -101,11 +123,21 @@ export class AddGamesComponent implements OnInit {
   }
 
   onSeasonChange() {
+    if (!this.dataLoaded) {
+      console.log('Data not loaded yet, ignoring season change');
+      return;
+    }
+    
     const selectedSeasonId = this.gameForm.get('season')?.value;
-    if (selectedSeasonId) {
+    console.log('Season changed to:', selectedSeasonId);
+    console.log('Available divisions:', this.divisions.length);
+    
+    if (selectedSeasonId && this.divisions.length > 0) {
       this.filteredDivisions = this.divisions.filter(div => div.seasonId === selectedSeasonId).sort((a, b) => a.name.localeCompare(b.name));
+      console.log('Filtered divisions:', this.filteredDivisions.length);
     } else {
       this.filteredDivisions = [];
+      console.log('No divisions available or no season selected');
     }
     // Clear division and teams when season changes
     this.filteredClubs = [];
@@ -113,10 +145,18 @@ export class AddGamesComponent implements OnInit {
   }
 
   onDivisionChange() {
+    if (!this.dataLoaded) {
+      console.log('Data not loaded yet, ignoring division change');
+      return;
+    }
+    
     const selectedSeasonId = this.gameForm.get('season')?.value;
     const selectedDivisionId = this.gameForm.get('division')?.value;
     
-    if (selectedSeasonId && selectedDivisionId) {
+    console.log('Division changed to:', selectedDivisionId);
+    console.log('Available clubs:', this.clubs.length);
+    
+    if (selectedSeasonId && selectedDivisionId && this.clubs.length > 0) {
       // Filter clubs that are in the selected season and division
       this.filteredClubs = this.clubs.filter(club => {
         return club.seasons && club.seasons.some((season: any) => {
@@ -133,8 +173,10 @@ export class AddGamesComponent implements OnInit {
           });
         });
       }).sort((a, b) => a.name.localeCompare(b.name));
+      console.log('Filtered clubs:', this.filteredClubs.length);
     } else {
       this.filteredClubs = [];
+      console.log('No clubs available or missing season/division selection');
     }
     this.gameForm.patchValue({ team1: '', team2: '' });
   }
