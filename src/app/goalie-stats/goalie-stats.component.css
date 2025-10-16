@@ -22,11 +22,13 @@
 /* Table Styles */
 .goalie-stats-table-container {
   width: 100%;
-  overflow-x: auto;
+  max-height: 80vh;
+  overflow: auto;
   position: relative;
   background-color: #1a252f;
   border-radius: 8px;
   border: 1px solid #34495e;
+  isolation: isolate;
 }
 
 .goalie-stats-table {
@@ -37,10 +39,7 @@
   border-spacing: 0;
   border: none;
   border-radius: 8px;
-  margin-bottom: 20px;
   min-width: 800px; /* Ensure table is wide enough for all columns */
-  overflow: visible;
-  position: relative;
 }
 
 .goalie-stats-table th {
@@ -50,11 +49,12 @@
   font-weight: bold;
   text-align: center;
   cursor: pointer;
-  position: relative;
+  position: sticky;
+  top: 0;
   transition: background-color 0.2s;
   white-space: nowrap;
   min-width: 50px;
-  z-index: 1;
+  z-index: 20;
 }
 
 .goalie-stats-table th:first-child {
@@ -93,22 +93,25 @@
 .sticky-column {
   position: sticky !important;
   background-color: #1a252f !important;
-  z-index: 10 !important;
+  z-index: 15 !important;
   border-right: 2px solid #34495e !important;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Rank column - sticky at left edge */
-.rank-column,
+.goalie-stats-table .rank-column,
 th.rank-column,
 td.rank-column {
+  position: sticky !important;
   left: 0 !important;
+  top: 0 !important;
   width: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
   text-align: center !important;
   font-weight: 600 !important;
-  z-index: 11 !important;
+  z-index: 25 !important;
+  background-color: #1a252f !important;
+  border-right: 2px solid #34495e !important;
 }
 
 /* Ensure rank header has same styling as other headers */
@@ -117,22 +120,22 @@ th.rank-column {
   color: white !important;
   text-align: center !important;
   padding: 8px 4px !important;
-}
-
-/* Ensure rank body cells have proper background */
-td.rank-column {
-  background-color: #1a252f !important;
+  z-index: 30 !important;
 }
 
 /* Goalie name column - sticky after rank */
-.goalie-name.sticky-column,
-th.goalie-name.sticky-column {
+.goalie-stats-table .goalie-name.sticky-column,
+th.goalie-name.sticky-column,
+td.goalie-name.sticky-column {
+  position: sticky !important;
   left: 50px !important;
+  top: 0 !important;
   width: 180px !important;
   min-width: 180px !important;
   max-width: 180px !important;
-  z-index: 10 !important;
-  text-align: left !important;
+  z-index: 21 !important;
+  background-color: #1a252f !important;
+  border-right: 2px solid #34495e !important;
 }
 
 /* Ensure goalie name header has same styling as other headers */
@@ -141,11 +144,7 @@ th.goalie-name.sticky-column {
   color: white !important;
   text-align: center !important;
   padding: 8px 12px !important;
-}
-
-/* Ensure goalie name body cells have proper background */
-td.goalie-name.sticky-column {
-  background-color: #1a252f !important;
+  z-index: 29 !important;
 }
 
 .goalie-stats-table th:hover {
@@ -183,54 +182,6 @@ td.goalie-name.sticky-column {
   font-size: 0.8em;
 }
 
-/* Sticky columns for better navigation */
-.sticky-column {
-  position: sticky !important;
-  background-color: #1a252f !important;
-  z-index: 999 !important;
-  border-right: 2px solid #34495e !important;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Rank column - sticky at left edge */
-.rank-column,
-th.rank-column,
-td.rank-column {
-  left: 0 !important;
-  width: 50px !important;
-  min-width: 50px !important;
-  max-width: 50px !important;
-  text-align: center !important;
-  font-weight: 600 !important;
-  z-index: 1000 !important;
-}
-
-/* Ensure rank header has same styling as other headers */
-th.rank-column {
-  background-color: #34495e !important;
-  color: white !important;
-  text-align: center !important;
-  padding: 8px 4px !important;
-}
-
-/* Goalie name column - sticky after rank */
-.goalie-name.sticky-column,
-th.goalie-name.sticky-column {
-  left: 50px !important;
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-  z-index: 999 !important;
-  text-align: left !important;
-}
-
-/* Ensure goalie name header has same styling as other headers */
-th.goalie-name.sticky-column {
-  background-color: #34495e !important;
-  color: white !important;
-  text-align: center !important;
-  padding: 8px 12px !important;
-}
 
 /* Goalie name and team cells */
 .goalie-name {
