@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ice-tilt-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist/ice-tilt
+    envVars:
+      - key: NODE_ENV
+        value: production

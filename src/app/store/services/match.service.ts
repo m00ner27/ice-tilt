@@ -29,6 +29,8 @@ export interface PlayerMatchStats {
   faceoffsWon?: number;
   faceoffsLost?: number;
   faceoffPercentage?: number;
+  interceptions?: number;
+  penaltyAssists?: number;
   playerScore?: number;
   penaltyKillCorsiZone?: number;
   saves?: number;
@@ -127,6 +129,8 @@ export class MatchService {
             faceoffsLost: parseInt(playerData.faceoffsLost) || 0,
             faceoffPercentage: (playerData.faceoffsWon && playerData.faceoffsLost) ? 
               (parseInt(playerData.faceoffsWon) || 0) / ((parseInt(playerData.faceoffsWon) || 0) + (parseInt(playerData.faceoffsLost) || 0)) * 100 : 0,
+            interceptions: parseInt(playerData.interceptions) || 0,
+            penaltyAssists: parseInt(playerData.penaltyAssists) || 0,
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: parseInt(playerData.penaltyKillCorsiZone) || 0,
             saves: 0, // Skaters don't have saves
@@ -168,6 +172,8 @@ export class MatchService {
             faceoffsLost: parseInt(playerData.faceoffsLost) || 0,
             faceoffPercentage: (playerData.faceoffsWon && playerData.faceoffsLost) ? 
               (parseInt(playerData.faceoffsWon) || 0) / ((parseInt(playerData.faceoffsWon) || 0) + (parseInt(playerData.faceoffsLost) || 0)) * 100 : 0,
+            interceptions: parseInt(playerData.interceptions) || 0,
+            penaltyAssists: parseInt(playerData.penaltyAssists) || 0,
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: parseInt(playerData.penaltyKillCorsiZone) || 0,
             saves: 0, // Skaters don't have saves
@@ -208,6 +214,8 @@ export class MatchService {
             faceoffsWon: 0,
             faceoffsLost: 0,
             faceoffPercentage: 0,
+            interceptions: 0,
+            penaltyAssists: 0,
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: 0,
             saves: parseInt(playerData.saves) || 0,
@@ -248,6 +256,8 @@ export class MatchService {
             faceoffsWon: 0,
             faceoffsLost: 0,
             faceoffPercentage: 0,
+            interceptions: 0,
+            penaltyAssists: 0,
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: 0,
             saves: parseInt(playerData.saves) || 0,
@@ -268,7 +278,7 @@ export class MatchService {
         if (!teamPlayers) return;
         
         Object.entries(teamPlayers).forEach(([playerId, playerData]: [string, any]) => {
-          playerStats.push({
+          const processedPlayer = {
             playerId: parseInt(playerId),
             name: playerData.playername || 'Unknown',
             team: teamName,
@@ -281,7 +291,7 @@ export class MatchService {
             timeOnIce: playerData.sktoi || 'N/A',
             shotPercentage: playerData.skshots ? (parseInt(playerData.skgoals) || 0) / parseInt(playerData.skshots) * 100 : 0,
             hits: parseInt(playerData.skhits) || 0,
-            blockedShots: parseInt(playerData.skblk) || 0,
+            blockedShots: parseInt(playerData.skbs) || 0,
             penaltyMinutes: parseInt(playerData.skpim) || 0,
             powerPlayGoals: parseInt(playerData.skppg) || 0,
             shortHandedGoals: parseInt(playerData.skshg) || 0,
@@ -289,10 +299,13 @@ export class MatchService {
             takeaways: parseInt(playerData.sktakeaways) || 0,
             giveaways: parseInt(playerData.skgiveaways) || 0,
             passes: parseInt(playerData.skpasses) || 0,
-            passPercentage: parseInt(playerData.skpasspercentage) || 0,
+            passPercentage: playerData.skpassattempts > 0 ? 
+              parseFloat(((parseInt(playerData.skpasses) || 0) / parseInt(playerData.skpassattempts) * 100).toFixed(1)) : 0,
             faceoffsWon: parseInt(playerData.skfow) || 0,
             faceoffsLost: parseInt(playerData.skfol) || 0,
             faceoffPercentage: parseInt(playerData.skfopercentage) || 0,
+            interceptions: parseInt(playerData.skint) || parseInt(playerData.skinterceptions) || 0,
+            penaltyAssists: parseInt(playerData.skpassattempts) || 0, // PA = Pass Attempts
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: parseInt(playerData.skpkc) || 0,
             saves: parseInt(playerData.glsaves) || 0,
@@ -301,7 +314,10 @@ export class MatchService {
             goalsAgainstAverage: parseFloat(playerData.glgaa) || 0,
             shutout: parseInt(playerData.glso) || 0,
             shutoutPeriods: parseInt(playerData.glsoperiods) || 0
-          });
+          };
+          
+          
+          playerStats.push(processedPlayer);
         });
       };
 

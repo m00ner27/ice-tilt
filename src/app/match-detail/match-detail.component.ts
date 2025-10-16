@@ -168,6 +168,98 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     return positionMap[position] || position;
   }
 
+  // Helper method to get interceptions from player stats or EASHL data
+  getInterceptions(playerStat: any): number {
+    console.log(`Getting interceptions for ${playerStat.name}:`, {
+      playerStatInterceptions: playerStat.interceptions,
+      hasEashlData: !!this.match.eashlData,
+      hasPlayers: !!(this.match.eashlData && this.match.eashlData.players)
+    });
+    
+    // First try to get from player stats
+    if (playerStat.interceptions !== undefined) {
+      const result = parseInt(playerStat.interceptions) || 0;
+      console.log(`Using player stat interceptions: ${result}`);
+      return result;
+    }
+    
+    // If not available in player stats, try to get from EASHL data
+    if (this.match.eashlData && this.match.eashlData.players) {
+      const homeClubId = this.match.homeClub?.eashlClubId;
+      const awayClubId = this.match.awayClub?.eashlClubId;
+      
+      if (homeClubId && awayClubId) {
+        const teamIds = [homeClubId.toString(), awayClubId.toString()];
+        
+        for (const teamId of teamIds) {
+          const teamPlayers = this.match.eashlData.players[teamId];
+          if (!teamPlayers) continue;
+
+          const playersArray = Array.isArray(teamPlayers) ? teamPlayers : Object.values(teamPlayers);
+          
+          const eashlPlayer = playersArray.find((p: any) => 
+            p.playername === playerStat.name || p.name === playerStat.name
+          );
+          
+          if (eashlPlayer) {
+            const result = parseInt(eashlPlayer.skint) || 0;
+            console.log(`Found EASHL interceptions: ${result} for ${playerStat.name}`);
+            return result;
+          }
+        }
+      }
+    }
+    
+    console.log(`No interceptions found for ${playerStat.name}, returning 0`);
+    return 0;
+  }
+
+  // Helper method to get blocked shots from player stats or EASHL data
+  getBlockedShots(playerStat: any): number {
+    console.log(`Getting blocked shots for ${playerStat.name}:`, {
+      playerStatBlockedShots: playerStat.blockedShots,
+      hasEashlData: !!this.match.eashlData,
+      hasPlayers: !!(this.match.eashlData && this.match.eashlData.players)
+    });
+    
+    // First try to get from player stats
+    if (playerStat.blockedShots !== undefined) {
+      const result = parseInt(playerStat.blockedShots) || 0;
+      console.log(`Using player stat blocked shots: ${result}`);
+      return result;
+    }
+    
+    // If not available in player stats, try to get from EASHL data
+    if (this.match.eashlData && this.match.eashlData.players) {
+      const homeClubId = this.match.homeClub?.eashlClubId;
+      const awayClubId = this.match.awayClub?.eashlClubId;
+      
+      if (homeClubId && awayClubId) {
+        const teamIds = [homeClubId.toString(), awayClubId.toString()];
+        
+        for (const teamId of teamIds) {
+          const teamPlayers = this.match.eashlData.players[teamId];
+          if (!teamPlayers) continue;
+
+          const playersArray = Array.isArray(teamPlayers) ? teamPlayers : Object.values(teamPlayers);
+          
+          const eashlPlayer = playersArray.find((p: any) => 
+            p.playername === playerStat.name || p.name === playerStat.name
+          );
+          
+          if (eashlPlayer) {
+            const result = parseInt(eashlPlayer.skbs) || 0;
+            console.log(`Found EASHL blocked shots: ${result} for ${playerStat.name}`);
+            return result;
+          }
+        }
+      }
+    }
+    
+    console.log(`No blocked shots found for ${playerStat.name}, returning 0`);
+    return 0;
+  }
+
   processMatchData(): void {
     if (!this.match) return;
 
@@ -219,6 +311,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   }
 
   processPlayerStats(): void {
+    
     this.match.playerStats.forEach((playerStat: any) => {
       const statDisplay: PlayerStatDisplay = {
         playerId: playerStat.playerId || 0,
@@ -233,14 +326,15 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         shots: playerStat.shots || 0,
         shotPercentage: playerStat.shotPercentage || 0,
         hits: playerStat.hits || 0,
-        blockedShots: playerStat.blockedShots || 0,
-        pim: playerStat.pim || 0,
+        blockedShots: this.getBlockedShots(playerStat),
+        pim: playerStat.penaltyMinutes || 0,
         penaltyAssists: playerStat.penaltyAssists || 0,
-        penaltyPercentage: (playerStat.pim || 0) + (playerStat.penaltyAssists || 0) > 0 ? 
-          ((playerStat.pim || 0) / ((playerStat.pim || 0) + (playerStat.penaltyAssists || 0)) * 100) : 0,
+        penaltyPercentage: (playerStat.penaltyMinutes || 0) + (playerStat.penaltyAssists || 0) > 0 ? 
+          ((playerStat.penaltyMinutes || 0) / ((playerStat.penaltyMinutes || 0) + (playerStat.penaltyAssists || 0)) * 100) : 0,
         ppg: playerStat.powerPlayGoals || 0,
         shg: playerStat.shortHandedGoals || 0,
         gwg: playerStat.gameWinningGoals || 0,
+        gameWinningGoals: playerStat.gameWinningGoals || 0,
         takeaways: playerStat.takeaways || 0,
         giveaways: playerStat.giveaways || 0,
         passes: playerStat.passes || 0,
@@ -250,7 +344,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         faceoffsLost: playerStat.faceoffsLost || 0,
         faceoffPercentage: (playerStat.faceoffsWon || 0) + (playerStat.faceoffsLost || 0) > 0 ? 
           ((playerStat.faceoffsWon || 0) / ((playerStat.faceoffsWon || 0) + (playerStat.faceoffsLost || 0)) * 100) : 0,
-        interceptions: playerStat.interceptions || 0,
+        interceptions: this.getInterceptions(playerStat),
         playerScore: playerStat.playerScore || 0,
         penaltyKillCorsiZone: playerStat.penaltyKillCorsiZone || 0,
         wins: playerStat.wins || 0,
@@ -263,12 +357,6 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       };
 
       // Determine which team the player belongs to
-      console.log('Regular stats team matching:', {
-        playerTeam: playerStat.team,
-        homeTeam: this.match.homeTeam,
-        awayTeam: this.match.awayTeam,
-        playerName: playerStat.name
-      });
       
       if (playerStat.team === this.match.homeTeam) {
         if (playerStat.position === 'G' || playerStat.position === 'goalie') {
@@ -276,22 +364,17 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         } else {
           this.homeTeamPlayers.push(statDisplay);
         }
-        console.log('Added to home team:', playerStat.name);
       } else if (playerStat.team === this.match.awayTeam) {
         if (playerStat.position === 'G' || playerStat.position === 'goalie') {
           this.awayTeamGoalies.push(statDisplay);
         } else {
           this.awayTeamPlayers.push(statDisplay);
         }
-        console.log('Added to away team:', playerStat.name);
-      } else {
-        console.log('Player team does not match either team:', playerStat.name, playerStat.team);
       }
     });
   }
 
   processEashlData(): void {
-    console.log('Processing EASHL data for match detail');
     
     if (!this.match.eashlData || !this.match.eashlData.players) {
       this.noStatsMessage = 'No EASHL player data available for this game.';
@@ -342,6 +425,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           ppg: isGoalie ? 0 : (parseInt(playerData.skppg) || 0),
           shg: isGoalie ? 0 : (parseInt(playerData.skshg) || 0),
           gwg: isGoalie ? 0 : (parseInt(playerData.skgwg) || 0),
+          gameWinningGoals: isGoalie ? 0 : (parseInt(playerData.skgwg) || 0),
           takeaways: isGoalie ? 0 : (parseInt(playerData.sktakeaways) || 0),
           giveaways: isGoalie ? 0 : (parseInt(playerData.skgiveaways) || 0),
           passes: isGoalie ? 0 : (parseInt(playerData.skpasses) || 0),

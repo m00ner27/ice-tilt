@@ -131,8 +131,12 @@ export class HomeComponent implements OnInit {
                 // Aggregate goalie stats using correct field names
                 if (player.glsaves !== undefined) currentPlayer.saves += parseInt(player.glsaves) || 0;
                 if (player.glshots !== undefined) currentPlayer.shotsAgainst += parseInt(player.glshots) || 0;
-                if (player.glga !== undefined) currentPlayer.goalsAgainst += parseInt(player.glga) || 0;
-                if (player.glso !== undefined) currentPlayer.shutouts += parseInt(player.glso) || 0;
+                if (player.glga !== undefined) {
+                  const goalsAgainst = parseInt(player.glga) || 0;
+                  currentPlayer.goalsAgainst += goalsAgainst;
+                  // Calculate shutouts based on goals against (0 goals = 1 shutout)
+                  currentPlayer.shutouts += (goalsAgainst === 0) ? 1 : 0;
+                }
               }
             });
           });

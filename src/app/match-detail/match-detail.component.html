@@ -82,7 +82,7 @@
             <th>PIM</th>
             <th>PPG</th>
             <th>SHG</th>
-            <th>GWG</th>
+            <th>INT</th>
             <th>TK</th>
             <th>GV</th>
             <th>PA</th>
@@ -91,7 +91,6 @@
             <th>FOW</th>
             <th>FOL</th>
             <th>FO%</th>
-            <th>INT</th>
           </tr>
         </thead>
         <tbody>
@@ -109,10 +108,10 @@
             <td>{{ player.shotPercentage ? (player.shotPercentage | number:'1.1-1') + '%' : '0%' }}</td>
             <td>{{ player.hits || 0 }}</td>
             <td>{{ player.blockedShots || 0 }}</td>
-            <td>{{ player.penaltyMinutes || 0 }}</td>
+            <td>{{ player.pim || 0 }}</td>
             <td>{{ player.powerPlayGoals || 0 }}</td>
             <td>{{ player.shortHandedGoals || 0 }}</td>
-            <td>{{ player.gameWinningGoals || 0 }}</td>
+            <td>{{ player.interceptions || 0 }}</td>
             <td>{{ player.takeaways || 0 }}</td>
             <td>{{ player.giveaways || 0 }}</td>
             <td>{{ player.penaltyAssists || 0 }}</td>
@@ -121,7 +120,6 @@
             <td>{{ player.faceoffsWon || 0 }}</td>
             <td>{{ player.faceoffsLost || 0 }}</td>
             <td>{{ player.faceoffPercentage ? (player.faceoffPercentage | number:'1.1-1') + '%' : '0%' }}</td>
-            <td>{{ player.interceptions || 0 }}</td>
           </tr>
         </tbody>
         </table>
@@ -197,7 +195,7 @@
             <th>PIM</th>
             <th>PPG</th>
             <th>SHG</th>
-            <th>GWG</th>
+            <th>INT</th>
             <th>TK</th>
             <th>GV</th>
             <th>PA</th>
@@ -206,7 +204,6 @@
             <th>FOW</th>
             <th>FOL</th>
             <th>FO%</th>
-            <th>INT</th>
           </tr>
         </thead>
         <tbody>
@@ -224,10 +221,10 @@
             <td>{{ player.shotPercentage ? (player.shotPercentage | number:'1.1-1') + '%' : '0%' }}</td>
             <td>{{ player.hits || 0 }}</td>
             <td>{{ player.blockedShots || 0 }}</td>
-            <td>{{ player.penaltyMinutes || 0 }}</td>
+            <td>{{ player.pim || 0 }}</td>
             <td>{{ player.powerPlayGoals || 0 }}</td>
             <td>{{ player.shortHandedGoals || 0 }}</td>
-            <td>{{ player.gameWinningGoals || 0 }}</td>
+            <td>{{ player.interceptions || 0 }}</td>
             <td>{{ player.takeaways || 0 }}</td>
             <td>{{ player.giveaways || 0 }}</td>
             <td>{{ player.penaltyAssists || 0 }}</td>
@@ -236,7 +233,6 @@
             <td>{{ player.faceoffsWon || 0 }}</td>
             <td>{{ player.faceoffsLost || 0 }}</td>
             <td>{{ player.faceoffPercentage ? (player.faceoffPercentage | number:'1.1-1') + '%' : '0%' }}</td>
-            <td>{{ player.interceptions || 0 }}</td>
           </tr>
         </tbody>
         </table>

@@ -505,7 +505,7 @@ export class ClubStatsService {
               playerStats.goalsAgainst += playerData.goalsAgainst || 0;
               // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
 playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
-              playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) * 100 : 0;
+              playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) : 0;
               playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
             } else {
               playerStats.goals += playerData.goals || 0;
@@ -741,7 +741,7 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
                 playerStats.goalsAgainst += playerData.goalsAgainst || 0;
                 // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
 playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
-                playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) * 100 : 0;
+                playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) : 0;
                 playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
               } else {
                 playerStats.goals += playerData.goals || playerData.skgoals || 0;

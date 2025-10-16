@@ -819,7 +819,9 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
             stats.saves = (stats.saves || 0) + (playerData.saves || 0);
             stats.shotsAgainst = (stats.shotsAgainst || 0) + (playerData.shotsAgainst || 0);
             stats.goalsAgainst = (stats.goalsAgainst || 0) + (playerData.goalsAgainst || 0);
-            stats.shutouts = (stats.shutouts || 0) + (playerData.shutouts || 0);
+            // Calculate shutouts based on goals against (0 goals = 1 shutout)
+            const goalsAgainstThisGame = playerData.goalsAgainst || 0;
+            stats.shutouts += (goalsAgainstThisGame === 0) ? 1 : 0;
           } else {
             // Calculate win/loss based on match result for skaters
             const isHomeTeam = match.homeTeam === pageClubName;
@@ -987,7 +989,9 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               stats.saves = (stats.saves || 0) + (parseInt(playerData.glsaves) || 0);
               stats.shotsAgainst = (stats.shotsAgainst || 0) + (parseInt(playerData.glshots) || 0);
               stats.goalsAgainst = (stats.goalsAgainst || 0) + (parseInt(playerData.glga) || 0);
-              stats.shutouts = (stats.shutouts || 0) + (parseInt(playerData.glso) || 0);
+              // Calculate shutouts based on goals against (0 goals = 1 shutout)
+              const goalsAgainstThisGame = parseInt(playerData.glga) || 0;
+              stats.shutouts += (goalsAgainstThisGame === 0) ? 1 : 0;
             } else {
               // Calculate win/loss based on match result
               const playerTeamScore = parseInt(playerData.score) || 0;

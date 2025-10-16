@@ -465,6 +465,16 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           console.log(`${player.name}: passes=${player.passes}, passAttempts=${player.passAttempts}, passPercentage=${player.passPercentage}%`);
         });
         console.log('=== END CLUB DETAIL COMPONENT - SKATER STATS ===');
+        
+        // Debug goalie stats, especially Vxxlle
+        console.log('=== CLUB DETAIL COMPONENT - GOALIE STATS ===');
+        this.goalieStats.forEach(goalie => {
+          console.log(`${goalie.name}: GP=${goalie.gamesPlayed}, SO=${goalie.shutouts}, GA=${goalie.goalsAgainst}, Saves=${goalie.saves}`);
+          if (goalie.name.includes('Vxxlle')) {
+            console.log('🔍 VXXLLE GOALIE STATS:', goalie);
+          }
+        });
+        console.log('=== END CLUB DETAIL COMPONENT - GOALIE STATS ===');
         this.cdr.detectChanges();
       }
   getImageUrl(logoUrl: string | undefined): string {
