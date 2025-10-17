@@ -6,39 +6,33 @@
     <p>Loading stats...</p>
   </div>
 
-  <!-- Processing Indicator -->
-  <div *ngIf="isProcessing" class="processing-container">
-    <p>Processing player statistics... {{ processingProgress }}%</p>
-    <div class="progress-bar">
-      <div class="progress-fill" [style.width.%]="processingProgress"></div>
-    </div>
-  </div>
-
-
   <!-- Main Content -->
-  <div *ngIf="!isLoading && !isProcessing">
+  <div *ngIf="!isLoading">
     <!-- Season and Division Selectors -->
     <div class="filters-container">
       <div class="filter-group">
         <label for="season-select">Season:</label>
         <select id="season-select" [(ngModel)]="selectedSeasonId" (ngModelChange)="onSeasonChange()">
-          <option value="all-seasons">All-Time</option>
           <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
         </select>
       </div>
       
-      <div class="filter-group" *ngIf="selectedSeasonId !== 'all-seasons'">
+      <div class="filter-group">
         <label for="division-select">Division:</label>
         <select id="division-select" [(ngModel)]="selectedDivisionId" (ngModelChange)="onDivisionChange()">
           <option value="all-divisions">All Divisions</option>
           <option *ngFor="let division of divisions" [value]="division._id">{{ division.name }}</option>
         </select>
       </div>
+      
+      <div class="stats-summary">
+        <span>Total Players: {{ getTotalPlayers() }}</span>
+      </div>
     </div>
 
     <!-- Stats Tables per Division -->
     <div *ngFor="let group of filteredGroupedStats" class="division-group">
-      <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
+      <h2 class="division-header">
         <img *ngIf="group.divisionData?.logoUrl" 
              [src]="getImageUrl(group.divisionData?.logoUrl)" 
              [alt]="group.division + ' logo'" 
@@ -51,33 +45,30 @@
         <table class="player-stats-table">
           <thead>
             <tr>
-              <th class="sticky-column rank-column">Rank</th>
+              <th class="sticky-column rank-column">#</th>
               <th class="sticky-column player-name" [ngClass]="getColumnSortClass('name')" (click)="onSortColumn('name')">Player</th>
-              <th [ngClass]="getColumnSortClass('team')" (click)="onSortColumn('team')">Club</th>
-              <th [className]="getColumnSortClass('position')" (click)="onSortColumn('position')">Pos</th>
-              <th [className]="getColumnSortClass('gamesPlayed')" (click)="onSortColumn('gamesPlayed')">GP</th>
-              <th [className]="getColumnSortClass('goals')" (click)="onSortColumn('goals')">G</th>
-              <th [className]="getColumnSortClass('assists')" (click)="onSortColumn('assists')">A</th>
-              <th [className]="getColumnSortClass('points')" (click)="onSortColumn('points')">PTS</th>
-              <th [className]="getColumnSortClass('plusMinus')" (click)="onSortColumn('plusMinus')">+/-</th>
-
-              <th [className]="getColumnSortClass('shots')" (click)="onSortColumn('shots')">S</th>
-              <th [className]="getColumnSortClass('shotPercentage')" (click)="onSortColumn('shotPercentage')">S%</th>
-              <th [className]="getColumnSortClass('hits')" (click)="onSortColumn('hits')">H</th>
-              <th [className]="getColumnSortClass('blockedShots')" (click)="onSortColumn('blockedShots')">BS</th>
-              <th [className]="getColumnSortClass('penaltyMinutes')" (click)="onSortColumn('penaltyMinutes')">PIM</th>
-              <th [className]="getColumnSortClass('powerPlayGoals')" (click)="onSortColumn('powerPlayGoals')">PPG</th>
-              <th [className]="getColumnSortClass('shortHandedGoals')" (click)="onSortColumn('shortHandedGoals')">SHG</th>
-              <th [className]="getColumnSortClass('gameWinningGoals')" (click)="onSortColumn('gameWinningGoals')">GWG</th>
-              <th [className]="getColumnSortClass('interceptions')" (click)="onSortColumn('interceptions')">INT</th>
-              <th [className]="getColumnSortClass('takeaways')" (click)="onSortColumn('takeaways')">TK</th>
-              <th [className]="getColumnSortClass('giveaways')" (click)="onSortColumn('giveaways')">GV</th>
-              <th [className]="getColumnSortClass('passAttempts')" (click)="onSortColumn('passAttempts')">PA</th>
-              <th [className]="getColumnSortClass('passes')" (click)="onSortColumn('passes')">P</th>
-              <th [className]="getColumnSortClass('passPercentage')" (click)="onSortColumn('passPercentage')">P%</th>
-              <th [className]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
-              <th [className]="getColumnSortClass('faceoffsLost')" (click)="onSortColumn('faceoffsLost')">FOL</th>
-              <th [className]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
+              <th [ngClass]="getColumnSortClass('team')" (click)="onSortColumn('team')">Team</th>
+              <th [ngClass]="getColumnSortClass('position')" (click)="onSortColumn('position')">Pos</th>
+              <th [ngClass]="getColumnSortClass('gamesPlayed')" (click)="onSortColumn('gamesPlayed')">GP</th>
+              <th [ngClass]="getColumnSortClass('goals')" (click)="onSortColumn('goals')">G</th>
+              <th [ngClass]="getColumnSortClass('assists')" (click)="onSortColumn('assists')">A</th>
+              <th [ngClass]="getColumnSortClass('points')" (click)="onSortColumn('points')">PTS</th>
+              <th [ngClass]="getColumnSortClass('plusMinus')" (click)="onSortColumn('plusMinus')">+/-</th>
+              <th [ngClass]="getColumnSortClass('shots')" (click)="onSortColumn('shots')">S</th>
+              <th [ngClass]="getColumnSortClass('shotPercentage')" (click)="onSortColumn('shotPercentage')">S%</th>
+              <th [ngClass]="getColumnSortClass('hits')" (click)="onSortColumn('hits')">H</th>
+              <th [ngClass]="getColumnSortClass('blockedShots')" (click)="onSortColumn('blockedShots')">BS</th>
+              <th [ngClass]="getColumnSortClass('penaltyMinutes')" (click)="onSortColumn('penaltyMinutes')">PIM</th>
+              <th [ngClass]="getColumnSortClass('powerPlayGoals')" (click)="onSortColumn('powerPlayGoals')">PPG</th>
+              <th [ngClass]="getColumnSortClass('shortHandedGoals')" (click)="onSortColumn('shortHandedGoals')">SHG</th>
+              <th [ngClass]="getColumnSortClass('gameWinningGoals')" (click)="onSortColumn('gameWinningGoals')">GWG</th>
+              <th [ngClass]="getColumnSortClass('takeaways')" (click)="onSortColumn('takeaways')">TK</th>
+              <th [ngClass]="getColumnSortClass('giveaways')" (click)="onSortColumn('giveaways')">GV</th>
+              <th [ngClass]="getColumnSortClass('passAttempts')" (click)="onSortColumn('passAttempts')">PA</th>
+              <th [ngClass]="getColumnSortClass('passes')" (click)="onSortColumn('passes')">P</th>
+              <th [ngClass]="getColumnSortClass('passPercentage')" (click)="onSortColumn('passPercentage')">P%</th>
+              <th [ngClass]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
+              <th [ngClass]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
             </tr>
           </thead>
           <tbody>
@@ -100,7 +91,6 @@
               <td [ngClass]="{'positive': player.plusMinus > 0, 'negative': player.plusMinus < 0}">
                 {{ player.plusMinus > 0 ? '+' : '' }}{{ player.plusMinus }}
               </td>
-
               <td>{{ player.shots }}</td>
               <td>{{ player.shotPercentage }}%</td>
               <td>{{ player.hits }}</td>
@@ -109,14 +99,12 @@
               <td>{{ player.powerPlayGoals }}</td>
               <td>{{ player.shortHandedGoals }}</td>
               <td>{{ player.gameWinningGoals }}</td>
-              <td>{{ player.interceptions }}</td>
               <td>{{ player.takeaways }}</td>
               <td>{{ player.giveaways }}</td>
               <td>{{ player.passAttempts }}</td>
               <td>{{ player.passes }}</td>
               <td>{{ player.passPercentage }}%</td>
               <td>{{ player.faceoffsWon }}</td>
-              <td>{{ player.faceoffsLost }}</td>
               <td>{{ player.faceoffPercentage }}%</td>
             </tr>
           </tbody>
@@ -130,37 +118,37 @@
     </div>
     
     <!-- Stats Legend -->
-    <div class="schedule-legend" *ngIf="!isLoading">
-      <div class="legend-item">
-        <span class="legend-abbr">Pos</span> - Position
-        <span class="legend-abbr">GP</span> - Games Played
-        <span class="legend-abbr">G</span> - Goals
-        <span class="legend-abbr">A</span> - Assists
-        <span class="legend-abbr">PTS</span> - Points
-        <span class="legend-abbr">+/-</span> - Plus/Minus
-        <span class="legend-abbr">S</span> - Shots
-        <span class="legend-abbr">S%</span> - Shot Percentage
-      </div>
-      <div class="legend-item">
-        <span class="legend-abbr">H</span> - Hits
-        <span class="legend-abbr">BS</span> - Blocked Shots
-        <span class="legend-abbr">PIM</span> - Penalty Minutes
-        <span class="legend-abbr">TK</span> - Takeaways
-        <span class="legend-abbr">GV</span> - Giveaways
-      </div>
-      <div class="legend-item">
-        <span class="legend-abbr">PPG</span> - Power Play Goals
-        <span class="legend-abbr">SHG</span> - Short Handed Goals
-        <span class="legend-abbr">GWG</span> - Game Winning Goals
-      </div>
-      <div class="legend-item">
-        <span class="legend-abbr">PA</span> - Pass Attempts
-        <span class="legend-abbr">P</span> - Passes
-        <span class="legend-abbr">P%</span> - Pass Percentage
-        <span class="legend-abbr">FOW</span> - Faceoffs Won
-        <span class="legend-abbr">FOL</span> - Faceoffs Lost
-        <span class="legend-abbr">FO%</span> - Faceoff Percentage
-        <span class="legend-abbr">INT</span> - Interceptions
+    <div class="stats-legend" *ngIf="!isLoading">
+      <h3>Statistics Legend</h3>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <span class="legend-abbr">GP</span> - Games Played
+          <span class="legend-abbr">G</span> - Goals
+          <span class="legend-abbr">A</span> - Assists
+          <span class="legend-abbr">PTS</span> - Points
+          <span class="legend-abbr">+/-</span> - Plus/Minus
+        </div>
+        <div class="legend-item">
+          <span class="legend-abbr">S</span> - Shots
+          <span class="legend-abbr">S%</span> - Shot Percentage
+          <span class="legend-abbr">H</span> - Hits
+          <span class="legend-abbr">BS</span> - Blocked Shots
+          <span class="legend-abbr">PIM</span> - Penalty Minutes
+        </div>
+        <div class="legend-item">
+          <span class="legend-abbr">PPG</span> - Power Play Goals
+          <span class="legend-abbr">SHG</span> - Short Handed Goals
+          <span class="legend-abbr">GWG</span> - Game Winning Goals
+          <span class="legend-abbr">TK</span> - Takeaways
+          <span class="legend-abbr">GV</span> - Giveaways
+        </div>
+        <div class="legend-item">
+          <span class="legend-abbr">PA</span> - Pass Attempts
+          <span class="legend-abbr">P</span> - Passes
+          <span class="legend-abbr">P%</span> - Pass Percentage
+          <span class="legend-abbr">FOW</span> - Faceoffs Won
+          <span class="legend-abbr">FO%</span> - Faceoff Percentage
+        </div>
       </div>
     </div>
   </div>
