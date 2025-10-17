@@ -1,13 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable, Subscription, combineLatest } from 'rxjs';
-import { map, take, tap } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
-import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
@@ -16,7 +14,7 @@ import * as ClubsSelectors from '../store/clubs.selectors';
 import * as SeasonsSelectors from '../store/seasons.selectors';
 import * as DivisionsSelectors from '../store/divisions.selectors';
 
-// Define interfaces
+// Simplified interfaces
 interface Season {
   _id: string;
   name: string;
@@ -24,8 +22,6 @@ interface Season {
   startDate: Date | string;
   isActive: boolean;
   divisions?: string[];
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 interface Division {
@@ -36,15 +32,13 @@ interface Division {
   order?: number;
 }
 
-interface ClubSeasonInfo {
-  seasonId: string | { _id: string; name: string };
-  divisionIds?: string[];
-  roster?: string[];
-}
-
 interface Club {
   name: string;
-  seasons?: ClubSeasonInfo[];
+  seasons?: Array<{
+    seasonId: string | { _id: string; name: string };
+    divisionIds?: string[];
+    roster?: string[];
+  }>;
 }
 
 interface PlayerStats {
@@ -52,9 +46,7 @@ interface PlayerStats {
   name: string;
   team: string;
   teamLogo?: string;
-  number: number;
   position: string;
-  positionCounts: { [position: string]: number };
   gamesPlayed: number;
   goals: number;
   assists: number;
@@ -64,13 +56,11 @@ interface PlayerStats {
   hits: number;
   blockedShots: number;
   penaltyMinutes: number;
-  timeOnIce: string;
   powerPlayGoals: number;
   shortHandedGoals: number;
   gameWinningGoals: number;
   takeaways: number;
   giveaways: number;
-  interceptions: number;
   passAttempts: number;
   passes: number;
   passPercentage: number;
@@ -78,10 +68,6 @@ interface PlayerStats {
   faceoffsWon: number;
   faceoffsLost: number;
   faceoffPercentage: number;
-  playerScore: number;
-  possession: number;
-  penaltyKillCorsiZone: number;
-  penaltyAssists: number;
   division?: string;
 }
 
@@ -94,7 +80,7 @@ interface GroupedPlayerStats {
 @Component({
   selector: 'app-player-stats',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './player-stats.component.html',
   styleUrl: './player-stats.component.css'
 })
@@ -118,18 +104,8 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   divisions: Division[] = [];
   
   isLoading: boolean = true;
-  isProcessing: boolean = false;
-  processingProgress: number = 0;
   sortColumn: string = 'points';
   sortDirection: 'asc' | 'desc' = 'desc';
-  
-  // Cache for processed stats
-  private statsCache = new Map<string, GroupedPlayerStats[]>();
-  private lastProcessedSeason: string | null = null;
-  
-  // Persistent cache using localStorage
-  private readonly CACHE_KEY = 'player-stats-cache';
-  private readonly CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
   
   // Subscription management
   private dataSubscription?: Subscription;
@@ -137,7 +113,6 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
-    private apiService: ApiService,
     private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
@@ -152,18 +127,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   ngOnInit(): void {
-    // Clear any invalid cache first
-    this.clearInvalidCache();
-    
-    // Load from persistent cache first
-    this.loadFromPersistentCache();
-    
     this.loadInitialData();
-    
-    // Preload all-seasons data in background for instant switching
-    setTimeout(() => {
-      this.preloadAllSeasonsData();
-    }, 2000); // Start preloading after 2 seconds
   }
   
   ngOnDestroy(): void {
@@ -192,23 +156,6 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       this.seasonsLoading$,
       this.divisionsLoading$
     ]).pipe(
-      tap(([matches, clubs, seasons, divisions, matchesLoading, clubsLoading, seasonsLoading, divisionsLoading]) => {
-        console.log('📊 Data loaded:', {
-          matches: matches.length,
-          clubs: clubs.length,
-          seasons: seasons.length,
-          divisions: divisions.length,
-          loading: { matches: matchesLoading, clubs: clubsLoading, seasons: seasonsLoading, divisions: divisionsLoading }
-        });
-        
-        // Debug matches specifically
-        if (matches.length === 0 && !matchesLoading) {
-          console.log('⚠️ No matches in store, checking store state...');
-          this.store.select(MatchesSelectors.selectMatchesLoadingState).pipe(take(1)).subscribe(state => {
-            console.log('🔍 Matches loading state:', state);
-          });
-        }
-      }),
       map(([matches, clubs, seasons, divisions, matchesLoading, clubsLoading, seasonsLoading, divisionsLoading]) => ({
         matches,
         clubs,
@@ -222,29 +169,14 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       }))
     ).subscribe({
       next: ({ matches, clubs, seasons, divisions, loading }) => {
-        console.log('📊 Data check:', { 
-          loading, 
-          matchesCount: matches.length, 
-          clubsCount: clubs.length, 
-          seasonsCount: seasons.length,
-          divisionsCount: divisions.length 
-        });
-        
         if (!loading && clubs.length > 0 && seasons.length > 0) {
           this.isLoading = false;
           
           if (this.seasons.length === 0) {
             this.seasons = seasons;
             this.divisions = divisions;
-            this.selectedSeasonId = 'all-seasons';
-            
-            // If no matches in store, try to load them directly
-            if (matches.length === 0) {
-              console.log('⚠️ No matches found in store, attempting direct load...');
-              this.loadMatchesDirectly();
-            } else {
-              this.processStats(matches, clubs, divisions);
-            }
+            this.selectedSeasonId = seasons.length > 0 ? seasons[0]._id : null;
+            this.processStats(matches, clubs, divisions);
           }
         }
       },
@@ -268,139 +200,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     return this.filteredGroupedStats.reduce((sum, group) => sum + group.stats.length, 0);
   }
   
-  // Method to manually clear cache (can be called from browser console)
-  clearCache(): void {
-    console.log('🗑️ Manually clearing all caches...');
-    localStorage.removeItem(this.CACHE_KEY);
-    this.statsCache.clear();
-    this.groupedStats = [];
-    this.filteredGroupedStats = [];
-    this.isLoading = true;
-    this.loadInitialData();
-  }
-  
-  private loadFromPersistentCache(): void {
-    try {
-      const cached = localStorage.getItem(this.CACHE_KEY);
-      if (cached) {
-        const data = JSON.parse(cached);
-        const now = Date.now();
-        
-        // Check if cache is still valid AND has actual data
-        if (data.timestamp && (now - data.timestamp) < this.CACHE_EXPIRY && data.stats && data.stats.length > 0) {
-          // Check if the cached data has actual players
-          const hasPlayers = data.stats.some((group: any) => group.stats && group.stats.length > 0);
-          if (hasPlayers) {
-            console.log('📦 Loading from persistent cache');
-            this.statsCache.set('all-seasons', data.stats);
-            this.groupedStats = data.stats;
-            this.applyDivisionFilter();
-            this.isLoading = false;
-            return;
-          } else {
-            console.log('🗑️ Cache has no players, clearing...');
-            localStorage.removeItem(this.CACHE_KEY);
-          }
-        } else {
-          console.log('⏰ Cache expired or invalid, clearing...');
-          localStorage.removeItem(this.CACHE_KEY);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading from cache:', error);
-      localStorage.removeItem(this.CACHE_KEY);
-    }
-  }
-  
-  private saveToPersistentCache(): void {
-    try {
-      const data = {
-        timestamp: Date.now(),
-        stats: this.groupedStats
-      };
-      localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
-      console.log('💾 Saved to persistent cache');
-    } catch (error) {
-      console.error('Error saving to cache:', error);
-    }
-  }
-  
-  private clearInvalidCache(): void {
-    try {
-      const cached = localStorage.getItem(this.CACHE_KEY);
-      if (cached) {
-        const data = JSON.parse(cached);
-        // Check if cache has no players or invalid data
-        const hasValidPlayers = data.stats && data.stats.some((group: any) => 
-          group.stats && group.stats.length > 0
-        );
-        
-        if (!hasValidPlayers) {
-          console.log('🗑️ Clearing invalid cache with no players');
-          localStorage.removeItem(this.CACHE_KEY);
-          this.statsCache.clear();
-        }
-      }
-    } catch (error) {
-      console.error('Error checking cache validity:', error);
-      localStorage.removeItem(this.CACHE_KEY);
-      this.statsCache.clear();
-    }
-  }
-  
-  private preloadAllSeasonsData(): void {
-    // Only preload if not already cached
-    if (!this.statsCache.has('all-seasons')) {
-      console.log('🔄 Preloading all-seasons data in background...');
-      combineLatest([this.allMatches$, this.allClubs$, this.divisions$]).pipe(take(1)).subscribe(([matches, clubs, divisions]) => {
-        if (matches.length > 0 && clubs.length > 0 && divisions.length > 0) {
-          // Process in background without showing loading states
-          this.processAllSeasonsStats(matches, clubs, divisions);
-          this.statsCache.set('all-seasons', this.groupedStats);
-          console.log('✅ All-seasons data preloaded and cached');
-        }
-      });
-    }
-  }
-  
-  private loadMatchesDirectly(): void {
-    console.log('🔄 Loading matches directly from API...');
-    this.apiService.getGames().subscribe({
-      next: (matches: any[]) => {
-        console.log('📊 Direct matches loaded:', matches.length);
-        if (matches.length > 0) {
-          // Get current data from observables
-          combineLatest([this.allClubs$, this.divisions$]).pipe(take(1)).subscribe(([clubs, divisions]) => {
-            this.processStats(matches, clubs, divisions);
-          });
-        } else {
-          console.log('⚠️ Still no matches found after direct load');
-          combineLatest([this.allClubs$, this.divisions$]).pipe(take(1)).subscribe(([clubs, divisions]) => {
-            this.processStats([], clubs, divisions);
-          });
-        }
-      },
-      error: (err: any) => {
-        console.error('Failed to load matches directly', err);
-        combineLatest([this.allClubs$, this.divisions$]).pipe(take(1)).subscribe(([clubs, divisions]) => {
-          this.processStats([], clubs, divisions);
-        });
-      }
-    });
-  }
-  
   private processStatsForCurrentSeason(): void {
     if (!this.selectedSeasonId) return;
     
-    // Check cache first
-    if (this.statsCache.has(this.selectedSeasonId) && this.lastProcessedSeason === this.selectedSeasonId) {
-      console.log('📋 Using cached stats for season:', this.selectedSeasonId);
-      this.groupedStats = this.statsCache.get(this.selectedSeasonId)!;
-      this.applyDivisionFilter();
-      return;
-    }
-    
-    // Get fresh data
     combineLatest([
       this.allMatches$,
       this.allClubs$,
@@ -411,110 +213,22 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   private processStats(matches: any[], clubs: Club[], divisions: Division[]): void {
-    console.log('🔄 Processing stats for season:', this.selectedSeasonId);
+    console.log('Processing stats for season:', this.selectedSeasonId);
     
-    // Check cache first
-    const cacheKey = this.selectedSeasonId || 'all-seasons';
-    if (this.statsCache.has(cacheKey)) {
-      const cachedStats = this.statsCache.get(cacheKey)!;
-      // Verify cached data has actual players
-      const hasPlayers = cachedStats.some(group => group.stats && group.stats.length > 0);
-      if (hasPlayers) {
-        console.log('📦 Using cached stats for season:', cacheKey);
-        this.groupedStats = cachedStats;
-        this.applyDivisionFilter();
-        this.isLoading = false;
-        return;
-      } else {
-        console.log('🗑️ Cached stats are empty, reprocessing...');
-        this.statsCache.delete(cacheKey);
-      }
-    }
-    
-    if (this.selectedSeasonId === 'all-seasons') {
-      this.processAllSeasonsStats(matches, clubs, divisions);
-    } else {
+    if (this.selectedSeasonId) {
       this.processSpecificSeasonStats(matches, clubs, divisions);
     }
-    
-    // Cache the results
-    this.statsCache.set(this.selectedSeasonId!, this.groupedStats);
-    this.lastProcessedSeason = this.selectedSeasonId;
     
     this.applyDivisionFilter();
   }
   
-  private processAllSeasonsStats(matches: any[], clubs: Club[], divisions: Division[]): void {
-    console.log('🌍 Processing ALL SEASONS stats');
-    
-    // Create team division map for all seasons
-    const teamDivisionMap = new Map<string, string>();
-    const divisionIdToNameMap = new Map<string, string>();
-    divisions.forEach(d => divisionIdToNameMap.set(d._id, d.name));
-
-    clubs.forEach(club => {
-      if (club.seasons && club.seasons.length > 0) {
-        const firstSeason = club.seasons[0];
-        if (firstSeason.divisionIds && firstSeason.divisionIds.length > 0) {
-          const divisionId = firstSeason.divisionIds[0];
-          const divisionName = divisionIdToNameMap.get(divisionId);
-          if (divisionName) {
-            teamDivisionMap.set(club.name, divisionName);
-          }
-        }
-      }
-    });
-    
-    // Filter matches for all seasons
-    const filteredMatches = matches.filter(match => {
-      // Check if match has any player data (either eashlData or manualEntry)
-      return (match.eashlData && match.eashlData.players && match.eashlData.players.length > 0) ||
-             (match.manualEntry && match.manualEntry.players && match.manualEntry.players.length > 0);
-    });
-    
-    
-    // For initial load, show a smaller subset for faster display
-    if (this.isLoading && filteredMatches.length > 20) {
-      const subsetMatches = filteredMatches.slice(0, 20); // Process first 20 matches
-      this.aggregatePlayerStats(subsetMatches, teamDivisionMap);
-      
-      // Process remaining matches in background
-      setTimeout(() => {
-        this.aggregatePlayerStats(filteredMatches, teamDivisionMap);
-      }, 500);
-    } else {
-      // Process all matches normally
-      this.aggregatePlayerStats(filteredMatches, teamDivisionMap);
-    }
-  }
   
   private processSpecificSeasonStats(matches: any[], clubs: Club[], divisions: Division[]): void {
-    console.log('🎯 Processing specific season stats:', this.selectedSeasonId);
-    
-    // Filter matches and clubs for the specific season
-    const seasonTeams = new Set<string>();
-    clubs.forEach(club => {
-      const seasonInfo = club.seasons?.find((s: ClubSeasonInfo) => {
-        if (typeof s.seasonId === 'object' && s.seasonId._id) {
-          return s.seasonId._id === this.selectedSeasonId;
-        } else if (typeof s.seasonId === 'string') {
-          return s.seasonId === this.selectedSeasonId;
-        }
-        return false;
-      });
-      if (seasonInfo) {
-        seasonTeams.add(club.name);
-      }
-    });
+    console.log('Processing specific season stats:', this.selectedSeasonId);
     
     // Filter matches to only include those from the specific season
     const filteredMatches = matches.filter(match => {
-      if (match.seasonId && match.seasonId === this.selectedSeasonId) {
-        const homeTeamInSeason = match.homeClub?.name && seasonTeams.has(match.homeClub.name);
-        const awayTeamInSeason = match.awayClub?.name && seasonTeams.has(match.awayClub.name);
-        return homeTeamInSeason || awayTeamInSeason;
-      }
-      return false;
+      return match.seasonId && match.seasonId === this.selectedSeasonId;
     });
     
     // Create team division map for the selected season
@@ -522,10 +236,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     const divisionIdToNameMap = new Map<string, string>();
     divisions.forEach(d => divisionIdToNameMap.set(d._id, d.name));
 
+    // First, try to get division info from club data
     clubs.forEach(club => {
-      if (!seasonTeams.has(club.name)) return;
-
-      const seasonInfo = club.seasons?.find((s: ClubSeasonInfo) => {
+      const seasonInfo = club.seasons?.find((s: any) => {
         if (typeof s.seasonId === 'object' && s.seasonId._id) {
           return s.seasonId._id === this.selectedSeasonId;
         } else if (typeof s.seasonId === 'string') {
@@ -541,13 +254,51 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    // Then, try to get division info from match data as fallback
+    filteredMatches.forEach(match => {
+      // Check if home team division is available in match data
+      if (match.homeClub?.name && !teamDivisionMap.has(match.homeClub.name)) {
+        if (match.homeClub.divisionId) {
+          const divisionName = divisionIdToNameMap.get(match.homeClub.divisionId);
+          if (divisionName) {
+            teamDivisionMap.set(match.homeClub.name, divisionName);
+          }
+        } else if (match.homeClub.division) {
+          teamDivisionMap.set(match.homeClub.name, match.homeClub.division);
+        }
+      }
+      
+      // Check if away team division is available in match data
+      if (match.awayClub?.name && !teamDivisionMap.has(match.awayClub.name)) {
+        if (match.awayClub.divisionId) {
+          const divisionName = divisionIdToNameMap.get(match.awayClub.divisionId);
+          if (divisionName) {
+            teamDivisionMap.set(match.awayClub.name, divisionName);
+          }
+        } else if (match.awayClub.division) {
+          teamDivisionMap.set(match.awayClub.name, match.awayClub.division);
+        }
+      }
+    });
+
+    console.log('Team division mapping:', Array.from(teamDivisionMap.entries()));
+    console.log('Looking for Flying Toasters in mapping:', teamDivisionMap.has('Flying Toasters'));
+    console.log('Flying Toasters division:', teamDivisionMap.get('Flying Toasters'));
+    
+    // Check for case variations
+    const allTeamNames = Array.from(teamDivisionMap.keys());
+    const flyingToastersVariations = allTeamNames.filter(name => 
+      name.toLowerCase().includes('flying') || name.toLowerCase().includes('toaster')
+    );
+    console.log('Teams containing "flying" or "toaster":', flyingToastersVariations);
     
     // Process stats for the filtered matches
     this.aggregatePlayerStats(filteredMatches, teamDivisionMap);
   }
   
   private aggregatePlayerStats(matches: any[], teamDivisionMap: Map<string, string>): void {
-    console.log('⚡ Aggregating player stats for', matches.length, 'matches');
+    console.log('Aggregating player stats for', matches.length, 'matches');
     
     const statsMap = new Map<number, PlayerStats>();
     const teamLogoMap = new Map<string, string | undefined>();
@@ -558,81 +309,11 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       if (match.awayTeam) teamLogoMap.set(match.awayTeam, this.getImageUrl(match.awayClub?.logoUrl));
     });
     
-    // For small datasets, process immediately
-    if (matches.length <= 20) {
-      console.log('⚡ Small dataset, processing immediately');
-      matches.forEach(match => {
-        this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
-      });
-      this.finalizePlayerStats(statsMap, teamDivisionMap);
-    } else {
-      // Process matches in batches to avoid blocking the UI
-      this.processMatchesInBatches(matches, statsMap, teamLogoMap, teamDivisionMap);
-    }
-  }
-  
-  private processMatchesInBatches(matches: any[], statsMap: Map<number, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): void {
-    const batchSize = 20; // Process 20 matches at a time for maximum performance
-    let currentIndex = 0;
-    let updateCounter = 0;
+    matches.forEach(match => {
+      this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
+    });
     
-    console.log(`🔄 Starting batch processing: ${matches.length} matches in batches of ${batchSize}`);
-    this.isProcessing = true;
-    this.processingProgress = 0;
-    
-    const processBatch = () => {
-      const batch = matches.slice(currentIndex, currentIndex + batchSize);
-      const progress = Math.round((currentIndex / matches.length) * 100);
-      
-      console.log(`📊 Processing batch ${Math.floor(currentIndex / batchSize) + 1}: matches ${currentIndex + 1}-${Math.min(currentIndex + batchSize, matches.length)} (${progress}%)`);
-      
-      // Update progress for UI
-      this.processingProgress = progress;
-      
-      // Process batch
-      batch.forEach(match => {
-        this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
-      });
-      
-      currentIndex += batchSize;
-      updateCounter++;
-      
-      // Update UI with partial results every batch for maximum responsiveness
-      if (currentIndex < matches.length) {
-        this.updatePartialResults(statsMap, teamDivisionMap);
-        // Use requestAnimationFrame for smoother UI updates
-        requestAnimationFrame(() => {
-          setTimeout(processBatch, 0); // No delay for maximum speed
-        });
-      } else {
-        // All matches processed, finalize stats
-        console.log('✅ All batches processed, finalizing stats...');
-        this.isProcessing = false;
-        this.processingProgress = 100;
-        this.finalizePlayerStats(statsMap, teamDivisionMap);
-      }
-    };
-    
-    // Start processing immediately
-    processBatch();
-  }
-  
-  private updatePartialResults(statsMap: Map<number, PlayerStats>, teamDivisionMap: Map<string, string>): void {
-    // Create a temporary stats array for partial results
-    const tempStats = Array.from(statsMap.values());
-    
-    if (tempStats.length > 0) {
-      // Show partial results with a limited number of players for better performance
-      const limitedStats = tempStats.slice(0, 200); // Show first 200 players
-      
-      this.groupedStats = [{
-        division: 'All Seasons (Loading...)',
-        divisionData: undefined,
-        stats: [...limitedStats].sort((a, b) => b.points - a.points || b.goals - a.goals)
-      }];
-      
-      this.applyDivisionFilter();
-    }
+    this.finalizePlayerStats(statsMap, teamDivisionMap);
   }
   
   private processMatchForPlayerStats(match: any, statsMap: Map<number, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): void {
@@ -641,15 +322,11 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       return;
     }
     
-    
     // Check for manual entry first
     if (match.manualEntry) {
       this.processManualPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
     } else if (match.eashlData?.players) {
       this.processEashlPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
-    } else if (match.eashlData?.manualEntry) {
-      // Handle eashlData with manualEntry flag
-      this.processManualPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
     }
   }
   
@@ -686,27 +363,45 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   private processEashlPlayerStats(match: any, statsMap: Map<number, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): void {
+    // Get the two teams from the match
+    const homeTeam = match.homeClub?.name || match.homeTeam || 'Unknown';
+    const awayTeam = match.awayClub?.name || match.awayTeam || 'Unknown';
+    const homeEashlClubId = match.homeClub?.eashlClubId;
+    const awayEashlClubId = match.awayClub?.eashlClubId;
+    
+    console.log('Processing EASHL stats for match:', {
+      homeTeam,
+      awayTeam,
+      homeEashlClubId,
+      awayEashlClubId,
+      clubIds: Object.keys(match.eashlData.players)
+    });
+    
+    // Process each club ID and assign players to teams
     Object.entries(match.eashlData.players).forEach(([clubId, clubPlayers]: [string, any]) => {
-      // Map club ID to team name
-      let teamName = 'Unknown';
-      if (match.homeClub?.eashlClubId === clubId) {
-        teamName = match.homeClub.name;
-      } else if (match.awayClub?.eashlClubId === clubId) {
-        teamName = match.awayClub.name;
-      }
-      
       if (typeof clubPlayers === 'object' && clubPlayers !== null) {
+        // Determine which team this club ID belongs to
+        let assignedTeam = this.determineTeamFromClubId(clubId, homeTeam, awayTeam, homeEashlClubId, awayEashlClubId);
+        
+        console.log(`Club ID ${clubId} assigned to team: ${assignedTeam}`);
+        
+        // Process all players in this club
         Object.entries(clubPlayers).forEach(([playerId, playerData]: [string, any]) => {
           if (!playerData.position || this.isGoalie(playerData.position)) {
             return; // Skip goalies
           }
 
+          const playerName = playerData.playername || 'Unknown';
           const playerIdNum = parseInt(playerId);
           let existingStats = statsMap.get(playerIdNum);
 
           if (!existingStats) {
-            existingStats = this.createNewPlayerStats(playerIdNum, playerData.playername || 'Unknown', teamName, teamLogoMap, teamDivisionMap);
+            existingStats = this.createNewPlayerStats(playerIdNum, playerName, assignedTeam, teamLogoMap, teamDivisionMap);
             statsMap.set(playerIdNum, existingStats);
+            
+            // Debug logging for division assignment
+            const assignedDivision = teamDivisionMap.get(assignedTeam) || 'Unknown';
+            console.log(`Player ${playerName} from team ${assignedTeam} assigned to division: ${assignedDivision}`);
           }
 
           this.updatePlayerStatsFromEashl(existingStats, playerData);
@@ -715,15 +410,46 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     });
   }
   
+  private determineTeamFromClubId(clubId: string, homeTeam: string, awayTeam: string, homeEashlClubId?: string, awayEashlClubId?: string): string {
+    // First try to match by EASHL club ID
+    if (homeEashlClubId && clubId === homeEashlClubId) {
+      console.log(`Club ID ${clubId} matches home team EASHL ID ${homeEashlClubId}`);
+      return homeTeam;
+    }
+    
+    if (awayEashlClubId && clubId === awayEashlClubId) {
+      console.log(`Club ID ${clubId} matches away team EASHL ID ${awayEashlClubId}`);
+      return awayTeam;
+    }
+    
+    // If no EASHL club ID match, use a smarter fallback strategy
+    console.log(`No EASHL club ID match for ${clubId}, using smart fallback assignment`);
+    
+    // Smart fallback: if we have one team that already matched and one that didn't,
+    // assign the unmatched club ID to the team that didn't match
+    if (homeEashlClubId && awayEashlClubId) {
+      // Both teams have EASHL IDs, so this is an unknown club ID
+      // Assign to away team as a default (since home team is often the "primary" team)
+      console.log(`Unknown club ID ${clubId} assigned to away team ${awayTeam} as fallback`);
+      return awayTeam;
+    } else {
+      // One or both teams don't have EASHL IDs, use simple fallback
+      const clubIdNum = parseInt(clubId);
+      if (clubIdNum % 2 === 0) {
+        return homeTeam;
+      } else {
+        return awayTeam;
+      }
+    }
+  }
+  
   private createNewPlayerStats(playerKey: any, name: string, teamName: string, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): PlayerStats {
     return {
       playerId: playerKey,
       name: name,
       team: teamName,
       teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
-      number: 0,
       position: 'Unknown',
-      positionCounts: {},
       division: teamDivisionMap.get(teamName) || 'Unknown',
       gamesPlayed: 0,
       goals: 0,
@@ -734,24 +460,18 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       hits: 0,
       blockedShots: 0,
       penaltyMinutes: 0,
-      timeOnIce: '0:00',
       powerPlayGoals: 0,
       shortHandedGoals: 0,
       gameWinningGoals: 0,
       takeaways: 0,
       giveaways: 0,
-      interceptions: 0,
       passAttempts: 0,
       passes: 0,
       passPercentage: 0,
       shotPercentage: 0,
       faceoffsWon: 0,
       faceoffsLost: 0,
-      faceoffPercentage: 0,
-      playerScore: 0,
-      possession: 0,
-      penaltyKillCorsiZone: 0,
-      penaltyAssists: 0
+      faceoffPercentage: 0
     };
   }
   
@@ -760,8 +480,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     
     // Track position frequency and update to most common position
     const currentPos = this.formatPosition(playerData.position);
-    existingStats.positionCounts[currentPos] = (existingStats.positionCounts[currentPos] || 0) + 1;
-    existingStats.position = this.getMostCommonPosition(existingStats.positionCounts);
+    existingStats.position = currentPos;
     
     existingStats.goals += parseInt(playerData.goals) || 0;
     existingStats.assists += parseInt(playerData.assists) || 0;
@@ -772,21 +491,15 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     existingStats.hits += parseInt(playerData.hits) || 0;
     existingStats.blockedShots += parseInt(playerData.blockedShots) || 0;
     existingStats.penaltyMinutes += parseInt(playerData.penaltyMinutes) || 0;
-    existingStats.timeOnIce = playerData.timeOnIce || '0:00';
     existingStats.powerPlayGoals += parseInt(playerData.powerPlayGoals) || 0;
     existingStats.shortHandedGoals += parseInt(playerData.shortHandedGoals) || 0;
     existingStats.gameWinningGoals += parseInt(playerData.gameWinningGoals) || 0;
     existingStats.takeaways += parseInt(playerData.takeaways) || 0;
     existingStats.giveaways += parseInt(playerData.giveaways) || 0;
-    existingStats.interceptions += parseInt(playerData.interceptions) || 0;
     existingStats.passAttempts += parseInt(playerData.passAttempts) || 0;
     existingStats.passes += parseInt(playerData.passes) || 0;
-    existingStats.playerScore += parseInt(playerData.score) || 0;
-    existingStats.possession += parseInt(playerData.possession) || 0;
     existingStats.faceoffsWon += parseInt(playerData.faceoffsWon) || 0;
     existingStats.faceoffsLost += parseInt(playerData.faceoffsLost) || 0;
-    existingStats.penaltyKillCorsiZone += parseInt(playerData.penaltyKillCorsiZone) || 0;
-    existingStats.penaltyAssists += parseInt(playerData.penaltyAssists) || 0;
   }
   
   private updatePlayerStatsFromEashl(existingStats: PlayerStats, playerData: any): void {
@@ -794,8 +507,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     
     // Track position frequency and update to most common position
     const currentPos = this.formatPosition(playerData.position);
-    existingStats.positionCounts[currentPos] = (existingStats.positionCounts[currentPos] || 0) + 1;
-    existingStats.position = this.getMostCommonPosition(existingStats.positionCounts);
+    existingStats.position = currentPos;
     
     existingStats.goals += parseInt(playerData.skgoals) || 0;
     existingStats.assists += parseInt(playerData.skassists) || 0;
@@ -806,86 +518,71 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     existingStats.hits += parseInt(playerData.skhits) || 0;
     existingStats.blockedShots += parseInt(playerData.skbs) || 0;
     existingStats.penaltyMinutes += parseInt(playerData.skpim) || 0;
-    existingStats.timeOnIce = playerData.sktoi || '0:00';
     existingStats.powerPlayGoals += parseInt(playerData.skppg) || 0;
     existingStats.shortHandedGoals += parseInt(playerData.skshg) || 0;
     existingStats.gameWinningGoals += parseInt(playerData.skgwg) || 0;
     existingStats.takeaways += parseInt(playerData.sktakeaways) || 0;
     existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
-    existingStats.interceptions += parseInt(playerData.skint) || 0;
     existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
     existingStats.passes += parseInt(playerData.skpasses) || 0;
-    existingStats.playerScore += parseInt(playerData.score) || 0;
-    existingStats.possession += parseInt(playerData.skpossession) || 0;
     existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
     existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
-    existingStats.penaltyKillCorsiZone += parseInt(playerData.skpkc) || 0;
-    existingStats.penaltyAssists += 0; // Not available in EASHL data
   }
   
   private finalizePlayerStats(statsMap: Map<number, PlayerStats>, teamDivisionMap: Map<string, string>): void {
-    console.log('🏁 Finalizing player stats for', statsMap.size, 'players');
+    console.log('Finalizing player stats for', statsMap.size, 'players');
     
-    // Use requestAnimationFrame to ensure UI updates smoothly
-    requestAnimationFrame(() => {
-      // Calculate percentages and ensure points are calculated correctly for all players
-      statsMap.forEach(player => {
-        player.points = player.goals + player.assists;
-        
-        // Calculate percentages
-        if (player.shots > 0) {
-          player.shotPercentage = parseFloat(((player.goals / player.shots) * 100).toFixed(1));
-        }
-        if (player.passAttempts > 0) {
-          player.passPercentage = parseFloat(((player.passes / player.passAttempts) * 100).toFixed(1));
-        }
-        const totalFaceoffs = player.faceoffsWon + player.faceoffsLost;
-        if (totalFaceoffs > 0) {
-          player.faceoffPercentage = parseFloat(((player.faceoffsWon / totalFaceoffs) * 100).toFixed(1));
-        }
-      });
+    // Calculate percentages and ensure points are calculated correctly for all players
+    statsMap.forEach(player => {
+      player.points = player.goals + player.assists;
       
-      // Convert stats map to grouped stats
-      const allPlayerStats = Array.from(statsMap.values());
-      
-      if (this.selectedSeasonId === 'all-seasons') {
-        // For "All Seasons", show as one combined table
-        this.groupedStats = [{
-          division: 'All Seasons',
-          divisionData: undefined,
-          stats: [...allPlayerStats].sort((a, b) => b.points - a.points || b.goals - a.goals)
-        }];
-      } else {
-        // Group stats by division for specific season
-        const divisionStatsMap = new Map<string, PlayerStats[]>();
-        allPlayerStats.forEach(stat => {
-          const divisionName = stat.division || 'Unassigned';
-          if (!divisionStatsMap.has(divisionName)) {
-            divisionStatsMap.set(divisionName, []);
-          }
-          divisionStatsMap.get(divisionName)!.push(stat);
-        });
-        
-        this.groupedStats = Array.from(divisionStatsMap.entries()).map(([division, stats]) => {
-          const divisionData = this.divisions.find(d => d.name === division);
-          return { 
-            division, 
-            divisionData,
-            stats: [...stats].sort((a, b) => b.points - a.points || b.goals - a.goals) 
-          };
-        }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
+      // Calculate percentages
+      if (player.shots > 0) {
+        player.shotPercentage = parseFloat(((player.goals / player.shots) * 100).toFixed(1));
       }
-      
-      console.log('✅ Player stats finalized:', this.groupedStats.length, 'divisions');
-      console.log('📊 Sample stats:', this.groupedStats[0]?.stats.slice(0, 3));
-      
-      // Save to persistent cache
-      this.saveToPersistentCache();
-      
-      // Apply division filter and trigger change detection
-      this.applyDivisionFilter();
-      this.isLoading = false;
+      if (player.passAttempts > 0) {
+        player.passPercentage = parseFloat(((player.passes / player.passAttempts) * 100).toFixed(1));
+      }
+      const totalFaceoffs = player.faceoffsWon + player.faceoffsLost;
+      if (totalFaceoffs > 0) {
+        player.faceoffPercentage = parseFloat(((player.faceoffsWon / totalFaceoffs) * 100).toFixed(1));
+      }
     });
+    
+    // Convert stats map to grouped stats
+    const allPlayerStats = Array.from(statsMap.values());
+    
+    // Group stats by division for the selected season
+    const divisionStatsMap = new Map<string, PlayerStats[]>();
+    allPlayerStats.forEach(stat => {
+      const divisionName = stat.division || 'Unassigned';
+      if (!divisionStatsMap.has(divisionName)) {
+        divisionStatsMap.set(divisionName, []);
+      }
+      divisionStatsMap.get(divisionName)!.push(stat);
+    });
+    
+    this.groupedStats = Array.from(divisionStatsMap.entries()).map(([division, stats]) => {
+      const divisionData = this.divisions.find(d => d.name === division);
+      return { 
+        division, 
+        divisionData,
+        stats: [...stats].sort((a, b) => b.points - a.points || b.goals - a.goals) 
+      };
+    }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
+    
+    console.log('Player stats finalized:', this.groupedStats.length, 'divisions');
+    console.log('Division names:', this.groupedStats.map(g => g.division));
+    
+    // Check specifically for Flying Toasters players
+    const flyingToastersPlayers = allPlayerStats.filter(p => p.team === 'Flying Toasters');
+    if (flyingToastersPlayers.length > 0) {
+      console.log('Flying Toasters players found:', flyingToastersPlayers.map(p => ({ name: p.name, team: p.team, division: p.division })));
+    }
+    
+    // Apply division filter
+    this.applyDivisionFilter();
+    this.isLoading = false;
   }
 
   applyDivisionFilter(): void {
@@ -902,7 +599,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       }
     }
     
-    console.log('🔍 Applied division filter:', {
+    console.log('Applied division filter:', {
       selectedDivisionId: this.selectedDivisionId,
       groupedStats: this.groupedStats.length,
       filteredStats: this.filteredGroupedStats.length,
@@ -987,17 +684,6 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
         case 'faceoffPercentage':
           comparison = a.faceoffPercentage - b.faceoffPercentage;
           break;
-        case 'interceptions':
-          comparison = a.interceptions - b.interceptions;
-          break;
-        case 'timeOnIce':
-          const timeA = this.parseTimeToMinutes(a.timeOnIce);
-          const timeB = this.parseTimeToMinutes(b.timeOnIce);
-          comparison = timeA - timeB;
-          break;
-        case 'penaltyAssists':
-          comparison = a.penaltyAssists - b.penaltyAssists;
-          break;
         default:
           comparison = a.points - b.points;
       }
@@ -1039,20 +725,6 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     return positionMap[key] || position;
   }
 
-  private getMostCommonPosition(positionCounts: { [position: string]: number }): string {
-    let mostCommon = '';
-    let maxCount = 0;
-    
-    for (const [position, count] of Object.entries(positionCounts)) {
-      if (count > maxCount) {
-        maxCount = count;
-        mostCommon = position;
-      }
-    }
-    
-    return mostCommon || 'Unknown';
-  }
-
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl, 'assets/images/1ithlwords.png');
   }
@@ -1066,20 +738,5 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     }
     
     event.target.src = '/assets/images/square-default.png';
-  }
-
-  private parseTimeToMinutes(timeStr: string): number {
-    if (!timeStr || timeStr === '0:00' || timeStr === 'N/A') {
-      return 0;
-    }
-    
-    const parts = timeStr.split(':');
-    if (parts.length === 2) {
-      const minutes = parseInt(parts[0]) || 0;
-      const seconds = parseInt(parts[1]) || 0;
-      return minutes + (seconds / 60);
-    }
-    
-    return 0;
   }
 }
