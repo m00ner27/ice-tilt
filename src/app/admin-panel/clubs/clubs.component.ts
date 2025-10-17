@@ -516,6 +516,11 @@ export class ClubsComponent implements OnInit, OnDestroy {
         next: (newClub) => {
           this.clubs.push(newClub);
           this.clubs.sort((a, b) => a.name.localeCompare(b.name));
+          
+          // Clear clubs cache to ensure fresh data is loaded
+          this.api.invalidateClubsCache();
+          console.log('Cleared clubs cache after creating new club');
+          
           this.cancelClubForm();
         },
         error: (error) => {
@@ -645,6 +650,10 @@ export class ClubsComponent implements OnInit, OnDestroy {
         // Force a complete reload of clubs to ensure we have the latest data
         this.loadData();
         
+        // Clear clubs cache to ensure fresh data is loaded
+        this.api.invalidateClubsCache();
+        console.log('Cleared clubs cache after update');
+        
         // Trigger storage event to notify other components
         const timestamp = Date.now().toString();
         localStorage.setItem('admin-data-updated', timestamp);
@@ -667,8 +676,20 @@ export class ClubsComponent implements OnInit, OnDestroy {
     if (confirm('Are you sure you want to delete this club?')) {
       this.api.deleteClub(club._id!).subscribe(() => {
         this.clubs = this.clubs.filter(c => c._id !== club._id);
+        
+        // Clear clubs cache to ensure fresh data is loaded
+        this.api.invalidateClubsCache();
+        console.log('Cleared clubs cache after deleting club');
       });
     }
+  }
+
+  clearAllCaches(): void {
+    this.api.invalidateAllCaches();
+    console.log('Cleared all caches');
+    alert('All caches cleared! The page will reload with fresh data.');
+    // Reload the page to ensure fresh data is loaded
+    window.location.reload();
   }
 
   cancelClubForm(): void {
