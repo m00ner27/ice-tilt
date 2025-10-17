@@ -965,21 +965,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
     });
   }
   
-  addMeAsAdmin(): void {
-    this.api.addMeAsAdmin().subscribe({
-      next: (response) => {
-        alert('You have been added as an admin! You can now delete clubs.');
-      },
-      error: (error) => {
-        console.error('Error adding admin:', error);
-        if (error.status === 409) {
-          alert('You are already an admin!');
-        } else {
-          alert('Error adding admin: ' + (error.error?.message || error.message));
-        }
-      }
-    });
-  }
 
   ngOnDestroy(): void {
     if (this.rosterUpdateSubscription) {

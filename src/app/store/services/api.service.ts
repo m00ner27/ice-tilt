@@ -297,7 +297,6 @@ export class ApiService {
     this.cacheService.invalidate('divisions');
   }
 
-
   // Invalidate all caches (useful for admin operations)
   invalidateAllCaches(): void {
     this.cacheService.clear();
