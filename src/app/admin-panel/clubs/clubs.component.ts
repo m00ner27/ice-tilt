@@ -349,7 +349,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
           // Update the club's roster in the clubs array
           const clubIndex = this.clubs.findIndex(c => c._id === club._id);
           if (clubIndex > -1) {
-            this.clubs[clubIndex].roster = mappedRoster;
+            this.clubs[clubIndex] = { ...this.clubs[clubIndex], roster: mappedRoster };
           }
           
           return mappedRoster;
@@ -417,7 +417,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
         }));
 
         if (this.selectedClub) {
-          this.selectedClub.roster = mappedRoster;
+          this.selectedClub = { ...this.selectedClub, roster: mappedRoster };
         }
       });
     }
@@ -822,12 +822,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
             }));
             
             // Update both selectedClub and the clubs array
-            this.selectedClub!.roster = mappedRoster;
+            this.selectedClub = { ...this.selectedClub!, roster: mappedRoster };
             
             // Also update the roster in the clubs array to ensure filtering works correctly
             const clubIndex = this.clubs.findIndex(c => c._id === club._id);
             if (clubIndex > -1) {
-              this.clubs[clubIndex].roster = mappedRoster;
+              this.clubs[clubIndex] = { ...this.clubs[clubIndex], roster: mappedRoster };
             }
           },
           error: (error) => {
@@ -878,7 +878,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
               status: player.playerProfile?.status || 'Signed',
               playerProfile: player.playerProfile
             }));
-            this.clubs[clubIndex].roster = mappedRoster;
+            this.clubs[clubIndex] = { ...this.clubs[clubIndex], roster: mappedRoster };
           });
         }
         
@@ -931,7 +931,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
               status: player.playerProfile?.status || 'Signed',
               playerProfile: player.playerProfile
             }));
-            this.clubs[clubIndex].roster = mappedRoster;
+            this.clubs[clubIndex] = { ...this.clubs[clubIndex], roster: mappedRoster };
           });
         }
         
