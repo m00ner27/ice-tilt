@@ -6,8 +6,17 @@
     <p>Loading stats...</p>
   </div>
 
+  <!-- Processing Indicator -->
+  <div *ngIf="isProcessing" class="processing-container">
+    <p>Processing player statistics... {{ processingProgress }}%</p>
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="processingProgress"></div>
+    </div>
+  </div>
+
+
   <!-- Main Content -->
-  <div *ngIf="!isLoading">
+  <div *ngIf="!isLoading && !isProcessing">
     <!-- Season and Division Selectors -->
     <div class="filters-container">
       <div class="filter-group">

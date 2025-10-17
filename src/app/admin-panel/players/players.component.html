@@ -111,14 +111,8 @@
               <span class="text-gray-400">Console:</span>
               <div class="flex items-center gap-2">
                 <img 
-                  *ngIf="player.platform === 'PS5'" 
-                  src="assets/images/playstation-logo.svg" 
-                  alt="PlayStation" 
-                  class="w-4 h-4">
-                <img 
-                  *ngIf="player.platform === 'Xbox'" 
-                  src="assets/images/xbox-logo.svg" 
-                  alt="Xbox" 
+                  [src]="player.platform === 'PS5' ? 'assets/images/playstation-logo.svg' : 'assets/images/xbox-logo.svg'"
+                  [alt]="player.platform === 'PS5' ? 'PlayStation' : 'Xbox'" 
                   class="w-4 h-4">
                 <span class="text-white">{{ player.platform === 'PS5' ? 'PlayStation' : 'Xbox' }}</span>
               </div>

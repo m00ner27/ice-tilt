@@ -27,8 +27,9 @@
                      formControlName="platform"
                      value="PS5" 
                      class="mr-3 text-blue-500 focus:ring-blue-500" />
-                   <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-6 h-6 mr-2">
-                   PlayStation
+                   <img *ngIf="playerForm.get('platform')?.value === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-6 h-6 mr-2">
+                   <img *ngIf="playerForm.get('platform')?.value === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-6 h-6 mr-2">
+                   {{ playerForm.get('platform')?.value === 'PS5' ? 'PlayStation' : 'Xbox' }}
                  </label>
                  <label class="flex items-center text-white cursor-pointer">
                    <input 

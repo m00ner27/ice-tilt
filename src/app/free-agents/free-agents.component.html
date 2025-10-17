@@ -72,7 +72,8 @@
             </p>
             <p class="gaming-ids">
               <span *ngIf="player.psnId">
-                <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo-sm">
+                <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="platform-logo-sm">
+                <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="platform-logo-sm">
                 PSN: {{player.psnId}}
               </span>
               <span *ngIf="player.xboxGamertag">

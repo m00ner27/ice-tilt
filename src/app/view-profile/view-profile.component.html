@@ -94,7 +94,8 @@
       <h2 class="text-admin-primary mb-6 text-3xl">Gaming ID</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="flex gap-2 items-center" *ngIf="player.psnId">
-          <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-5 h-5 flex-shrink-0">
+          <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-5 h-5 flex-shrink-0">
+          <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-5 h-5 flex-shrink-0">
           <span class="text-gray-400">PSN:</span>
           <span class="text-admin-primary font-medium">{{ player.psnId }}</span>
         </div>

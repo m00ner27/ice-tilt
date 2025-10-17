@@ -99,7 +99,8 @@
             </p>
             <p class="text-gray-300 my-1 text-sm flex flex-col gap-1">
               <span *ngIf="player.psnId" class="flex items-center gap-1">
-                <img src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4 flex-shrink-0">
+                <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4 flex-shrink-0">
+                <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4 flex-shrink-0">
                 PSN: {{player.psnId}}
               </span>
               <span *ngIf="player.xboxGamertag" class="flex items-center gap-1">

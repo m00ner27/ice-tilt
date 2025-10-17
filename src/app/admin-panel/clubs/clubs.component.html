@@ -77,6 +77,7 @@
             <div class="flex items-center gap-2 text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">
               <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
               <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+              <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
               <span>{{ player.platform === 'PS5' ? 'PlayStation' : 'Xbox' }}</span>
             </div>
             <button class="p-1 text-admin-primary hover:bg-red-600 hover:text-white rounded transition-colors" (click)="removePlayerFromRoster(selectedClub, player)">
@@ -165,6 +166,7 @@
               <!-- Platform Badge -->
               <div class="flex items-center gap-1 text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">
                 <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
+              <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
                 <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
                 <span class="text-xs">{{ player.platform === 'PS5' ? 'PS5' : 'Xbox' }}</span>
               </div>

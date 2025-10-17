@@ -97,7 +97,7 @@ export class GoalieStatsComponent implements OnInit {
       next: ({ matches, seasons, clubs }) => {
         this.allMatches = matches;
         this.allClubs = clubs;
-        this.seasons = seasons.sort((a, b) => {
+        this.seasons = [...seasons].sort((a, b) => {
           const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
           const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
           return dateB - dateA;
