@@ -1,0 +1,102 @@
+<div class="p-6">
+  <!-- Authentication Error Alert -->
+  <div *ngIf="authError && !isAuthenticated" class="bg-red-600 text-white p-4 rounded-lg mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="font-semibold">Authentication Required</h3>
+        <p class="text-sm">You need to be logged in to access admin features. Click the button below to login.</p>
+      </div>
+      <button 
+        (click)="login()" 
+        class="bg-white text-red-600 px-4 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors"
+      >
+        Login
+      </button>
+    </div>
+  </div>
+
+  <!-- Admin Logout Button -->
+  <div *ngIf="isAuthenticated" class="bg-blue-600 text-white p-4 rounded-lg mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="font-semibold">Admin Panel Active</h3>
+        <p class="text-sm">You are currently logged into the admin panel. Use the profile dropdown in the top-right to logout completely, or click below to exit admin view.</p>
+      </div>
+      <button 
+        (click)="logoutFromAdmin()" 
+        class="bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors"
+      >
+        Exit Admin View
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg flex items-center gap-4">
+      <i class="fas fa-calendar text-3xl text-admin-primary"></i>
+      <div>
+        <h3 class="text-lg font-semibold text-admin-text">Active Seasons</h3>
+        <p class="text-2xl font-bold text-white">{{ seasons.length }}</p>
+      </div>
+    </div>
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg flex items-center gap-4">
+      <i class="fas fa-users text-3xl text-admin-primary"></i>
+      <div>
+        <h3 class="text-lg font-semibold text-admin-text">Total Clubs</h3>
+        <p class="text-2xl font-bold text-white">{{ clubs.length }}</p>
+      </div>
+    </div>
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg flex items-center gap-4">
+      <i class="fas fa-user text-3xl text-admin-primary"></i>
+      <div>
+        <h3 class="text-lg font-semibold text-admin-text">Total Users</h3>
+        <p class="text-2xl font-bold text-white">{{ usersCount }}</p>
+      </div>
+    </div>
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg flex items-center gap-4">
+      <i class="fas fa-trophy text-3xl text-admin-primary"></i>
+      <div>
+        <h3 class="text-lg font-semibold text-admin-text">Divisions</h3>
+        <p class="text-2xl font-bold text-white">{{ divisions.length }}</p>
+      </div>
+    </div>
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg flex items-center gap-4">
+      <i class="fas fa-gamepad text-3xl text-admin-primary"></i>
+      <div>
+        <h3 class="text-lg font-semibold text-admin-text">Games Scheduled</h3>
+        <p class="text-2xl font-bold text-white">{{ games.length }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg">
+      <h3 class="text-xl font-semibold text-admin-primary mb-4">Recent Activity</h3>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 p-3 bg-admin-hover rounded-lg" *ngFor="let activity of recentActivity">
+          <i [class]="activity.icon" class="text-admin-primary"></i>
+          <span class="text-white flex-1">{{ activity.message }}</span>
+          <small class="text-admin-text">{{ activity.time }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg">
+      <h3 class="text-xl font-semibold text-admin-primary mb-4">Quick Actions</h3>
+      <div class="space-y-3">
+        <button (click)="goTo('seasons')" class="w-full bg-admin-secondary text-white px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-blue-700 transition-colors">
+          <i class="fas fa-plus"></i>
+          Add Season
+        </button>
+        <button (click)="goTo('clubs')" class="w-full bg-admin-secondary text-white px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-blue-700 transition-colors">
+          <i class="fas fa-plus"></i>
+          Add Club
+        </button>
+        <button (click)="goTo('schedule')" class="w-full bg-admin-secondary text-white px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-blue-700 transition-colors">
+          <i class="fas fa-plus"></i>
+          Schedule Game
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

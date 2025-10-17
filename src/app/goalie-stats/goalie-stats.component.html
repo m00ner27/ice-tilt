@@ -1,0 +1,82 @@
+<div class="goalie-stats-container">
+  <h1 class="goalie-stats-title">Goalie Statistics</h1>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading stats...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading">
+    <!-- Season and Division Selectors -->
+    <div class="filters-container">
+      <div class="filter-group">
+        <label for="season-select">Season:</label>
+        <select id="season-select" [(ngModel)]="selectedSeasonId" (ngModelChange)="onSeasonChange()">
+          <option value="all-seasons">All-Time</option>
+          <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group" *ngIf="selectedSeasonId !== 'all-seasons'">
+        <label for="division-select">Division:</label>
+        <select id="division-select" [(ngModel)]="selectedDivisionId" (ngModelChange)="onDivisionChange()">
+          <option value="all-divisions">All Divisions</option>
+          <option *ngFor="let division of divisions" [value]="division._id">{{ division.name }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stats Tables per Division -->
+    <div *ngFor="let group of filteredGroupedStats" class="division-group">
+      <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
+        <img *ngIf="group.divisionData?.logoUrl" [src]="getImageUrl(group.divisionData?.logoUrl)" [alt]="group.division + ' logo'" class="division-logo" (error)="onImageError($event)">
+        {{ group.division }}
+      </h2>
+      
+      <div class="goalie-stats-table-container">
+        <table class="goalie-stats-table">
+          <thead>
+            <tr>
+              <th class="sticky-column rank-column">Rank</th>
+              <th class="sticky-column goalie-name" [ngClass]="getColumnSortClass('name')" (click)="onSortColumn('name')">Player</th>
+              <th [ngClass]="getColumnSortClass('team')" (click)="onSortColumn('team')">Club</th>
+              <th [className]="getColumnSortClass('gamesPlayed')" (click)="onSortColumn('gamesPlayed')">GP</th>
+              <th [className]="getColumnSortClass('saves')" (click)="onSortColumn('saves')">SV</th>
+              <th [className]="getColumnSortClass('shotsAgainst')" (click)="onSortColumn('shotsAgainst')">SA</th>
+              <th [className]="getColumnSortClass('savePercentage')" (click)="onSortColumn('savePercentage')">SV%</th>
+              <th [className]="getColumnSortClass('goalsAgainstAverage')" (click)="onSortColumn('goalsAgainstAverage')">GAA</th>
+              <th [className]="getColumnSortClass('shutouts')" (click)="onSortColumn('shutouts')">SO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let goalie of group.stats; let i = index">
+              <td class="sticky-column rank-column">{{ i + 1 }}</td>
+              <td class="sticky-column goalie-name">
+                <div class="goalie-name-container">
+                  <img [src]="goalie.teamLogo" class="goalie-logo" [alt]="goalie.team + ' logo'">
+                  <span class="goalie-name-text">{{ goalie.name }}</span>
+                </div>
+              </td>
+              <td class="team-cell">
+                <span class="team-name">{{ goalie.team }}</span>
+              </td>
+              <td>{{ goalie.gamesPlayed }}</td>
+              <td>{{ goalie.saves }}</td>
+              <td>{{ goalie.shotsAgainst }}</td>
+              <td>{{ goalie.savePercentage | number:'1.3-3' }}</td>
+              <td>{{ goalie.goalsAgainstAverage | number:'1.2-2' }}</td>
+              <td>{{ goalie.shutouts }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- No Stats Message -->
+    <div *ngIf="groupedStats.length === 0" class="no-data-container">
+      <p>No goalie statistics available for the selected season.</p>
+    </div>
+  </div>
+</div>
+  

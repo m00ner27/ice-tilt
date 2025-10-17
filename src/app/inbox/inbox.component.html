@@ -1,0 +1,49 @@
+<div class="inbox-container">
+  <h1>My Inbox</h1>
+  <p>View and respond to contract offers from clubs.</p>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading || (offersLoading$ | async)" class="loading">
+    <p>Loading your offers...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error || (offersError$ | async)" class="error">
+    <p>{{ error || (offersError$ | async) }}</p>
+  </div>
+
+  <!-- Offers List -->
+  <div *ngIf="!isLoading && !error && !(offersLoading$ | async) && !(offersError$ | async)" class="offers-list">
+    <div *ngIf="(inboxOffers$ | async)?.length; else noOffers">
+      <div *ngFor="let offer of inboxOffers$ | async" class="offer-item">
+        <div class="offer-details">
+          <img 
+            [src]="getImageUrl(offer.clubLogoUrl)" 
+            [alt]="offer.clubName" 
+            class="club-logo"
+          />
+          <div class="offer-info">
+            <span class="offer-text">
+              You have received a contract offer from <strong>{{ offer.clubName }}</strong>.
+            </span>
+            <span *ngIf="offer.seasonName" class="season-info">
+              Season: {{ offer.seasonName }}
+            </span>
+          </div>
+        </div>
+        <div class="offer-actions">
+          <button (click)="respondToOffer(offer._id, 'accepted')" class="btn btn-accept">
+            Accept
+          </button>
+          <button (click)="respondToOffer(offer._id, 'rejected')" class="btn btn-reject">
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+    <ng-template #noOffers>
+      <p>You have no pending offers.</p>
+    </ng-template>
+  </div>
+</div>
+  

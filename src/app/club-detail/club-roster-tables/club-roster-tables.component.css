@@ -1,0 +1,24 @@
+/* Mobile font size optimizations for player names */
+@media (max-width: 768px) {
+  .mobile-stats-table th:first-child,
+  .mobile-stats-table td:first-child {
+    font-size: 0.6rem !important;
+    padding: 4px 2px !important;
+  }
+  
+  .mobile-stats-table th:first-child {
+    font-weight: 600 !important;
+  }
+  
+  .mobile-stats-table td:first-child {
+    font-weight: 400 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-stats-table th:first-child,
+  .mobile-stats-table td:first-child {
+    font-size: 0.55rem !important;
+    padding: 3px 1px !important;
+  }
+}

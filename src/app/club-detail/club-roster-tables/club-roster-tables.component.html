@@ -1,0 +1,151 @@
+<!-- Signed Players Roster Table -->
+<div class="mt-5 bg-admin-card p-3 sm:p-5 rounded-lg" *ngIf="selectedSeasonId !== null">
+  <h4 class="text-gray-200 mb-2 text-xl font-semibold border-l-4 border-admin-primary pl-3">Signed Players</h4>
+  <div class="mt-3 rounded-md overflow-x-auto">
+    <table class="w-full bg-admin-card text-white border-collapse">
+      <thead class="bg-admin-accent">
+        <tr>
+          <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm uppercase tracking-wide">Gamertag</th>
+          <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-xs sm:text-sm uppercase tracking-wide">Console</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let player of signedPlayers" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+          <td class="px-2 sm:px-4 py-2 sm:py-3 text-white">{{ player.gamertag || 'Unknown' }}</td>
+          <td class="px-2 sm:px-4 py-2 sm:py-3 text-white flex items-center gap-2">
+            <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
+            <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+            {{ player.platform === 'PS5' ? 'PlayStation' : 'Xbox' }}
+            <span *ngIf="!player.platform || (player.platform !== 'PS5' && player.platform !== 'Xbox')" class="text-gray-400">
+              {{ player.platform || 'Unknown' }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="signedPlayers.length === 0" class="border-t border-admin-accent">
+          <td colspan="2" class="px-4 py-8 text-center text-gray-400 italic">No signed players</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Statistics Section (was Team Roster) -->
+<div class="mt-5 bg-admin-card p-3 sm:p-5 rounded-lg">
+  <h4 class="text-gray-200 mb-2 text-xl font-semibold border-l-4 border-admin-primary pl-3">Skaters</h4>
+  <!-- Skaters Table -->
+  <div class="mt-3 rounded-md overflow-x-auto">
+    <table class="w-full bg-admin-card text-white border-collapse min-w-max mobile-stats-table">
+    <thead class="bg-admin-accent">
+      <tr>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-left font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">Gamertag</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">GP</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">W</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">L</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">OTL</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">G</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">A</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">PTS</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">+/-</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">S</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">S%</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">H</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">PIM</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">BS</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">PPG</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">SHG</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">GWG</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">INT</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">TK</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">GV</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">P</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">PA</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">P%</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">FOW</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">FOL</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide whitespace-nowrap">FO%</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let skater of skaterStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-left font-medium">
+          <span [class.text-white]="skater.isSigned" [class.text-red-500]="!skater.isSigned">
+            {{ skater.name }}
+          </span>
+          <span *ngIf="!skater.isSigned" class="text-red-400 text-xs ml-2">(Unsigned)</span>
+        </td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.gamesPlayed }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.wins || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.losses || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.otLosses || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white font-semibold">{{ skater.goals }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white font-semibold">{{ skater.assists }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white font-bold">{{ skater.points }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white" [class.text-green-500]="skater.plusMinus > 0" [class.text-red-500]="skater.plusMinus < 0">{{ skater.plusMinus > 0 ? '+' + skater.plusMinus : skater.plusMinus }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.shots || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.shotPercentage || 0 | number:'1.1-1' }}%</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.hits || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.pim || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.blockedShots || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.ppg || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.shg || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.gwg || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.interceptions || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.takeaways || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.giveaways || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.passes || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.passAttempts || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.passPercentage || 0 | number:'1.1-1' }}%</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.faceoffsWon || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.faceoffsLost || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ skater.faceoffPercentage || 0 | number:'1.1-1' }}%</td>
+      </tr>
+      <tr *ngIf="skaterStats.length === 0" class="border-t border-admin-accent">
+        <td colspan="25" class="px-4 py-8 text-center text-gray-400 italic">No skater statistics available</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  
+  <!-- Goalies Table -->
+  <h4 class="text-gray-200 mb-4 mt-6 text-xl font-semibold border-l-4 border-admin-primary pl-3">Goalies</h4>
+  <div class="mt-3 rounded-md overflow-x-auto">
+    <table class="w-full bg-admin-card text-white border-collapse mobile-stats-table">
+    <thead class="bg-admin-accent">
+      <tr>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-left font-semibold text-xs sm:text-xs uppercase tracking-wide">Gamertag</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">GP</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">W</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">L</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">OTL</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">SV</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">SA</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">SV%</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">GAA</th>
+        <th class="px-1 sm:px-2 py-2 sm:py-3 text-center font-semibold text-xs sm:text-xs uppercase tracking-wide">SO</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let goalie of goalieStats" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-left font-medium">
+          <span [class.text-white]="goalie.isSigned" [class.text-red-500]="!goalie.isSigned">
+            {{ goalie.name }}
+          </span>
+          <span *ngIf="!goalie.isSigned" class="text-red-400 text-xs ml-2">(Unsigned)</span>
+        </td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ goalie.gamesPlayed }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ goalie.wins || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ goalie.losses || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ goalie.otl || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white font-semibold">{{ goalie.saves || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white">{{ goalie.shotsAgainst || 0 }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white font-semibold">{{ goalie.savePercentage | number:'1.3-3' }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white font-semibold">{{ goalie.goalsAgainstAverage | number:'1.2-2' }}</td>
+        <td class="px-1 sm:px-2 py-2 sm:py-3 text-center text-white font-bold">{{ goalie.shutouts }}</td>
+      </tr>
+      <tr *ngIf="goalieStats.length === 0" class="border-t border-admin-accent">
+        <td colspan="10" class="px-4 py-8 text-center text-gray-400 italic">No goalie statistics available</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>

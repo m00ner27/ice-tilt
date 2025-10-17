@@ -1,0 +1,53 @@
+<!-- Other Stats Grid -->
+<div class="stats-grid">
+  <!-- First Row -->
+  <div class="stat-item">
+    <span class="stat-label">Points</span>
+    <span class="stat-value">{{club?.stats?.points}}</span>
+  </div>
+
+  <div class="stat-item">
+    <span class="stat-label">Games Played</span>
+    <span class="stat-value">{{club?.stats?.gamesPlayed}}</span>
+  </div>
+
+  <div class="stat-item">
+    <span class="stat-label">Win %</span>
+    <span class="stat-value">{{club?.stats?.winPercentage | number:'1.1-1'}}%</span>
+  </div>
+
+  <div class="stat-item">
+    <span class="stat-label">Streak</span>
+    <span class="stat-value">{{club?.stats?.streakCount}}{{club?.stats?.streakType}}</span>
+  </div>
+
+  <!-- Second Row -->
+  <div class="stat-item">
+    <span class="stat-label">Goals For</span>
+    <span class="stat-value">{{club?.stats?.goalsFor}}</span>
+  </div>
+
+  <div class="stat-item">
+    <span class="stat-label">Goals Against</span>
+    <span class="stat-value">{{club?.stats?.goalsAgainst}}</span>
+  </div>
+
+  <div class="stat-item">
+    <span class="stat-label">Goal Diff</span>
+    <span class="stat-value" [ngClass]="{
+    'positive': (club?.stats?.goalDifferential || 0) > 0,
+    'negative': (club?.stats?.goalDifferential || 0) < 0
+  }">
+    {{(club?.stats?.goalDifferential || 0) > 0 ? '+' : ''}}{{club?.stats?.goalDifferential}}
+  </span>
+  </div>
+
+  <div class="stat-item last-ten">
+    <span class="stat-label">Last 10</span>
+    <div class="last-ten-grid">
+      <span *ngFor="let result of club?.stats?.lastTen" [ngClass]="result">
+        {{result}}
+      </span>
+    </div>
+  </div>
+</div>

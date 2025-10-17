@@ -1,0 +1,186 @@
+<!-- News Section -->
+<section class="mt-4 text-white">
+    <div class="container mx-auto px-4">
+      <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          <!-- News Item 1 -->
+          <div class="carousel-item active">
+            <a [routerLink]="['/article', 'new-season-begins']" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Welcome to the new ITHL!</h3>
+                </div>
+              </div>
+            </a>
+          </div>
+          <!-- News Item 2 -->
+          <div class="carousel-item">
+            <a href="/article-2" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Top Plays of the Week</h3>
+                </div>
+              </div>
+            </a>
+          </div>
+          <!-- News Item 3 -->
+          <div class="carousel-item">
+            <a href="/article-3" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/news3.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Player Spotlight: Rising Star</h3>
+                </div>
+              </div>
+            </a>
+          </div>
+          <!-- News Item 4 -->
+          <div class="carousel-item">
+            <a [routerLink]="['/article', 'playoff-race-heats-up']" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">Playoff Race Heats Up: Final Push Begins</h3>
+                </div>
+              </div>
+            </a>
+          </div>
+          <!-- News Item 5 - Signing Up & Free Agents -->
+          <div class="carousel-item">
+            <a [routerLink]="['/article', 'signing-up-free-agents']" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/hockey-fight.jpg');">
+                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
+                  <h3 class="text-white text-2xl m-0">📝 Signing Up & Free Agents</h3>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <!-- Carousel Controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+    </div>
+  </section>
+  
+
+
+
+
+
+<!-- Stats Leaders Section -->
+<section class="mt-4 text-white p-3 sm:p-5">
+  <div class="container mx-auto px-2 sm:px-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+      <!-- Goals Top 5 -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Goals</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topGoals; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.goals }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Assists Top 5 -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Assists</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topAssists; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.assists }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Points Top 5 -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Points</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topPoints; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.points }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Save % Top 5 (Goalies) -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Save %</div>
+          <div class="p-0 rounded-b-lg overflow-hidden">
+            <div *ngIf="isLoading" class="p-4 text-center text-white">
+              <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              <p class="mt-2">Loading stats...</p>
+            </div>
+            <div *ngIf="hasError" class="p-4 text-center text-red-400">
+              <p>Failed to load player stats. Please try again later.</p>
+            </div>
+            <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topSavePct; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.savePercentage }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AdSense Banner Ad -->
+<app-adsense [config]="bannerAdConfig"></app-adsense>
+
+
+<!-- AdSense Rectangle Ad -->
+<div id="ads-section" class="min-h-32">
+  <div *ngIf="!showAds" class="p-8 text-center text-gray-400">
+    <div class="inline-block animate-pulse">Loading ads...</div>
+  </div>
+  <app-adsense [config]="rectangleAdConfig" *ngIf="showAds"></app-adsense>
+</div>
+

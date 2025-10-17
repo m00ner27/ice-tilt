@@ -1,0 +1,152 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-admin-primary">Seasons & Divisions</h2>
+    <button class="bg-admin-secondary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors" (click)="isAddingSeason = true">
+      <i class="fas fa-plus"></i>
+      Add Season
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Seasons List -->
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">Seasons</h3>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between p-3 bg-admin-hover rounded-lg cursor-pointer hover:bg-admin-accent transition-colors" 
+             *ngFor="let season of seasons$ | async" 
+             [class.bg-admin-accent]="selectedSeason?._id === season._id"
+             (click)="selectSeason(season)">
+          <div class="flex-1">
+            <h4 class="text-white font-medium">{{ season.name }}</h4>
+            <p class="text-admin-text text-sm">{{ season.startDate | date:'MMM d, y' }} - {{ season.endDate | date:'MMM d, y' }}</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="text-admin-primary hover:text-white p-1 rounded transition-colors" (click)="editSeason(season); $event.stopPropagation()">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="text-red-500 hover:text-red-300 p-1 rounded transition-colors" (click)="deleteSeason(season); $event.stopPropagation()">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divisions List -->
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg" *ngIf="selectedSeason">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-admin-primary">Divisions in {{ selectedSeason.name }}</h3>
+        <button class="bg-admin-secondary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors" (click)="isAddingDivision = true">
+          <i class="fas fa-plus"></i>
+          Add Division
+        </button>
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between p-3 bg-admin-hover rounded-lg" *ngFor="let division of getDivisionsForSelectedSeason()">
+          <div class="flex items-center gap-3">
+            <span class="text-admin-primary font-mono text-sm bg-admin-accent px-2 py-1 rounded">{{ division.order || 0 }}</span>
+            <img *ngIf="division.logoUrl" [src]="getImageUrl(division.logoUrl)" [alt]="division.name + ' logo'" class="w-8 h-8 object-contain rounded" (error)="onImageError($event)">
+            <h4 class="text-white font-medium">{{ division.name }}</h4>
+          </div>
+          <div class="flex gap-2">
+            <button class="text-admin-primary hover:text-white p-1 rounded transition-colors" (click)="editDivision(division)">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="text-red-500 hover:text-red-300 p-1 rounded transition-colors" (click)="deleteDivision(division)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clubs by Division -->
+  <div class="mt-8" *ngIf="selectedSeason">
+    <h3 class="text-xl font-semibold text-admin-primary mb-6">Clubs by Division in {{ selectedSeason.name }}</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="bg-admin-card rounded-xl p-6 shadow-lg" *ngFor="let division of getDivisionsForSelectedSeason()">
+        <div class="text-lg font-semibold text-admin-primary mb-4">{{ division.name }}</div>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-3 p-2 bg-admin-hover rounded-lg" *ngFor="let club of getClubsForDivision(division._id)">
+            <img [src]="getImageUrl(club.logoUrl)" alt="Logo" class="w-6 h-6 object-contain rounded" />
+            <div class="flex-1">
+              <div class="text-white font-medium">{{ club.name }}</div>
+            </div>
+          </li>
+          <li class="text-admin-text text-center py-4" *ngIf="getClubsForDivision(division._id).length === 0">No clubs in this division.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Season Form Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isAddingSeason">
+    <div class="bg-admin-card rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-admin-primary mb-6">{{ editingSeason ? 'Edit Season' : 'Add Season' }}</h3>
+      <form [formGroup]="seasonForm" (ngSubmit)="editingSeason ? updateSeason() : addSeason()">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Season Name</label>
+            <input formControlName="name" type="text" placeholder="Enter season name" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Start Date</label>
+            <input formControlName="startDate" type="date" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">End Date</label>
+            <input formControlName="endDate" type="date" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50" [disabled]="!seasonForm.valid">
+            {{ editingSeason ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="bg-admin-accent text-white px-4 py-2 rounded hover:bg-admin-hover transition-colors" (click)="cancelSeasonForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Division Form Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isAddingDivision">
+    <div class="bg-admin-card rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-admin-primary mb-6">{{ editingDivision ? 'Edit Division' : 'Add Division' }}</h3>
+      <form [formGroup]="divisionForm" (ngSubmit)="editingDivision ? updateDivision() : addDivision()">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Division Name</label>
+            <input formControlName="name" type="text" placeholder="Enter division name" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Division Logo</label>
+            <div class="space-y-2">
+              <input type="file" accept="image/*" (change)="onDivisionLogoFileChange($event)" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <div *ngIf="divisionLogoPreview" class="flex items-center gap-3">
+                <img [src]="getImageUrl(divisionLogoPreview)" alt="Logo Preview" class="w-16 h-16 object-contain rounded">
+                <span *ngIf="uploadingDivisionLogo" class="text-admin-primary text-sm">Uploading...</span>
+              </div>
+            </div>
+            <input formControlName="logoUrl" type="text" class="hidden">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Display Order</label>
+            <input formControlName="order" type="number" placeholder="0" min="0" step="1" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+            <p class="text-xs text-gray-400 mt-1">Lower numbers appear first in standings and dropdowns</p>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50" [disabled]="!divisionForm.valid">
+            {{ editingDivision ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="bg-admin-accent text-white px-4 py-2 rounded hover:bg-admin-hover transition-colors" (click)="cancelDivisionForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

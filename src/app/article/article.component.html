@@ -1,0 +1,26 @@
+<div class="max-w-4xl mx-auto my-10 bg-admin-card rounded-xl p-8 shadow-lg text-white">
+  <div class="text-center mb-8">
+    <button class="bg-admin-accent text-white border-none rounded-md px-4 py-2 text-base cursor-pointer transition-colors hover:bg-admin-hover mb-5" (click)="goBack()">
+      <i class="fas fa-arrow-left mr-2"></i> Back
+    </button>
+    <h1 class="text-admin-primary text-4xl mb-4 font-semibold">{{ articleTitle }}</h1>
+    <div class="text-admin-text text-base">
+      <span class="mx-3">{{ articleDate }}</span>
+      <span class="mx-3">by {{ articleAuthor }}</span>
+    </div>
+  </div>
+  
+  <div class="leading-relaxed">
+    <div class="mb-8 text-center">
+      <img [src]="articleImage" [alt]="articleTitle" class="max-w-full h-auto rounded-lg shadow-xl">
+    </div>
+    
+    <div class="text-lg">
+      <p class="text-xl text-admin-primary mb-6 font-medium leading-relaxed">
+        {{ articleLead }}
+      </p>
+      
+      <div [innerHTML]="articleBody" class="prose prose-invert max-w-none prose-headings:text-admin-primary prose-p:text-white prose-p:mb-5 prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-ul:my-4 prose-ul:pl-6 prose-li:mb-2"></div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+<div class="match-history-container">
+  <div class="match-history-header">
+    <h3>Match History</h3>
+  </div>
+  
+  <div class="match-list">
+    <div *ngIf="matches.length === 0" class="no-matches">
+      No matches played yet.
+    </div>
+    
+    <div *ngFor="let match of matches" 
+         class="match-card" 
+         [ngClass]="{'win': didTeamWin(match), 'loss': !didTeamWin(match)}"
+         (click)="navigateToMatchDetail(match)"
+         [attr.aria-label]="'View details for match against ' + getOpponent(match)">
+      <div class="match-date">{{ formatDate(match.date) }}</div>
+      <div class="match-details">
+        <div class="opponent">
+          <span class="vs">vs</span> 
+          <img [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" [alt]="getOpponent(match)" class="opponent-logo">
+          {{ getOpponent(match) }}
+        </div>
+        <div class="score">
+          <img [src]="getImageUrl(getOurClub(match)?.logoUrl)" [alt]="teamName" class="score-logo">
+          <span class="score-value">{{ getOurScore(match) }}</span>
+          <span class="score-separator">-</span>
+          <span class="score-value">{{ getOpponentScore(match) }}</span>
+          <img [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" [alt]="getOpponent(match)" class="score-logo">
+        </div>
+      </div>
+      <div class="view-details">View details</div>
+    </div>
+  </div>
+</div> 

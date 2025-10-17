@@ -1,0 +1,50 @@
+<div class="loading" *ngIf="loading">
+  Loading club details...
+</div>
+
+<div class="error" *ngIf="error">
+  {{ error }}
+</div>
+
+<div class="club-detail-container" *ngIf="club && !loading && !error">
+  <button class="back-button" (click)="goBack()">← Back to Standings</button>
+  
+  <!-- Season Selector -->
+  <div class="season-selector" *ngIf="seasons.length > 0">
+    <label for="seasonSelect">View Season:</label>
+    <select id="seasonSelect" 
+            [value]="selectedSeasonId || 'all-seasons'" 
+            (change)="onSeasonChange($any($event.target).value)">
+        <option *ngFor="let season of getClubSeasons(backendClub)" [value]="season._id">
+        {{ season.name }}
+      </option>
+    </select>
+  </div>
+  
+  <app-club-header 
+    [club]="club" 
+    [selectedSeasonDivision]="getSelectedSeasonDivision()">
+  </app-club-header>
+
+  <app-club-stats-grid [club]="club"></app-club-stats-grid>
+
+  <!-- AdSense Rectangle Ad -->
+  <app-adsense [config]="rectangleAdConfig"></app-adsense>
+
+  <!-- Add a loading state -->
+  <div class="loading-stats" *ngIf="club && !club.stats">
+    Calculating team statistics...
+  </div>
+
+  <app-club-roster-tables 
+    [signedPlayers]="signedPlayers"
+    [skaterStats]="skaterStats"
+    [goalieStats]="goalieStats"
+    [selectedSeasonId]="selectedSeasonId">
+  </app-club-roster-tables>
+  
+  <!-- Match History Component -->
+  <app-match-history [matches]="clubMatches" [teamName]="club.clubName"></app-match-history>
+  
+  <app-club-stat-legend></app-club-stat-legend>
+</div>

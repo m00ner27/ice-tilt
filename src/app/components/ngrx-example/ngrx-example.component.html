@@ -1,0 +1,103 @@
+<div class="container mx-auto mt-4 p-6">
+  <h2 class="text-2xl font-bold mb-6">NgRx State Management Example</h2>
+  
+  <!-- Loading States -->
+  <div class="mb-6">
+    <div class="w-full">
+      <h4 class="text-lg font-semibold mb-4">Loading States</h4>
+      <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+        <p><strong>Clubs Loading:</strong> {{ clubsLoading$ | async }}</p>
+        <p><strong>Matches Loading:</strong> {{ matchesLoading$ | async }}</p>
+        <p><strong>Seasons Loading:</strong> {{ seasonsLoading$ | async }}</p>
+        <p><strong>Users Loading:</strong> {{ usersLoading$ | async }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error States -->
+  <div class="mb-6" *ngIf="(clubsError$ | async) || (matchesError$ | async) || (seasonsError$ | async) || (usersError$ | async)">
+    <div class="w-full">
+      <h4 class="text-lg font-semibold mb-4">Error States</h4>
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <p *ngIf="clubsError$ | async"><strong>Clubs Error:</strong> {{ clubsError$ | async }}</p>
+        <p *ngIf="matchesError$ | async"><strong>Matches Error:</strong> {{ matchesError$ | async }}</p>
+        <p *ngIf="seasonsError$ | async"><strong>Seasons Error:</strong> {{ seasonsError$ | async }}</p>
+        <p *ngIf="usersError$ | async"><strong>Users Error:</strong> {{ usersError$ | async }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Counts -->
+  <div class="mb-6">
+    <div class="w-full">
+      <h4 class="text-lg font-semibold mb-4">Data Counts</h4>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow">
+          <h5 class="text-lg font-semibold mb-2">Clubs</h5>
+          <p class="text-gray-600">{{ (clubs$ | async)?.length || 0 }} clubs</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow">
+          <h5 class="text-lg font-semibold mb-2">Matches</h5>
+          <p class="text-gray-600">{{ (matches$ | async)?.length || 0 }} matches</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow">
+          <h5 class="text-lg font-semibold mb-2">Seasons</h5>
+          <p class="text-gray-600">{{ (seasons$ | async)?.length || 0 }} seasons</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow">
+          <h5 class="text-lg font-semibold mb-2">Users</h5>
+          <p class="text-gray-600">{{ (users$ | async)?.length || 0 }} users</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="mb-6">
+    <div class="w-full">
+      <h4 class="text-lg font-semibold mb-4">Actions</h4>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors" (click)="loadAllData()">Load All Data</button>
+        <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors" (click)="clearAllData()">Clear All Data</button>
+        <button type="button" class="bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500 transition-colors" (click)="loadClubs()">Load Clubs</button>
+        <button type="button" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors" (click)="loadMatches()">Load Matches</button>
+        <button type="button" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors" (click)="loadSeasons()">Load Seasons</button>
+        <button type="button" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors" (click)="loadUsers()">Load Users</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sample Data Display -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <h4 class="text-lg font-semibold mb-4">Sample Clubs</h4>
+      <div class="space-y-2" *ngIf="(clubs$ | async)?.length">
+        <div class="bg-white border border-gray-200 rounded p-3" *ngFor="let club of (clubs$ | async)?.slice(0, 5)">
+          <h6 class="font-semibold mb-1">{{ club.name || club.clubName }}</h6>
+          <small class="text-gray-500">{{ club.division }}</small>
+        </div>
+      </div>
+      <p *ngIf="!(clubs$ | async)?.length" class="text-gray-500">No clubs loaded</p>
+    </div>
+    
+    <div>
+      <h4 class="text-lg font-semibold mb-4">Sample Seasons</h4>
+      <div class="space-y-2" *ngIf="(seasons$ | async)?.length">
+        <div class="bg-white border border-gray-200 rounded p-3" *ngFor="let season of (seasons$ | async)?.slice(0, 5)">
+          <h6 class="font-semibold mb-1">{{ season.name }}</h6>
+          <p class="mb-1">
+            <span class="px-2 py-1 rounded text-xs font-semibold" 
+                  [class.bg-green-100]="season.isActive" 
+                  [class.text-green-800]="season.isActive"
+                  [class.bg-gray-100]="!season.isActive" 
+                  [class.text-gray-800]="!season.isActive">
+              {{ season.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </p>
+          <small class="text-gray-500">{{ season.startDate | date }} - {{ season.endDate | date }}</small>
+        </div>
+      </div>
+      <p *ngIf="!(seasons$ | async)?.length" class="text-gray-500">No seasons loaded</p>
+    </div>
+  </div>
+</div>

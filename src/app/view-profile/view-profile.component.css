@@ -1,0 +1,17 @@
+/* View Profile Component - Now using Tailwind CSS classes */
+/* Minimal custom styles for any specific overrides if needed */
+
+/* Ensure proper spacing and layout */
+.view-profile-container {
+  min-height: 100vh;
+}
+
+/* Custom animations if needed */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}

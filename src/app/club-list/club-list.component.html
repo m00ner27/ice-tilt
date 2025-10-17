@@ -1,0 +1,47 @@
+<div class="p-5 text-white">
+  <h2 class="text-white mb-5 text-center text-4xl font-bold text-shadow-lg">Clubs</h2>
+  
+  <!-- Search bar -->
+  <div class="mb-5 flex justify-center">
+    <input 
+      type="text" 
+      class="w-full max-w-md px-4 py-3 rounded-full text-base outline-none transition-all duration-200 bg-admin-card text-white focus:border-admin-primary focus:shadow-lg focus:shadow-admin-primary/25" 
+      placeholder="Search clubs or managers..."
+      [(ngModel)]="searchText"
+      (input)="filterClubs()"
+    >
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading$ | async" class="text-center text-white py-10 text-xl">
+    Loading clubs...
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error$ | async" class="text-center text-red-500 py-5 text-lg bg-red-500/10 border border-red-500 rounded-lg my-5">
+    {{ error$ | async }}
+  </div>
+
+  <!-- Club cards -->
+  <div *ngIf="!(loading$ | async) && !(error$ | async)" class="grid gap-3 p-3 justify-center" style="grid-template-columns: repeat(auto-fit, minmax(280px, 280px)); max-width: 1400px; margin: 0 auto;">
+    <div *ngFor="let club of filteredClubs" 
+         class="bg-admin-card rounded-lg border-2 p-5 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 flex flex-col items-center cursor-pointer"
+         [style.border-color]="club.primaryColour || '#394867'"
+         [routerLink]="['/clubs', club._id]">
+      <div class="text-center w-full flex flex-col items-center">
+        <img 
+          [src]="getImageUrl(club.logoUrl)" 
+          [alt]="club.name" 
+          class="w-30 h-30 rounded-none mb-4 object-contain p-1 bg-transparent"
+          (error)="onImageError($event, club)"
+        >
+        <h3 class="my-3 text-white text-xl font-semibold">{{club.name}}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- No results message -->
+  <div *ngIf="!(loading$ | async) && !(error$ | async) && filteredClubs.length === 0" class="text-center text-white py-5 text-lg">
+    No clubs found
+  </div>
+</div>

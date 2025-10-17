@@ -1,0 +1,127 @@
+/* Manual Stats Grid Layout */
+.grid-cols-13 {
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+}
+
+/* Skater stats grid - 13 columns total (Player + Pos + 11 stats) */
+.skater-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Goalie stats grid - 6 columns total (Player + 5 stats) */
+.goalie-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Input styling for better visual hierarchy */
+input[type="number"], input[type="text"], select {
+  font-size: 0.875rem;
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  color: #ffffff;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+input[type="number"] {
+  text-align: center;
+}
+
+input[type="text"] {
+  text-align: left;
+}
+
+select {
+  text-align: center;
+}
+
+/* Ensure all inputs have consistent styling */
+input, select {
+  transition: border-color 0.2s ease-in-out;
+}
+
+input:focus, select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+  border-color: #3b82f6;
+}
+
+/* Team labels */
+.team-label {
+  font-weight: 600;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+}
+
+/* Points calculation display */
+.points-display {
+  background-color: #374151;
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+/* Save percentage and GAA display */
+.stats-display {
+  background-color: #374151;
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+  font-weight: 600;
+  color: #f3f4f6;
+  font-size: 0.75rem;
+}
+
+/* Game summary styling */
+.game-summary {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  border: 1px solid #4b5563;
+}
+
+/* Winner text styling */
+.winner-text {
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .skater-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .skater-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  }
+  
+  .goalie-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+}
+
+/* Focus states for better UX */
+input:focus, select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+  border-color: #3b82f6;
+}
+
+/* Hover effects */
+input:hover, select:hover {
+  border-color: #6b7280;
+}
+
+/* Disabled state */
+input:disabled, select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

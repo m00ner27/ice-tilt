@@ -1,0 +1,281 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for theming - can be used with Tailwind */
+:root {
+  --primary-color: #1e40af;
+  --primary-dark: #1e3a8a;
+  --card-bg: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --hover-bg: #f3f4f6;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
+/* Global body styles - keep as they're specific to your design */
+body {
+    background: linear-gradient(to bottom, #092d4bec, #4a8dcba9), 
+    url("/assets/images/IMG_2896.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+  
+/* Custom component styles that can't be easily replaced with Tailwind utilities */
+
+/* Navbar brand - can be replaced with Tailwind classes in component */
+.navbar-brand {
+    @apply font-bold flex items-center;
+}
+
+/* Team logos section - specific layout needs */
+.team-logos {
+    @apply flex flex-wrap;
+}
+
+.team-logo-link {
+    @apply m-0 p-0;
+}
+
+.logo-container {
+    @apply w-10 h-5 flex items-center justify-center border border-gray-500 -mx-px overflow-hidden;
+}
+
+.logo-container img {
+    @apply w-[130%] h-auto object-cover;
+}
+
+/* Logo sizes - keep as utility classes for consistency */
+.logo {
+    @apply h-10;
+}
+
+.team-logo {
+    @apply h-8 align-middle;
+}
+
+/* Table styles - consolidated and optimized */
+.table td {
+    @apply align-middle text-center;
+}
+
+.table img.team-logo {
+    @apply ml-2.5;
+}
+
+/* Section-specific team logo styles - consolidated */
+.recent-transactions-section .team-logo,
+.recent-games-section .team-logo {
+    @apply h-8 align-middle;
+}
+
+.recent-transactions-section .table td,
+.recent-games-section .table td {
+    @apply align-middle text-center;
+}
+
+.recent-transactions-section .table img.team-logo,
+.recent-games-section .table img.team-logo {
+    @apply ml-2.5;
+}
+
+/* News Section Styles - optimized with Tailwind */
+.news-section {
+    @apply max-w-7xl mx-auto rounded-lg;
+}
+
+.carousel-item {
+    @apply text-center p-0;
+}
+
+.news-image {
+    @apply h-[420px] w-full object-cover mb-4;
+}
+
+.carousel-item h5,
+.carousel-item p {
+    @apply p-4 bg-white/80;
+}
+
+/* Styles for Stats Leaders Section - optimized with Tailwind */
+.stats-leaders-section .profile-picture {
+    @apply h-16 w-16 rounded-full object-cover;
+}
+
+.stats-leaders-section .team-logo {
+    @apply h-10 w-10 object-cover;
+}
+
+.stats-leaders-section .small-team-logo {
+    @apply h-5 w-5 mr-2.5 align-middle;
+}
+
+.stats-leaders-section .card-header {
+    @apply font-bold bg-gray-50;
+}
+
+.stats-leaders-section .list-group-item {
+    @apply text-sm px-2.5 py-2 flex justify-between items-center;
+}
+
+.stats-leaders-section .stat-total {
+    @apply ml-auto font-bold;
+}
+
+/* Table styles - optimized with Tailwind */
+.table thead th {
+    @apply bg-gray-800 text-white font-bold text-center align-middle;
+}
+
+.table tbody td {
+    @apply text-center align-middle;
+}
+
+.small-team-logo {
+    @apply h-5 w-5 mr-1.5 align-middle;
+}
+
+
+
+/* Profile section styles - optimized with Tailwind */
+.profile-section {
+    @apply max-w-4xl mx-auto p-5;
+}
+
+.profile-picture {
+    @apply h-32 w-32 rounded-full object-cover;
+}
+
+.form-group {
+    @apply mb-5;
+}
+
+.form-control {
+    @apply rounded-md;
+}
+
+.btn-primary {
+    @apply w-full;
+}
+
+.form-select {
+    @apply rounded-md;
+}
+
+.checkbox-group label {
+    @apply mr-4;
+}
+
+.bio-section {
+    @apply mt-5;
+}
+
+.stats-table th, .stats-table td {
+    @apply text-center;
+}
+
+.profile-info {
+    @apply mt-5;
+}
+
+/* Consolidated team-logo styles */
+.team-logo {
+    @apply h-8 w-auto mr-2.5 align-middle;
+}
+
+/* General Table Styles */
+.table {
+    @apply mb-0 text-sm;
+}
+
+.standings-table thead th {
+    @apply bg-gray-800 text-white font-bold;
+}
+
+.standings-table tbody tr {
+    @apply transition-colors duration-300;
+}
+
+.standings-table tbody tr:hover {
+    @apply bg-gray-50;
+}
+
+.logo-column {
+    @apply w-12;
+}
+
+.highlight td {
+    @apply text-center align-middle;
+}
+
+#sortSeason {
+    @apply border border-gray-800 bg-gray-50;
+}
+
+/* Position badges - keep custom colors as they're specific to your design */
+.badge {
+    @apply px-3 py-2 text-sm rounded-xl text-white;
+}
+
+.bg-red { @apply bg-red-600; } /* Red for C (Center) */
+.bg-blue { @apply bg-blue-600; } /* Blue for RW (Right Wing) */
+.bg-green { @apply bg-green-600; } /* Green for LW (Left Wing) */
+.bg-teal { @apply bg-teal-400; } /* Teal for LD (Left Defense) */
+.bg-yellow { @apply bg-yellow-400; } /* Yellow for RD (Right Defense) */
+.bg-purple { @apply bg-purple-600; } /* Purple for G (Goalie) */
+
+/* Consolidated link styles - can be replaced with Tailwind classes in components */
+a.team-link, 
+a.transaction-link, 
+a.player-link {
+    @apply text-inherit no-underline font-normal;
+}
+
+a.team-link:hover, 
+a.transaction-link:hover {
+    @apply text-black underline;
+}
+
+.player-link:hover {
+    @apply no-underline text-gray-400;
+}
+
+
+/* Team name and logo at top of club page */
+.heading-with-image {
+    @apply flex items-center my-5;
+}
+
+.heading-with-image img {
+    @apply mr-4 w-12 h-auto;
+}
+
+.heading-with-image h2 {
+    @apply m-0;
+}
+
+/* Additional link styles - consolidated above */
+.score-link {
+    @apply text-inherit no-underline;
+}
+
+.score-link:hover {
+    @apply text-black underline;
+}
+
+.winning-team {
+    @apply font-bold text-gray-900;
+}
+
+
+

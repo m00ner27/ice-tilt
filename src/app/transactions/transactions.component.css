@@ -1,0 +1,82 @@
+/* Match home page styling */
+.transactions-section {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+.transactions-section .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  padding-bottom: 2rem;
+}
+
+/* Animation for new transactions */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.transaction-item {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .flex-wrap {
+    flex-direction: column;
+  }
+  
+  .min-w-48 {
+    min-width: 100%;
+  }
+  
+  /* Optimize transaction items for mobile */
+  .transactions-section .container {
+    padding: 0 0.5rem;
+  }
+  
+  /* Make transaction cards use full width */
+  .bg-admin-card {
+    margin: 0;
+  }
+  
+  /* Reduce padding on mobile for more space */
+  .p-3 {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Further optimize for very small screens */
+  .transactions-section .container {
+    padding: 0 0.25rem;
+  }
+  
+  /* Smaller padding for very small screens */
+  .p-3 {
+    padding: 0.5rem;
+  }
+  
+  /* Ensure text doesn't get cut off */
+  .truncate {
+    max-width: 200px;
+  }
+}

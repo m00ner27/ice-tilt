@@ -1,0 +1,371 @@
+<div class="max-w-6xl mx-auto p-8 text-white">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center p-8">
+    <div class="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full mx-auto mb-4 animate-spin"></div>
+    <p>Loading your profile...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="text-center p-8 bg-admin-card rounded-lg border border-red-500">
+    <p>{{ error }}</p>
+    <button (click)="retryLoad()" class="mt-4 px-6 py-3 rounded text-admin-primary hover:bg-admin-accent hover:text-white transition-all duration-200" style="border: 1px solid #34495e;">Retry</button>
+  </div>
+
+  <!-- Player Profile Content -->
+  <div *ngIf="!loading && !error && player" class="bg-admin-card rounded-lg p-8 shadow-lg">
+    <!-- Header Section -->
+    <div class="mb-8 border-b border-admin-accent pb-4">
+      <div class="flex flex-col gap-1 mb-6">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-4">
+            <img *ngIf="player.clubLogo" [src]="player.clubLogo" [alt]="player.currentClubName" class="w-8 h-8 object-contain mb-0">
+            <div>
+              <h1 class="m-0 text-3xl text-white">
+                {{ player.discordUsername }}<span class="text-admin-primary" *ngIf="player.number"> {{ player.number }}</span>
+              </h1>
+              <p *ngIf="player.currentClubName" class="text-gray-300">{{ player.currentClubName }}</p>
+            </div>
+          </div>
+          <div class="header-right">
+          </div>
+        </div>
+      </div>
+      <div class="bg-admin-hover rounded-lg p-3 mb-4">
+        <div class="text-center mb-3 pb-2 border-b border-admin-primary/50">
+          <h3 class="text-admin-primary text-base font-semibold m-0 uppercase tracking-wide">Player Information</h3>
+        </div>
+        
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0">
+            <span class="text-base text-admin-primary min-w-5">🏒</span>
+            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Position:</span>
+            <app-position-pill [position]="player.position"></app-position-pill>
+            <ng-container *ngIf="player.secondaryPositions && player.secondaryPositions.length">
+              <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Secondary:</span>
+              <ng-container *ngFor="let pos of player.secondaryPositions">
+                <app-position-pill [position]="pos"></app-position-pill>
+              </ng-container>
+            </ng-container>
+          </div>
+          
+          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0">
+            <span class="text-base text-admin-primary min-w-5">✋</span>
+            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Handedness:</span>
+            <span class="text-white font-medium text-sm">{{ player.handedness }}</span>
+          </div>
+          
+          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0" *ngIf="player.country">
+            <span class="text-base text-admin-primary min-w-5">🌍</span>
+            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Country:</span>
+            <span class="text-white font-medium text-sm">{{ countryEmojiMap[player.country] }} {{ player.country }}</span>
+          </div>
+          
+          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0">
+            <span class="text-base text-admin-primary min-w-5">📊</span>
+            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Stats:</span>
+            <span class="text-white font-medium text-sm">{{ careerTotals?.gamesPlayed || 0 }} Games • {{ careerTotals?.points || 0 }} Points • {{ careerTotals?.goals || 0 }} Goals</span>
+          </div>
+          
+          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0" *ngIf="player.platform">
+            <span class="text-base text-admin-primary min-w-5">🎮</span>
+            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Platform:</span>
+            <span class="text-white font-medium text-sm">{{ player.platform }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Career Clubs Section -->
+      <div class="mt-4 text-left bg-gradient-to-br from-slate-600/60 to-slate-700/70 rounded-lg p-4" *ngIf="allClubs.length > 0">
+        <div class="flex items-center justify-start gap-4">
+          <span class="self-center m-0 text-admin-primary font-semibold text-sm uppercase tracking-wide">Career Clubs:</span>
+          <div class="flex flex-wrap gap-3 mt-2 justify-start items-center">
+            <div *ngFor="let club of getCareerClubs()" class="flex items-center">
+              <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="w-10 h-10 object-contain rounded-full border-2 border-admin-accent transition-all duration-200 cursor-pointer hover:border-admin-primary hover:scale-110" 
+                   [title]="club.name" onerror="this.style.display='none'"
+                   (click)="navigateToClub(club._id)">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gaming ID Section -->
+    <div class="bg-admin-hover rounded-lg p-6 mb-8" *ngIf="player.psnId || player.xboxGamertag || player.gamertag">
+      <h2 class="text-admin-primary mb-6 text-3xl">Gaming ID</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="flex gap-2 items-center" *ngIf="player.psnId">
+          <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-5 h-5 flex-shrink-0">
+          <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-5 h-5 flex-shrink-0">
+          <span class="text-gray-400">PSN:</span>
+          <span class="text-admin-primary font-medium">{{ player.psnId }}</span>
+        </div>
+        <div class="flex gap-2 items-center" *ngIf="player.xboxGamertag">
+          <img src="assets/images/xbox-logo.svg" alt="Xbox" class="w-5 h-5 flex-shrink-0">
+          <span class="text-gray-400">Xbox:</span>
+          <span class="text-admin-primary font-medium">{{ player.xboxGamertag }}</span>
+        </div>
+        <div class="flex gap-2 items-center" *ngIf="player.gamertag && !player.psnId && !player.xboxGamertag">
+          <span class="text-gray-400">Gamertag:</span>
+          <span class="text-admin-primary font-medium">{{ player.gamertag }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Career Statistics Section -->
+    <div class="bg-admin-card rounded-lg p-8 mt-8 shadow-lg" *ngIf="careerStats.length > 0">
+      <!-- Career Totals -->
+      <div class="mb-8">
+        <h3 class="text-white mb-4 text-2xl">Career Totals</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.gamesPlayed }}</div>
+            <div class="text-gray-400 text-sm">Games Played</div>
+          </div>
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.goals }}</div>
+            <div class="text-gray-400 text-sm">Goals</div>
+          </div>
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.assists }}</div>
+            <div class="text-gray-400 text-sm">Assists</div>
+          </div>
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.points }}</div>
+            <div class="text-gray-400 text-sm">Points</div>
+          </div>
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.plusMinus }}</div>
+            <div class="text-gray-400 text-sm">+/-</div>
+          </div>
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.shots }}</div>
+            <div class="text-gray-400 text-sm">Shots</div>
+          </div>
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.hits }}</div>
+            <div class="text-gray-400 text-sm">Hits</div>
+          </div>
+          <div class="bg-admin-hover rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-admin-primary mb-2">{{ careerTotals.pim }}</div>
+            <div class="text-gray-400 text-sm">PIM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Season-by-Season Breakdown -->
+      <div class="mb-8">
+        <h2 class="text-white mb-4 text-2xl">Season Breakdown</h2>
+        <div class="mt-4 overflow-x-auto rounded-lg bg-admin-card" style="border: 1px solid #34495e;">
+          <table class="w-full border-collapse bg-admin-card text-sm rounded-lg overflow-hidden min-w-max">
+            <thead>
+              <tr class="bg-admin-accent text-white">
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide text-left pl-4 bg-admin-accent">Season</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide text-left bg-admin-accent min-w-40">Club</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">GP</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">W</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">L</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">OTL</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">G</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">A</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">P</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">+/-</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">S</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">H</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PIM</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PPG</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">SHG</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">GWG</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">FO Won</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">FO Lost</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">BS</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">INT</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">TK</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">GV</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">DEF</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PD</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">SA</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">Shot %</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PA</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let season of careerStats" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
+                <td class="px-3 py-2 text-center align-middle text-left pl-4 font-semibold text-admin-primary">{{ season.seasonName }}</td>
+                <td class="px-3 py-2 text-center align-middle text-left pl-2 min-w-40">
+                  <div class="flex items-center gap-2">
+                    <img [src]="season.clubLogo" [alt]="season.clubName" class="w-6 h-6 rounded-full object-cover flex-shrink-0">
+                    <span class="text-white font-medium whitespace-nowrap">{{ season.clubName }}</span>
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.gamesPlayed }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.wins }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.losses }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.overtimeLosses || 0 }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.goals }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.assists }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.points }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.plusMinus }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.shots }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.hits }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.pim }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.ppg }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.shg }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.gwg }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.faceoffsWon }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.faceoffsLost }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.blockedShots }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.interceptions }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.takeaways }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.giveaways }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.deflections }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.penaltiesDrawn }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.shotAttempts }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ (season.stats.shotPct || 0) | number:'1.1-1' }}%</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.passAttempts }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ season.stats.passesCompleted }}</td>
+              </tr>
+              
+              <!-- Career Totals Row -->
+              <tr class="bg-admin-accent border-t-2 border-admin-primary">
+                <td class="px-3 py-2 text-center align-middle text-left pl-4 font-bold text-admin-primary text-sm bg-admin-accent">CAREER</td>
+                <td class="px-3 py-2 text-center align-middle text-left pl-2 bg-admin-accent">
+                  <span class="text-admin-primary font-bold text-sm">TOTALS</span>
+                </td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.gamesPlayed }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.wins }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.losses }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.overtimeLosses || 0 }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.goals }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.assists }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.points }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.plusMinus }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.shots }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.hits }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.pim }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.ppg }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.shg }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.gwg }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.faceoffsWon }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.faceoffsLost }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.blockedShots }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.interceptions }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.takeaways }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.giveaways }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.deflections }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.penaltiesDrawn }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.shotAttempts }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ (careerTotals.shotPct || 0) | number:'1.1-1' }}%</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.passAttempts }}</td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm text-white">{{ careerTotals.passesCompleted }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game-by-Game Stats Section -->
+    <div class="bg-admin-card rounded-lg p-8 mt-8 shadow-lg">
+      <h2 class="text-white mb-4 text-2xl">Game-by-Game Statistics</h2>
+      
+      <!-- Loading State -->
+      <div *ngIf="loadingGameStats" class="text-center p-8">
+        <div class="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full mx-auto mb-4 animate-spin"></div>
+        <p>Loading game statistics...</p>
+      </div>
+      
+      <!-- No Games Played Message -->
+      <div *ngIf="!loadingGameStats && gameByGameStats.length === 0" class="text-center py-10 px-5 text-white italic">
+        <p class="m-0 text-lg">No games played yet this season.</p>
+      </div>
+      
+      <!-- Game Stats Table -->
+      <div *ngIf="!loadingGameStats && gameByGameStats.length > 0" class="mt-4 overflow-x-auto rounded-lg bg-admin-card" style="border: 1px solid #34495e;">
+        <table class="w-full border-collapse bg-admin-card text-sm rounded-lg overflow-hidden min-w-max">
+            <thead>
+              <tr class="bg-admin-accent text-white">
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide text-left pl-4 bg-admin-accent">Date</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide text-center bg-admin-accent min-w-32">Club</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide min-w-32">Opponent</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide min-w-20">Result</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">G</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">A</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">P</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">+/-</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">S</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">H</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PIM</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PPG</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">SHG</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">GWG</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">FO Won</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">FO Lost</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">BS</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">INT</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">TK</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">GV</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">DEF</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PD</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">SA</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">Shot %</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PA</th>
+                <th class="px-3 py-2 text-center font-semibold text-sm uppercase tracking-wide">PC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let game of gameByGameStats" class="border-b border-admin-accent hover:bg-admin-hover transition-colors">
+                <td class="px-3 py-2 text-center align-middle text-left pl-4 font-semibold text-admin-primary min-w-30">{{ formatGameDate(game.date) }}</td>
+                <td class="px-3 py-2 text-center align-middle text-white font-semibold min-w-32">
+                  <div class="flex items-center gap-2">
+                    <img [src]="game.teamLogoUrl" [alt]="game.team" class="w-6 h-6 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'">
+                    <span class="text-white font-medium whitespace-nowrap">{{ game.team }}</span>
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-center align-middle min-w-32 text-left">
+                  <div class="flex items-center gap-2">
+                    <img [src]="game.opponentLogoUrl" [alt]="game.opponent" class="w-6 h-6 rounded-full object-cover flex-shrink-0" onerror="this.style.display='none'">
+                    <span class="text-white font-medium whitespace-nowrap">{{ game.opponent }}</span>
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-center align-middle font-bold text-sm rounded min-w-20 text-center" 
+                    [ngClass]="game.result === 'W' ? 'bg-green-600 text-white' : game.result === 'L' ? 'bg-red-600 text-white' : 'bg-yellow-600 text-white'">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-lg">{{ game.result === 'W' ? 'W' : game.result === 'L' ? 'L' : 'OTL' }}</span>
+                    <span class="text-sm opacity-80">({{ game.team === game.homeTeam ? game.homeScore : game.awayScore }}-{{ game.team === game.homeTeam ? game.awayScore : game.homeScore }})</span>
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.goals }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.assists }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.points }}</td>
+                <td class="px-3 py-2 text-center align-middle" [ngClass]="game.plusMinus > 0 ? 'text-green-500' : game.plusMinus < 0 ? 'text-red-500' : ''">{{ game.plusMinus > 0 ? '+' : '' }}{{ game.plusMinus }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.shots }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.hits }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.pim }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.ppg }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.shg }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.gwg }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.faceoffsWon }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.faceoffsLost }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.blockedShots }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.interceptions }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.takeaways }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.giveaways }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.deflections }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.penaltiesDrawn }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.shotAttempts }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.shotPercentage | number:'1.1-1' }}%</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.passAttempts }}</td>
+                <td class="px-3 py-2 text-center align-middle">{{ game.passes }}</td>
+              </tr>
+            </tbody>
+          </table>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-4 mt-8">
+      <button (click)="editProfile()" class="px-6 py-3 rounded text-admin-primary hover:bg-admin-accent hover:text-white transition-all duration-200" style="border: 1px solid #34495e;">Edit Profile</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<div class="flex min-h-screen bg-gray-900">
+  <aside class="w-64 bg-gray-800 p-6 border-r border-gray-700">
+    <div class="pb-6 border-b border-gray-700">
+      <h2 class="text-xl font-bold text-blue-300">Admin Panel</h2>
+    </div>
+    <nav class="flex flex-col pt-6 space-y-2">
+      <a 
+        routerLink="dashboard" 
+        routerLinkActive="bg-blue-600 text-white" 
+        [routerLinkActiveOptions]="{exact: true}"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-tachometer-alt w-5 text-center"></i>
+        Dashboard
+      </a>
+      <a 
+        routerLink="seasons" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-calendar w-5 text-center"></i>
+        Seasons & Divisions
+      </a>
+      <a 
+        routerLink="clubs" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-users w-5 text-center"></i>
+        Clubs
+      </a>
+      <a 
+        routerLink="add-games" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-plus-square w-5 text-center"></i>
+        Add Games
+      </a>
+      <a 
+        routerLink="schedule" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-gamepad w-5 text-center"></i>
+        Schedule
+      </a>
+      <a 
+        routerLink="users" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-user-cog w-5 text-center"></i>
+        Users
+      </a>
+      <a 
+        routerLink="players" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-hockey-puck w-5 text-center"></i>
+        Players
+      </a>
+      <a 
+        routerLink="admins" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-user-shield w-5 text-center"></i>
+        Admins
+      </a>
+      <a 
+        routerLink="create-player" 
+        routerLinkActive="bg-blue-600 text-white"
+        class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+      >
+        <i class="fas fa-user-plus w-5 text-center"></i>
+        Create Player
+      </a>
+    </nav>
+  </aside>
+  <main class="flex-1 overflow-y-auto">
+    <router-outlet></router-outlet>
+  </main>
+</div>
