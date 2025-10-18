@@ -657,14 +657,31 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       goalsFor += ourScore;
       goalsAgainst += opponentScore;
 
-      // Only count games that have been played (have EASHL data or actual scores > 0)
+      // Only count games that have been played (have EASHL data or actual scores > 0) or are forfeit games
       const hasBeenPlayed = match.eashlData && match.eashlData.matchId || 
                            (ourScore > 0 || opponentScore > 0) ||
                            (match.isOvertime || match.isShootout);
+      const isForfeitGame = match.forfeit && match.forfeit !== 'none';
 
-      if (hasBeenPlayed) {
+      if (hasBeenPlayed || isForfeitGame) {
         // Determine result
-        if (ourScore > opponentScore) {
+        if (isForfeitGame) {
+          // Handle forfeit games
+          if ((isHomeTeam && match.forfeit === 'forfeit-home') || 
+              (!isHomeTeam && match.forfeit === 'forfeit-away')) {
+            wins++;
+            lastTenResults.push('W');
+            // For forfeit wins, use default scores
+            goalsFor = goalsFor - ourScore + 1;
+            goalsAgainst = goalsAgainst - opponentScore + 0;
+          } else {
+            losses++;
+            lastTenResults.push('L');
+            // For forfeit losses, use default scores
+            goalsFor = goalsFor - ourScore + 0;
+            goalsAgainst = goalsAgainst - opponentScore + 1;
+          }
+        } else if (ourScore > opponentScore) {
           wins++;
           lastTenResults.push('W');
         } else if (ourScore < opponentScore) {

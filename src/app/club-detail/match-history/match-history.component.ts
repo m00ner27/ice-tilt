@@ -47,6 +47,13 @@ export class MatchHistoryComponent {
   
   // Determine if the team won the match
   didTeamWin(match: EashlMatch): boolean {
+    // Handle forfeit games
+    if (match.forfeit && match.forfeit !== 'none') {
+      const isHomeTeam = match.homeTeam === this.teamName;
+      return (isHomeTeam && match.forfeit === 'forfeit-home') || 
+             (!isHomeTeam && match.forfeit === 'forfeit-away');
+    }
+    
     const isHomeTeam = match.homeTeam === this.teamName;
     return isHomeTeam ? 
       match.homeScore > match.awayScore : 
@@ -67,10 +74,30 @@ export class MatchHistoryComponent {
   }
 
   getOurScore(match: EashlMatch): number {
+    // Handle forfeit games
+    if (match.forfeit && match.forfeit !== 'none') {
+      const isHomeTeam = match.homeTeam === this.teamName;
+      if ((isHomeTeam && match.forfeit === 'forfeit-home') || 
+          (!isHomeTeam && match.forfeit === 'forfeit-away')) {
+        return 1; // Forfeit win
+      } else {
+        return 0; // Forfeit loss
+      }
+    }
     return match.homeTeam === this.teamName ? match.homeScore : match.awayScore;
   }
 
   getOpponentScore(match: EashlMatch): number {
+    // Handle forfeit games
+    if (match.forfeit && match.forfeit !== 'none') {
+      const isHomeTeam = match.homeTeam === this.teamName;
+      if ((isHomeTeam && match.forfeit === 'forfeit-home') || 
+          (!isHomeTeam && match.forfeit === 'forfeit-away')) {
+        return 0; // Forfeit win
+      } else {
+        return 1; // Forfeit loss
+      }
+    }
     return match.homeTeam === this.teamName ? match.awayScore : match.homeScore;
   }
   

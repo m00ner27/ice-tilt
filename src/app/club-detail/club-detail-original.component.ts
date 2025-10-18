@@ -590,19 +590,20 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
     );
 
     sortedMatches.forEach(match => {
-      // Include matches that have either eashlData OR are merged games with valid scores
+      // Include matches that have either eashlData OR are merged games with valid scores OR are forfeit games
       const hasEashlData = match.eashlData;
       const isMergedGame = match.eashlMatchId && match.eashlMatchId.includes('+');
       const hasValidScores = match.homeScore !== undefined && match.awayScore !== undefined;
+      const isForfeitGame = match.forfeit && match.forfeit !== 'none';
       
-      // Skip if no valid data to process
-      if (!hasEashlData && !isMergedGame) {
-        console.log(`Skipping match ${match.id}: no eashlData and not a merged game`);
+      // Skip if no valid data to process (unless it's a forfeit game)
+      if (!hasEashlData && !isMergedGame && !isForfeitGame) {
+        console.log(`Skipping match ${match.id}: no eashlData, not a merged game, and not a forfeit game`);
         return;
       }
       
-      if (!hasValidScores) {
-        console.log(`Skipping match ${match.id}: no valid scores (home: ${match.homeScore}, away: ${match.awayScore})`);
+      if (!hasValidScores && !isForfeitGame) {
+        console.log(`Skipping match ${match.id}: no valid scores (home: ${match.homeScore}, away: ${match.awayScore}) and not a forfeit game`);
         return;
       }
       
@@ -612,7 +613,33 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
       let gameResult: 'W' | 'L' | 'OTL' = 'L';
       const isHomeTeam = match.homeTeam === clubName;
 
-      if (isHomeTeam) {
+      if (isForfeitGame) {
+        // Handle forfeit games
+        if ((isHomeTeam && match.forfeit === 'forfeit-home') || 
+            (!isHomeTeam && match.forfeit === 'forfeit-away')) {
+          stats.wins++;
+          gameResult = 'W';
+          // For forfeit wins, use default scores
+          if (isHomeTeam) {
+            stats.goalsFor += 1;
+            stats.goalsAgainst += 0;
+          } else {
+            stats.goalsFor += 1;
+            stats.goalsAgainst += 0;
+          }
+        } else {
+          stats.losses++;
+          gameResult = 'L';
+          // For forfeit losses, use default scores
+          if (isHomeTeam) {
+            stats.goalsFor += 0;
+            stats.goalsAgainst += 1;
+          } else {
+            stats.goalsFor += 0;
+            stats.goalsAgainst += 1;
+          }
+        }
+      } else if (isHomeTeam) {
         stats.goalsFor += match.homeScore;
         stats.goalsAgainst += match.awayScore;
         if (match.homeScore > match.awayScore) {

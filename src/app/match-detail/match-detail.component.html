@@ -11,9 +11,9 @@
         </div>
       </div>
       <div class="scores-section">
-        <span class="club-score home-score">{{ match.homeScore }}</span>
+        <span class="club-score home-score">{{ getHomeScore() }}</span>
         <span class="vs-label">VS</span>
-        <span class="club-score away-score">{{ match.awayScore }}</span>
+        <span class="club-score away-score">{{ getAwayScore() }}</span>
       </div>
       <div class="club away-club" [class.winner]="isTeamWinner(match.awayTeam)">
         <div class="club-name-logo">

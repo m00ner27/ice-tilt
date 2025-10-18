@@ -59,6 +59,7 @@ export interface EashlMatch {
   awayScore: number;
   isOvertime?: boolean;
   isShootout?: boolean;
+  forfeit?: string;
   playerStats: PlayerMatchStats[];
   // Keep a reference to the raw eashlData if needed elsewhere
   eashlData?: any; 
@@ -382,6 +383,7 @@ export class MatchService {
       awayScore: awayScore,
       isOvertime: game.isOvertime || false,
       isShootout: game.isShootout || false,
+      forfeit: game.forfeit,
       playerStats: playerStats,
       eashlData: game.eashlData,
       seasonId: game.seasonId, // Populate seasonId

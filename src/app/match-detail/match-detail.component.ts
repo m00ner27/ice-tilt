@@ -562,10 +562,32 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   getScoreDisplay(): string {
     if (!this.match) return '0 - 0';
     
-    const homeScore = this.match.homeScore || this.match.score?.home || 0;
-    const awayScore = this.match.awayScore || this.match.score?.away || 0;
+    const homeScore = this.getHomeScore();
+    const awayScore = this.getAwayScore();
     
     return `${homeScore} - ${awayScore}`;
+  }
+
+  getHomeScore(): number {
+    if (!this.match) return 0;
+    
+    // Handle forfeit games
+    if (this.match.forfeit && this.match.forfeit !== 'none') {
+      return this.match.forfeit === 'forfeit-home' ? 1 : 0;
+    }
+    
+    return this.match.homeScore || this.match.score?.home || 0;
+  }
+
+  getAwayScore(): number {
+    if (!this.match) return 0;
+    
+    // Handle forfeit games
+    if (this.match.forfeit && this.match.forfeit !== 'none') {
+      return this.match.forfeit === 'forfeit-away' ? 1 : 0;
+    }
+    
+    return this.match.awayScore || this.match.score?.away || 0;
   }
 
   getDateDisplay(): string {

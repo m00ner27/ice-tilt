@@ -150,8 +150,29 @@ export class ScheduleBarComponent implements OnInit, OnDestroy {
       return true;
     }
     
+    // A game is final if it's a forfeit game
+    if (match.forfeit && match.forfeit !== 'none') {
+      return true;
+    }
+    
     // For games without EASHL data, only consider them final if they have actual scores (not just 0-0 defaults)
     // This handles cases where scores were manually entered
     return match.homeScore !== undefined && match.awayScore !== undefined && (match.homeScore > 0 || match.awayScore > 0);
+  }
+
+  getHomeScore(match: EashlMatch): number {
+    // Handle forfeit games
+    if (match.forfeit && match.forfeit !== 'none') {
+      return match.forfeit === 'forfeit-home' ? 1 : 0;
+    }
+    return match.homeScore || 0;
+  }
+
+  getAwayScore(match: EashlMatch): number {
+    // Handle forfeit games
+    if (match.forfeit && match.forfeit !== 'none') {
+      return match.forfeit === 'forfeit-away' ? 1 : 0;
+    }
+    return match.awayScore || 0;
   }
 }

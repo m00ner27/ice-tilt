@@ -17,9 +17,9 @@
           <div class="club">
             <img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} logo" class="club-logo">
           </div>
-          <span class="score">{{ match.homeScore }}</span>
+          <span class="score">{{ getHomeScore(match) }}</span>
           <span class="vs-text">VS</span>
-          <span class="score">{{ match.awayScore }}</span>
+          <span class="score">{{ getAwayScore(match) }}</span>
           <div class="club">
             <img [src]="getImageUrl(match.awayClub?.logoUrl)" alt="{{ match.awayTeam }} logo" class="club-logo">
           </div>

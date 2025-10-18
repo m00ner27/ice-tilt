@@ -41,6 +41,7 @@ interface Game {
   date: string;
   isOvertime?: boolean;
   eashlMatchId?: string;
+  forfeit?: string;
   score?: {
     home: number;
     away: number;
@@ -146,7 +147,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
     
     // Load seasons first, then load data directly
     this.loadSeasons();
-    this.loadDataDirectly();
     
     // Listen for storage events (when admin panel makes changes)
     window.addEventListener('storage', (event) => {
@@ -296,19 +296,31 @@ export class StandingsComponent implements OnInit, OnDestroy {
     // Calculate standings for each division, sorted by order
     // First, deduplicate divisions by ID to prevent duplicates
     const uniqueDivisions = new Map<string, Division>();
-    this.divisions
-      .filter(division => division.seasonId === this.selectedSeasonId)
-      .forEach(division => {
-        if (!uniqueDivisions.has(division._id)) {
-          uniqueDivisions.set(division._id, division);
-        }
-      });
+    
+    // Since we're loading season-specific data, all divisions should belong to the current season
+    // But let's be safe and filter if needed
+    const divisionsToProcess = this.divisions.filter(division => {
+      // If division has seasonId field, check it matches
+      if (division.seasonId) {
+        return division.seasonId === this.selectedSeasonId;
+      }
+      // If no seasonId field, assume it belongs to current season (since we loaded season-specific data)
+      return true;
+    });
+    
+    divisionsToProcess.forEach(division => {
+      if (!uniqueDivisions.has(division._id)) {
+        uniqueDivisions.set(division._id, division);
+      }
+    });
     
     // Convert to array and sort by order
     const sortedDivisions = Array.from(uniqueDivisions.values())
       .sort((a, b) => (a.order || 0) - (b.order || 0));
     
     console.log(`Processing ${sortedDivisions.length} unique divisions for season ${this.selectedSeasonId}`);
+    console.log('Available divisions:', this.divisions.map(d => ({ id: d._id, name: d.name, seasonId: d.seasonId })));
+    console.log('Filtered divisions:', divisionsToProcess.map(d => ({ id: d._id, name: d.name, seasonId: d.seasonId })));
     
     sortedDivisions.forEach(division => {
       const divisionGames = gamesByDivision.get(division._id) || [];
@@ -407,46 +419,73 @@ export class StandingsComponent implements OnInit, OnDestroy {
       const homeTeam = standingsMap.get(homeClubId);
       const awayTeam = standingsMap.get(awayClubId);
 
-      if (homeTeam && awayTeam && homeScore !== undefined && awayScore !== undefined) {
+      if (homeTeam && awayTeam) {
         // Check if game has been played (simplified logic)
-        const hasBeenPlayed = (game.eashlData as any)?.matchId || (homeScore > 0 || awayScore > 0) || game.isOvertime;
+        const hasBeenPlayed = (game.eashlData as any)?.matchId || ((homeScore || 0) > 0 || (awayScore || 0) > 0) || game.isOvertime;
+        const isForfeitGame = game.forfeit && game.forfeit !== 'none';
 
-        if (hasBeenPlayed) {
+        if (hasBeenPlayed || isForfeitGame) {
           // Update games played
           homeTeam.gamesPlayed++;
           awayTeam.gamesPlayed++;
 
-          // Update goals
-          homeTeam.goalsFor += homeScore;
-          homeTeam.goalsAgainst += awayScore;
-          awayTeam.goalsFor += awayScore;
-          awayTeam.goalsAgainst += homeScore;
-
-          // Update wins/losses and points
-          if (homeScore > awayScore) {
-            homeTeam.wins++;
-            homeTeam.points += 2;
-            
-            if (game.isOvertime) {
-              awayTeam.otLosses++;
-              awayTeam.points += 1;
-            } else {
+          if (isForfeitGame) {
+            // Handle forfeit games
+            if (game.forfeit === 'forfeit-home') {
+              // Home team wins by forfeit
+              homeTeam.wins++;
+              homeTeam.points += 2;
               awayTeam.losses++;
-            }
-          } else if (awayScore > homeScore) {
-            awayTeam.wins++;
-            awayTeam.points += 2;
-            
-            if (game.isOvertime) {
-              homeTeam.otLosses++;
-              homeTeam.points += 1;
-            } else {
+              // For forfeit games, use default scores (1-0)
+              homeTeam.goalsFor += 1;
+              homeTeam.goalsAgainst += 0;
+              awayTeam.goalsFor += 0;
+              awayTeam.goalsAgainst += 1;
+            } else if (game.forfeit === 'forfeit-away') {
+              // Away team wins by forfeit
+              awayTeam.wins++;
+              awayTeam.points += 2;
               homeTeam.losses++;
+              // For forfeit games, use default scores (0-1)
+              homeTeam.goalsFor += 0;
+              homeTeam.goalsAgainst += 1;
+              awayTeam.goalsFor += 1;
+              awayTeam.goalsAgainst += 0;
             }
-          } else {
-            // Tie game
-            homeTeam.points += 1;
-            awayTeam.points += 1;
+          } else if (homeScore !== undefined && awayScore !== undefined) {
+            // Handle regular games with actual scores
+            // Update goals
+            homeTeam.goalsFor += homeScore;
+            homeTeam.goalsAgainst += awayScore;
+            awayTeam.goalsFor += awayScore;
+            awayTeam.goalsAgainst += homeScore;
+
+            // Update wins/losses and points
+            if (homeScore > awayScore) {
+              homeTeam.wins++;
+              homeTeam.points += 2;
+              
+              if (game.isOvertime) {
+                awayTeam.otLosses++;
+                awayTeam.points += 1;
+              } else {
+                awayTeam.losses++;
+              }
+            } else if (awayScore > homeScore) {
+              awayTeam.wins++;
+              awayTeam.points += 2;
+              
+              if (game.isOvertime) {
+                homeTeam.otLosses++;
+                homeTeam.points += 1;
+              } else {
+                homeTeam.losses++;
+              }
+            } else {
+              // Tie game
+              homeTeam.points += 1;
+              awayTeam.points += 1;
+            }
           }
         }
       }
