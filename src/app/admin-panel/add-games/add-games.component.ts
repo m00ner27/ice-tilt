@@ -133,7 +133,7 @@ export class AddGamesComponent implements OnInit {
     console.log('Available divisions:', this.divisions.length);
     
     if (selectedSeasonId && this.divisions.length > 0) {
-      this.filteredDivisions = this.divisions.filter(div => div.seasonId === selectedSeasonId).sort((a, b) => a.name.localeCompare(b.name));
+      this.filteredDivisions = this.divisions.filter(div => div.seasonId === selectedSeasonId).sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
       console.log('Filtered divisions:', this.filteredDivisions.length);
     } else {
       this.filteredDivisions = [];

@@ -174,8 +174,32 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
           
           if (this.seasons.length === 0) {
             this.seasons = seasons;
-            this.divisions = divisions;
             this.selectedSeasonId = seasons.length > 0 ? seasons[0]._id : null;
+            
+            // Debug logging to see what divisions data we're getting
+            console.log('Raw divisions data from store:', divisions);
+            console.log('Divisions count:', divisions.length);
+            console.log('Selected season ID:', this.selectedSeasonId);
+            
+            // Filter divisions to only show those for the selected season, then deduplicate
+            const seasonDivisions = this.selectedSeasonId 
+              ? divisions.filter(d => d.seasonId === this.selectedSeasonId)
+              : divisions;
+            
+            console.log('After season filter - Divisions count:', seasonDivisions.length);
+            console.log('After season filter - Division names:', seasonDivisions.map(d => d.name));
+            
+            // Deduplicate divisions by _id to prevent duplicate dropdown entries
+            const deduplicatedDivisions = seasonDivisions.filter((division, index, self) => 
+              index === self.findIndex(d => d._id === division._id)
+            );
+            
+            // Sort divisions by their order field (ascending)
+            this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            console.log('After deduplication - Divisions count:', this.divisions.length);
+            console.log('After deduplication - Division names:', this.divisions.map(d => d.name));
+            
             this.processStats(matches, clubs, divisions);
           }
         }
@@ -208,6 +232,19 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       this.allClubs$,
       this.divisions$
     ]).pipe(take(1)).subscribe(([matches, clubs, divisions]) => {
+      // Filter divisions to only show those for the selected season, then deduplicate
+      const seasonDivisions = this.selectedSeasonId 
+        ? divisions.filter(d => d.seasonId === this.selectedSeasonId)
+        : divisions;
+      
+      // Deduplicate divisions by _id to prevent duplicate dropdown entries
+      const deduplicatedDivisions = seasonDivisions.filter((division, index, self) => 
+        index === self.findIndex(d => d._id === division._id)
+      );
+      
+      // Sort divisions by their order field (ascending)
+      this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
+      
       this.processStats(matches, clubs, divisions);
     });
   }

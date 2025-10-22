@@ -776,7 +776,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   // Removed loadDivisionsForSeason - divisions are loaded globally in loadData()
 
   getDivisionsForSeason(seasonId: string): Division[] {
-    return this.divisions.filter(d => d.seasonId === seasonId);
+    return this.divisions.filter(d => d.seasonId === seasonId).sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
   }
 
   isSeasonSelected(seasonId: string): boolean {

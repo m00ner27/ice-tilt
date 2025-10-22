@@ -77,7 +77,7 @@ export class AddGamesComponent implements OnInit {
   loadDivisions() {
     this.api.getDivisions().subscribe({
       next: (divisions) => {
-        this.divisions = divisions;
+        this.divisions = (divisions || []).sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
       },
       error: (error) => {
         console.error('Error loading divisions:', error);

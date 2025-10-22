@@ -177,9 +177,9 @@ export class ClubStatsService {
             continue;
           }
           
-          // Check if any player in this team is on our roster
+          // Check if any player in this team is on our roster (case-insensitive)
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag === player.name)
+            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
           );
           console.log(`Team ${teamKey} contains roster player:`, teamContainsRosterPlayer);
           if (teamContainsRosterPlayer) {
@@ -263,7 +263,7 @@ export class ClubStatsService {
           
           console.log('Team players:', teamPlayers.map((p: any) => p.name));
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag === player.name)
+            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
           );
           console.log('Team', ourTeamKey, 'contains roster players:', teamContainsRosterPlayer);
           console.log('Roster players:', roster.map(p => p.gamertag).join(', '));
@@ -281,8 +281,8 @@ export class ClubStatsService {
       }
     });
 
-    // Create a set of roster player names for quick lookup
-    const rosterPlayerNames = new Set(roster.map(p => p.gamertag).filter(Boolean));
+    // Create a set of roster player names for quick lookup (case-insensitive)
+    const rosterPlayerNames = new Set(roster.map(p => p.gamertag?.toLowerCase()).filter(Boolean));
     console.log('Roster player names for stats processing:', Array.from(rosterPlayerNames));
 
     // Initialize player stats map with all players who played for this club
@@ -327,7 +327,7 @@ export class ClubStatsService {
         interceptions: 0,
         playerScore: 0,
         penaltyKillCorsiZone: 0,
-        isSigned: rosterPlayerNames.has(playerName)
+        isSigned: rosterPlayerNames.has(playerName?.toLowerCase())
       };
 
       const baseGoalieStats: GoalieStats = {
@@ -347,7 +347,7 @@ export class ClubStatsService {
         goalsAgainstAverage: 0,
         shutouts: 0,
         otl: 0,
-        isSigned: rosterPlayerNames.has(playerName)
+        isSigned: rosterPlayerNames.has(playerName?.toLowerCase())
       };
 
       // Create separate entries for skater and goalie roles
@@ -630,7 +630,7 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
           }
           
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag === player.name)
+            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
           );
           console.log(`Stats processing - team ${teamKey} contains roster player:`, teamContainsRosterPlayer);
           if (teamContainsRosterPlayer) {
@@ -872,11 +872,11 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
       gp: p.gamesPlayed,
       saves: p.saves,
       shotsAgainst: p.shotsAgainst,
-      onRoster: rosterPlayerNames.has(p.name),
+      onRoster: rosterPlayerNames.has(p.name?.toLowerCase()),
       isSigned: p.isSigned
     })));
-    console.log('Skaters (all who played):', skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed, onRoster: rosterPlayerNames.has(s.name), isSigned: s.isSigned })));
-    console.log('Goalies (all who played):', goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves, onRoster: rosterPlayerNames.has(g.name), isSigned: g.isSigned })));
+    console.log('Skaters (all who played):', skaterStats.map(s => ({ name: s.name, position: s.position, gp: s.gamesPlayed, onRoster: rosterPlayerNames.has(s.name?.toLowerCase()), isSigned: s.isSigned })));
+    console.log('Goalies (all who played):', goalieStats.map(g => ({ name: g.name, position: g.position, gp: g.gamesPlayed, saves: g.saves, onRoster: rosterPlayerNames.has(g.name?.toLowerCase()), isSigned: g.isSigned })));
     
     console.log('Final skater stats:', skaterStats.length, 'players');
     console.log('Final goalie stats:', goalieStats.length, 'players');

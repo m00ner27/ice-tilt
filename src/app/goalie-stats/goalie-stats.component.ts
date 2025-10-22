@@ -143,7 +143,13 @@ export class GoalieStatsComponent implements OnInit {
     if (this.selectedSeasonId === 'all-seasons') {
       this.apiService.getDivisions().subscribe({
         next: (divisions) => {
-          this.divisions = divisions;
+          // Deduplicate divisions by _id to prevent duplicate dropdown entries
+          const deduplicatedDivisions = divisions.filter((division, index, self) => 
+            index === self.findIndex(d => d._id === division._id)
+          );
+          
+          // Sort divisions by their order field (ascending)
+          this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
           this.filterAndAggregateStats();
           this.isLoading = false;
         },
@@ -156,7 +162,13 @@ export class GoalieStatsComponent implements OnInit {
       // Load divisions for specific season
       this.apiService.getDivisionsBySeason(this.selectedSeasonId).subscribe({
         next: (divisions) => {
-          this.divisions = divisions;
+          // Deduplicate divisions by _id to prevent duplicate dropdown entries
+          const deduplicatedDivisions = divisions.filter((division, index, self) => 
+            index === self.findIndex(d => d._id === division._id)
+          );
+          
+          // Sort divisions by their order field (ascending)
+          this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
           this.filterAndAggregateStats();
           this.isLoading = false;
         },
