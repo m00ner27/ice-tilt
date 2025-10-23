@@ -291,21 +291,18 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.isMergedGame) {
-      // Merged games should now have combined player stats
-      if (!this.match.playerStats || this.match.playerStats.length === 0) {
-        this.noStatsMessage = `This game was created by merging multiple EASHL games (${this.match.eashlMatchId}). Player statistics are being processed and should be available shortly.`;
-        return;
-      }
-    }
-
-    // Check if we have player stats or need to process EASHL data
-    if (this.match.playerStats && this.match.playerStats.length > 0) {
-      this.processPlayerStats();
-    } else if (this.match.eashlData && this.match.eashlData.players) {
+    // Check if we have EASHL data or player stats
+    // Prioritize EASHL data for regular games since it has all stat categories
+    if (this.match.eashlData && this.match.eashlData.players) {
       this.processEashlData();
+    } else if (this.match.playerStats && this.match.playerStats.length > 0) {
+      this.processPlayerStats();
     } else {
-      this.noStatsMessage = 'No detailed player statistics are available for this game.';
+      if (this.isMergedGame) {
+        this.noStatsMessage = `This game was created by merging multiple EASHL games (${this.match.eashlMatchId}). Player statistics are being processed and should be available shortly.`;
+      } else {
+        this.noStatsMessage = 'No detailed player statistics are available for this game.';
+      }
       return;
     }
   }
@@ -381,9 +378,24 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Debug logging for merged games
+    if (this.isMergedGame) {
+      console.log('=== PROCESSING MERGED GAME EASHL DATA ===');
+      console.log('EASHL Match ID:', this.match.eashlMatchId);
+      console.log('Players data structure:', this.match.eashlData.players);
+    }
+
     // Get team IDs from EASHL data
     const homeClubId = this.match.homeClub?.eashlClubId;
     const awayClubId = this.match.awayClub?.eashlClubId;
+    
+    console.log('Expected club IDs:', { homeClubId, awayClubId });
+    console.log('Expected club ID types:', { 
+      homeClubIdType: typeof homeClubId, 
+      awayClubIdType: typeof awayClubId 
+    });
+    console.log('Available player club IDs in EASHL data:', Object.keys(this.match.eashlData.players));
+    console.log('Available club ID types:', Object.keys(this.match.eashlData.players).map(id => ({ id, type: typeof id })));
     
     if (!homeClubId || !awayClubId) {
       this.noStatsMessage = 'Team information not available for this game.';
@@ -394,14 +406,44 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     const teamIds = [homeClubId.toString(), awayClubId.toString()];
     
     teamIds.forEach(teamId => {
+      console.log(`Looking for players for team ID: ${teamId} (type: ${typeof teamId})`);
       const teamPlayers = this.match.eashlData.players[teamId];
-      if (!teamPlayers) return;
+      console.log(`Found team players:`, teamPlayers);
+      if (!teamPlayers) {
+        console.log(`No players found for team ID: ${teamId}`);
+        console.log('Available team IDs in EASHL data:', Object.keys(this.match.eashlData.players));
+        console.log('Checking if team ID exists with different type...');
+        // Try to find the team with different type conversion
+        const stringTeamId = teamId.toString();
+        const numberTeamId = parseInt(teamId);
+        console.log(`Trying string version: ${stringTeamId}`, this.match.eashlData.players[stringTeamId]);
+        console.log(`Trying number version: ${numberTeamId}`, this.match.eashlData.players[numberTeamId]);
+        return;
+      }
 
       const playersArray = Array.isArray(teamPlayers) ? teamPlayers : Object.values(teamPlayers);
       
       playersArray.forEach((playerData: any) => {
         const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
         const isHomeTeam = teamId === homeClubId.toString();
+        
+        // Debug logging for merged games
+        if (this.isMergedGame) {
+          console.log(`Processing player: ${playerData.playername || playerData.name}`, {
+            skpasses: playerData.skpasses,
+            skpassattempts: playerData.skpassattempts,
+            skfow: playerData.skfow,
+            skfol: playerData.skfol,
+            skint: playerData.skint,
+            sktakeaways: playerData.sktakeaways,
+            skgiveaways: playerData.skgiveaways,
+            skshots: playerData.skshots,
+            skgoals: playerData.skgoals,
+            skassists: playerData.skassists,
+            skhits: playerData.skhits,
+            skbs: playerData.skbs
+          });
+        }
         
         const statDisplay: PlayerStatDisplay = {
           playerId: playerData.playerId || 0,
@@ -447,6 +489,24 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
             (parseInt(playerData.glshots) > 0 ? ((parseInt(playerData.glsaves) || 0) / parseInt(playerData.glshots)) : 0) : 0,
           goalsAgainst: isGoalie ? (parseInt(playerData.glga) || 0) : 0
         };
+
+        // Debug logging for merged games - show final processed stats
+        if (this.isMergedGame) {
+          console.log(`Final processed stats for ${playerData.playername || playerData.name}:`, {
+            shots: statDisplay.shots,
+            passes: statDisplay.passes,
+            passAttempts: statDisplay.passAttempts,
+            passPercentage: statDisplay.passPercentage,
+            faceoffsWon: statDisplay.faceoffsWon,
+            faceoffsLost: statDisplay.faceoffsLost,
+            faceoffPercentage: statDisplay.faceoffPercentage,
+            interceptions: statDisplay.interceptions,
+            goals: statDisplay.goals,
+            assists: statDisplay.assists,
+            hits: statDisplay.hits,
+            blockedShots: statDisplay.blockedShots
+          });
+        }
 
         // Add to appropriate team
         if (isHomeTeam) {
