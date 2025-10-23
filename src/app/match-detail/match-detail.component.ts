@@ -305,6 +305,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    
+    // Fix goalie stats after processing data
+    this.fixGoalieStats();
   }
 
   processPlayerStats(): void {
@@ -827,5 +830,31 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     
     // Simple scoring system: points + defensive stats - giveaways + plus/minus
     return points + (hits * 0.1) + (blockedShots * 0.2) + (takeaways * 0.1) - (giveaways * 0.1) + (plusMinus * 0.5);
+  }
+
+  fixGoalieStats(): void {
+    // Get team total shots
+    const homeTeamTotalShots = this.getTeamTotalShots('home');
+    const awayTeamTotalShots = this.getTeamTotalShots('away');
+    
+    // Get team total goals
+    const homeTeamTotalGoals = this.getTeamTotalGoals('home');
+    const awayTeamTotalGoals = this.getTeamTotalGoals('away');
+    
+    // Fix home team goalies - their shots against should equal away team's total shots
+    this.homeTeamGoalies.forEach(goalie => {
+      goalie.shotsAgainst = awayTeamTotalShots;
+      goalie.goalsAgainst = awayTeamTotalGoals; // Goals against = goals scored by opposing team
+      goalie.saves = Math.max(0, awayTeamTotalShots - awayTeamTotalGoals); // Saves = SA - GA
+      goalie.savePercentage = awayTeamTotalShots > 0 ? goalie.saves / awayTeamTotalShots * 100 : 0;
+    });
+    
+    // Fix away team goalies - their shots against should equal home team's total shots
+    this.awayTeamGoalies.forEach(goalie => {
+      goalie.shotsAgainst = homeTeamTotalShots;
+      goalie.goalsAgainst = homeTeamTotalGoals; // Goals against = goals scored by opposing team
+      goalie.saves = Math.max(0, homeTeamTotalShots - homeTeamTotalGoals); // Saves = SA - GA
+      goalie.savePercentage = homeTeamTotalShots > 0 ? goalie.saves / homeTeamTotalShots * 100 : 0;
+    });
   }
 }

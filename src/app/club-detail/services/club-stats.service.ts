@@ -425,12 +425,12 @@ export class ClubStatsService {
 
       if (isHomeTeamInMatch) {
         won = match.homeScore > match.awayScore;
-        lost = match.homeScore < match.awayScore && !match.otWin && !match.soWin;
-        otLoss = match.homeScore < match.awayScore && (match.otWin || match.soWin);
+        lost = match.homeScore < match.awayScore && !match.isOvertime && !match.isShootout;
+        otLoss = match.homeScore < match.awayScore && (match.isOvertime || match.isShootout);
       } else if (isAwayTeamInMatch) {
         won = match.awayScore > match.homeScore;
-        lost = match.awayScore < match.homeScore && !match.otWin && !match.soWin;
-        otLoss = match.awayScore < match.homeScore && (match.otWin || match.soWin);
+        lost = match.awayScore < match.homeScore && !match.isOvertime && !match.isShootout;
+        otLoss = match.awayScore < match.homeScore && (match.isOvertime || match.isShootout);
       }
 
       // Prioritize processed playerStats over raw EASHL data
@@ -497,7 +497,12 @@ export class ClubStatsService {
             playerStats.gamesPlayed++;
             if (won) playerStats.wins++;
             else if (lost) playerStats.losses++;
-            else if (otLoss) playerStats.otLosses++;
+            else if (otLoss) {
+              playerStats.otLosses++;
+              if (isGoalie) {
+                playerStats.otl = (playerStats.otl || 0) + 1;
+              }
+            }
 
             if (isGoalie) {
               playerStats.saves += playerData.saves || 0;
@@ -733,7 +738,12 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
               playerStats.gamesPlayed++;
               if (won) playerStats.wins++;
               else if (lost) playerStats.losses++;
-              else if (otLoss) playerStats.otLosses++;
+              else if (otLoss) {
+                playerStats.otLosses++;
+                if (isGoalie) {
+                  playerStats.otl = (playerStats.otl || 0) + 1;
+                }
+              }
               
               if (isGoalie) {
                 playerStats.saves += playerData.saves || 0;

@@ -825,7 +825,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               if (homeScore > awayScore) {
                 stats.wins = (stats.wins || 0) + 1;
               } else if (homeScore < awayScore) {
-                if (match.isOvertime) {
+                if (match.isOvertime || match.isShootout) {
                   stats.otl = (stats.otl || 0) + 1;
                 } else {
                   stats.losses = (stats.losses || 0) + 1;
@@ -835,7 +835,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               if (awayScore > homeScore) {
                 stats.wins = (stats.wins || 0) + 1;
               } else if (awayScore < homeScore) {
-                if (match.isOvertime) {
+                if (match.isOvertime || match.isShootout) {
                   stats.otl = (stats.otl || 0) + 1;
                 } else {
                   stats.losses = (stats.losses || 0) + 1;
@@ -859,7 +859,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               if (homeScore > awayScore) {
                 stats.wins = (stats.wins || 0) + 1;
               } else if (homeScore < awayScore) {
-                if (match.isOvertime) {
+                if (match.isOvertime || match.isShootout) {
                   stats.otl = (stats.otl || 0) + 1;
                 } else {
                   stats.losses = (stats.losses || 0) + 1;
@@ -869,7 +869,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
               if (awayScore > homeScore) {
                 stats.wins = (stats.wins || 0) + 1;
               } else if (awayScore < homeScore) {
-                if (match.isOvertime) {
+                if (match.isOvertime || match.isShootout) {
                   stats.otl = (stats.otl || 0) + 1;
                 } else {
                   stats.losses = (stats.losses || 0) + 1;
