@@ -372,6 +372,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
+    // Recalculate goalie shots against to match opposing team's total shots
+    this.recalculateGoalieShotsAgainst();
   }
 
   processEashlData(): void {
@@ -549,6 +552,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         }
       });
     }
+    
+    // Recalculate goalie shots against to match opposing team's total shots
+    this.recalculateGoalieShotsAgainst();
   }
 
   goBack(): void {
@@ -702,6 +708,31 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     if (!saves || !shotsAgainst || shotsAgainst === 0) return '0.000';
     const percentage = (saves / shotsAgainst) * 100;
     return percentage.toFixed(3);
+  }
+
+  // Method to recalculate goalie shots against based on opposing team's total shots
+  recalculateGoalieShotsAgainst(): void {
+    // Calculate total shots for each team
+    const homeTeamTotalShots = this.getTeamTotalShots('home');
+    const awayTeamTotalShots = this.getTeamTotalShots('away');
+    
+    // Update home team goalies' shots against to match away team's total shots
+    this.homeTeamGoalies.forEach(goalie => {
+      goalie.shotsAgainst = awayTeamTotalShots;
+      // Recalculate goals against to maintain mathematical consistency: GA = SA - SV
+      goalie.goalsAgainst = Math.max(0, awayTeamTotalShots - (goalie.saves || 0));
+      // Recalculate save percentage
+      goalie.savePercentage = awayTeamTotalShots > 0 ? (goalie.saves || 0) / awayTeamTotalShots * 100 : 0;
+    });
+    
+    // Update away team goalies' shots against to match home team's total shots
+    this.awayTeamGoalies.forEach(goalie => {
+      goalie.shotsAgainst = homeTeamTotalShots;
+      // Recalculate goals against to maintain mathematical consistency: GA = SA - SV
+      goalie.goalsAgainst = Math.max(0, homeTeamTotalShots - (goalie.saves || 0));
+      // Recalculate save percentage
+      goalie.savePercentage = homeTeamTotalShots > 0 ? (goalie.saves || 0) / homeTeamTotalShots * 100 : 0;
+    });
   }
 
   ngOnDestroy(): void {
