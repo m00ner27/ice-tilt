@@ -620,15 +620,19 @@ export class ClubsComponent implements OnInit, OnDestroy {
     });
     
     // Create a clean update object with only the fields that should be updated
-    const updated = {
+    const updated: any = {
       _id: this.editingClub._id, // Include the club ID for the API call
       name: form.name,
-      logoUrl: form.logo,
       primaryColour: form.color,
       seasons: seasons,
       region: form.region,
       eashlClubId: form.eashlClubId
     };
+    
+    // Only include logoUrl if it has a value (to avoid clearing existing logos)
+    if (form.logo && form.logo.trim() !== '') {
+      updated.logoUrl = form.logo;
+    }
     
     console.log('=== CLUB UPDATE DEBUG ===');
     console.log('Form values:', form);

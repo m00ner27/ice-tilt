@@ -184,7 +184,18 @@ export class SeasonsComponent implements OnInit {
 
   updateDivision() {
     if (this.divisionForm.valid && this.editingDivision) {
-      const divisionData = { ...this.divisionForm.value, _id: this.editingDivision._id };
+      const formValue = this.divisionForm.value;
+      // Only include logoUrl if it has a value (to avoid clearing existing logos)
+      const divisionData: any = { 
+        ...formValue, 
+        _id: this.editingDivision._id 
+      };
+      
+      // Remove logoUrl if it's empty to preserve existing logo
+      if (!divisionData.logoUrl || divisionData.logoUrl.trim() === '') {
+        delete divisionData.logoUrl;
+      }
+      
       console.log('Sending division update:', divisionData);
       
       // Update via API
