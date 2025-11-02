@@ -300,7 +300,11 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   private loadClubsForSeason(seasonId: string): void {
+    // Clear cache first to ensure fresh data
+    this.api.invalidateClubsCache();
+    
     // Load all clubs and filter by season
+    // Use a direct HTTP call to bypass cache if needed
     this.api.getClubs().subscribe({
       next: (allClubs) => {
         // Filter clubs that are active in this season
@@ -430,12 +434,14 @@ export class ClubsComponent implements OnInit, OnDestroy {
       
       this.api.uploadFile(file).subscribe({
         next: (res) => {
-          this.clubForm.patchValue({ logo: res.url });
-          this.logoPreview = this.imageUrlService.getImageUrl(res.url);
+          const logoUrl = res.url || res.data?.url || res;
+          this.clubForm.patchValue({ logo: logoUrl });
+          this.logoPreview = this.imageUrlService.getImageUrl(logoUrl);
           this.uploadingLogo = false;
         },
         error: (error) => {
           console.error('Upload failed:', error);
+          alert('Logo upload failed. Please try again.');
           this.uploadingLogo = false;
         }
       });
@@ -519,7 +525,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
           
           // Clear clubs cache to ensure fresh data is loaded
           this.api.invalidateClubsCache();
-          console.log('Cleared clubs cache after creating new club');
           
           this.cancelClubForm();
         },
@@ -629,39 +634,30 @@ export class ClubsComponent implements OnInit, OnDestroy {
       eashlClubId: form.eashlClubId
     };
     
-    // Only include logoUrl if it has a value (to avoid clearing existing logos)
-    if (form.logo && form.logo.trim() !== '') {
-      updated.logoUrl = form.logo;
-    }
-    
-    console.log('=== CLUB UPDATE DEBUG ===');
-    console.log('Form values:', form);
-    console.log('EASHL Club ID from form:', form.eashlClubId);
-    console.log('Update object:', updated);
+    // Always include logoUrl from form (backend will preserve existing if empty)
+    updated.logoUrl = form.logo || '';
     
     this.api.updateClub(updated).subscribe({
       next: (updatedClub) => {
-        console.log('Club update response:', updatedClub);
-        console.log('Updated EASHL Club ID:', updatedClub.eashlClubId);
+        // Clear clubs cache FIRST before reloading to ensure fresh data
+        this.api.invalidateClubsCache();
         
+        // Update the club in the local array immediately with the response
         const idx = this.clubs.findIndex(c => c._id === updatedClub._id);
         if (idx > -1) {
-          this.clubs[idx] = updatedClub;
-          console.log('Updated club in local array:', this.clubs[idx]);
+          // Create a new object to trigger change detection
+          this.clubs[idx] = { ...updatedClub };
         }
         this.clubs.sort((a, b) => a.name.localeCompare(b.name));
         
-        // Force a complete reload of clubs to ensure we have the latest data
-        this.loadData();
-        
-        // Clear clubs cache to ensure fresh data is loaded
-        this.api.invalidateClubsCache();
-        console.log('Cleared clubs cache after update');
+        // Force a complete reload of clubs AFTER cache is cleared
+        setTimeout(() => {
+          this.loadClubsForSeason(this.selectedSeasonId || this.seasons[0]?._id || '');
+        }, 100);
         
         // Trigger storage event to notify other components
         const timestamp = Date.now().toString();
         localStorage.setItem('admin-data-updated', timestamp);
-        console.log('Triggered admin data update event:', timestamp);
         
         // Show success message and close form after a brief delay
         alert('Club updated successfully!');
@@ -683,7 +679,6 @@ export class ClubsComponent implements OnInit, OnDestroy {
         
         // Clear clubs cache to ensure fresh data is loaded
         this.api.invalidateClubsCache();
-        console.log('Cleared clubs cache after deleting club');
       });
     }
   }

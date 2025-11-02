@@ -286,7 +286,10 @@ export class ApiService {
   }
 
   invalidateClubsCache(): void {
+    // Invalidate both the general clubs cache and any season-specific caches
     this.cacheService.invalidate('clubs');
+    // Also invalidate any clubs-season-* patterns
+    this.cacheService.invalidatePattern('^clubs');
   }
 
   invalidateSeasonsCache(): void {

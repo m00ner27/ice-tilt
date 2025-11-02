@@ -13,8 +13,8 @@ export class ImageUrlService {
    * @returns Full URL to the image
    */
   getImageUrl(logoUrl: string | undefined, defaultImage: string = 'assets/images/1ithlwords.png'): string {
-    // Always use the production backend URL for images
-    const BACKEND_URL = 'https://ice-tilt-backend.onrender.com';
+    // Use the API URL from environment (handles both dev and prod)
+    const BACKEND_URL = environment.apiUrl || 'https://ice-tilt-backend.onrender.com';
     
     if (!logoUrl || logoUrl.trim() === '') {
       return defaultImage;
