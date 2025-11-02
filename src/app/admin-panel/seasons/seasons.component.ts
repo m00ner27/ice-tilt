@@ -185,14 +185,14 @@ export class SeasonsComponent implements OnInit {
   updateDivision() {
     if (this.divisionForm.valid && this.editingDivision) {
       const formValue = this.divisionForm.value;
-      // Only include logoUrl if it has a value (to avoid clearing existing logos)
+      // Include logoUrl if it exists (backend will preserve existing if empty)
       const divisionData: any = { 
         ...formValue, 
         _id: this.editingDivision._id 
       };
       
-      // Remove logoUrl if it's empty to preserve existing logo
-      if (!divisionData.logoUrl || divisionData.logoUrl.trim() === '') {
+      // Include logoUrl if it exists in form (even if empty - backend will handle it)
+      if (formValue.logoUrl === undefined || formValue.logoUrl === null) {
         delete divisionData.logoUrl;
       }
       
