@@ -617,7 +617,10 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     }
     
     // Recalculate goalie shots against to match opposing team's total shots
-    this.recalculateGoalieShotsAgainst();
+    // BUT skip this for manual stats entries - use the manually entered values
+    if (!this.match.eashlData?.manualEntry) {
+      this.recalculateGoalieShotsAgainst();
+    }
   }
 
   goBack(): void {
