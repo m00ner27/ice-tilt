@@ -54,7 +54,7 @@ export class ManualStatsComponent implements OnInit {
     this.store.dispatch(MatchesActions.loadMatches());
     
     // Check if there's a game ID in the route parameters
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params: any) => {
       if (params['gameId']) {
         console.log('Loading game from route parameter:', params['gameId']);
         // Try to load the game directly from API first for most accurate data
@@ -95,7 +95,7 @@ export class ManualStatsComponent implements OnInit {
         this.initializePlayerArrays();
         console.log('Game loaded and player arrays initialized');
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading game:', error);
         // Fallback to placeholder if API fails
         const placeholderGame = {
