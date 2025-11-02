@@ -269,6 +269,10 @@ export class ManualStatsComponent implements OnInit {
       const homeGoals = this.getTotalGoals('home');
       const awayGoals = this.getTotalGoals('away');
       
+      // Convert overtime string to boolean (true for 'ot' or 'so', false for 'none')
+      const overtimeValue = this.statsForm.value.overtime;
+      const isOvertime = overtimeValue === 'ot' || overtimeValue === 'so';
+      
       const statsData = {
         gameId: this.selectedGame._id,
         homeScore: homeGoals,
@@ -277,15 +281,18 @@ export class ManualStatsComponent implements OnInit {
           homeSkaters: this.homeSkaters.filter(p => p.gamertag.trim() !== ''),
           awaySkaters: this.awaySkaters.filter(p => p.gamertag.trim() !== ''),
           homeGoalies: this.homeGoalies.filter(p => p.gamertag.trim() !== ''),
-          awayGoalies: this.awayGoalies.filter(p => p.gamertag.trim() !== '')
+          awayGoalies: this.awayGoalies.filter(p => p.gamertag.trim() !== ''),
+          isOvertime: isOvertime
         },
-        ...this.statsForm.value
+        status: this.statsForm.value.status
       };
 
       console.log('Submitting stats with calculated scores:', {
         homeGoals,
         awayGoals,
-        winner: homeGoals > awayGoals ? 'home' : awayGoals > homeGoals ? 'away' : 'tie'
+        winner: homeGoals > awayGoals ? 'home' : awayGoals > homeGoals ? 'away' : 'tie',
+        overtime: overtimeValue,
+        isOvertime: isOvertime
       });
 
       // Dispatch NgRx action to save manual game stats
