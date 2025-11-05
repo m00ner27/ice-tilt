@@ -27,6 +27,11 @@
                 "output": "/"
               },
               {
+                "glob": "_headers",
+                "input": "src",
+                "output": "/"
+              },
+              {
                 "glob": "ads.txt",
                 "input": "src",
                 "output": "/"
