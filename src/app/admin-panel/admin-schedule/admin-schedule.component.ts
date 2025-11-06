@@ -523,8 +523,8 @@ export class AdminScheduleComponent implements OnInit {
       const selectedCheckboxes = document.querySelectorAll('input[name="mergeGame"]:checked') as NodeListOf<HTMLInputElement>;
       const selectedGameIds = Array.from(selectedCheckboxes).map(cb => cb.value);
       
-      if (selectedGameIds.length !== 2) {
-        alert('Please select exactly 2 EASHL games to merge.');
+      if (selectedGameIds.length < 2) {
+        alert('Please select at least 2 EASHL games to merge.');
         return;
       }
       
@@ -561,8 +561,13 @@ export class AdminScheduleComponent implements OnInit {
           };
         });
       
-      if (selectedGames.length !== 2) {
-        alert('Error: Could not process the selected EASHL games. Please try again.');
+      if (selectedGames.length < 2) {
+        alert('Error: Please select at least 2 EASHL games to merge.');
+        return;
+      }
+      
+      if (selectedGames.length !== selectedGameIds.length) {
+        alert('Error: Could not process all selected EASHL games. Please try again.');
         return;
       }
       
