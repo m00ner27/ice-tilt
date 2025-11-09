@@ -43,7 +43,6 @@ export class AdminScheduleComponent implements OnInit {
     // Listen for storage events to refresh data when clubs are updated
     window.addEventListener('storage', (event) => {
       if (event.key === 'admin-data-updated') {
-        console.log('Admin data updated, refreshing clubs and games...');
         this.loadClubsAndGames();
       }
     });
@@ -80,21 +79,14 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   applyFilter(): void {
-    console.log('=== Applying filter ===');
-    console.log('Current filter:', this.currentFilter);
-    console.log('Selected club:', this.selectedClub);
-    console.log('Sort by:', this.sortBy, this.sortOrder);
-    console.log('Total games:', this.games.length);
     
     let filtered = [...this.games];
     
     // Apply status filter (linked/unlinked/all)
     if (this.currentFilter === 'unlinked') {
       filtered = filtered.filter(g => !this.isGameLinked(g) && !this.isForfeit(g.status));
-      console.log('After unlinked filter:', filtered.length);
     } else if (this.currentFilter === 'linked') {
       filtered = filtered.filter(g => this.isGameLinked(g) || this.isForfeit(g.status));
-      console.log('After linked filter:', filtered.length);
     }
     
     // Apply club filter
@@ -102,7 +94,6 @@ export class AdminScheduleComponent implements OnInit {
       filtered = filtered.filter(g => 
         g.homeTeam === this.selectedClub || g.awayTeam === this.selectedClub
       );
-      console.log('After club filter:', filtered.length);
     }
     
     
@@ -136,12 +127,10 @@ export class AdminScheduleComponent implements OnInit {
     });
     
     this.filteredGames = filtered;
-    console.log('Final filtered games:', this.filteredGames.length);
   }
 
   calculateUnlinkedCount(): void {
     this.unlinkedGamesCount = this.games.filter(g => !this.isGameLinked(g) && !this.isForfeit(g.status)).length;
-    console.log('Unlinked count calculated:', this.unlinkedGamesCount);
   }
 
   private isGameLinked(game: any): boolean {
@@ -152,35 +141,16 @@ export class AdminScheduleComponent implements OnInit {
     const hasManualStats = !!(game.eashlData && game.eashlData.manualEntry);
     const isLinked = hasEashlMatchId || hasManualStats;
     
-    console.log(`=== GAME LINKING CHECK ===`);
-    console.log(`Game ID: ${game._id}`);
-    console.log(`EASHL Match ID: ${game.eashlMatchId}`);
-    console.log(`Has EASHL Match ID: ${hasEashlMatchId}`);
-    console.log(`EASHL Data:`, game.eashlData);
-    console.log(`Manual Entry Flag: ${game.eashlData?.manualEntry}`);
-    console.log(`Has Manual Stats: ${hasManualStats}`);
-    console.log(`Is Linked: ${isLinked}`);
     
     return isLinked;
   }
 
   loadClubsAndGames(): void {
-    console.log('=== Loading clubs and games ===');
     this.api.getClubs().subscribe({
       next: (clubs) => {
         this.clubs = clubs || [];
-        console.log('Clubs loaded:', this.clubs.length);
-        
-        // Log EASHL club IDs for debugging
-        this.clubs.forEach(club => {
-          if (club.name === 'Kilmarnock Thunder') {
-            console.log('Kilmarnock Thunder EASHL ID:', club.eashlClubId);
-          }
-        });
-        
         this.api.getGames().subscribe({
           next: (games) => {
-            console.log('Games loaded from API:', games?.length || 0);
             this.games = (games || []).map(game => {
               // Ensure that homeClubId and awayClubId are objects before accessing their properties
               const homeId = game.homeClubId?._id || game.homeClubId;
@@ -203,9 +173,6 @@ export class AdminScheduleComponent implements OnInit {
             this.games.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             this.applyFilter();
             this.calculateUnlinkedCount();
-            console.log('Mapped games with clubs:', this.games.length);
-            console.log('Games with eashlMatchId:', this.games.filter(g => g.eashlMatchId).length);
-            console.log('Games without eashlMatchId:', this.games.filter(g => !g.eashlMatchId).length);
           },
           error: (error) => {
             console.error('Error loading games:', error);
@@ -223,19 +190,6 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   loadEashlGames(game: any) {
-    console.log('--- Loading EASHL Games for ---', game);
-    console.log('Game ID:', game._id);
-    console.log('Current eashlGames:', game.eashlGames);
-    console.log('eashlGames length:', game.eashlGames?.length);
-    
-    // Temporarily disable caching to debug the issue
-    // if (game.eashlGames && game.eashlGames.length > 0) {
-    //   console.log('Games already loaded, skipping fetch.');
-    //   return;
-    // }
-    
-    // Clear cache and force reload
-    console.log('Clearing cache and loading fresh EASHL games...');
     game.eashlGames = [];
 
     const homeId = game.homeClubId?._id || game.homeClubId;
@@ -243,14 +197,11 @@ export class AdminScheduleComponent implements OnInit {
 
     const homeClub = this.clubs.find(c => c._id === homeId);
     const awayClub = this.clubs.find(c => c._id === awayId);
-    console.log('Found Home Club:', homeClub);
-    console.log('Found Away Club:', awayClub);
 
     if (!homeClub?.eashlClubId || !awayClub?.eashlClubId) {
       console.error('One or both clubs missing EASHL Club ID. Home ID:', homeClub?.eashlClubId, 'Away ID:', awayClub?.eashlClubId);
       return;
     }
-    console.log(`Fetching games for ${homeClub.name} (${homeClub.eashlClubId}) and ${awayClub.name} (${awayClub.eashlClubId})`);
 
     const homeGames$ = this.eashlService.getClubMatches(homeClub.eashlClubId).pipe(
       catchError(err => {
@@ -273,17 +224,12 @@ export class AdminScheduleComponent implements OnInit {
 
     forkJoin([homeGames$, awayGames$]).pipe(
       map(([homeResponse, awayResponse]) => {
-        console.log('Raw data from API:', { homeResponse, awayResponse });
-        
         // Extract the arrays from the response objects
         const homeGames = homeResponse?.homeGames || [];
         const awayGames = awayResponse?.awayGames || [];
         
-        console.log('Extracted games:', { homeGames, awayGames });
-        
         const allGames = [...homeGames, ...awayGames];
         const uniqueGames = Array.from(new Map(allGames.map(item => [item.matchId, item])).values());
-        console.log('Unique games found:', uniqueGames);
         return uniqueGames.map(match => {
           const clubDetails = match.clubs[homeClub.eashlClubId];
           const opponentDetails = clubDetails ? match.clubs[clubDetails.opponentClubId] : null;
@@ -308,9 +254,7 @@ export class AdminScheduleComponent implements OnInit {
         });
       })
     ).subscribe(formattedGames => {
-      console.log('Final formatted games for dropdown:', formattedGames);
       game.eashlGames = formattedGames;
-      console.log('Updated game object:', game);
     });
   }
 
@@ -404,9 +348,6 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   loadEashlGamesForMerge(primaryGame: any) {
-    console.log('=== LOADING EASHL GAMES FOR MERGE ===');
-    console.log('Primary Game ID:', primaryGame._id);
-    console.log('Primary Game:', primaryGame);
     
     const homeId = primaryGame.homeClubId?._id || primaryGame.homeClubId;
     const awayId = primaryGame.awayClubId?._id || primaryGame.awayClubId;
@@ -414,15 +355,12 @@ export class AdminScheduleComponent implements OnInit {
     const homeClub = this.clubs.find(c => c._id === homeId);
     const awayClub = this.clubs.find(c => c._id === awayId);
     
-    console.log('Home Club:', homeClub);
-    console.log('Away Club:', awayClub);
     
     if (!homeClub?.eashlClubId || !awayClub?.eashlClubId) {
       alert('One or both clubs missing EASHL Club ID. Cannot load games for merging.');
       return;
     }
 
-    console.log(`Fetching EASHL games for ${homeClub.name} (${homeClub.eashlClubId}) and ${awayClub.name} (${awayClub.eashlClubId})`);
 
     const homeGames$ = this.eashlService.getClubMatches(homeClub.eashlClubId).pipe(
       catchError(err => {
@@ -439,16 +377,12 @@ export class AdminScheduleComponent implements OnInit {
 
     forkJoin([homeGames$, awayGames$]).pipe(
       map(([homeResponse, awayResponse]) => {
-        console.log('Raw EASHL data for merge:', { homeResponse, awayResponse });
-        
         // Extract the arrays from the response objects
         const homeGames = homeResponse?.homeGames || [];
         const awayGames = awayResponse?.awayGames || [];
         
         const allGames = [...homeGames, ...awayGames];
         const uniqueGames = Array.from(new Map(allGames.map(item => [item.matchId, item])).values());
-        
-        console.log('Unique EASHL games found for merge:', uniqueGames);
         
         if (uniqueGames.length < 2) {
           alert('Need at least 2 EASHL games to merge. Found: ' + uniqueGames.length);
@@ -462,7 +396,6 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   showEashlMergeModal(primaryGame: any, eashlGames: any[]) {
-    console.log('=== SHOWING EASHL MERGE MODAL ===');
     
     // Create HTML for the EASHL game selection modal
     const modalHtml = `
@@ -597,7 +530,6 @@ export class AdminScheduleComponent implements OnInit {
         targetClubId = clubIds.find(id => id !== homeClubEashlId) || '';
       }
       
-      console.log(`Looking for ${isHomeTeam ? 'home' : 'away'} team goals in club ID:`, targetClubId);
       
       if (targetClubId && eashlGame.players[targetClubId]) {
         const teamPlayers = eashlGame.players[targetClubId];
@@ -611,7 +543,6 @@ export class AdminScheduleComponent implements OnInit {
       }
     }
     
-    console.log(`Team ${isHomeTeam ? 'home' : 'away'} goals calculated:`, totalGoals);
     return totalGoals;
   }
 
@@ -710,7 +641,6 @@ export class AdminScheduleComponent implements OnInit {
       }
     });
     
-    console.log('Combined player stats:', combinedPlayers);
     return combinedPlayers;
   }
 
@@ -720,8 +650,6 @@ export class AdminScheduleComponent implements OnInit {
     
     // Process all games
     games.forEach((game, gameIndex) => {
-      console.log(`Processing game ${gameIndex + 1} for player stats:`, game.matchId);
-      
       if (game.players) {
         Object.keys(game.players).forEach(clubId => {
           if (!combinedPlayers[clubId]) {
@@ -811,7 +739,6 @@ export class AdminScheduleComponent implements OnInit {
       }
     });
     
-    console.log('Combined player stats from multiple games:', combinedPlayers);
     return combinedPlayers;
   }
 
@@ -895,24 +822,16 @@ export class AdminScheduleComponent implements OnInit {
       return;
     }
     
-    console.log('Merging EASHL games:', selectedEashlGames.map(game => game.matchId));
-    console.log('Overtime game:', isOvertime);
-    
     // First, extract and combine the scores from the selected EASHL games
-    console.log('Extracting scores from EASHL games...');
-    
     // Calculate scores by summing player goals instead of trusting EA's game-level scores
     // This is more accurate because EA sometimes shows default scores (like 3-0) for incomplete games
     let combinedScore = { home: 0, away: 0 };
-    
-    console.log('Calculating scores from player goals...');
     
     // Get the home club EASHL ID to identify which team is which
     const homeClub = this.games.find(g => g._id === primaryGameId)?.homeClubId;
     const homeClubEashlId = homeClub?.eashlClubId;
     
     if (homeClubEashlId) {
-      console.log('Home club EASHL ID:', homeClubEashlId);
       
       // Calculate scores for each game by summing player goals
       selectedEashlGames.forEach((game, index) => {
@@ -922,10 +841,8 @@ export class AdminScheduleComponent implements OnInit {
         combinedScore.home += gameHomeGoals;
         combinedScore.away += gameAwayGoals;
         
-        console.log(`Game ${index + 1} actual goals:`, { home: gameHomeGoals, away: gameAwayGoals });
       });
       
-      console.log('Combined actual goals:', combinedScore);
     } else {
       console.error('Could not find home club EASHL ID');
     }
@@ -962,8 +879,6 @@ export class AdminScheduleComponent implements OnInit {
         const mergedMatchIds = selectedEashlGames.map(game => game.matchId).join(' + ');
         alert(`EASHL games merged successfully!\n\nGame ${primaryGameId} now linked to merged EASHL matches: ${mergedMatchIds}`);
         
-        console.log('EASHL merge result:', updatedGames);
-        
         // Update the local game data immediately
         const gameIndex = this.games.findIndex(g => g._id === primaryGameId);
         if (gameIndex !== -1) {
@@ -973,7 +888,6 @@ export class AdminScheduleComponent implements OnInit {
             status: 'pending_stats',
             isOvertime: isOvertime
           };
-          console.log('Updated game after EASHL merge:', updatedGame);
           this.games[gameIndex] = updatedGame;
         }
         
@@ -993,18 +907,15 @@ export class AdminScheduleComponent implements OnInit {
             eashlData: combinedEashlData // Include the combined player statistics locally
           };
           
-          console.log('Local game updated with combined score and EASHL data:', this.games[gameIndex]);
         }
         
         // Force a complete data refresh to ensure everything is in sync
         setTimeout(() => {
-          console.log('Refreshing data after EASHL merge...');
           this.loadClubsAndGames();
           
           // Also reload the NgRx store and trigger storage event
           this.store.dispatch(MatchesActions.loadMatches());
           const timestamp = Date.now().toString();
-          console.log('Triggering storage event for EASHL merge:', timestamp);
           localStorage.setItem('admin-data-updated', timestamp);
         }, 100);
       },
@@ -1030,8 +941,6 @@ export class AdminScheduleComponent implements OnInit {
       next: (result) => {
         alert(`Games merged successfully!\n\nMerged game ID: ${result.mergedGame._id}\nDeleted game ID: ${result.deletedGameId}`);
         
-        console.log('Merge result:', result);
-        console.log('Merged game data:', result.mergedGame);
         
         // Remove the deleted game from the local list
         this.games = this.games.filter(g => g._id !== secondaryGameId);
@@ -1057,7 +966,6 @@ export class AdminScheduleComponent implements OnInit {
             eashlGames: []
           };
           
-          console.log('Updated game data:', updatedGame);
           this.games[primaryGameIndex] = updatedGame;
         }
         
@@ -1067,7 +975,6 @@ export class AdminScheduleComponent implements OnInit {
         
         // Force a complete data refresh to ensure everything is in sync
         setTimeout(() => {
-          console.log('Refreshing data after merge...');
           this.loadClubsAndGames();
           // Also reload the NgRx store so standings component gets updated
           this.store.dispatch(MatchesActions.loadMatches());
@@ -1098,7 +1005,6 @@ export class AdminScheduleComponent implements OnInit {
     if (confirm(`Are you sure you want to unlink stats for ${game.homeTeam} vs ${game.awayTeam}?`)) {
       this.api.unlinkGameStats(game._id).subscribe({
         next: (updatedGame) => {
-          console.log('Stats unlinked', updatedGame);
           const index = this.games.findIndex(g => g._id === game._id);
           if (index !== -1) {
             // update game in list
@@ -1116,7 +1022,6 @@ export class AdminScheduleComponent implements OnInit {
             // Also reload the NgRx store and trigger storage event
             this.store.dispatch(MatchesActions.loadMatches());
             const timestamp = Date.now().toString();
-            console.log('Triggering storage event for unlink stats:', timestamp);
             localStorage.setItem('admin-data-updated', timestamp);
           }
         },
@@ -1180,13 +1085,11 @@ export class AdminScheduleComponent implements OnInit {
 
           Promise.all(eashlUpdatePromises)
             .then(() => {
-              console.log('All EASHL data fetched and stored.');
               this.loadClubsAndGames(); // Reload all data
               // Also reload the NgRx store so standings component gets updated
               this.store.dispatch(MatchesActions.loadMatches());
               // Trigger storage event to notify standings component
               const timestamp = Date.now().toString();
-              console.log('Triggering storage event for standings update:', timestamp);
               localStorage.setItem('admin-data-updated', timestamp);
             })
             .catch(err => {
@@ -1196,7 +1099,6 @@ export class AdminScheduleComponent implements OnInit {
               this.store.dispatch(MatchesActions.loadMatches());
               // Trigger storage event to notify standings component
               const timestamp = Date.now().toString();
-              console.log('Triggering storage event for standings update (error case):', timestamp);
               localStorage.setItem('admin-data-updated', timestamp);
             });
         },
@@ -1216,11 +1118,8 @@ export class AdminScheduleComponent implements OnInit {
 
   // Handle image loading errors
   onImageError(event: any): void {
-    console.log('Image failed to load, URL:', event.target.src);
-    
     // Prevent infinite error loops - if we're already showing the default image, don't change it
     if (event.target.src.includes('square-default.png')) {
-      console.log('Default image also failed to load, stopping error handling');
       return;
     }
     
