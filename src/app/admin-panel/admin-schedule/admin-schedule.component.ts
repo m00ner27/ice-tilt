@@ -658,6 +658,16 @@ export class AdminScheduleComponent implements OnInit {
                 skgiveaways: 0,
                 sktakeaways: 0,
                 skpim: 0,
+                skshots: 0, // shots
+                skbs: 0, // blocked shots (alternative field name)
+                skppg: 0, // power play goals
+                skshg: 0, // short handed goals
+                skgwg: 0, // game winning goals
+                skfow: 0, // faceoffs won
+                skfol: 0, // faceoffs lost
+                skpassattempts: 0,
+                skpasses: 0,
+                skinterceptions: 0,
                 glsaves: 0,
                 glshots: 0,
                 glga: 0,
@@ -668,16 +678,26 @@ export class AdminScheduleComponent implements OnInit {
             // Add stats from this game to the combined total
             const combinedPlayer = combinedPlayers[clubId][playerId];
             
-            // Skater stats
-            if (player.skgoals) combinedPlayer.skgoals += parseInt(player.skgoals) || 0;
-            if (player.skassists) combinedPlayer.skassists += parseInt(player.skassists) || 0;
-            if (player.skplusmin) combinedPlayer.skplusmin += parseInt(player.skplusmin) || 0;
-            if (player.sktoi) combinedPlayer.sktoi += parseInt(player.sktoi) || 0;
-            if (player.skhits) combinedPlayer.skhits += parseInt(player.skhits) || 0;
-            if (player.skblk) combinedPlayer.skblk += parseInt(player.skblk) || 0;
-            if (player.skgiveaways) combinedPlayer.skgiveaways += parseInt(player.skgiveaways) || 0;
-            if (player.sktakeaways) combinedPlayer.sktakeaways += parseInt(player.sktakeaways) || 0;
-            if (player.skpim) combinedPlayer.skpim += parseInt(player.skpim) || 0;
+            // Skater stats - use !== undefined to allow 0 values to be added
+            if (player.skgoals !== undefined) combinedPlayer.skgoals += parseInt(player.skgoals) || 0;
+            if (player.skassists !== undefined) combinedPlayer.skassists += parseInt(player.skassists) || 0;
+            if (player.skplusmin !== undefined) combinedPlayer.skplusmin += parseInt(player.skplusmin) || 0;
+            if (player.sktoi !== undefined) combinedPlayer.sktoi += parseInt(player.sktoi) || 0;
+            if (player.skhits !== undefined) combinedPlayer.skhits += parseInt(player.skhits) || 0;
+            if (player.skblk !== undefined) combinedPlayer.skblk += parseInt(player.skblk) || 0;
+            if (player.skgiveaways !== undefined) combinedPlayer.skgiveaways += parseInt(player.skgiveaways) || 0;
+            if (player.sktakeaways !== undefined) combinedPlayer.sktakeaways += parseInt(player.sktakeaways) || 0;
+            if (player.skpim !== undefined) combinedPlayer.skpim += parseInt(player.skpim) || 0;
+            if (player.skshots !== undefined) combinedPlayer.skshots += parseInt(player.skshots) || 0;
+            if (player.skbs !== undefined) combinedPlayer.skbs += parseInt(player.skbs) || 0;
+            if (player.skppg !== undefined) combinedPlayer.skppg += parseInt(player.skppg) || 0;
+            if (player.skshg !== undefined) combinedPlayer.skshg += parseInt(player.skshg) || 0;
+            if (player.skgwg !== undefined) combinedPlayer.skgwg += parseInt(player.skgwg) || 0;
+            if (player.skfow !== undefined) combinedPlayer.skfow += parseInt(player.skfow) || 0;
+            if (player.skfol !== undefined) combinedPlayer.skfol += parseInt(player.skfol) || 0;
+            if (player.skpassattempts !== undefined) combinedPlayer.skpassattempts += parseInt(player.skpassattempts) || 0;
+            if (player.skpasses !== undefined) combinedPlayer.skpasses += parseInt(player.skpasses) || 0;
+            if (player.skinterceptions !== undefined) combinedPlayer.skinterceptions += parseInt(player.skinterceptions) || 0;
             
             // Goalie stats - CRITICAL FIX: use !== undefined to allow 0 values to be added
             // Previously, if glsaves was 0, it wouldn't be added, causing goalie stats to show as 0
@@ -739,6 +759,16 @@ export class AdminScheduleComponent implements OnInit {
                 skgiveaways: 0,
                 sktakeaways: 0,
                 skpim: 0,
+                skshots: 0, // shots
+                skbs: 0, // blocked shots (alternative field name)
+                skppg: 0, // power play goals
+                skshg: 0, // short handed goals
+                skgwg: 0, // game winning goals
+                skfow: 0, // faceoffs won
+                skfol: 0, // faceoffs lost
+                skpassattempts: 0,
+                skpasses: 0,
+                skinterceptions: 0,
                 glsaves: 0,
                 glshots: 0,
                 glga: 0,
@@ -749,16 +779,26 @@ export class AdminScheduleComponent implements OnInit {
             // Add stats from this game to the combined total
             const combinedPlayer = combinedPlayers[clubId][playerId];
             
-            // Skater stats
-            if (player.skgoals) combinedPlayer.skgoals += parseInt(player.skgoals) || 0;
-            if (player.skassists) combinedPlayer.skassists += parseInt(player.skassists) || 0;
-            if (player.skplusmin) combinedPlayer.skplusmin += parseInt(player.skplusmin) || 0;
-            if (player.sktoi) combinedPlayer.sktoi += parseInt(player.sktoi) || 0;
-            if (player.skhits) combinedPlayer.skhits += parseInt(player.skhits) || 0;
-            if (player.skblk) combinedPlayer.skblk += parseInt(player.skblk) || 0;
-            if (player.skgiveaways) combinedPlayer.skgiveaways += parseInt(player.skgiveaways) || 0;
-            if (player.sktakeaways) combinedPlayer.sktakeaways += parseInt(player.sktakeaways) || 0;
-            if (player.skpim) combinedPlayer.skpim += parseInt(player.skpim) || 0;
+            // Skater stats - use !== undefined to allow 0 values to be added
+            if (player.skgoals !== undefined) combinedPlayer.skgoals += parseInt(player.skgoals) || 0;
+            if (player.skassists !== undefined) combinedPlayer.skassists += parseInt(player.skassists) || 0;
+            if (player.skplusmin !== undefined) combinedPlayer.skplusmin += parseInt(player.skplusmin) || 0;
+            if (player.sktoi !== undefined) combinedPlayer.sktoi += parseInt(player.sktoi) || 0;
+            if (player.skhits !== undefined) combinedPlayer.skhits += parseInt(player.skhits) || 0;
+            if (player.skblk !== undefined) combinedPlayer.skblk += parseInt(player.skblk) || 0;
+            if (player.skgiveaways !== undefined) combinedPlayer.skgiveaways += parseInt(player.skgiveaways) || 0;
+            if (player.sktakeaways !== undefined) combinedPlayer.sktakeaways += parseInt(player.sktakeaways) || 0;
+            if (player.skpim !== undefined) combinedPlayer.skpim += parseInt(player.skpim) || 0;
+            if (player.skshots !== undefined) combinedPlayer.skshots += parseInt(player.skshots) || 0;
+            if (player.skbs !== undefined) combinedPlayer.skbs += parseInt(player.skbs) || 0;
+            if (player.skppg !== undefined) combinedPlayer.skppg += parseInt(player.skppg) || 0;
+            if (player.skshg !== undefined) combinedPlayer.skshg += parseInt(player.skshg) || 0;
+            if (player.skgwg !== undefined) combinedPlayer.skgwg += parseInt(player.skgwg) || 0;
+            if (player.skfow !== undefined) combinedPlayer.skfow += parseInt(player.skfow) || 0;
+            if (player.skfol !== undefined) combinedPlayer.skfol += parseInt(player.skfol) || 0;
+            if (player.skpassattempts !== undefined) combinedPlayer.skpassattempts += parseInt(player.skpassattempts) || 0;
+            if (player.skpasses !== undefined) combinedPlayer.skpasses += parseInt(player.skpasses) || 0;
+            if (player.skinterceptions !== undefined) combinedPlayer.skinterceptions += parseInt(player.skinterceptions) || 0;
             
             // Goalie stats - CRITICAL FIX: use !== undefined to allow 0 values to be added
             // Previously, if glsaves was 0, it wouldn't be added, causing goalie stats to show as 0
