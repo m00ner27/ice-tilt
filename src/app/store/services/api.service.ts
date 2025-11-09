@@ -352,6 +352,32 @@ export class ApiService {
     );
   }
 
+  fixMergedGameStats(gameId?: string, fixAll: boolean = false): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        
+        let url = `${this.apiUrl}/api/games/fix-merged-stats`;
+        if (fixAll) {
+          url += '?all=true';
+        } else if (gameId) {
+          url += `/${gameId}`;
+        }
+        
+        return this.http.post(url, {}, { headers });
+      }),
+      catchError(error => {
+        console.error('Error fixing merged game stats:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   mergeGames(primaryGameId: string, gameIds: string[]): Observable<any> {
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
