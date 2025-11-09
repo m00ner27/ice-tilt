@@ -679,11 +679,12 @@ export class AdminScheduleComponent implements OnInit {
             if (player.sktakeaways) combinedPlayer.sktakeaways += parseInt(player.sktakeaways) || 0;
             if (player.skpim) combinedPlayer.skpim += parseInt(player.skpim) || 0;
             
-            // Goalie stats
-            if (player.glsaves) combinedPlayer.glsaves += parseInt(player.glsaves) || 0;
-            if (player.glshots) combinedPlayer.glshots += parseInt(player.glshots) || 0;
-            if (player.glga) combinedPlayer.glga += parseInt(player.glga) || 0;
-            if (player.glso) combinedPlayer.glso += parseInt(player.glso) || 0;
+            // Goalie stats - CRITICAL FIX: use !== undefined to allow 0 values to be added
+            // Previously, if glsaves was 0, it wouldn't be added, causing goalie stats to show as 0
+            if (player.glsaves !== undefined) combinedPlayer.glsaves += parseInt(player.glsaves) || 0;
+            if (player.glshots !== undefined) combinedPlayer.glshots += parseInt(player.glshots) || 0;
+            if (player.glga !== undefined) combinedPlayer.glga += parseInt(player.glga) || 0;
+            if (player.glso !== undefined) combinedPlayer.glso += parseInt(player.glso) || 0;
           });
         });
       }
@@ -759,11 +760,12 @@ export class AdminScheduleComponent implements OnInit {
             if (player.sktakeaways) combinedPlayer.sktakeaways += parseInt(player.sktakeaways) || 0;
             if (player.skpim) combinedPlayer.skpim += parseInt(player.skpim) || 0;
             
-            // Goalie stats
-            if (player.glsaves) combinedPlayer.glsaves += parseInt(player.glsaves) || 0;
-            if (player.glshots) combinedPlayer.glshots += parseInt(player.glshots) || 0;
-            if (player.glga) combinedPlayer.glga += parseInt(player.glga) || 0;
-            if (player.glso) combinedPlayer.glso += parseInt(player.glso) || 0;
+            // Goalie stats - CRITICAL FIX: use !== undefined to allow 0 values to be added
+            // Previously, if glsaves was 0, it wouldn't be added, causing goalie stats to show as 0
+            if (player.glsaves !== undefined) combinedPlayer.glsaves += parseInt(player.glsaves) || 0;
+            if (player.glshots !== undefined) combinedPlayer.glshots += parseInt(player.glshots) || 0;
+            if (player.glga !== undefined) combinedPlayer.glga += parseInt(player.glga) || 0;
+            if (player.glso !== undefined) combinedPlayer.glso += parseInt(player.glso) || 0;
           });
         });
       }
