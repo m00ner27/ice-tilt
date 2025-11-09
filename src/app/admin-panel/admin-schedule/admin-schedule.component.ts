@@ -23,7 +23,6 @@ export class AdminScheduleComponent implements OnInit {
   clubs: any[] = [];
   currentFilter: 'all' | 'linked' | 'unlinked' = 'unlinked';
   unlinkedGamesCount: number = 0;
-  fixingMergedGames: boolean = false;
   
   // Club filtering and sorting
   selectedClub: string = 'all';
@@ -1213,44 +1212,6 @@ export class AdminScheduleComponent implements OnInit {
   // Helper method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl);
-  }
-
-  // Fix all merged games stats
-  fixAllMergedGames(): void {
-    if (this.fixingMergedGames) {
-      return; // Already fixing
-    }
-
-    const confirmMessage = 'This will recalculate stats for all merged games in the database.\n\n' +
-      'This may take a few minutes. Continue?';
-    
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    this.fixingMergedGames = true;
-    
-    this.api.fixMergedGameStats(undefined, true).subscribe({
-      next: (result) => {
-        this.fixingMergedGames = false;
-        const message = result.message || 
-          `Fixed stats for ${result.fixedCount || 0} games, skipped ${result.skippedCount || 0} games`;
-        alert(message);
-        
-        // Reload games to see updated stats
-        this.loadClubsAndGames();
-        this.store.dispatch(MatchesActions.loadMatches());
-        
-        // Trigger storage event to notify other components
-        const timestamp = Date.now().toString();
-        localStorage.setItem('admin-data-updated', timestamp);
-      },
-      error: (error) => {
-        this.fixingMergedGames = false;
-        alert('Failed to fix merged games: ' + (error?.error?.message || error.message || 'Unknown error'));
-        console.error('Error fixing merged games:', error);
-      }
-    });
   }
 
   // Handle image loading errors

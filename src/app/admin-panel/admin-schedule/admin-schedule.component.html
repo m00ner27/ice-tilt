@@ -24,13 +24,6 @@
       class="border rounded-lg px-4 py-2 font-medium transition-colors">
       All Games
     </button>
-    <button 
-      (click)="fixAllMergedGames()" 
-      [disabled]="fixingMergedGames"
-      class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white border border-blue-700 rounded-lg px-4 py-2 font-medium transition-colors">
-      <span *ngIf="fixingMergedGames">Fixing...</span>
-      <span *ngIf="!fixingMergedGames">Fix All Merged Games</span>
-    </button>
   </div>
 
   <!-- Club Filtering and Sorting Controls -->
