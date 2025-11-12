@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
@@ -28,7 +28,8 @@ import * as MatchesSelectors from '../store/matches.selectors';
     RouterModule,
     PositionPillComponent
   ],
-  templateUrl: './players.component.html'
+  templateUrl: './players.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlayersComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -80,7 +81,8 @@ export class PlayersComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private cdr: ChangeDetectorRef
   ) {
     // Initialize selectors
     this.users$ = this.store.select(UsersSelectors.selectAllUsers);
@@ -130,6 +132,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.seasons$
     ]).pipe(takeUntil(this.destroy$)).subscribe(([users, clubs, seasons]) => {
       this.processPlayerData(users, clubs, seasons);
+      this.cdr.markForCheck();
     });
   }
 
@@ -326,6 +329,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
           this.processPlayerData(users, clubs, seasons);
+          this.cdr.markForCheck();
         });
       });
     });
@@ -337,6 +341,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
           this.processPlayerData(users, clubs, seasons);
+          this.cdr.markForCheck();
         });
       });
     });
@@ -348,6 +353,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
           this.processPlayerData(users, clubs, seasons);
+          this.cdr.markForCheck();
         });
       });
     });
@@ -359,6 +365,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
           this.processPlayerData(users, clubs, seasons);
+          this.cdr.markForCheck();
         });
       });
     });
@@ -370,6 +377,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
           this.processPlayerData(users, clubs, seasons);
+          this.cdr.markForCheck();
         });
       });
     });
@@ -382,6 +390,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
           this.processPlayerData(users, clubs, seasons);
+          this.cdr.markForCheck();
         });
       });
     });

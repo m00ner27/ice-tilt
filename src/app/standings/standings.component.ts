@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
 import { MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { LoggerService } from '../shared/services/logger.service';
 
 // Import selectors
 import * as SeasonsSelectors from '../store/seasons.selectors';
@@ -97,7 +98,8 @@ interface DivisionStandings {
   selector: 'app-standings',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './standings.component.html'
+  templateUrl: './standings.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StandingsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -128,7 +130,9 @@ export class StandingsComponent implements OnInit, OnDestroy {
     private matchService: MatchService,
     private imageUrlService: ImageUrlService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private logger: LoggerService,
+    private cdr: ChangeDetectorRef
   ) {
     // Initialize selectors
     this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
@@ -140,8 +144,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    console.log('Standings component initialized');
-    
     // Set up data subscriptions first
     this.setupDataSubscriptions();
     
@@ -168,6 +170,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
     this.selectedSeasonId = seasonId;
     this.isLoading = true;
     this.divisionStandings = []; // Clear existing standings
+    this.cdr.markForCheck();
     
     // Load season-specific data
     this.loadSeasonSpecificData();
@@ -176,11 +179,10 @@ export class StandingsComponent implements OnInit, OnDestroy {
   private setupDataSubscriptions() {
     // Subscribe to seasons for the dropdown
     this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
-      console.log('Seasons loaded:', seasons?.length);
       if (seasons.length > 0 && !this.selectedSeasonId) {
         this.selectedSeasonId = seasons[0]._id;
-        console.log('Auto-selected season:', this.selectedSeasonId);
         this.loadSeasonSpecificData();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -191,7 +193,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
 
 
   loadDataDirectly(): void {
-    console.log('Loading data directly from API...');
     this.isLoading = true; // Ensure loading state is set
     
     // First load seasons to get the current season
@@ -201,7 +202,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
           // Auto-select first season if none selected
           if (!this.selectedSeasonId) {
             this.selectedSeasonId = seasons[0]._id;
-            console.log('Auto-selected season:', this.selectedSeasonId);
           }
           
           // Now load season-specific data
@@ -211,7 +211,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error loading seasons:', error);
+        this.logger.error('Error loading seasons:', error);
         this.isLoading = false;
       }
     });
@@ -223,7 +223,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log(`Loading data for season: ${this.selectedSeasonId}`);
     this.isLoading = true; // Set loading state
     
     // Load only season-specific data in parallel
@@ -233,12 +232,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
       divisions: this.apiService.getDivisionsBySeason(this.selectedSeasonId)
     }).subscribe({
       next: ({ games, clubs, divisions }) => {
-        console.log('Season-specific data loaded:', { 
-          games: games?.length, 
-          clubs: clubs?.length, 
-          divisions: divisions?.length 
-        });
-        
         // Clear existing data to prevent accumulation
         this.games = games || [];
         this.clubs = clubs || [];
@@ -248,10 +241,12 @@ export class StandingsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         
         this.calculateStandings();
+        this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading season-specific data:', error);
+        this.logger.error('Error loading season-specific data:', error);
         this.isLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -318,10 +313,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
     const sortedDivisions = Array.from(uniqueDivisions.values())
       .sort((a, b) => (a.order || 0) - (b.order || 0));
     
-    console.log(`Processing ${sortedDivisions.length} unique divisions for season ${this.selectedSeasonId}`);
-    console.log('Available divisions:', this.divisions.map(d => ({ id: d._id, name: d.name, seasonId: d.seasonId })));
-    console.log('Filtered divisions:', divisionsToProcess.map(d => ({ id: d._id, name: d.name, seasonId: d.seasonId })));
-    
     sortedDivisions.forEach(division => {
       const divisionGames = gamesByDivision.get(division._id) || [];
       const standings = this.calculateDivisionStandings(divisionGames, division);
@@ -334,9 +325,9 @@ export class StandingsComponent implements OnInit, OnDestroy {
       }
     });
     
-    console.log(`Created ${this.divisionStandings.length} division standings`);
     this.isLoading = false;
     this.dataLoaded = true; // Mark that data has been loaded at least once
+    this.cdr.markForCheck();
   }
 
   calculateDivisionStandings(games: Game[], division: Division): TeamStanding[] {
@@ -564,6 +555,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
     this.divisionStandings.forEach(divisionStanding => {
       this.sortStandings(divisionStanding.standings, this.sortColumn, this.sortDirection);
     });
+    this.cdr.markForCheck();
   }
 
   getColumnSortClass(column: string): string {

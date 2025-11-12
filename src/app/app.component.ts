@@ -7,6 +7,7 @@ import { Store } from '@ngrx/store';
 import * as UsersActions from './store/users.actions';
 import { combineLatest, filter } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { PerformanceService } from './shared/services/performance.service';
 
 @Component({
   selector: 'app-root',
@@ -26,11 +27,20 @@ export class AppComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private store: Store,
-    private router: Router
-  ) {}
+    private router: Router,
+    private performanceService: PerformanceService
+  ) {
+    // Mark app initialization start
+    this.performanceService.mark('app-init-start');
+    this.performanceService.logInitialLoad();
+  }
 
   ngOnInit(): void {
+    this.performanceService.mark('app-init-end');
+    this.performanceService.measure('app-initialization', 'app-init-start', 'app-init-end');
+    
     // Wait for a stable authenticated state, then perform a single sync
+    this.performanceService.mark('auth-check-start');
     combineLatest([
       this.auth.isLoading$,
       this.auth.isAuthenticated$,
@@ -41,6 +51,9 @@ export class AppComponent implements OnInit {
     ).subscribe({
       next: ([_, __, user]) => {
         if (!user) return; // Type guard to ensure user is not null
+        
+        this.performanceService.mark('auth-check-end');
+        this.performanceService.measure('authentication-check', 'auth-check-start', 'auth-check-end');
         
         this.isLoading = false;
         this.isLoggedIn = true;

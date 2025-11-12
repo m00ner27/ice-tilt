@@ -14,7 +14,7 @@ import { environment } from './environments/environment';
 // Import store configuration
 import { reducers, metaReducers } from './app/store';
 
-// Import effects
+// Import effects - build optimizer will tree-shake unused code
 import { PlayersEffects } from './app/store/players.effects';
 import { ClubsEffects } from './app/store/clubs.effects';
 import { MatchesEffects } from './app/store/matches.effects';
@@ -49,6 +49,7 @@ bootstrapApplication(AppComponent, {
     provideStore(reducers, { metaReducers }),
     
     // Set up NgRx effects
+    // Build optimizer will tree-shake unused effects in production
     provideEffects([
       PlayersEffects,
       ClubsEffects,

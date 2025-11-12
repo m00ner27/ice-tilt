@@ -1,79 +1,188 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
-import { ScheduleComponent } from './schedule/schedule.component';
-import { FreeAgentsComponent } from './free-agents/free-agents.component';
-import { PlayerStatsComponent } from './player-stats/player-stats.component';
-import { GoalieStatsComponent } from './goalie-stats/goalie-stats.component';
-import { ManagerViewComponent } from './manager-view/manager-view.component';
-import { EditProfileComponent } from './edit-profile/edit-profile.component';
-import { TestComponent } from './test-component/test-component';
-import { ClubListComponent } from './club-list/club-list.component';
-import { ClubDetailSimpleComponent } from './club-detail/club-detail.component';
-import { MatchDetailComponent } from './match-detail/match-detail.component';
-import { StandingsComponent } from './standings/standings.component';
-import { ArticleComponent } from './article/article.component';
-import { PlayersComponent } from './players/players.component';
-import { PlayerProfileComponent } from './player-profile/player-profile.component';
-import { RealDataComponent } from './real-data/real-data.component';
-import { TransactionsComponent } from './transactions/transactions.component';
-import { InboxComponent } from './inbox/inbox.component';
-import { ViewProfileComponent } from './view-profile/view-profile.component';
 import { authGuard, adminGuard, superAdminGuard } from './core/guards/auth.guard';
 import { ManagerGuard } from './core/guards/manager.guard';
 import { AdminPasswordGuard } from './guards/admin-password.guard';
-import { AdminPasswordComponent } from './admin-password/admin-password.component';
-import { AdminPanelComponent } from './admin-panel/admin-panel.component';
-import { AdminDashboardComponent } from './admin-panel/dashboard/admin-dashboard.component';
-import { SeasonsComponent } from './admin-panel/seasons/seasons.component';
-import { ClubsComponent } from './admin-panel/clubs/clubs.component';
-import { AddGamesComponent } from './admin-panel/add-games/add-games.component';
-import { AdminScheduleComponent } from './admin-panel/admin-schedule/admin-schedule.component';
-import { EashlStatsComponent } from './components/eashl-stats/eashl-stats.component';
-import { UsersComponent } from './admin-panel/users/users.component';
-import { ManualStatsComponent } from './admin-panel/manual-stats/manual-stats.component';
-import { CreatePlayerComponent } from './admin-panel/create-player/create-player.component';
-import { PlayersComponent as AdminPlayersComponent } from './admin-panel/players/players.component';
-import { AdminsComponent } from './admin-panel/admins/admins.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
   { path: 'home', component: HomeComponent },
-  { path: 'schedule', component: ScheduleComponent },
-  { path: 'free-agents', component: FreeAgentsComponent, canActivate: [authGuard] },
-  { path: 'players', component: PlayersComponent },
-  { path: 'players/:id', component: PlayerProfileComponent },
-  { path: 'player-stats', component: PlayerStatsComponent },
-  { path: 'goalie-stats', component: GoalieStatsComponent },
+  
+  // Lazy loaded routes - Schedule
+  { 
+    path: 'schedule', 
+    loadComponent: () => import('./schedule/schedule.component').then(m => m.ScheduleComponent)
+  },
+  
+  // Lazy loaded routes - Free Agents
+  { 
+    path: 'free-agents', 
+    loadComponent: () => import('./free-agents/free-agents.component').then(m => m.FreeAgentsComponent),
+    canActivate: [authGuard]
+  },
+  
+  // Lazy loaded routes - Players
+  { 
+    path: 'players', 
+    loadComponent: () => import('./players/players.component').then(m => m.PlayersComponent)
+  },
+  { 
+    path: 'players/:id', 
+    loadComponent: () => import('./player-profile/player-profile.component').then(m => m.PlayerProfileComponent)
+  },
+  
+  // Lazy loaded routes - Stats
+  { 
+    path: 'player-stats', 
+    loadComponent: () => import('./player-stats/player-stats.component').then(m => m.PlayerStatsComponent)
+  },
+  { 
+    path: 'goalie-stats', 
+    loadComponent: () => import('./goalie-stats/goalie-stats.component').then(m => m.GoalieStatsComponent)
+  },
+  
   // TODO: Manager feature temporarily disabled
-  // { path: 'manager-view', component: ManagerViewComponent, canActivate: [authGuard, ManagerGuard] },
-  { path: 'clubs', component: ClubListComponent },
-  { path: 'clubs/:id', component: ClubDetailSimpleComponent },
-  { path: 'match/:id', component: MatchDetailComponent },
-  { path: 'standings', component: StandingsComponent },
-  { path: 'article/:slug', component: ArticleComponent },
-  { path: 'transactions', component: TransactionsComponent },
-  { path: 'inbox', component: InboxComponent, canActivate: [authGuard] },
-  { path: 'profile', component: ViewProfileComponent, canActivate: [authGuard] },
-  { path: 'edit-profile', component: EditProfileComponent, canActivate: [authGuard] },
-  { path: 'test', component: TestComponent },
-  { path: 'real-data', component: RealDataComponent },
-  { path: 'eashl-stats', component: EashlStatsComponent, canActivate: [authGuard] },
-  { path: 'admin-password', component: AdminPasswordComponent },
-  { path: 'admin', component: AdminPanelComponent, canActivate: [AdminPasswordGuard], children: [
-    { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-    { path: 'dashboard', component: AdminDashboardComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'seasons', component: SeasonsComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'clubs', component: ClubsComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'add-games', component: AddGamesComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'schedule', component: AdminScheduleComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'users', component: UsersComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'players', component: AdminPlayersComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'create-player', component: CreatePlayerComponent, canActivate: [AdminPasswordGuard] },
-    { path: 'admins', component: AdminsComponent, canActivate: [AdminPasswordGuard, superAdminGuard] },
-  ]},
+  // { 
+  //   path: 'manager-view', 
+  //   loadComponent: () => import('./manager-view/manager-view.component').then(m => m.ManagerViewComponent),
+  //   canActivate: [authGuard, ManagerGuard] 
+  // },
+  
+  // Lazy loaded routes - Clubs
+  { 
+    path: 'clubs', 
+    loadComponent: () => import('./club-list/club-list.component').then(m => m.ClubListComponent)
+  },
+  { 
+    path: 'clubs/:id', 
+    loadComponent: () => import('./club-detail/club-detail.component').then(m => m.ClubDetailSimpleComponent)
+  },
+  
+  // Lazy loaded routes - Match
+  { 
+    path: 'match/:id', 
+    loadComponent: () => import('./match-detail/match-detail.component').then(m => m.MatchDetailComponent)
+  },
+  
+  // Lazy loaded routes - Standings
+  { 
+    path: 'standings', 
+    loadComponent: () => import('./standings/standings.component').then(m => m.StandingsComponent)
+  },
+  
+  // Lazy loaded routes - Article
+  { 
+    path: 'article/:slug', 
+    loadComponent: () => import('./article/article.component').then(m => m.ArticleComponent)
+  },
+  
+  // Lazy loaded routes - Transactions
+  { 
+    path: 'transactions', 
+    loadComponent: () => import('./transactions/transactions.component').then(m => m.TransactionsComponent)
+  },
+  
+  // Lazy loaded routes - Inbox
+  { 
+    path: 'inbox', 
+    loadComponent: () => import('./inbox/inbox.component').then(m => m.InboxComponent),
+    canActivate: [authGuard]
+  },
+  
+  // Lazy loaded routes - Profile
+  { 
+    path: 'profile', 
+    loadComponent: () => import('./view-profile/view-profile.component').then(m => m.ViewProfileComponent),
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'edit-profile', 
+    loadComponent: () => import('./edit-profile/edit-profile.component').then(m => m.EditProfileComponent),
+    canActivate: [authGuard]
+  },
+  
+  // Lazy loaded routes - Test
+  { 
+    path: 'test', 
+    loadComponent: () => import('./test-component/test-component').then(m => m.TestComponent)
+  },
+  
+  // Lazy loaded routes - Real Data
+  { 
+    path: 'real-data', 
+    loadComponent: () => import('./real-data/real-data.component').then(m => m.RealDataComponent)
+  },
+  
+  // Lazy loaded routes - EASHL Stats
+  { 
+    path: 'eashl-stats', 
+    loadComponent: () => import('./components/eashl-stats/eashl-stats.component').then(m => m.EashlStatsComponent),
+    canActivate: [authGuard]
+  },
+  
+  // Lazy loaded routes - Admin Password
+  { 
+    path: 'admin-password', 
+    loadComponent: () => import('./admin-password/admin-password.component').then(m => m.AdminPasswordComponent)
+  },
+  
+  // Lazy loaded routes - Admin Panel (parent and children)
+  { 
+    path: 'admin', 
+    loadComponent: () => import('./admin-panel/admin-panel.component').then(m => m.AdminPanelComponent),
+    canActivate: [AdminPasswordGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { 
+        path: 'dashboard', 
+        loadComponent: () => import('./admin-panel/dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'seasons', 
+        loadComponent: () => import('./admin-panel/seasons/seasons.component').then(m => m.SeasonsComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'clubs', 
+        loadComponent: () => import('./admin-panel/clubs/clubs.component').then(m => m.ClubsComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'add-games', 
+        loadComponent: () => import('./admin-panel/add-games/add-games.component').then(m => m.AddGamesComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'schedule', 
+        loadComponent: () => import('./admin-panel/admin-schedule/admin-schedule.component').then(m => m.AdminScheduleComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'users', 
+        loadComponent: () => import('./admin-panel/users/users.component').then(m => m.UsersComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'players', 
+        loadComponent: () => import('./admin-panel/players/players.component').then(m => m.PlayersComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'create-player', 
+        loadComponent: () => import('./admin-panel/create-player/create-player.component').then(m => m.CreatePlayerComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'admins', 
+        loadComponent: () => import('./admin-panel/admins/admins.component').then(m => m.AdminsComponent),
+        canActivate: [AdminPasswordGuard, superAdminGuard]
+      },
+    ]
+  },
   {
     path: 'admin/manual-stats/:gameId',
-    component: ManualStatsComponent
+    loadComponent: () => import('./admin-panel/manual-stats/manual-stats.component').then(m => m.ManualStatsComponent)
   }
 ];
 

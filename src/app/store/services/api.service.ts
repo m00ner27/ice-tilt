@@ -7,6 +7,7 @@ import { Game } from '../models/models/match.interface';
 import { User } from '../users.actions';
 import { AuthService } from '@auth0/auth0-angular';
 import { CacheService } from '../../shared/services/cache.service';
+import { LoggerService } from '../../shared/services/logger.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +18,8 @@ export class ApiService {
   constructor(
     private http: HttpClient,
     private auth: AuthService,
-    private cacheService: CacheService
+    private cacheService: CacheService,
+    private logger: LoggerService
   ) { 
     // Add request interceptor to track all HTTP requests
   }
@@ -30,8 +32,7 @@ export class ApiService {
     
     return this.http.get(url).pipe(
       catchError(error => {
-        console.error('=== TEST ERROR RECEIVED ===');
-        console.error('Error:', error);
+        this.logger.error('=== TEST ERROR RECEIVED ===', error);
         throw error;
       })
     );
@@ -94,10 +95,7 @@ export class ApiService {
     const cacheKey = 'seasons';
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/seasons`).pipe(
       catchError(error => {
-        console.error('=== API SERVICE: getSeasons Error ===');
-        console.error('Error:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        this.logger.error('=== API SERVICE: getSeasons Error ===', error, error.status, error.message);
         throw error;
       })
     );
@@ -138,10 +136,7 @@ export class ApiService {
     const cacheKey = `divisions-season-${seasonId}`;
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/divisions/season/${seasonId}`).pipe(
       catchError(error => {
-        console.error('=== API SERVICE: getDivisionsBySeason Error ===');
-        console.error('Error:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        this.logger.error('=== API SERVICE: getDivisionsBySeason Error ===', error, error.status, error.message);
         throw error;
       })
     );
@@ -180,10 +175,7 @@ export class ApiService {
   getClubById(clubId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/api/clubs/${clubId}`).pipe(
       catchError(error => {
-        console.error('=== API SERVICE: getClubById Error ===');
-        console.error('Error:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        this.logger.error('=== API SERVICE: getClubById Error ===', error, error.status, error.message);
         throw error;
       })
     );
@@ -225,10 +217,7 @@ export class ApiService {
     const cacheKey = `clubs-season-${seasonId}`;
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/clubs/season/${seasonId}`).pipe(
       catchError(error => {
-        console.error('=== API SERVICE: getClubsBySeason Error ===');
-        console.error('Error:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        this.logger.error('=== API SERVICE: getClubsBySeason Error ===', error, error.status, error.message);
         throw error;
       })
     );
@@ -269,10 +258,7 @@ export class ApiService {
     const cacheKey = 'games';
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
       catchError(error => {
-        console.error('=== API SERVICE: getGames Error ===');
-        console.error('Error:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        this.logger.error('=== API SERVICE: getGames Error ===', error, error.status, error.message);
         throw error;
       })
     );
@@ -314,10 +300,7 @@ export class ApiService {
     const cacheKey = `games-season-${seasonId}`;
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/games/season/${seasonId}`).pipe(
       catchError(error => {
-        console.error('=== API SERVICE: getGamesBySeason Error ===');
-        console.error('Error:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
+        this.logger.error('=== API SERVICE: getGamesBySeason Error ===', error, error.status, error.message);
         throw error;
       })
     );
@@ -372,7 +355,7 @@ export class ApiService {
         return this.http.post(url, {}, { headers });
       }),
       catchError(error => {
-        console.error('Error fixing merged game stats:', error);
+        this.logger.error('Error fixing merged game stats:', error);
         return throwError(() => error);
       })
     );
@@ -423,13 +406,13 @@ export class ApiService {
 
   // Club roster methods
   getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
-    console.log('ApiService: getClubRoster called for clubId:', clubId, 'seasonId:', seasonId);
+    this.logger.log('ApiService: getClubRoster called for clubId:', clubId, 'seasonId:', seasonId);
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
     return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster?seasonId=${seasonId}`, { headers }).pipe(
       catchError(error => {
-        console.error('Error loading club roster:', error);
+        this.logger.error('Error loading club roster:', error);
         throw error;
       })
     );
@@ -437,7 +420,7 @@ export class ApiService {
 
   // Get global club roster (all players signed to the club across all seasons)
   getClubGlobalRoster(clubId: string): Observable<any[]> {
-    console.log('ApiService: getClubGlobalRoster called for clubId:', clubId);
+    this.logger.log('ApiService: getClubGlobalRoster called for clubId:', clubId);
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -483,7 +466,7 @@ export class ApiService {
 
   // Get free agents for a specific season
   getFreeAgentsForSeason(seasonId: string): Observable<any[]> {
-    console.log('ApiService: getFreeAgentsForSeason called for season:', seasonId);
+    this.logger.log('ApiService: getFreeAgentsForSeason called for season:', seasonId);
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -508,7 +491,7 @@ export class ApiService {
     seasonName?: string;
     sentBy: string; 
   }): Observable<any> {
-    console.log('ApiService: sendContractOffer called');
+    this.logger.log('ApiService: sendContractOffer called');
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -523,7 +506,7 @@ export class ApiService {
   }
 
   getInboxOffers(userId: string): Observable<any[]> {
-    console.log('ApiService: getInboxOffers called for userId:', userId);
+    this.logger.log('ApiService: getInboxOffers called for userId:', userId);
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -538,7 +521,7 @@ export class ApiService {
   }
 
   respondToOffer(offerId: string, status: 'accepted' | 'rejected'): Observable<any> {
-    console.log('ApiService: respondToOffer called for offerId:', offerId, 'status:', status);
+    this.logger.log('ApiService: respondToOffer called for offerId:', offerId, 'status:', status);
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -553,7 +536,7 @@ export class ApiService {
   }
 
   getUsers(): Observable<any[]> {
-    console.log('ApiService: getUsers called');
+    this.logger.log('ApiService: getUsers called');
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -577,7 +560,7 @@ export class ApiService {
   }
 
   auth0Sync(): Observable<any> {
-    console.log('ApiService: auth0Sync called');
+    this.logger.log('ApiService: auth0Sync called');
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -592,7 +575,7 @@ export class ApiService {
   }
 
   getCurrentUser(): Observable<any> {
-    console.log('ApiService: getCurrentUser called');
+    this.logger.log('ApiService: getCurrentUser called');
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -717,15 +700,15 @@ export class ApiService {
 
   // Create Player (for admin system)
   createPlayer(playerData: any): Observable<any> {
-    console.log('ApiService: createPlayer called with data', playerData);
-    console.log('ApiService: making POST request to', `${this.apiUrl}/api/players`);
+    this.logger.log('ApiService: createPlayer called with data', playerData);
+    this.logger.log('ApiService: making POST request to', `${this.apiUrl}/api/players`);
     
     // Get the access token and add it to the request
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
       switchMap(token => {
-        console.log('ApiService: Got access token, making authenticated request');
+        this.logger.log('ApiService: Got access token, making authenticated request');
         const headers = new HttpHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -737,7 +720,7 @@ export class ApiService {
 
   // Get all players (for admin management)
   getAllPlayers(): Observable<any> {
-    console.log('ApiService: getAllPlayers called');
+    this.logger.log('ApiService: getAllPlayers called');
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -753,7 +736,7 @@ export class ApiService {
 
   // Get free agents (for admin management)
   getFreeAgents(): Observable<any> {
-    console.log('ApiService: getFreeAgents called');
+    this.logger.log('ApiService: getFreeAgents called');
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -769,7 +752,7 @@ export class ApiService {
 
   // Delete player (for admin management)
   deletePlayer(playerId: string): Observable<any> {
-    console.log('ApiService: deletePlayer called for playerId:', playerId);
+    this.logger.log('ApiService: deletePlayer called for playerId:', playerId);
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -785,7 +768,7 @@ export class ApiService {
 
   // Add current user as admin (for testing)
   addMeAsAdmin(): Observable<any> {
-    console.log('ApiService: addMeAsAdmin called');
+    this.logger.log('ApiService: addMeAsAdmin called');
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(

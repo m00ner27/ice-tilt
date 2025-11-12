@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { takeUntil } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { LoggerService } from '../shared/services/logger.service';
 
 // Import selectors
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -26,7 +27,8 @@ interface Club {
   selector: 'app-club-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './club-list.component.html'
+  templateUrl: './club-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClubListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -43,7 +45,9 @@ export class ClubListComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private cdr: ChangeDetectorRef,
+    private logger: LoggerService
   ) {
     // Initialize selectors
     this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
@@ -58,6 +62,7 @@ export class ClubListComponent implements OnInit, OnDestroy {
     // Subscribe to clubs changes for filtering
     this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
       this.sortAndFilterClubs(clubs);
+      this.cdr.markForCheck();
     });
   }
 
@@ -92,6 +97,7 @@ export class ClubListComponent implements OnInit, OnDestroy {
     // Get current clubs from store and apply filter
     this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
       this.sortAndFilterClubs(clubs);
+      this.cdr.markForCheck();
     });
   }
 
@@ -102,11 +108,11 @@ export class ClubListComponent implements OnInit, OnDestroy {
 
   // Handle image loading errors
   onImageError(event: any, club: any): void {
-    console.log('Image failed to load for club:', club.name, 'URL:', event.target.src);
+    this.logger.log('Image failed to load for club:', club.name, 'URL:', event.target.src);
     
     // Prevent infinite error loops - if we're already showing the default image, don't change it
     if (event.target.src.includes('square-default.png')) {
-      console.log('Default image also failed to load, stopping error handling');
+      this.logger.log('Default image also failed to load, stopping error handling');
       return;
     }
     
