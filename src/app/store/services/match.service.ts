@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CacheService } from '../../shared/services/cache.service';
+import { ApiService } from './api.service';
 
 export interface PlayerMatchStats {
   playerId: number;
@@ -73,7 +74,11 @@ export interface EashlMatch {
 export class MatchService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient, private cacheService: CacheService) { }
+  constructor(
+    private http: HttpClient, 
+    private cacheService: CacheService,
+    private apiService: ApiService
+  ) { }
 
   private transformGameData(game: any): EashlMatch {
     const playerStats: PlayerMatchStats[] = [];
@@ -397,11 +402,28 @@ export class MatchService {
     );
   }
 
+  // Get match with full player stats data (for match detail page)
+  getMatchWithStats(id: string): Observable<EashlMatch> {
+    console.log('[MatchService] getMatchWithStats - Loading match with stats for id:', id);
+    return this.apiService.getGameWithStats(id).pipe(
+      map(this.transformGameData),
+      catchError(error => {
+        console.error('[MatchService] getMatchWithStats - Error:', error);
+        throw error;
+      })
+    );
+  }
+
   getMatches(): Observable<EashlMatch[]> {
     const cacheKey = 'matches';
     
+    console.error('[MatchService] getMatches() - ERROR: This method does NOT include player stats! Use apiService.getGamesWithStats() instead.');
+    console.error('[MatchService] getMatches() - Full stack trace:', new Error().stack);
+    console.error('[MatchService] getMatches() - This should NOT be called for player-stats or goalie-stats pages!');
+    
     // Check cache first
     if (this.cacheService.has(cacheKey)) {
+      console.warn('[MatchService] getMatches() - Returning cached data (may not have player stats)');
       return of(this.cacheService.get(cacheKey));
     }
 

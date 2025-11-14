@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
@@ -6,13 +6,15 @@ import { ImageUrlService } from '../shared/services/image-url.service';
 import { ApiService } from '../store/services/api.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { LoggerService } from '../shared/services/logger.service';
 
 @Component({
   selector: 'app-schedule-bar',
   standalone: true,
   templateUrl: './schedule-bar.component.html',
   styleUrls: ['./schedule-bar.component.css'],
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ScheduleBarComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -23,14 +25,48 @@ export class ScheduleBarComponent implements OnInit, OnDestroy {
   constructor(
     private matchService: MatchService,
     private imageUrlService: ImageUrlService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private logger: LoggerService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     // Delay loading to improve initial page load performance
+    // Only load when component is actually visible (lazy loading)
+    // Use IntersectionObserver to detect when schedule bar comes into view
+    if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+      this.setupLazyLoading();
+    } else {
+      // Fallback: delay by 2 seconds for older browsers
+      setTimeout(() => {
+        this.loadMatches();
+      }, 2000);
+    }
+  }
+
+  private setupLazyLoading(): void {
+    // Wait a bit for the component to render, then check visibility
     setTimeout(() => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
       this.loadMatches();
-    }, 1000);
+            observer.disconnect(); // Only load once
+          }
+        });
+      }, {
+        rootMargin: '100px' // Start loading 100px before it comes into view
+      });
+
+      // Try to observe the component element
+      const element = document.querySelector('app-schedule-bar');
+      if (element) {
+        observer.observe(element);
+      } else {
+        // Fallback if element not found
+        setTimeout(() => this.loadMatches(), 1000);
+      }
+    }, 500);
   }
 
   ngOnDestroy() {
@@ -40,20 +76,24 @@ export class ScheduleBarComponent implements OnInit, OnDestroy {
 
   loadMatches() {
     this.isLoading = true;
+    this.cdr.markForCheck();
     
-    // Load only matches from yesterday and today directly from API
+    // Load only matches from yesterday, today, and next 7 days
+    // This is much more efficient than loading ALL games
     this.apiService.getGames()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (games) => {
-          // Transform games to EashlMatch format and filter for yesterday/today
+          // Transform games to EashlMatch format and filter for recent dates only
           this.matches = this.transformAndFilterGames(games || []);
           this.filterUpcomingMatches();
           this.isLoading = false;
+          this.cdr.markForCheck();
         },
         error: (error) => {
-          console.error('Error fetching matches in ScheduleBarComponent:', error);
+          this.logger.error('Error fetching matches in ScheduleBarComponent:', error);
           this.isLoading = false;
+          this.cdr.markForCheck();
         }
       });
   }
@@ -61,17 +101,23 @@ export class ScheduleBarComponent implements OnInit, OnDestroy {
   transformAndFilterGames(games: any[]): EashlMatch[] {
     const now = new Date();
     const yesterday = new Date(now.getTime() - (1 * 24 * 60 * 60 * 1000));
+    const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
     
-    // Set time boundaries for yesterday and today only
+    // Set time boundaries: yesterday through next 7 days
+    // This limits the dataset significantly compared to loading ALL games
     const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const nextWeekEnd = new Date(nextWeek.getFullYear(), nextWeek.getMonth(), nextWeek.getDate(), 23, 59, 59, 999);
     
     const filteredGames = games.filter(game => {
+      if (!game || !game.date) return false;
       const gameDate = new Date(game.date);
-      return gameDate >= yesterdayStart && gameDate <= todayEnd;
+      return gameDate >= yesterdayStart && gameDate <= nextWeekEnd;
     });
     
-    return filteredGames.map(game => this.transformGameData(game));
+    // Limit to maximum 50 games to prevent UI slowdown
+    const limitedGames = filteredGames.slice(0, 50);
+    
+    return limitedGames.map(game => this.transformGameData(game));
   }
 
   private transformGameData(game: any): EashlMatch {

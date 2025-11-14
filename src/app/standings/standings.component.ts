@@ -3,20 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject, combineLatest, forkJoin } from 'rxjs';
+import { Observable, Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
-import { MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { LoggerService } from '../shared/services/logger.service';
 
-// Import selectors
-import * as SeasonsSelectors from '../store/seasons.selectors';
-import * as ClubsSelectors from '../store/clubs.selectors';
-import * as MatchesSelectors from '../store/matches.selectors';
-import * as DivisionsSelectors from '../store/divisions.selectors';
+// Import specific selectors for better tree-shaking
+import { selectAllSeasons, selectSeasonsLoading, selectSeasonsError } from '../store/seasons.selectors';
+import { selectAllClubs } from '../store/clubs.selectors';
+import { selectAllDivisions } from '../store/divisions.selectors';
 
 interface Season {
   _id: string;
@@ -107,7 +105,6 @@ export class StandingsComponent implements OnInit, OnDestroy {
   // Observable selectors
   seasons$: Observable<any[]>;
   clubs$: Observable<any[]>;
-  matches$: Observable<any[]>;
   divisions$: Observable<any[]>;
   seasonsLoading$: Observable<boolean>;
   seasonsError$: Observable<any>;
@@ -127,20 +124,18 @@ export class StandingsComponent implements OnInit, OnDestroy {
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
     private apiService: ApiService,
-    private matchService: MatchService,
     private imageUrlService: ImageUrlService,
     private route: ActivatedRoute,
     private router: Router,
     private logger: LoggerService,
     private cdr: ChangeDetectorRef
   ) {
-    // Initialize selectors
-    this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
-    this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
-    this.matches$ = this.store.select(MatchesSelectors.selectAllMatches);
-    this.divisions$ = this.store.select(DivisionsSelectors.selectAllDivisions);
-    this.seasonsLoading$ = this.store.select(SeasonsSelectors.selectSeasonsLoading);
-    this.seasonsError$ = this.store.select(SeasonsSelectors.selectSeasonsError);
+    // Initialize selectors using direct imports for better tree-shaking
+    this.seasons$ = this.store.select(selectAllSeasons);
+    this.clubs$ = this.store.select(selectAllClubs);
+    this.divisions$ = this.store.select(selectAllDivisions);
+    this.seasonsLoading$ = this.store.select(selectSeasonsLoading);
+    this.seasonsError$ = this.store.select(selectSeasonsError);
   }
 
   ngOnInit(): void {

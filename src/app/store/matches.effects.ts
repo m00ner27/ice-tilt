@@ -9,8 +9,11 @@ import * as MatchesActions from './matches.actions';
 @Injectable()
 export class MatchesEffects {
   loadMatches$: any;
+  loadMatchesWithStats$: any;
   loadMatch$: any;
+  loadMatchWithStats$: any;
   loadMatchesBySeason$: any;
+  loadMatchesBySeasonWithStats$: any;
   createMatch$: any;
   deleteMatch$: any;
   bulkUpdateMatches$: any;
@@ -38,6 +41,32 @@ export class MatchesEffects {
       )
     );
 
+    // Load Matches With Stats Effect (includes full player data)
+    this.loadMatchesWithStats$ = createEffect(() =>
+      this.actions$.pipe(
+        ofType(MatchesActions.loadMatchesWithStats),
+        mergeMap(() => {
+          console.log('[MatchesEffects] loadMatchesWithStats - Effect triggered, calling getGamesWithStats()');
+          console.log('[MatchesEffects] loadMatchesWithStats - This will call: /api/games?includeStats=true');
+          return this.apiService.getGamesWithStats().pipe(
+            map(matches => {
+              console.log('[MatchesEffects] loadMatchesWithStats - Received matches:', matches?.length || 0);
+              if (matches && matches.length > 0) {
+                const sampleMatch = matches[0];
+                console.log('[MatchesEffects] loadMatchesWithStats - Sample match has eashlData:', !!sampleMatch.eashlData);
+                console.log('[MatchesEffects] loadMatchesWithStats - Sample match has eashlData.players:', !!sampleMatch.eashlData?.players);
+              }
+              return MatchesActions.loadMatchesWithStatsSuccess({ matches: matches || [] });
+            }),
+            catchError(error => {
+              console.error('[MatchesEffects] loadMatchesWithStats - Error:', error);
+              return of(MatchesActions.loadMatchesWithStatsFailure({ error }));
+            })
+          );
+        })
+      )
+    );
+
     // Load Single Match Effect
     this.loadMatch$ = createEffect(() =>
       this.actions$.pipe(
@@ -51,6 +80,31 @@ export class MatchesEffects {
       )
     );
 
+    // Load Single Match With Stats Effect (includes full player data)
+    this.loadMatchWithStats$ = createEffect(() =>
+      this.actions$.pipe(
+        ofType(MatchesActions.loadMatchWithStats),
+        mergeMap(({ matchId }) => {
+          console.log('[MatchesEffects] loadMatchWithStats - Effect triggered for matchId:', matchId);
+          console.log('[MatchesEffects] loadMatchWithStats - Calling getMatchWithStats()');
+          return this.matchService.getMatchWithStats(matchId).pipe(
+            map(match => {
+              console.log('[MatchesEffects] loadMatchWithStats - Received match');
+              console.log('[MatchesEffects] loadMatchWithStats - Match has eashlData:', !!match.eashlData);
+              console.log('[MatchesEffects] loadMatchWithStats - Match has eashlData.players:', !!match.eashlData?.players);
+              console.log('[MatchesEffects] loadMatchWithStats - Match has playerStats:', !!match.playerStats);
+              console.log('[MatchesEffects] loadMatchWithStats - Match playerStats length:', match.playerStats?.length || 0);
+              return MatchesActions.loadMatchWithStatsSuccess({ match });
+            }),
+            catchError(error => {
+              console.error('[MatchesEffects] loadMatchWithStats - Error:', error);
+              return of(MatchesActions.loadMatchWithStatsFailure({ error }));
+            })
+          );
+        })
+      )
+    );
+
     // Load Matches by Season Effect
     this.loadMatchesBySeason$ = createEffect(() =>
       this.actions$.pipe(
@@ -61,6 +115,37 @@ export class MatchesEffects {
             catchError(error => of(MatchesActions.loadMatchesBySeasonFailure({ error })))
           )
         )
+      )
+    );
+
+    // Load Matches by Season With Stats Effect (includes full player data)
+    this.loadMatchesBySeasonWithStats$ = createEffect(() =>
+      this.actions$.pipe(
+        ofType(MatchesActions.loadMatchesBySeasonWithStats),
+        mergeMap(({ seasonId }) => {
+          console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Effect triggered for seasonId:', seasonId);
+          console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Calling getGamesBySeasonWithStats()');
+          return this.apiService.getGamesBySeasonWithStats(seasonId).pipe(
+            map(matches => {
+              console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Received matches:', matches?.length || 0);
+              if (matches && matches.length > 0) {
+                const sampleMatch = matches[0];
+                console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Sample match has eashlData:', !!sampleMatch.eashlData);
+                console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Sample match has eashlData.players:', !!sampleMatch.eashlData?.players);
+                console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Sample match has playerStats:', !!sampleMatch.playerStats);
+                console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Sample match playerStats length:', sampleMatch.playerStats?.length || 0);
+                if (sampleMatch.eashlData?.players) {
+                  console.log('[MatchesEffects] loadMatchesBySeasonWithStats - Sample match eashlData.players keys:', Object.keys(sampleMatch.eashlData.players));
+                }
+              }
+              return MatchesActions.loadMatchesBySeasonWithStatsSuccess({ matches });
+            }),
+            catchError(error => {
+              console.error('[MatchesEffects] loadMatchesBySeasonWithStats - Error:', error);
+              return of(MatchesActions.loadMatchesBySeasonWithStatsFailure({ error }));
+            })
+          );
+        })
       )
     );
 

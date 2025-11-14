@@ -83,15 +83,38 @@ export class NgRxApiService {
   // ===== MATCHES =====
 
   loadMatches(): void {
+    console.error('[NgRxApiService] loadMatches() - ERROR: This loads matches WITHOUT player stats!');
+    console.error('[NgRxApiService] loadMatches() - Stack trace:', new Error().stack);
+    console.error('[NgRxApiService] loadMatches() - For player-stats/goalie-stats, use loadMatchesWithStats() instead!');
+    console.error('[NgRxApiService] loadMatches() - This should NOT be called for club-detail, player-stats, or goalie-stats pages!');
+    // Still dispatch, but the reducer will protect matches with stats
     this.store.dispatch(MatchesActions.loadMatches());
+  }
+
+  loadMatchesWithStats(): void {
+    console.log('[NgRxApiService] loadMatchesWithStats - Dispatching loadMatchesWithStats action');
+    this.store.dispatch(MatchesActions.loadMatchesWithStats());
   }
 
   loadMatch(matchId: string): void {
     this.store.dispatch(MatchesActions.loadMatch({ matchId }));
   }
 
+  loadMatchWithStats(matchId: string): void {
+    console.log('[NgRxApiService] loadMatchWithStats - Dispatching action for matchId:', matchId);
+    this.store.dispatch(MatchesActions.loadMatchWithStats({ matchId }));
+    console.log('[NgRxApiService] loadMatchWithStats - Action dispatched');
+  }
+
   loadMatchesBySeason(seasonId: string): void {
     this.store.dispatch(MatchesActions.loadMatchesBySeason({ seasonId }));
+  }
+
+  loadMatchesBySeasonWithStats(seasonId: string): void {
+    console.log('[NgRxApiService] loadMatchesBySeasonWithStats - Dispatching action for seasonId:', seasonId);
+    console.log('[NgRxApiService] loadMatchesBySeasonWithStats - Stack trace:', new Error().stack);
+    this.store.dispatch(MatchesActions.loadMatchesBySeasonWithStats({ seasonId }));
+    console.log('[NgRxApiService] loadMatchesBySeasonWithStats - Action dispatched');
   }
 
   createMatch(matchData: any): void {

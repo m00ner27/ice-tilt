@@ -6,15 +6,30 @@ export const loadMatches = createAction('[Matches] Load Matches');
 export const loadMatchesSuccess = createAction('[Matches] Load Matches Success', props<{ matches: EashlMatch[] }>());
 export const loadMatchesFailure = createAction('[Matches] Load Matches Failure', props<{ error: any }>());
 
+// Load Matches With Stats Actions (includes full player data)
+export const loadMatchesWithStats = createAction('[Matches] Load Matches With Stats');
+export const loadMatchesWithStatsSuccess = createAction('[Matches] Load Matches With Stats Success', props<{ matches: EashlMatch[] }>());
+export const loadMatchesWithStatsFailure = createAction('[Matches] Load Matches With Stats Failure', props<{ error: any }>());
+
 // Load Single Match Actions
 export const loadMatch = createAction('[Matches] Load Match', props<{ matchId: string }>());
 export const loadMatchSuccess = createAction('[Matches] Load Match Success', props<{ match: EashlMatch }>());
 export const loadMatchFailure = createAction('[Matches] Load Match Failure', props<{ error: any }>());
 
+// Load Single Match With Stats Actions (includes full player data)
+export const loadMatchWithStats = createAction('[Matches] Load Match With Stats', props<{ matchId: string }>());
+export const loadMatchWithStatsSuccess = createAction('[Matches] Load Match With Stats Success', props<{ match: EashlMatch }>());
+export const loadMatchWithStatsFailure = createAction('[Matches] Load Match With Stats Failure', props<{ error: any }>());
+
 // Load Matches by Season Actions
 export const loadMatchesBySeason = createAction('[Matches] Load Matches By Season', props<{ seasonId: string }>());
 export const loadMatchesBySeasonSuccess = createAction('[Matches] Load Matches By Season Success', props<{ matches: EashlMatch[] }>());
 export const loadMatchesBySeasonFailure = createAction('[Matches] Load Matches By Season Failure', props<{ error: any }>());
+
+// Load Matches by Season With Stats Actions (includes full player data)
+export const loadMatchesBySeasonWithStats = createAction('[Matches] Load Matches By Season With Stats', props<{ seasonId: string }>());
+export const loadMatchesBySeasonWithStatsSuccess = createAction('[Matches] Load Matches By Season With Stats Success', props<{ matches: EashlMatch[] }>());
+export const loadMatchesBySeasonWithStatsFailure = createAction('[Matches] Load Matches By Season With Stats Failure', props<{ error: any }>());
 
 // Create Match Actions
 export const createMatch = createAction('[Matches] Create Match', props<{ matchData: Partial<EashlMatch> }>());

@@ -127,16 +127,39 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   }
   
   loadMatch(id: string): void {
+    console.log('[MatchDetail] loadMatch - Loading match with stats for id:', id);
     
     // First check if the match is already in the store
     this.store.select(MatchesSelectors.selectAllMatches).pipe(take(1)).subscribe(matches => {
       const existingMatch = matches.find(match => match.id === id);
       if (existingMatch) {
-        this.match = existingMatch;
-        this.processMatchData();
+        console.log('[MatchDetail] loadMatch - Match found in store, checking for stats');
+        console.log('[MatchDetail] loadMatch - Existing match has eashlData.players:', !!existingMatch.eashlData?.players);
+        console.log('[MatchDetail] loadMatch - Existing match has playerStats:', !!existingMatch.playerStats);
+        console.log('[MatchDetail] loadMatch - Existing match playerStats length:', existingMatch.playerStats?.length || 0);
+        
+        // If match exists but doesn't have stats, reload with stats
+        const hasStats = existingMatch.eashlData?.players || (existingMatch.playerStats && existingMatch.playerStats.length > 0);
+        if (hasStats) {
+          this.match = existingMatch;
+          this.processMatchData();
+        } else {
+          console.log('[MatchDetail] loadMatch - Match exists but lacks stats, reloading with stats');
+          this.ngrxApiService.loadMatchWithStats(id);
+          
+          // Subscribe to match changes
+          this.selectedMatch$.pipe(
+            filter(match => match !== null && match.id === id),
+            take(1)
+          ).subscribe(match => {
+            this.match = match;
+            this.processMatchData();
+          });
+        }
       } else {
-        // If not in store, load from API
-        this.ngrxApiService.loadMatch(id);
+        // If not in store, load from API with stats
+        console.log('[MatchDetail] loadMatch - Match not in store, loading with stats');
+        this.ngrxApiService.loadMatchWithStats(id);
         
         // Subscribe to match changes
         this.selectedMatch$.pipe(

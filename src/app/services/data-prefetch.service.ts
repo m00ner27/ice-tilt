@@ -44,18 +44,24 @@ export class DataPrefetchService {
 
   private prefetchStandingsData() {
     // Prefetch matches for standings (most critical data)
-    this.ngrxApiService.loadMatches();
+    // TEMPORARILY DISABLED: Commented out to prevent loading matches without stats
+    // This was interfering with player-stats component which needs matches WITH stats
+    // this.ngrxApiService.loadMatches();
   }
 
   private prefetchPlayersData() {
     // Prefetch users and matches for players page
     this.ngrxApiService.loadUsers();
-    this.ngrxApiService.loadMatches();
+    // TEMPORARILY DISABLED: Commented out to prevent loading matches without stats
+    // This was interfering with player-stats component which needs matches WITH stats
+    // this.ngrxApiService.loadMatches();
   }
 
   private prefetchClubDetailData() {
     // Prefetch matches for club detail pages
-    this.ngrxApiService.loadMatches();
+    // TEMPORARILY DISABLED: Commented out to prevent loading matches without stats
+    // This was interfering with player-stats component which needs matches WITH stats
+    // this.ngrxApiService.loadMatches();
   }
 
   // Prefetch data for next likely route

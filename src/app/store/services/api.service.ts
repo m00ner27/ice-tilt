@@ -100,7 +100,8 @@ export class ApiService {
       })
     );
     
-    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
+    // Divisions rarely change, use longer cache (30 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 30 * 60 * 1000);
   }
 
   addSeason(seasonData: any): Observable<any> {
@@ -129,7 +130,8 @@ export class ApiService {
   getDivisions(): Observable<any[]> {
     const cacheKey = 'divisions';
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/divisions`);
-    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
+    // Divisions rarely change, use longer cache (30 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 30 * 60 * 1000);
   }
 
   getDivisionsBySeason(seasonId: string): Observable<any[]> {
@@ -140,7 +142,8 @@ export class ApiService {
         throw error;
       })
     );
-    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
+    // Divisions rarely change, use longer cache (30 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 30 * 60 * 1000);
   }
 
   addDivision(divisionData: any): Observable<any> {
@@ -169,7 +172,8 @@ export class ApiService {
   getClubs(): Observable<any[]> {
     const cacheKey = 'clubs';
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/clubs`);
-    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
+    // Divisions rarely change, use longer cache (30 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 30 * 60 * 1000);
   }
 
   getClubById(clubId: string): Observable<any> {
@@ -221,7 +225,8 @@ export class ApiService {
         throw error;
       })
     );
-    return this.cacheService.getOrFetch(cacheKey, observable, 10 * 60 * 1000); // Cache for 10 minutes
+    // Divisions rarely change, use longer cache (30 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 30 * 60 * 1000);
   }
 
   // File upload method
@@ -263,12 +268,19 @@ export class ApiService {
       })
     );
     
-    return this.cacheService.getOrFetch(cacheKey, observable, 5 * 60 * 1000); // Cache for 5 minutes (games change more frequently)
+    // Games change frequently, use shorter cache (2 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 2 * 60 * 1000);
   }
 
   // Cache invalidation methods
   invalidateGamesCache(): void {
     this.cacheService.invalidate('games');
+    // Also invalidate the stats cache to ensure fresh data
+    this.cacheService.invalidate('games-with-stats');
+    // Invalidate all game-*-with-stats caches (single game stats)
+    this.cacheService.invalidatePattern('^game-.*-with-stats$');
+    // Invalidate all games-season-*-with-stats caches (season games with stats)
+    this.cacheService.invalidatePattern('^games-season-.*-with-stats$');
   }
 
   invalidateClubsCache(): void {
@@ -304,7 +316,46 @@ export class ApiService {
         throw error;
       })
     );
-    return this.cacheService.getOrFetch(cacheKey, observable, 5 * 60 * 1000); // Cache for 5 minutes
+    // Games by season change frequently, use shorter cache (2 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 2 * 60 * 1000);
+  }
+
+  // Get games with full player stats data (for stats pages)
+  getGamesWithStats(): Observable<any[]> {
+    const cacheKey = 'games-with-stats';
+    const observable = this.http.get<any[]>(`${this.apiUrl}/api/games?includeStats=true`).pipe(
+      catchError(error => {
+        this.logger.error('=== API SERVICE: getGamesWithStats Error ===', error, error.status, error.message);
+        throw error;
+      })
+    );
+    // Stats data changes frequently, use shorter cache (2 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 2 * 60 * 1000);
+  }
+
+  // Get games by season with full player stats data (for stats pages)
+  getGamesBySeasonWithStats(seasonId: string): Observable<any[]> {
+    const cacheKey = `games-season-${seasonId}-with-stats`;
+    const url = `${this.apiUrl}/api/games/season/${seasonId}?includeStats=true`;
+    console.log('[ApiService] getGamesBySeasonWithStats - Calling URL:', url);
+    const observable = this.http.get<any[]>(url).pipe(
+      tap(matches => {
+        console.log('[ApiService] getGamesBySeasonWithStats - Received', matches?.length || 0, 'matches from API');
+        if (matches && matches.length > 0) {
+          const sampleMatch = matches[0];
+          console.log('[ApiService] getGamesBySeasonWithStats - Sample match from API has eashlData:', !!sampleMatch.eashlData);
+          console.log('[ApiService] getGamesBySeasonWithStats - Sample match from API has eashlData.players:', !!sampleMatch.eashlData?.players);
+          console.log('[ApiService] getGamesBySeasonWithStats - Sample match from API has playerStats:', !!sampleMatch.playerStats);
+          console.log('[ApiService] getGamesBySeasonWithStats - Sample match from API playerStats length:', sampleMatch.playerStats?.length || 0);
+        }
+      }),
+      catchError(error => {
+        this.logger.error('=== API SERVICE: getGamesBySeasonWithStats Error ===', error, error.status, error.message);
+        throw error;
+      })
+    );
+    // Stats data changes frequently, use shorter cache (2 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 2 * 60 * 1000);
   }
 
   deleteGame(gameId: string): Observable<any> {
@@ -380,6 +431,28 @@ export class ApiService {
 
   getGame(gameId: string): Observable<Game> {
     return this.http.get<Game>(`${this.apiUrl}/api/games/${gameId}`);
+  }
+
+  // Get single game with full player stats data (for match detail page)
+  getGameWithStats(gameId: string): Observable<any> {
+    const cacheKey = `game-${gameId}-with-stats`;
+    const url = `${this.apiUrl}/api/games/${gameId}?includeStats=true`;
+    console.log('[ApiService] getGameWithStats - Calling URL:', url);
+    const observable = this.http.get<any>(url).pipe(
+      tap(game => {
+        console.log('[ApiService] getGameWithStats - Received game from API');
+        console.log('[ApiService] getGameWithStats - Game has eashlData:', !!game.eashlData);
+        console.log('[ApiService] getGameWithStats - Game has eashlData.players:', !!game.eashlData?.players);
+        console.log('[ApiService] getGameWithStats - Game has playerStats:', !!game.playerStats);
+        console.log('[ApiService] getGameWithStats - Game playerStats length:', game.playerStats?.length || 0);
+      }),
+      catchError(error => {
+        this.logger.error('=== API SERVICE: getGameWithStats Error ===', error, error.status, error.message);
+        throw error;
+      })
+    );
+    // Stats data changes frequently, use shorter cache (2 minutes)
+    return this.cacheService.getOrFetch(cacheKey, observable, 2 * 60 * 1000);
   }
 
   getTeamPlayers(teamId: string): Observable<any[]> {

@@ -90,7 +90,7 @@ export class GoalieStatsComponent implements OnInit {
   loadInitialData(): void {
     this.isLoading = true;
     forkJoin({
-      matches: this.matchService.getMatches(),
+      matches: this.apiService.getGamesWithStats(), // Use getGamesWithStats to get full player data
       seasons: this.apiService.getSeasons(),
       clubs: this.apiService.getClubs()
     }).subscribe({

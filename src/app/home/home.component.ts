@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { LoggerService } from '../shared/services/logger.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -62,7 +63,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   constructor(
     private matchService: MatchService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private logger: LoggerService
   ) {}
 
   getImageUrl(logoUrl: string | undefined): string {
@@ -138,7 +140,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.calculatePlayerStats(recentMatches);
         },
         error: (error) => {
-          console.error('Error loading matches for player stats:', error);
+          this.logger.error('Error loading matches for player stats:', error);
           this.hasError = true;
           this.isLoading = false;
         }

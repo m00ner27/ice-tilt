@@ -6,10 +6,12 @@ import { Observable, Subscription, combineLatest } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
+import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
+import * as MatchesActions from '../store/matches.actions';
 import * as ClubsSelectors from '../store/clubs.selectors';
 import * as SeasonsSelectors from '../store/seasons.selectors';
 import * as DivisionsSelectors from '../store/divisions.selectors';
@@ -113,6 +115,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
+    private apiService: ApiService,
     private imageUrlService: ImageUrlService
   ) {
     // Initialize selectors
@@ -127,6 +130,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   ngOnInit(): void {
+    console.log('[PlayerStats] ngOnInit - Component initialized, loading data with stats');
     this.loadInitialData();
   }
   
@@ -139,8 +143,26 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   loadInitialData(): void {
     this.isLoading = true;
     
+    console.log('[PlayerStats] loadInitialData - STARTING - Component is loading data with stats');
+    console.log('[PlayerStats] loadInitialData - Current time:', new Date().toISOString());
+    
+    // Clear old games cache to ensure we get fresh data with stats
+    console.log('[PlayerStats] loadInitialData - Invalidating games cache...');
+    this.apiService.invalidateGamesCache();
+    console.log('[PlayerStats] loadInitialData - Games cache invalidated');
+    
+    // Clear matches from store to remove old data without player stats
+    // This ensures we don't process stale matches before new data with stats arrives
+    console.log('[PlayerStats] loadInitialData - Clearing matches from NgRx store...');
+    this.store.dispatch(MatchesActions.clearMatches());
+    console.log('[PlayerStats] loadInitialData - Matches cleared from store');
+    
     // Load data using NgRx store
-    this.ngrxApiService.loadMatches();
+    // Use loadMatchesWithStats to get full player data needed for stats calculation
+    console.log('[PlayerStats] loadInitialData - About to call ngrxApiService.loadMatchesWithStats()');
+    console.log('[PlayerStats] loadInitialData - This should trigger the effect that calls /api/games?includeStats=true');
+    this.ngrxApiService.loadMatchesWithStats();
+    console.log('[PlayerStats] loadInitialData - Called ngrxApiService.loadMatchesWithStats() - action dispatched');
     this.ngrxApiService.loadClubs();
     this.ngrxApiService.loadSeasons();
     this.ngrxApiService.loadDivisions();
@@ -169,6 +191,30 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       }))
     ).subscribe({
       next: ({ matches, clubs, seasons, divisions, loading }) => {
+        console.log('[PlayerStats] Subscription - matches:', matches.length, 'loading:', loading, 'clubs:', clubs.length, 'seasons:', seasons.length);
+        
+        // Verify matches have player data before processing
+        if (matches.length > 0) {
+          const matchesWithPlayers = matches.filter(m => m.eashlData?.players);
+          const matchesWithoutPlayers = matches.filter(m => !m.eashlData?.players && m.eashlData);
+          console.log('[PlayerStats] Subscription - Matches with eashlData.players:', matchesWithPlayers.length);
+          console.log('[PlayerStats] Subscription - Matches with eashlData but no players:', matchesWithoutPlayers.length);
+          
+          if (matches.length > 0 && matchesWithPlayers.length === 0 && matchesWithoutPlayers.length > 0) {
+            console.warn('[PlayerStats] Subscription - WARNING: All matches lack player data! Sample match:', {
+              id: matches[0].id || matches[0]._id,
+              hasEashlData: !!matches[0].eashlData,
+              hasPlayers: !!matches[0].eashlData?.players,
+              eashlDataKeys: matches[0].eashlData ? Object.keys(matches[0].eashlData) : []
+            });
+            // Don't process if we don't have player data yet - wait for loadMatchesWithStats to complete
+            if (loading) {
+              console.log('[PlayerStats] Subscription - Still loading, waiting for matches with stats...');
+              return;
+            }
+          }
+        }
+        
         if (!loading && clubs.length > 0 && seasons.length > 0) {
           this.isLoading = false;
           
@@ -200,7 +246,32 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
             console.log('After deduplication - Divisions count:', this.divisions.length);
             console.log('After deduplication - Division names:', this.divisions.map(d => d.name));
             
+            // CRITICAL: Only process if we have matches with player data
+            // If matches exist but none have player data, we're using stale data from store
+            const matchesWithPlayers = matches.filter(m => m.eashlData?.players);
+            const hasMatchesWithPlayers = matchesWithPlayers.length > 0;
+            
+            if (!hasMatchesWithPlayers && matches.length > 0) {
+              console.error('[PlayerStats] Subscription - ERROR: Matches loaded but NONE have player data!');
+              console.error('[PlayerStats] Subscription - This means loadMatchesWithStats() did not work or old data is in store');
+              console.error('[PlayerStats] Subscription - Sample match structure:', {
+                id: matches[0].id || matches[0]._id,
+                hasEashlData: !!matches[0].eashlData,
+                hasPlayers: !!matches[0].eashlData?.players,
+                eashlDataKeys: matches[0].eashlData ? Object.keys(matches[0].eashlData) : [],
+                eashlDataType: typeof matches[0].eashlData
+              });
+              // Don't process - wait for correct data
+              console.warn('[PlayerStats] Subscription - Refusing to process stats without player data. Waiting for loadMatchesWithStats to complete...');
+              return;
+            }
+            
+            if (hasMatchesWithPlayers || matches.length === 0) {
+              console.log('[PlayerStats] Subscription - Processing stats, matches with players:', matchesWithPlayers.length, 'out of', matches.length);
             this.processStats(matches, clubs, divisions);
+            } else {
+              console.warn('[PlayerStats] Subscription - Skipping stats processing - no matches with player data yet');
+            }
           }
         }
       },
@@ -250,7 +321,26 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   private processStats(matches: any[], clubs: Club[], divisions: Division[]): void {
-    console.log('Processing stats for season:', this.selectedSeasonId);
+    console.log('[PlayerStats] processStats - Processing stats for season:', this.selectedSeasonId);
+    console.log('[PlayerStats] processStats - Total matches:', matches.length);
+    
+    // Debug: Check sample matches for eashlData.players
+    if (matches.length > 0) {
+      const matchesWithPlayers = matches.filter(m => m.eashlData?.players);
+      const matchesWithoutPlayers = matches.filter(m => !m.eashlData?.players && m.eashlData);
+      console.log('[PlayerStats] processStats - Matches with eashlData.players:', matchesWithPlayers.length);
+      console.log('[PlayerStats] processStats - Matches with eashlData but no players:', matchesWithoutPlayers.length);
+      
+      if (matches.length > 0) {
+        const sampleMatch = matches[0];
+        console.log('[PlayerStats] processStats - Sample match structure:', {
+          id: sampleMatch.id || sampleMatch._id,
+          hasEashlData: !!sampleMatch.eashlData,
+          hasPlayers: !!sampleMatch.eashlData?.players,
+          eashlDataKeys: sampleMatch.eashlData ? Object.keys(sampleMatch.eashlData) : []
+        });
+      }
+    }
     
     if (this.selectedSeasonId) {
       this.processSpecificSeasonStats(matches, clubs, divisions);
@@ -354,16 +444,21 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   private processMatchForPlayerStats(match: any, statsMap: Map<number, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): void {
-    // Skip if match has no relevant data
+    // Debug logging
     if (!match.eashlData && !match.manualEntry) {
+      console.log('[PlayerStats] processMatchForPlayerStats - Skipping match (no eashlData or manualEntry):', match.id || match._id);
       return;
     }
     
     // Check for manual entry first
     if (match.manualEntry) {
+      console.log('[PlayerStats] processMatchForPlayerStats - Processing manual entry match:', match.id || match._id);
       this.processManualPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
     } else if (match.eashlData?.players) {
+      console.log('[PlayerStats] processMatchForPlayerStats - Processing EASHL match with players:', match.id || match._id, 'players count:', Object.keys(match.eashlData.players).length);
       this.processEashlPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
+    } else {
+      console.warn('[PlayerStats] processMatchForPlayerStats - Match has eashlData but no players:', match.id || match._id, 'eashlData keys:', match.eashlData ? Object.keys(match.eashlData) : 'no eashlData');
     }
   }
   

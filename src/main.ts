@@ -2,8 +2,9 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { provideAuth0, authHttpInterceptorFn } from '@auth0/auth0-angular';
+import { PerformanceInterceptor } from './app/shared/interceptors/performance.interceptor';
 
 // Import the NgRx providers
 import { provideStore } from '@ngrx/store';
@@ -26,6 +27,11 @@ import { ManagersEffects } from './app/store/managers.effects';
 bootstrapApplication(AppComponent, {
   providers: [
     provideHttpClient(withInterceptors([authHttpInterceptorFn])),
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: PerformanceInterceptor,
+      multi: true
+    },
     provideRouter(routes),
 
     // Auth0 Configuration

@@ -31,9 +31,9 @@
   <!-- AdSense Rectangle Ad -->
   <app-adsense [config]="rectangleAdConfig"></app-adsense>
 
-  <!-- Add a loading state -->
-  <div class="loading-stats" *ngIf="club && !club.stats">
-    Calculating team statistics...
+  <!-- Add a loading state for games -->
+  <div class="loading-stats" *ngIf="gamesLoading || (club && !club.stats && !matchesLoaded)">
+    Loading games and calculating team statistics...
   </div>
 
   <app-club-roster-tables 

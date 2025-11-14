@@ -179,7 +179,10 @@ export class ClubStatsService {
           
           // Check if any player in this team is on our roster (case-insensitive)
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
+            roster.some(rosterPlayer => {
+              const playerName = player.name || player.playername;
+              return rosterPlayer.gamertag?.toLowerCase() === playerName?.toLowerCase();
+            })
           );
           console.log(`Team ${teamKey} contains roster player:`, teamContainsRosterPlayer);
           if (teamContainsRosterPlayer) {
@@ -261,18 +264,22 @@ export class ClubStatsService {
             return;
           }
           
-          console.log('Team players:', teamPlayers.map((p: any) => p.name));
+          console.log('Team players:', teamPlayers.map((p: any) => p.name || p.playername));
           const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
+            roster.some(rosterPlayer => {
+              const playerName = player.name || player.playername;
+              return rosterPlayer.gamertag?.toLowerCase() === playerName?.toLowerCase();
+            })
           );
           console.log('Team', ourTeamKey, 'contains roster players:', teamContainsRosterPlayer);
           console.log('Roster players:', roster.map(p => p.gamertag).join(', '));
-          console.log('Team players:', teamPlayers.map((p: any) => p.name).join(', '));
+          console.log('Team players:', teamPlayers.map((p: any) => p.name || p.playername).join(', '));
 
           teamPlayers.forEach((playerData: any) => {
-            if (playerData && playerData.name) {
-              console.log('Adding EASHL player to collection:', {name: playerData.name, team: playerData.team, clubname: playerData.clubname, ishome: playerData.ishome});
-              allPlayersWhoPlayed.add(playerData.name);
+            const playerName = playerData.name || playerData.playername;
+            if (playerData && playerName) {
+              console.log('Adding EASHL player to collection:', {name: playerName, team: playerData.team, clubname: playerData.clubname, ishome: playerData.ishome});
+              allPlayersWhoPlayed.add(playerName);
             }
           });
         } else {
@@ -288,13 +295,18 @@ export class ClubStatsService {
     // Initialize player stats map with all players who played for this club
     const initialPlayerStatsMap = new Map<string, any>();
     allPlayersWhoPlayed.forEach(playerName => {
-      const player = roster.find(p => p.gamertag === playerName); // Find roster player to get _id/id and number
+      // Find roster player using case-insensitive matching
+      const player = roster.find(p => 
+        p.gamertag?.toLowerCase() === playerName?.toLowerCase()
+      );
+      // Use roster gamertag as canonical name, fallback to EASHL name
+      const canonicalName = player?.gamertag || playerName;
       const playerId = player?._id || player?.id || playerName; // Use roster ID if available, otherwise name
       const playerNumber = player?.number || 0;
 
       const baseSkaterStats: SkaterStats = {
         playerId: parseInt(playerId) || 0,
-        name: playerName,
+        name: canonicalName,
         number: playerNumber,
         position: 'Unknown', // Will be determined by game performance
         role: 'skater', // Track the role
@@ -327,12 +339,12 @@ export class ClubStatsService {
         interceptions: 0,
         playerScore: 0,
         penaltyKillCorsiZone: 0,
-        isSigned: rosterPlayerNames.has(playerName?.toLowerCase())
+        isSigned: rosterPlayerNames.has(canonicalName?.toLowerCase())
       };
 
       const baseGoalieStats: GoalieStats = {
         playerId: parseInt(playerId) || 0,
-        name: playerName,
+        name: canonicalName,
         number: playerNumber,
         position: 'G',
         role: 'goalie', // Track the role
@@ -347,12 +359,12 @@ export class ClubStatsService {
         goalsAgainstAverage: 0,
         shutouts: 0,
         otl: 0,
-        isSigned: rosterPlayerNames.has(playerName?.toLowerCase())
+        isSigned: rosterPlayerNames.has(canonicalName?.toLowerCase())
       };
 
-      // Create separate entries for skater and goalie roles
-      initialPlayerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
-      initialPlayerStatsMap.set(`${playerName}_goalie`, baseGoalieStats);
+      // Create separate entries for skater and goalie roles using canonical name
+      initialPlayerStatsMap.set(`${canonicalName}_skater`, baseSkaterStats);
+      initialPlayerStatsMap.set(`${canonicalName}_goalie`, baseGoalieStats);
     });
 
     // Also initialize stats for roster players who might not have played yet
@@ -505,20 +517,22 @@ export class ClubStatsService {
             }
 
             if (isGoalie) {
-              playerStats.saves += playerData.saves || 0;
-              playerStats.shotsAgainst += playerData.shotsAgainst || 0;
-              playerStats.goalsAgainst += playerData.goalsAgainst || 0;
+              playerStats.saves += parseInt(playerData.saves) || 0;
+              playerStats.shotsAgainst += parseInt(playerData.shotsAgainst) || 0;
+              playerStats.goalsAgainst += parseInt(playerData.goalsAgainst) || 0;
               // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
-playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
+              playerStats.shutouts += (parseInt(playerData.goalsAgainst) === 0) ? 1 : 0;
               playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) : 0;
               playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
             } else {
-              playerStats.goals += playerData.goals || 0;
-              playerStats.assists += playerData.assists || 0;
-              playerStats.points += (playerData.goals || 0) + (playerData.assists || 0);
-              playerStats.plusMinus += playerData.plusMinus || 0;
-              playerStats.shots += playerData.shots || 0;
-              playerStats.hits += playerData.hits || 0;
+              const goalsThisGame = parseInt(playerData.goals) || 0;
+              const assistsThisGame = parseInt(playerData.assists) || 0;
+              playerStats.goals += goalsThisGame;
+              playerStats.assists += assistsThisGame;
+              playerStats.points += goalsThisGame + assistsThisGame;
+              playerStats.plusMinus += parseInt(playerData.plusMinus) || 0;
+              playerStats.shots += parseInt(playerData.shots) || 0;
+              playerStats.hits += parseInt(playerData.hits) || 0;
               
               // Try to get blocked shots from EASHL data if playerStats has 0
               let blockedShots = parseInt(playerData.blockedShots) || 0;
@@ -538,24 +552,24 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
                 }
               }
               playerStats.blockedShots += blockedShots;
-              playerStats.pim += playerData.penaltyMinutes || 0;
-              playerStats.penaltyAssists += playerData.penaltyAssists || 0;
-              playerStats.ppg += playerData.powerPlayGoals || 0;
-              playerStats.shg += playerData.shortHandedGoals || 0;
-              playerStats.gwg += playerData.gameWinningGoals || 0;
-              playerStats.takeaways += playerData.takeaways || 0;
-              playerStats.giveaways += playerData.giveaways || 0;
-              const passesToAdd = playerData.passes || playerData.passesCompleted || 0;
+              playerStats.pim += parseInt(playerData.penaltyMinutes) || 0;
+              playerStats.penaltyAssists += parseInt(playerData.penaltyAssists) || 0;
+              playerStats.ppg += parseInt(playerData.powerPlayGoals) || 0;
+              playerStats.shg += parseInt(playerData.shortHandedGoals) || 0;
+              playerStats.gwg += parseInt(playerData.gameWinningGoals) || 0;
+              playerStats.takeaways += parseInt(playerData.takeaways) || 0;
+              playerStats.giveaways += parseInt(playerData.giveaways) || 0;
+              const passesToAdd = parseInt(playerData.passes) || parseInt(playerData.passesCompleted) || 0;
               playerStats.passes += passesToAdd;
               
               // Calculate passAttempts from passPercentage if passAttempts is not available
               let passAttemptsToAdd = 0;
               if (playerData.passAttempts !== undefined) {
-                passAttemptsToAdd = playerData.passAttempts || 0;
+                passAttemptsToAdd = parseInt(playerData.passAttempts) || 0;
                 console.log(`Using direct passAttempts: ${passAttemptsToAdd}`);
               } else if (playerData.passPercentage !== undefined && playerData.passPercentage > 0) {
                 // Calculate passAttempts from passes and passPercentage
-                const passAttempts = Math.round(passesToAdd / (playerData.passPercentage / 100));
+                const passAttempts = Math.round(passesToAdd / (parseFloat(playerData.passPercentage) / 100));
                 passAttemptsToAdd = passAttempts;
                 console.log(`Calculated passAttempts from passPercentage: ${passAttemptsToAdd} (passes: ${passesToAdd}, passPercentage: ${playerData.passPercentage})`);
               } else {
@@ -567,8 +581,8 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
               playerStats.passAttempts += passAttemptsToAdd;
               
               console.log(`Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
-              playerStats.faceoffsWon += playerData.faceoffsWon || 0;
-              playerStats.faceoffsLost += playerData.faceoffsLost || 0;
+              playerStats.faceoffsWon += parseInt(playerData.faceoffsWon) || 0;
+              playerStats.faceoffsLost += parseInt(playerData.faceoffsLost) || 0;
               
               // Try to get interceptions from EASHL data if playerStats has 0
               let interceptions = parseInt(playerData.interceptions) || 0;
@@ -628,15 +642,18 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
             console.log(`Stats processing - converted team ${teamKey} object to array:`, teamPlayers);
             console.log(`Stats processing - converted team ${teamKey} array length:`, teamPlayers.length);
             console.log(`Stats processing - converted team ${teamKey} first player:`, teamPlayers[0]);
-            console.log(`Stats processing - converted team ${teamKey} first player name:`, teamPlayers[0]?.name);
+            console.log(`Stats processing - converted team ${teamKey} first player name:`, teamPlayers[0]?.name || teamPlayers[0]?.playername);
           } else {
             console.log(`Stats processing - team ${teamKey} is not an array or object, skipping...`);
             continue;
           }
           
-          const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
-          );
+          const teamContainsRosterPlayer = teamPlayers.some((player: any) => {
+            const playerName = player.name || player.playername;
+            return roster.some(rosterPlayer => 
+              rosterPlayer.gamertag?.toLowerCase() === playerName?.toLowerCase()
+            );
+          });
           console.log(`Stats processing - team ${teamKey} contains roster player:`, teamContainsRosterPlayer);
           if (teamContainsRosterPlayer) {
             ourTeamKey = teamKey;
@@ -703,30 +720,39 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
           }
           
           teamPlayers.forEach((playerData: any) => {
-            if (!playerData || !playerData.name) return;
+            if (!playerData || !(playerData.name || playerData.playername)) return;
+            const eashlPlayerName = playerData.name || playerData.playername;
+            
+            // Normalize to roster gamertag (case-insensitive match)
+            const rosterPlayer = roster.find(p => 
+              p.gamertag?.toLowerCase() === eashlPlayerName?.toLowerCase()
+            );
+            const playerName = rosterPlayer?.gamertag || eashlPlayerName;
 
-            console.log(`Stats processing - EASHL player ${playerData.name}:`, playerData);
-            console.log(`Stats processing - EASHL player ${playerData.name} data keys:`, Object.keys(playerData));
-            console.log(`Stats processing - EASHL player ${playerData.name} blockedShots:`, playerData.blockedShots);
-            console.log(`Stats processing - EASHL player ${playerData.name} powerPlayGoals:`, playerData.powerPlayGoals);
-            console.log(`Stats processing - EASHL player ${playerData.name} penaltyMinutes:`, playerData.penaltyMinutes);
-            console.log(`Stats processing - EASHL player ${playerData.name} shortHandedGoals:`, playerData.shortHandedGoals);
-            console.log(`Stats processing - EASHL player ${playerData.name} gameWinningGoals:`, playerData.gameWinningGoals);
-            console.log(`Stats processing - EASHL player ${playerData.name} penaltyKillCorsiZone:`, playerData.penaltyKillCorsiZone);
-
-            const playerName = playerData.name;
+            console.log(`Stats processing - EASHL player ${eashlPlayerName} -> normalized to ${playerName}:`, playerData);
+            console.log(`Stats processing - EASHL player ${playerName} data keys:`, Object.keys(playerData));
+            console.log(`Stats processing - EASHL player ${playerName} blockedShots:`, playerData.blockedShots);
+            console.log(`Stats processing - EASHL player ${playerName} powerPlayGoals:`, playerData.powerPlayGoals);
+            console.log(`Stats processing - EASHL player ${playerName} penaltyMinutes:`, playerData.penaltyMinutes);
+            console.log(`Stats processing - EASHL player ${playerName} shortHandedGoals:`, playerData.shortHandedGoals);
+            console.log(`Stats processing - EASHL player ${playerName} gameWinningGoals:`, playerData.gameWinningGoals);
+            console.log(`Stats processing - EASHL player ${playerName} penaltyKillCorsiZone:`, playerData.penaltyKillCorsiZone);
             const isGoalie = playerData.position === 'goalie'; // EASHL data uses 'goalie' string
             const roleSuffix = isGoalie ? '_goalie' : '_skater';
             
             let matchingKey = null;
             
+            // Try exact match first with normalized name
             if (playerStatsMap.has(`${playerName}${roleSuffix}`)) {
               matchingKey = `${playerName}${roleSuffix}`;
             } else {
+              // Fallback to case-insensitive partial match
               for (const [key, stats] of playerStatsMap.entries()) {
-                if (key.endsWith(roleSuffix) && (stats.name === playerName || 
-                    stats.name.includes(playerName) || 
-                    playerName.includes(stats.name))) {
+                if (key.endsWith(roleSuffix) && (
+                    stats.name?.toLowerCase() === playerName?.toLowerCase() || 
+                    stats.name?.toLowerCase() === eashlPlayerName?.toLowerCase() ||
+                    stats.name?.toLowerCase().includes(playerName?.toLowerCase()) || 
+                    playerName?.toLowerCase().includes(stats.name?.toLowerCase()))) {
                   matchingKey = key;
                   break;
                 }
@@ -746,25 +772,27 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
               }
               
               if (isGoalie) {
-                playerStats.saves += playerData.saves || 0;
-                playerStats.shotsAgainst += playerData.shotsAgainst || 0;
-                playerStats.goalsAgainst += playerData.goalsAgainst || 0;
+                playerStats.saves += parseInt(playerData.saves) || 0;
+                playerStats.shotsAgainst += parseInt(playerData.shotsAgainst) || parseInt(playerData.glshots) || 0;
+                playerStats.goalsAgainst += parseInt(playerData.goalsAgainst) || parseInt(playerData.glga) || 0;
                 // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
-playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
+                playerStats.shutouts += (parseInt(playerData.goalsAgainst) === 0 || parseInt(playerData.glga) === 0) ? 1 : 0;
                 playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) : 0;
                 playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
               } else {
-                playerStats.goals += playerData.goals || playerData.skgoals || 0;
-                playerStats.assists += playerData.assists || playerData.skassists || 0;
-                playerStats.points += (playerData.goals || playerData.skgoals || 0) + (playerData.assists || playerData.skassists || 0);
-                playerStats.plusMinus += playerData.plusMinus || playerData.skplusmin || 0;
-                playerStats.shots += playerData.shots || playerData.skshots || 0;
-                playerStats.hits += playerData.hits || playerData.skhits || 0;
+                playerStats.goals += parseInt(playerData.goals) || parseInt(playerData.skgoals) || 0;
+                playerStats.assists += parseInt(playerData.assists) || parseInt(playerData.skassists) || 0;
+                const goalsThisGame = parseInt(playerData.goals) || parseInt(playerData.skgoals) || 0;
+                const assistsThisGame = parseInt(playerData.assists) || parseInt(playerData.skassists) || 0;
+                playerStats.points += goalsThisGame + assistsThisGame;
+                playerStats.plusMinus += parseInt(playerData.plusMinus) || parseInt(playerData.skplusmin) || 0;
+                playerStats.shots += parseInt(playerData.shots) || parseInt(playerData.skshots) || 0;
+                playerStats.hits += parseInt(playerData.hits) || parseInt(playerData.skhits) || 0;
                 const blockedShotsToAdd = parseInt(playerData.blockedShots) || parseInt(playerData.skbs) || 0;
                 playerStats.blockedShots += blockedShotsToAdd;
-                if (playerData.name && playerData.name.includes('Liskoilija')) {
+                if (playerName && playerName.includes('Liskoilija')) {
                   console.log('🔍 LISKOILIJA BLOCKED SHOTS DEBUG:', {
-                    name: playerData.name,
+                    name: playerName,
                     blockedShots: playerData.blockedShots,
                     skbs: playerData.skbs,
                     skblk: playerData.skblk,
@@ -772,42 +800,42 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
                     total: playerStats.blockedShots
                   });
                 }
-                playerStats.pim += playerData.penaltyMinutes || playerData.skpim || 0;
+                playerStats.pim += parseInt(playerData.penaltyMinutes) || parseInt(playerData.skpim) || 0;
                 playerStats.penaltyAssists += 0; // EASHL data doesn't have penalty assists
-                playerStats.ppg += playerData.powerPlayGoals || playerData.skppg || 0;
-                playerStats.shg += playerData.shortHandedGoals || playerData.skshg || 0;
-                playerStats.gwg += playerData.gameWinningGoals || playerData.skgwg || 0;
-                playerStats.takeaways += playerData.takeaways || playerData.sktakeaways || 0;
-                playerStats.giveaways += playerData.giveaways || playerData.skgiveaways || 0;
-                const passesToAdd = playerData.passes || playerData.passesCompleted || playerData.skpasses || 0;
+                playerStats.ppg += parseInt(playerData.powerPlayGoals) || parseInt(playerData.skppg) || 0;
+                playerStats.shg += parseInt(playerData.shortHandedGoals) || parseInt(playerData.skshg) || 0;
+                playerStats.gwg += parseInt(playerData.gameWinningGoals) || parseInt(playerData.skgwg) || 0;
+                playerStats.takeaways += parseInt(playerData.takeaways) || parseInt(playerData.sktakeaways) || 0;
+                playerStats.giveaways += parseInt(playerData.giveaways) || parseInt(playerData.skgiveaways) || 0;
+                const passesToAdd = parseInt(playerData.passes) || parseInt(playerData.passesCompleted) || parseInt(playerData.skpasses) || 0;
                 playerStats.passes += passesToAdd;
                 
                 // Calculate passAttempts from passPercentage if passAttempts is not available
                 let passAttemptsToAdd = 0;
                 if (playerData.passAttempts !== undefined || playerData.skpassattempts !== undefined) {
-                  passAttemptsToAdd = playerData.passAttempts || playerData.skpassattempts || 0;
+                  passAttemptsToAdd = parseInt(playerData.passAttempts) || parseInt(playerData.skpassattempts) || 0;
                   console.log(`EASHL - Using direct passAttempts: ${passAttemptsToAdd}`);
                 } else if (playerData.passPercentage !== undefined && playerData.passPercentage > 0) {
                   // Calculate passAttempts from passes and passPercentage
-                  const passAttempts = Math.round(passesToAdd / (playerData.passPercentage / 100));
+                  const passAttempts = Math.round(passesToAdd / (parseFloat(playerData.passPercentage) / 100));
                   passAttemptsToAdd = passAttempts;
                   console.log(`EASHL - Calculated passAttempts from passPercentage: ${passAttemptsToAdd} (passes: ${passesToAdd}, passPercentage: ${playerData.passPercentage})`);
                 } else {
                   // Fallback: Estimate passAttempts based on passes (assume ~80% pass completion rate)
                   // This is a reasonable estimate for hockey statistics
                   passAttemptsToAdd = Math.round(passesToAdd / 0.8);
-                  console.log(`EASHL - Estimated passAttempts for ${playerData.name}: ${passAttemptsToAdd} (passes: ${passesToAdd}, estimated 80% completion rate)`);
+                  console.log(`EASHL - Estimated passAttempts for ${playerName}: ${passAttemptsToAdd} (passes: ${passesToAdd}, estimated 80% completion rate)`);
                 }
                 playerStats.passAttempts += passAttemptsToAdd;
                 
-                console.log(`EASHL - Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
-                playerStats.faceoffsWon += playerData.faceoffsWon || playerData.skfow || 0;
-                playerStats.faceoffsLost += playerData.faceoffsLost || playerData.skfol || 0;
-                const interceptionsToAdd = parseInt(playerData.interceptions) || parseInt(playerData.skint) || 0;
+                console.log(`EASHL - Updated stats for ${playerName}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
+                playerStats.faceoffsWon += parseInt(playerData.faceoffsWon) || parseInt(playerData.skfow) || 0;
+                playerStats.faceoffsLost += parseInt(playerData.faceoffsLost) || parseInt(playerData.skfol) || 0;
+                const interceptionsToAdd = parseInt(playerData.interceptions) || parseInt(playerData.skint) || parseInt(playerData.skinterceptions) || 0;
                 playerStats.interceptions += interceptionsToAdd;
-                if (playerData.name && playerData.name.includes('Liskoilija')) {
+                if (playerName && playerName.includes('Liskoilija')) {
                   console.log('🔍 LISKOILIJA INTERCEPTIONS DEBUG:', {
-                    name: playerData.name,
+                    name: playerName,
                     interceptions: playerData.interceptions,
                     skint: playerData.skint,
                     skinterceptions: playerData.skinterceptions,

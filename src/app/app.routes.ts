@@ -132,7 +132,7 @@ export const routes: Routes = [
     loadComponent: () => import('./admin-panel/admin-panel.component').then(m => m.AdminPanelComponent),
     canActivate: [AdminPasswordGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { 
         path: 'dashboard', 
         loadComponent: () => import('./admin-panel/dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent),
