@@ -21,6 +21,7 @@ interface AggregatedPlayer {
   shotsAgainst: number;
   goalsAgainst: number;
   shutouts: number;
+  gamesPlayed: number;
 }
 
 @Component({
@@ -133,9 +134,8 @@ export class HomeComponent implements OnInit, OnDestroy {
             return;
           }
           
-          // Limit to recent matches for better performance (last 30 days)
-          const recentMatches = this.getRecentMatches(matches);
-          this.calculatePlayerStats(recentMatches);
+          // Use all matches to show all-time leaders
+          this.calculatePlayerStats(matches);
         },
         error: (error) => {
           console.error('Error loading matches for player stats:', error);
@@ -143,17 +143,6 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
-  }
-
-  getRecentMatches(matches: EashlMatch[]): EashlMatch[] {
-    // Only get matches from the last 3 days for better performance
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-    
-    return matches.filter(match => {
-      const matchDate = new Date(match.date);
-      return matchDate >= threeDaysAgo;
-    });
   }
 
   calculatePlayerStats(matches: EashlMatch[]) {
@@ -208,12 +197,39 @@ export class HomeComponent implements OnInit, OnDestroy {
               saves: 0,
               shotsAgainst: 0,
               goalsAgainst: 0,
-              shutouts: 0
+              shutouts: 0,
+              gamesPlayed: 0
             };
           }
           
           // Aggregate stats (optimized)
           const currentPlayer = playerMap[numericPlayerId];
+          
+          // Check if player has goalie stats in this match
+          const hasGoalieStats = playerData.glsaves !== undefined || 
+                                 playerData.glshots !== undefined || 
+                                 playerData.glga !== undefined;
+          
+          // Check if player has skater stats in this match
+          const hasSkaterStats = playerData.skgoals !== undefined || 
+                                playerData.skassists !== undefined;
+          
+          // Track games played and position
+          // If player has goalie stats, mark as goalie and count game
+          if (hasGoalieStats) {
+            currentPlayer.position = 'goalie';
+            currentPlayer.gamesPlayed += 1;
+          } else if (hasSkaterStats) {
+            // If they have skater stats and aren't already marked as goalie, mark as skater
+            if (currentPlayer.position !== 'goalie') {
+              currentPlayer.position = 'skater';
+            }
+            // Count game for skaters (unless they're a goalie)
+            if (currentPlayer.position !== 'goalie') {
+              currentPlayer.gamesPlayed += 1;
+            }
+          }
+          
           if (playerData.skgoals !== undefined) currentPlayer.goals += parseInt(playerData.skgoals) || 0;
           if (playerData.skassists !== undefined) currentPlayer.assists += parseInt(playerData.skassists) || 0;
           if (playerData.glsaves !== undefined) currentPlayer.saves += parseInt(playerData.glsaves) || 0;
@@ -235,27 +251,27 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Get top performers (optimized sorting)
     const allPlayers = Object.values(playerMap);
     
-    // Top 5 goals
+    // Top 5 goals (include anyone with goals - if they have goals, they're a skater)
     this.topGoals = allPlayers
-      .filter(p => p.position !== 'goalie' && p.goals > 0)
+      .filter(p => p.goals > 0)
       .sort((a, b) => b.goals - a.goals)
       .slice(0, 5);
     
-    // Top 5 assists
+    // Top 5 assists (include anyone with assists - if they have assists, they're a skater)
     this.topAssists = allPlayers
-      .filter(p => p.position !== 'goalie' && p.assists > 0)
+      .filter(p => p.assists > 0)
       .sort((a, b) => b.assists - a.assists)
       .slice(0, 5);
     
-    // Top 5 points
+    // Top 5 points (include anyone with points - if they have points, they're a skater)
     this.topPoints = allPlayers
-      .filter(p => p.position !== 'goalie' && p.points > 0)
+      .filter(p => p.points > 0)
       .sort((a, b) => b.points - a.points)
       .slice(0, 5);
     
-    // Top 5 save percentage (goalies only)
+    // Top 5 save percentage (goalies only, minimum 10 GP)
     this.topSavePct = allPlayers
-      .filter(p => p.position === 'goalie' && (p.shotsAgainst || 0) >= 1)
+      .filter(p => p.position === 'goalie' && (p.shotsAgainst || 0) >= 1 && (p.gamesPlayed || 0) >= 10)
       .map(g => ({
         ...g,
         savePercentage: ((g.saves || 0) / (g.shotsAgainst || 1)).toFixed(3)
