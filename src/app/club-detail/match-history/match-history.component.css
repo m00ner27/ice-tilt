@@ -18,6 +18,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .match-history-header h3 {
@@ -222,4 +224,107 @@
 .match-card:hover .view-details {
   color: #3498db;
   text-decoration: underline;
+}
+
+.pagination-info {
+  color: #9aa1a7;
+  font-size: 0.9em;
+  font-weight: normal;
+}
+
+@media (max-width: 768px) {
+  .pagination-info {
+    font-size: 0.8em;
+    margin-top: 5px;
+  }
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #34495e;
+  flex-wrap: wrap;
+}
+
+.pagination-button {
+  background-color: #2c3e50;
+  color: white;
+  border: 1px solid #34495e;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  min-width: 80px;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #34495e;
+  border-color: #4a5f7a;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-number {
+  background-color: #2c3e50;
+  color: white;
+  border: 1px solid #34495e;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  min-width: 40px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.page-number:hover {
+  background-color: #34495e;
+  border-color: #4a5f7a;
+}
+
+.page-number.active {
+  background-color: #3498db;
+  border-color: #3498db;
+  font-weight: 600;
+}
+
+.page-ellipsis {
+  color: #9aa1a7;
+  padding: 0 5px;
+  font-size: 0.9em;
+}
+
+@media (max-width: 768px) {
+  .pagination-controls {
+    gap: 8px;
+    margin-top: 15px;
+    padding-top: 15px;
+  }
+  
+  .pagination-button {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    min-width: 70px;
+  }
+  
+  .page-number {
+    padding: 6px 10px;
+    font-size: 0.85em;
+    min-width: 35px;
+  }
 } 

@@ -1,6 +1,9 @@
 <div class="match-history-container">
   <div class="match-history-header">
     <h3>Match History</h3>
+    <div *ngIf="needsPagination" class="pagination-info">
+      Showing {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, matches.length) }} of {{ matches.length }} matches
+    </div>
   </div>
   
   <div class="match-list">
@@ -8,7 +11,7 @@
       No matches played yet.
     </div>
     
-    <div *ngFor="let match of matches" 
+    <div *ngFor="let match of paginatedMatches" 
          class="match-card" 
          [ngClass]="{'win': didTeamWin(match), 'loss': !didTeamWin(match)}"
          (click)="navigateToMatchDetail(match)"
@@ -30,5 +33,50 @@
       </div>
       <div class="view-details">View details</div>
     </div>
+  </div>
+  
+  <!-- Pagination Controls -->
+  <div *ngIf="needsPagination" class="pagination-controls">
+    <button 
+      class="pagination-button" 
+      (click)="previousPage()" 
+      [disabled]="currentPage === 1"
+      [attr.aria-label]="'Go to previous page'">
+      ← Previous
+    </button>
+    
+    <div class="page-numbers">
+      <button 
+        *ngIf="currentPage > 3 && totalPages > 5" 
+        class="page-number" 
+        (click)="goToPage(1)">
+        1
+      </button>
+      <span *ngIf="currentPage > 3 && totalPages > 5" class="page-ellipsis">...</span>
+      
+      <button 
+        *ngFor="let page of pageNumbers" 
+        class="page-number" 
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)">
+        {{ page }}
+      </button>
+      
+      <span *ngIf="currentPage < totalPages - 2 && totalPages > 5" class="page-ellipsis">...</span>
+      <button 
+        *ngIf="currentPage < totalPages - 2 && totalPages > 5" 
+        class="page-number" 
+        (click)="goToPage(totalPages)">
+        {{ totalPages }}
+      </button>
+    </div>
+    
+    <button 
+      class="pagination-button" 
+      (click)="nextPage()" 
+      [disabled]="currentPage === totalPages"
+      [attr.aria-label]="'Go to next page'">
+      Next →
+    </button>
   </div>
 </div> 

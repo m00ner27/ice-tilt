@@ -15,10 +15,77 @@ export class MatchHistoryComponent {
   @Input() matches: EashlMatch[] = [];
   @Input() teamName: string = '';
   
+  // Pagination properties
+  currentPage: number = 1;
+  itemsPerPage: number = 6;
+  
   constructor(
     private router: Router,
     private imageUrlService: ImageUrlService
   ) { }
+  
+  // Get reversed matches (most recent first)
+  get reversedMatches(): EashlMatch[] {
+    // Create a copy and reverse it to show most recent matches first
+    return [...this.matches].reverse();
+  }
+  
+  // Get paginated matches
+  get paginatedMatches(): EashlMatch[] {
+    const reversed = this.reversedMatches;
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return reversed.slice(startIndex, endIndex);
+  }
+  
+  // Get total number of pages
+  get totalPages(): number {
+    return Math.ceil(this.matches.length / this.itemsPerPage);
+  }
+  
+  // Check if pagination is needed
+  get needsPagination(): boolean {
+    return this.matches.length > this.itemsPerPage;
+  }
+  
+  // Navigate to previous page
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+  
+  // Navigate to next page
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+  
+  // Navigate to specific page
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+  
+  // Get page numbers for display
+  get pageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
 
   // Method to get the full image URL using the centralized service
   getImageUrl(logoUrl: string | undefined): string {
@@ -105,4 +172,7 @@ export class MatchHistoryComponent {
   getLocationLabel(match: EashlMatch): string {
     return match.homeTeam === this.teamName ? 'Home' : 'Away';
   }
+  
+  // Expose Math.min for template
+  Math = Math;
 } 
