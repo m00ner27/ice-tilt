@@ -115,6 +115,41 @@
             Skipped {{ recalculationResult.gamesSkipped || 0 }}.
           </p>
         </div>
+        <div class="mt-4 pt-4 border-t border-gray-600">
+          <label class="block text-sm font-medium text-admin-text mb-2">Recalculate Playoff Series Wins</label>
+          <select 
+            [(ngModel)]="selectedBracketId"
+            class="w-full bg-admin-hover text-white px-3 py-2 rounded-lg mb-2"
+            [disabled]="recalculatingSeries">
+            <option value="">Select a bracket...</option>
+            <option *ngFor="let bracket of playoffBrackets" [value]="bracket._id">
+              {{ bracket.name || bracket.seasonId || bracket._id }} ({{ bracket.divisionId || 'All Divisions' }})
+            </option>
+          </select>
+          <button 
+            (click)="recalculatePlayoffSeriesWins()" 
+            [disabled]="recalculatingSeries || !selectedBracketId"
+            class="w-full bg-purple-600 text-white px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-sync-alt" [class.fa-spin]="recalculatingSeries"></i>
+            {{ recalculatingSeries ? 'Recalculating...' : 'Recalculate Series Wins' }}
+          </button>
+          <div *ngIf="seriesRecalculationResult" class="mt-3 p-3 rounded-lg" 
+               [class.bg-green-600]="!seriesRecalculationResult.error" 
+               [class.bg-red-600]="seriesRecalculationResult.error"
+               [class.text-white]="true">
+            <p *ngIf="!seriesRecalculationResult.error" class="font-semibold">Series Recalculation Complete!</p>
+            <p *ngIf="seriesRecalculationResult.error" class="font-semibold">Error: {{ seriesRecalculationResult.error }}</p>
+            <p *ngIf="seriesRecalculationResult.seriesUpdated" class="text-sm mt-1">
+              Updated {{ seriesRecalculationResult.seriesUpdated }} series.
+            </p>
+            <div *ngIf="seriesRecalculationResult.results && seriesRecalculationResult.results.length > 0" class="mt-2 text-xs">
+              <p class="font-semibold mb-1">Results:</p>
+              <div *ngFor="let result of seriesRecalculationResult.results" class="mb-1">
+                Series: {{ result.oldWins.home }}-{{ result.oldWins.away }} → {{ result.newWins.home }}-{{ result.newWins.away }} ({{ result.gamesProcessed }} games)
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

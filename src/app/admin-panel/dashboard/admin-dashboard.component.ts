@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../store/services/api.service';
 import { AuthService } from '@auth0/auth0-angular';
@@ -9,7 +10,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-dashboard.component.html'
 })
 export class AdminDashboardComponent implements OnInit {
@@ -23,6 +24,10 @@ export class AdminDashboardComponent implements OnInit {
   authError = false;
   recalculating = false;
   recalculationResult: any = null;
+  recalculatingSeries = false;
+  seriesRecalculationResult: any = null;
+  playoffBrackets: any[] = [];
+  selectedBracketId: string = '';
 
   constructor(
     private api: ApiService,
@@ -84,6 +89,16 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading divisions:', error);
+      }
+    });
+
+    // Load playoff brackets
+    this.api.getPlayoffBrackets().subscribe({
+      next: (brackets) => {
+        this.playoffBrackets = brackets || [];
+      },
+      error: (error) => {
+        console.error('Error loading playoff brackets:', error);
       }
     });
 
@@ -164,6 +179,43 @@ export class AdminDashboardComponent implements OnInit {
         this.recalculating = false;
         this.recalculationResult = { error: error.message || 'An error occurred' };
         console.error('Error recalculating stats:', error);
+      }
+    });
+  }
+
+  recalculatePlayoffSeriesWins() {
+    if (this.recalculatingSeries || !this.selectedBracketId) return;
+    
+    if (!confirm('This will recalculate series wins for all series in the selected bracket based on completed games. Continue?')) {
+      return;
+    }
+    
+    this.recalculatingSeries = true;
+    this.seriesRecalculationResult = null;
+    
+    this.api.recalculateAllPlayoffSeriesWins(this.selectedBracketId).subscribe({
+      next: (result) => {
+        this.recalculatingSeries = false;
+        this.seriesRecalculationResult = result;
+        console.log('Series recalculation complete:', result);
+        // Clear cache and reload brackets to show updated scores
+        if (this.api['cacheService']) {
+          this.api['cacheService'].clear();
+        }
+        // Reload brackets
+        this.api.getPlayoffBrackets().subscribe({
+          next: (brackets) => {
+            this.playoffBrackets = brackets || [];
+          },
+          error: (error) => {
+            console.error('Error reloading playoff brackets:', error);
+          }
+        });
+      },
+      error: (error) => {
+        this.recalculatingSeries = false;
+        this.seriesRecalculationResult = { error: error.message || 'An error occurred' };
+        console.error('Error recalculating series wins:', error);
       }
     });
   }

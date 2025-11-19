@@ -419,6 +419,21 @@ export class ApiService {
     );
   }
 
+  // Recalculate series wins for all series in a playoff bracket
+  recalculateAllPlayoffSeriesWins(bracketId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/playoffs/brackets/${bracketId}/recalculate-all-series`, {}, { headers });
+      })
+    );
+  }
+
   // Club roster methods
   getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
     this.logger.log('ApiService: getClubRoster called for clubId:', clubId, 'seasonId:', seasonId);
