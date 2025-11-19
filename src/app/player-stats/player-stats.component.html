@@ -25,6 +25,13 @@
         </select>
       </div>
       
+      <div class="filter-group">
+        <label for="playoff-filter">
+          <input type="checkbox" id="playoff-filter" [(ngModel)]="includePlayoffs" (ngModelChange)="onPlayoffFilterChange()">
+          Include Playoff Games
+        </label>
+      </div>
+      
       <div class="stats-summary">
         <span>Total Players: {{ getTotalPlayers() }}</span>
       </div>

@@ -102,6 +102,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   selectedDivisionId: string = 'all-divisions';
   seasons: Season[] = [];
   divisions: Division[] = [];
+  includePlayoffs: boolean = false;
   
   isLoading: boolean = true;
   sortColumn: string = 'points';
@@ -264,9 +265,14 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     console.log('Processing specific season stats:', this.selectedSeasonId);
     
     // Filter matches to only include those from the specific season
-    const filteredMatches = matches.filter(match => {
+    let filteredMatches = matches.filter(match => {
       return match.seasonId && match.seasonId === this.selectedSeasonId;
     });
+    
+    // Filter out playoff games unless includePlayoffs is true
+    if (!this.includePlayoffs) {
+      filteredMatches = filteredMatches.filter(match => !this.isPlayoffGame(match));
+    }
     
     // Create team division map for the selected season
     const teamDivisionMap = new Map<string, string>();
@@ -775,5 +781,20 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     }
     
     event.target.src = '/assets/images/square-default.png';
+  }
+
+  private isPlayoffGame(match: any): boolean {
+    // Check if match is marked as playoff
+    const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+    
+    // Check if match has playoff identifiers
+    const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+    
+    return isPlayoff || !!hasPlayoffIds;
+  }
+
+  onPlayoffFilterChange(): void {
+    // Reprocess stats with the new filter setting
+    this.processStatsForCurrentSeason();
   }
 }

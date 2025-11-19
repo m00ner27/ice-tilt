@@ -25,6 +25,13 @@
           <option *ngFor="let division of divisions" [value]="division._id">{{ division.name }}</option>
         </select>
       </div>
+      
+      <div class="filter-group">
+        <label for="playoff-filter">
+          <input type="checkbox" id="playoff-filter" [(ngModel)]="includePlayoffs" (ngModelChange)="onPlayoffFilterChange()">
+          Include Playoff Games
+        </label>
+      </div>
     </div>
 
     <!-- Stats Tables per Division -->
