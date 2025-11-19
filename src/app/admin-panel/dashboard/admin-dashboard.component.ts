@@ -21,6 +21,8 @@ export class AdminDashboardComponent implements OnInit {
   recentActivity: any[] = [];
   isAuthenticated = false;
   authError = false;
+  recalculating = false;
+  recalculationResult: any = null;
 
   constructor(
     private api: ApiService,
@@ -130,5 +132,39 @@ export class AdminDashboardComponent implements OnInit {
 
   goTo(route: string) {
     this.router.navigate([`/admin/${route}`]);
+  }
+
+  recalculateAllStats() {
+    if (this.recalculating) return;
+    
+    if (!confirm('This will recalculate shot statistics for all linked games. This may take a few minutes. Continue?')) {
+      return;
+    }
+    
+    this.recalculating = true;
+    this.recalculationResult = null;
+    
+    this.api.recalculateAllGameStats().subscribe({
+      next: (result) => {
+        this.recalculating = false;
+        this.recalculationResult = result;
+        console.log('Recalculation complete:', result);
+        // Clear cache and reload games to show updated stats
+        if (this.api['cacheService']) {
+          this.api['cacheService'].clear();
+        }
+        // Reload games to show updated stats
+        this.loadDashboardData();
+        // Trigger a page refresh to ensure all components see the updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      },
+      error: (error) => {
+        this.recalculating = false;
+        this.recalculationResult = { error: error.message || 'An error occurred' };
+        console.error('Error recalculating stats:', error);
+      }
+    });
   }
 }

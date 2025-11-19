@@ -404,6 +404,21 @@ export class ApiService {
     );
   }
 
+  // Recalculate stats for all games with EASHL data
+  recalculateAllGameStats(): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/games/recalculate-all-stats`, {}, { headers });
+      })
+    );
+  }
+
   // Club roster methods
   getClubRoster(clubId: string, seasonId: string): Observable<any[]> {
     this.logger.log('ApiService: getClubRoster called for clubId:', clubId, 'seasonId:', seasonId);

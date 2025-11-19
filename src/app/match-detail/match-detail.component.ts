@@ -306,8 +306,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Fix goalie stats after processing data
-    this.fixGoalieStats();
+    // Note: Using EASHL glshots directly for goalie SA instead of recalculating from opposing team's total
+    // This preserves the actual EASHL recorded stats (glsaves, glga, glshots)
+    // fixGoalieStats() is no longer called to preserve EASHL data
   }
 
   processPlayerStats(): void {
@@ -373,8 +374,8 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       }
     });
     
-    // Recalculate goalie shots against to match opposing team's total shots
-    this.recalculateGoalieShotsAgainst();
+    // Note: Using EASHL glshots directly for goalie SA instead of recalculating from opposing team's total
+    // This preserves the actual EASHL recorded stats (glsaves, glga, glshots)
   }
 
   processEashlData(): void {
@@ -451,6 +452,14 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           });
         }
         
+        // Calculate goalie shots against once (use glshots from EASHL if available, otherwise calculate)
+        const goalieShotsAgainst = isGoalie && (playerData.glshots !== undefined && playerData.glshots !== null)
+          ? (parseInt(playerData.glshots) || 0)
+          : isGoalie
+            ? ((parseInt(playerData.glsaves) || 0) + (parseInt(playerData.glga) || 0))
+            : 0;
+        const goalieSaves = isGoalie ? (parseInt(playerData.glsaves) || 0) : 0;
+        
         const statDisplay: PlayerStatDisplay = {
           playerId: playerData.playerId || 0,
           name: playerData.playername || playerData.name || 'Unknown Player',
@@ -462,9 +471,12 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           points: isGoalie ? (parseInt(playerData.skassists) || 0) : 
             ((parseInt(playerData.skgoals) || 0) + (parseInt(playerData.skassists) || 0)),
           plusMinus: isGoalie ? 0 : (parseInt(playerData.skplusmin) || 0),
-          shots: isGoalie ? 0 : (parseInt(playerData.skshots) || 0),
+          // In hockey, goals are shots on goal, so total shots = skshots + skgoals
+          shots: isGoalie ? 0 : ((parseInt(playerData.skshots) || 0) + (parseInt(playerData.skgoals) || 0)),
           shotPercentage: isGoalie ? 0 : 
-            (parseInt(playerData.skshots) > 0 ? ((parseInt(playerData.skgoals) || 0) / parseInt(playerData.skshots) * 100) : 0),
+            (((parseInt(playerData.skshots) || 0) + (parseInt(playerData.skgoals) || 0)) > 0 
+              ? ((parseInt(playerData.skgoals) || 0) / ((parseInt(playerData.skshots) || 0) + (parseInt(playerData.skgoals) || 0)) * 100) 
+              : 0),
           hits: isGoalie ? 0 : (parseInt(playerData.skhits) || 0),
           blockedShots: isGoalie ? 0 : (parseInt(playerData.skbs) || 0),
           pim: parseInt(playerData.skpim) || 0,
@@ -488,12 +500,13 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           interceptions: isGoalie ? 0 : (parseInt(playerData.skint) || 0),
           playerScore: parseInt(playerData.score) || 0,
           penaltyKillCorsiZone: isGoalie ? 0 : (parseInt(playerData.skpkc) || 0),
-          // Goalie-specific stats
-          saves: isGoalie ? (parseInt(playerData.glsaves) || 0) : 0,
-          shotsAgainst: isGoalie ? (parseInt(playerData.glshots) || 0) : 0,
-          savePercentage: isGoalie ? 
-            (parseInt(playerData.glshots) > 0 ? ((parseInt(playerData.glsaves) || 0) / parseInt(playerData.glshots)) : 0) : 0,
-          goalsAgainst: isGoalie ? (parseInt(playerData.glga) || 0) : 0
+          // Goalie-specific stats - use EASHL data directly
+          saves: goalieSaves,
+          goalsAgainst: isGoalie ? (parseInt(playerData.glga) || 0) : 0,
+          shotsAgainst: goalieShotsAgainst,
+          savePercentage: isGoalie && goalieShotsAgainst > 0 
+            ? (goalieSaves / goalieShotsAgainst * 100) 
+            : 0
         };
 
         // Debug logging for merged games - show final processed stats
@@ -616,11 +629,8 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       });
     }
     
-    // Recalculate goalie shots against to match opposing team's total shots
-    // BUT skip this for manual stats entries - use the manually entered values
-    if (!this.match.eashlData?.manualEntry) {
-      this.recalculateGoalieShotsAgainst();
-    }
+    // Note: Using EASHL glshots directly for goalie SA instead of recalculating from opposing team's total
+    // This preserves the actual EASHL recorded stats (glsaves, glga, glshots)
   }
 
   goBack(): void {
@@ -776,30 +786,9 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     return percentage.toFixed(3);
   }
 
-  // Method to recalculate goalie shots against based on opposing team's total shots
-  recalculateGoalieShotsAgainst(): void {
-    // Calculate total shots for each team
-    const homeTeamTotalShots = this.getTeamTotalShots('home');
-    const awayTeamTotalShots = this.getTeamTotalShots('away');
-    
-    // Update home team goalies' shots against to match away team's total shots
-    this.homeTeamGoalies.forEach(goalie => {
-      goalie.shotsAgainst = awayTeamTotalShots;
-      // Recalculate goals against to maintain mathematical consistency: GA = SA - SV
-      goalie.goalsAgainst = Math.max(0, awayTeamTotalShots - (goalie.saves || 0));
-      // Recalculate save percentage
-      goalie.savePercentage = awayTeamTotalShots > 0 ? (goalie.saves || 0) / awayTeamTotalShots * 100 : 0;
-    });
-    
-    // Update away team goalies' shots against to match home team's total shots
-    this.awayTeamGoalies.forEach(goalie => {
-      goalie.shotsAgainst = homeTeamTotalShots;
-      // Recalculate goals against to maintain mathematical consistency: GA = SA - SV
-      goalie.goalsAgainst = Math.max(0, homeTeamTotalShots - (goalie.saves || 0));
-      // Recalculate save percentage
-      goalie.savePercentage = homeTeamTotalShots > 0 ? (goalie.saves || 0) / homeTeamTotalShots * 100 : 0;
-    });
-  }
+  // DEPRECATED: This method is no longer used. We now use EASHL glshots directly from the game data
+  // instead of recalculating from opposing team's total shots, which preserves the actual recorded stats.
+  // recalculateGoalieShotsAgainst(): void { ... }
 
   ngOnDestroy(): void {
     if (this.routeParamsSubscription) {
@@ -835,29 +824,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
     return points + (hits * 0.1) + (blockedShots * 0.2) + (takeaways * 0.1) - (giveaways * 0.1) + (plusMinus * 0.5);
   }
 
-  fixGoalieStats(): void {
-    // Get team total shots
-    const homeTeamTotalShots = this.getTeamTotalShots('home');
-    const awayTeamTotalShots = this.getTeamTotalShots('away');
-    
-    // Get team total goals
-    const homeTeamTotalGoals = this.getTeamTotalGoals('home');
-    const awayTeamTotalGoals = this.getTeamTotalGoals('away');
-    
-    // Fix home team goalies - their shots against should equal away team's total shots
-    this.homeTeamGoalies.forEach(goalie => {
-      goalie.shotsAgainst = awayTeamTotalShots;
-      goalie.goalsAgainst = awayTeamTotalGoals; // Goals against = goals scored by opposing team
-      goalie.saves = Math.max(0, awayTeamTotalShots - awayTeamTotalGoals); // Saves = SA - GA
-      goalie.savePercentage = awayTeamTotalShots > 0 ? goalie.saves / awayTeamTotalShots * 100 : 0;
-    });
-    
-    // Fix away team goalies - their shots against should equal home team's total shots
-    this.awayTeamGoalies.forEach(goalie => {
-      goalie.shotsAgainst = homeTeamTotalShots;
-      goalie.goalsAgainst = homeTeamTotalGoals; // Goals against = goals scored by opposing team
-      goalie.saves = Math.max(0, homeTeamTotalShots - homeTeamTotalGoals); // Saves = SA - GA
-      goalie.savePercentage = homeTeamTotalShots > 0 ? goalie.saves / homeTeamTotalShots * 100 : 0;
-    });
-  }
+  // DEPRECATED: This method is no longer used. We now use EASHL glshots directly from the game data
+  // instead of recalculating from opposing team's total shots, which preserves the actual recorded stats.
+  // fixGoalieStats(): void { ... }
 }

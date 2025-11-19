@@ -71,6 +71,7 @@ export class GoalieStatsComponent implements OnInit {
   divisions: Division[] = [];
   selectedSeasonId: string | null = null;
   selectedDivisionId: string = 'all-divisions';
+  includePlayoffs: boolean = false;
   
   isLoading: boolean = true;
   sortColumn: string = 'savePercentage'; // Default sort by save percentage
@@ -193,8 +194,11 @@ export class GoalieStatsComponent implements OnInit {
       
       console.log('All teams:', Array.from(allTeams));
       
-      // Use all matches for "All Seasons"
-      const filteredMatches = this.allMatches;
+      // Use all matches for "All Seasons", but filter out playoff games unless includePlayoffs is true
+      let filteredMatches = this.allMatches;
+      if (!this.includePlayoffs) {
+        filteredMatches = filteredMatches.filter(match => !this.isPlayoffGame(match));
+      }
       console.log('Using all matches for All Seasons:', filteredMatches.length);
       
       // Create team division map for all seasons
@@ -252,7 +256,7 @@ export class GoalieStatsComponent implements OnInit {
     console.log('Teams in season:', Array.from(seasonTeams));
     
     // Filter matches to only include those from the specific season
-    const filteredMatches = this.allMatches.filter(match => {
+    let filteredMatches = this.allMatches.filter(match => {
       // Check if the match belongs to the selected season
       if (match.seasonId && match.seasonId === this.selectedSeasonId) {
         // Also ensure at least one team is officially in this season
@@ -262,6 +266,11 @@ export class GoalieStatsComponent implements OnInit {
       }
       return false;
     });
+    
+    // Filter out playoff games unless includePlayoffs is true
+    if (!this.includePlayoffs) {
+      filteredMatches = filteredMatches.filter(match => !this.isPlayoffGame(match));
+    }
     
     console.log('Matches from specific season:', filteredMatches.length);
     
@@ -534,7 +543,11 @@ export class GoalieStatsComponent implements OnInit {
 
                 existingStats.gamesPlayed++;
                 existingStats.saves += parseInt(playerData.glsaves) || 0;
-                existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
+                // Use glshots from EASHL if available, otherwise calculate from saves + goals
+                const shotsAgainstThisGame = (playerData.glshots !== undefined && playerData.glshots !== null)
+                  ? (parseInt(playerData.glshots) || 0)
+                  : ((parseInt(playerData.glsaves) || 0) + (parseInt(playerData.glga) || 0));
+                existingStats.shotsAgainst += shotsAgainstThisGame;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
                 // Calculate shutouts based on goals against (0 goals = 1 shutout)
                 existingStats.shutouts += shutouts;
@@ -854,7 +867,11 @@ export class GoalieStatsComponent implements OnInit {
               if (existingStats) {
                 existingStats.gamesPlayed++;
                 existingStats.saves += parseInt(playerData.glsaves) || 0;
-                existingStats.shotsAgainst += parseInt(playerData.glshots) || 0;
+                // Use glshots from EASHL if available, otherwise calculate from saves + goals
+                const shotsAgainstThisGame = (playerData.glshots !== undefined && playerData.glshots !== null)
+                  ? (parseInt(playerData.glshots) || 0)
+                  : ((parseInt(playerData.glsaves) || 0) + (parseInt(playerData.glga) || 0));
+                existingStats.shotsAgainst += shotsAgainstThisGame;
                 existingStats.goalsAgainst += parseInt(playerData.glga) || 0;
                 // Use EA's shutout field if available, otherwise calculate based on goals against
                 const goalsAgainstThisGame = parseInt(playerData.glga) || 0;
@@ -1029,5 +1046,20 @@ export class GoalieStatsComponent implements OnInit {
     
     // Set the fallback image - use a path that will be treated as a local asset
     event.target.src = '/assets/images/square-default.png';
+  }
+
+  private isPlayoffGame(match: any): boolean {
+    // Check if match is marked as playoff
+    const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+    
+    // Check if match has playoff identifiers
+    const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+    
+    return isPlayoff || !!hasPlayoffIds;
+  }
+
+  onPlayoffFilterChange(): void {
+    // Reprocess stats with the new filter setting
+    this.loadStatsForSeason();
   }
 }

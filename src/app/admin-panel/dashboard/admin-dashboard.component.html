@@ -96,6 +96,25 @@
           <i class="fas fa-plus"></i>
           Schedule Game
         </button>
+        <button 
+          (click)="recalculateAllStats()" 
+          [disabled]="recalculating"
+          class="w-full bg-yellow-600 text-white px-4 py-3 rounded-lg flex items-center gap-3 hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <i class="fas fa-sync-alt" [class.fa-spin]="recalculating"></i>
+          {{ recalculating ? 'Recalculating...' : 'Recalculate All Game Stats' }}
+        </button>
+        <div *ngIf="recalculationResult" class="mt-3 p-3 rounded-lg" 
+             [class.bg-green-600]="!recalculationResult.error" 
+             [class.bg-red-600]="recalculationResult.error"
+             [class.text-white]="true">
+          <p *ngIf="!recalculationResult.error" class="font-semibold">Recalculation Complete!</p>
+          <p *ngIf="recalculationResult.error" class="font-semibold">Error: {{ recalculationResult.error }}</p>
+          <p *ngIf="recalculationResult.totalGames" class="text-sm mt-1">
+            Processed {{ recalculationResult.totalGames }} games. 
+            Updated {{ recalculationResult.gamesUpdated || 0 }}, 
+            Skipped {{ recalculationResult.gamesSkipped || 0 }}.
+          </p>
+        </div>
       </div>
     </div>
   </div>

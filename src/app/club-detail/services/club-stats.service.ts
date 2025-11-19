@@ -527,19 +527,29 @@ export class ClubStatsService {
             }
 
             if (isGoalie) {
-              playerStats.saves += playerData.saves || 0;
-              playerStats.shotsAgainst += playerData.shotsAgainst || 0;
-              playerStats.goalsAgainst += playerData.goalsAgainst || 0;
+              const saves = playerData.saves || 0;
+              const goalsAgainst = playerData.goalsAgainst || 0;
+              // In hockey, shots against = saves + goals against (a goal is a shot on goal)
+              const shotsAgainst = saves + goalsAgainst;
+              
+              playerStats.saves += saves;
+              playerStats.shotsAgainst += shotsAgainst;
+              playerStats.goalsAgainst += goalsAgainst;
               // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
-playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
-              playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) : 0;
+playerStats.shutouts += (goalsAgainst === 0 && shotsAgainst > 0) ? 1 : 0;
+              playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) * 100 : 0;
               playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
             } else {
-              playerStats.goals += playerData.goals || 0;
+              const goals = playerData.goals || 0;
+              const shotsWithoutGoals = playerData.shots || 0;
+              // In hockey, goals are shots on goal, so total shots = shots + goals
+              const totalShots = shotsWithoutGoals + goals;
+              
+              playerStats.goals += goals;
               playerStats.assists += playerData.assists || 0;
-              playerStats.points += (playerData.goals || 0) + (playerData.assists || 0);
+              playerStats.points += goals + (playerData.assists || 0);
               playerStats.plusMinus += playerData.plusMinus || 0;
-              playerStats.shots += playerData.shots || 0;
+              playerStats.shots += totalShots;
               playerStats.hits += playerData.hits || 0;
               
               // Try to get blocked shots from EASHL data if playerStats has 0
@@ -768,19 +778,32 @@ playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
               }
               
               if (isGoalie) {
-                playerStats.saves += playerData.saves || 0;
-                playerStats.shotsAgainst += playerData.shotsAgainst || 0;
-                playerStats.goalsAgainst += playerData.goalsAgainst || 0;
+                const saves = playerData.saves || playerData.glsaves || 0;
+                const goalsAgainst = playerData.goalsAgainst || playerData.glga || 0;
+                // In hockey, shots against = saves + goals against (a goal is a shot on goal)
+                // Use glshots from EASHL if available, otherwise calculate from saves + goals
+                const shotsAgainst = (playerData.glshots !== undefined && playerData.glshots !== null)
+                  ? (parseInt(playerData.glshots) || 0)
+                  : ((parseInt(playerData.glsaves) || 0) + (parseInt(playerData.glga) || 0));
+                
+                playerStats.saves += saves;
+                playerStats.shotsAgainst += shotsAgainst;
+                playerStats.goalsAgainst += goalsAgainst;
                 // Calculate shutouts based on goals against for this specific game (0 goals = 1 shutout)
-playerStats.shutouts += (playerData.goalsAgainst === 0) ? 1 : 0;
-                playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) : 0;
+playerStats.shutouts += (goalsAgainst === 0 && shotsAgainst > 0) ? 1 : 0;
+                playerStats.savePercentage = playerStats.shotsAgainst > 0 ? (playerStats.saves / playerStats.shotsAgainst) * 100 : 0;
                 playerStats.goalsAgainstAverage = playerStats.gamesPlayed > 0 ? (playerStats.goalsAgainst / playerStats.gamesPlayed) : 0;
               } else {
-                playerStats.goals += playerData.goals || playerData.skgoals || 0;
+                const goals = playerData.goals || playerData.skgoals || 0;
+                const shotsWithoutGoals = playerData.shots || playerData.skshots || 0;
+                // In hockey, goals are shots on goal, so total shots = shots + goals
+                const totalShots = shotsWithoutGoals + goals;
+                
+                playerStats.goals += goals;
                 playerStats.assists += playerData.assists || playerData.skassists || 0;
-                playerStats.points += (playerData.goals || playerData.skgoals || 0) + (playerData.assists || playerData.skassists || 0);
+                playerStats.points += goals + (playerData.assists || playerData.skassists || 0);
                 playerStats.plusMinus += playerData.plusMinus || playerData.skplusmin || 0;
-                playerStats.shots += playerData.shots || playerData.skshots || 0;
+                playerStats.shots += totalShots;
                 playerStats.hits += playerData.hits || playerData.skhits || 0;
                 const blockedShotsToAdd = parseInt(playerData.blockedShots) || parseInt(playerData.skbs) || 0;
                 playerStats.blockedShots += blockedShotsToAdd;

@@ -112,6 +112,10 @@ export class MatchService {
         // Process home team skaters
         homeSkaters.forEach((playerData: any) => {
           const teamName = game.homeClubId?.name || 'Home Team';
+          const goals = parseInt(playerData.goals) || 0;
+          const shotsWithoutGoals = parseInt(playerData.shots) || 0;
+          // In hockey, goals are shots on goal, so total shots = shots + goals
+          const totalShots = shotsWithoutGoals + goals;
           
           playerStats.push({
             playerId: parseInt(playerData.playerId) || 0,
@@ -119,12 +123,12 @@ export class MatchService {
             team: teamName,
             number: parseInt(playerData.number) || 0,
             position: playerData.position || 'Unknown',
-            goals: parseInt(playerData.goals) || 0,
+            goals: goals,
             assists: parseInt(playerData.assists) || 0,
             plusMinus: parseInt(playerData.plusMinus) || 0,
-            shots: parseInt(playerData.shots) || 0,
+            shots: totalShots,
             timeOnIce: 'N/A', // Manual stats don't track time on ice
-            shotPercentage: playerData.shots ? (parseInt(playerData.goals) || 0) / parseInt(playerData.shots) * 100 : 0,
+            shotPercentage: totalShots > 0 ? (goals / totalShots) * 100 : 0,
             hits: parseInt(playerData.hits) || 0,
             blockedShots: parseInt(playerData.blockedShots) || 0,
             penaltyMinutes: parseInt(playerData.penaltyMinutes) || 0,
@@ -155,6 +159,10 @@ export class MatchService {
         // Process away team skaters
         awaySkaters.forEach((playerData: any) => {
           const teamName = game.awayClubId?.name || 'Away Team';
+          const goals = parseInt(playerData.goals) || 0;
+          const shotsWithoutGoals = parseInt(playerData.shots) || 0;
+          // In hockey, goals are shots on goal, so total shots = shots + goals
+          const totalShots = shotsWithoutGoals + goals;
           
           playerStats.push({
             playerId: parseInt(playerData.playerId) || 0,
@@ -162,12 +170,12 @@ export class MatchService {
             team: teamName,
             number: parseInt(playerData.number) || 0,
             position: playerData.position || 'Unknown',
-            goals: parseInt(playerData.goals) || 0,
+            goals: goals,
             assists: parseInt(playerData.assists) || 0,
             plusMinus: parseInt(playerData.plusMinus) || 0,
-            shots: parseInt(playerData.shots) || 0,
+            shots: totalShots,
             timeOnIce: 'N/A', // Manual stats don't track time on ice
-            shotPercentage: playerData.shots ? (parseInt(playerData.goals) || 0) / parseInt(playerData.shots) * 100 : 0,
+            shotPercentage: totalShots > 0 ? (goals / totalShots) * 100 : 0,
             hits: parseInt(playerData.hits) || 0,
             blockedShots: parseInt(playerData.blockedShots) || 0,
             penaltyMinutes: parseInt(playerData.penaltyMinutes) || 0,
@@ -198,6 +206,11 @@ export class MatchService {
         // Process home team goalies
         homeGoalies.forEach((playerData: any) => {
           const teamName = game.homeClubId?.name || 'Home Team';
+          const saves = parseInt(playerData.saves) || 0;
+          const goalsAgainst = parseInt(playerData.goalsAgainst) || 0;
+          // In hockey, shots against = saves + goals against (a goal is a shot on goal)
+          // Always calculate from saves + goals to ensure accuracy
+          const shotsAgainst = saves + goalsAgainst;
           
           playerStats.push({
             playerId: parseInt(playerData.playerId) || 0,
@@ -228,10 +241,10 @@ export class MatchService {
             penaltyAssists: 0,
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: 0,
-            saves: parseInt(playerData.saves) || 0,
-            shotsAgainst: parseInt(playerData.shotsAgainst) || 0,
-            goalsAgainst: parseInt(playerData.goalsAgainst) || 0,
-            goalsAgainstAverage: playerData.shotsAgainst ? (parseInt(playerData.goalsAgainst) || 0) / (parseInt(playerData.shotsAgainst) || 1) * 60 : 0,
+            saves: saves,
+            shotsAgainst: shotsAgainst,
+            goalsAgainst: goalsAgainst,
+            goalsAgainstAverage: shotsAgainst > 0 ? (goalsAgainst / shotsAgainst) * 60 : 0,
             shutout: parseInt(playerData.shutout) || 0,
             shutoutPeriods: parseInt(playerData.shutoutPeriods) || 0
           });
@@ -240,6 +253,11 @@ export class MatchService {
         // Process away team goalies
         awayGoalies.forEach((playerData: any) => {
           const teamName = game.awayClubId?.name || 'Away Team';
+          const saves = parseInt(playerData.saves) || 0;
+          const goalsAgainst = parseInt(playerData.goalsAgainst) || 0;
+          // In hockey, shots against = saves + goals against (a goal is a shot on goal)
+          // Always calculate from saves + goals to ensure accuracy
+          const shotsAgainst = saves + goalsAgainst;
           
           playerStats.push({
             playerId: parseInt(playerData.playerId) || 0,
@@ -270,10 +288,10 @@ export class MatchService {
             penaltyAssists: 0,
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: 0,
-            saves: parseInt(playerData.saves) || 0,
-            shotsAgainst: parseInt(playerData.shotsAgainst) || 0,
-            goalsAgainst: parseInt(playerData.goalsAgainst) || 0,
-            goalsAgainstAverage: playerData.shotsAgainst ? (parseInt(playerData.goalsAgainst) || 0) / (parseInt(playerData.shotsAgainst) || 1) * 60 : 0,
+            saves: saves,
+            shotsAgainst: shotsAgainst,
+            goalsAgainst: goalsAgainst,
+            goalsAgainstAverage: shotsAgainst > 0 ? (goalsAgainst / shotsAgainst) * 60 : 0,
             shutout: parseInt(playerData.shutout) || 0,
             shutoutPeriods: parseInt(playerData.shutoutPeriods) || 0
           });
@@ -288,18 +306,23 @@ export class MatchService {
         if (!teamPlayers) return;
         
         Object.entries(teamPlayers).forEach(([playerId, playerData]: [string, any]) => {
+          const goals = parseInt(playerData.skgoals) || 0;
+          const shotsWithoutGoals = parseInt(playerData.skshots) || 0;
+          // In hockey, goals are shots on goal, so total shots = shots + goals
+          const totalShots = shotsWithoutGoals + goals;
+          
           const processedPlayer = {
             playerId: parseInt(playerId),
             name: playerData.playername || 'Unknown',
             team: teamName,
             number: parseInt(playerData.jerseynum) || 0,
             position: playerData.position || 'Unknown',
-            goals: parseInt(playerData.skgoals) || 0,
+            goals: goals,
             assists: parseInt(playerData.skassists) || 0,
             plusMinus: parseInt(playerData.skplusmin) || 0,
-            shots: parseInt(playerData.skshots) || 0,
+            shots: totalShots,
             timeOnIce: playerData.sktoi || 'N/A',
-            shotPercentage: playerData.skshots ? (parseInt(playerData.skgoals) || 0) / parseInt(playerData.skshots) * 100 : 0,
+            shotPercentage: totalShots > 0 ? (goals / totalShots) * 100 : 0,
             hits: parseInt(playerData.skhits) || 0,
             blockedShots: parseInt(playerData.skbs) || 0,
             penaltyMinutes: parseInt(playerData.skpim) || 0,
@@ -319,7 +342,10 @@ export class MatchService {
             playerScore: parseInt(playerData.score) || 0,
             penaltyKillCorsiZone: parseInt(playerData.skpkc) || 0,
             saves: parseInt(playerData.glsaves) || 0,
-            shotsAgainst: parseInt(playerData.glshots) || 0,
+            // Use glshots from EASHL if available, otherwise calculate from saves + goals
+            shotsAgainst: (playerData.glshots !== undefined && playerData.glshots !== null)
+              ? (parseInt(playerData.glshots) || 0)
+              : ((parseInt(playerData.glsaves) || 0) + (parseInt(playerData.glga) || 0)),
             goalsAgainst: parseInt(playerData.glga) || 0,
             goalsAgainstAverage: parseFloat(playerData.glgaa) || 0,
             shutout: parseInt(playerData.glso) || 0,
