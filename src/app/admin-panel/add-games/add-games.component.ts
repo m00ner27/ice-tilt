@@ -43,6 +43,9 @@ export class AddGamesComponent implements OnInit {
   filteredClubs: Club[] = [];
   gameForm: FormGroup;
   dataLoaded = false;
+  playoffBrackets: any[] = [];
+  playoffSeries: any[] = [];
+  isPlayoffGame = false;
 
   constructor(
     private fb: FormBuilder,
@@ -55,12 +58,95 @@ export class AddGamesComponent implements OnInit {
       team1: ['', Validators.required],
       team2: ['', Validators.required],
       date: ['', Validators.required],
-      time: ['', Validators.required]
+      time: ['', Validators.required],
+      isPlayoff: [false],
+      playoffBracketId: [''],
+      playoffSeriesId: [''],
+      playoffRoundId: ['']
     });
   }
 
   ngOnInit() {
     this.loadAllData();
+    this.loadPlayoffBrackets();
+    
+    // Watch for playoff checkbox changes
+    this.gameForm.get('isPlayoff')?.valueChanges.subscribe(isPlayoff => {
+      this.isPlayoffGame = isPlayoff;
+      if (isPlayoff) {
+        this.gameForm.get('playoffBracketId')?.setValidators(Validators.required);
+        this.gameForm.get('playoffSeriesId')?.setValidators(Validators.required);
+        this.gameForm.get('playoffRoundId')?.setValidators(Validators.required);
+      } else {
+        this.gameForm.get('playoffBracketId')?.clearValidators();
+        this.gameForm.get('playoffSeriesId')?.clearValidators();
+        this.gameForm.get('playoffRoundId')?.clearValidators();
+        this.gameForm.get('playoffBracketId')?.setValue('');
+        this.gameForm.get('playoffSeriesId')?.setValue('');
+        this.gameForm.get('playoffRoundId')?.setValue('');
+      }
+      this.gameForm.get('playoffBracketId')?.updateValueAndValidity();
+      this.gameForm.get('playoffSeriesId')?.updateValueAndValidity();
+      this.gameForm.get('playoffRoundId')?.updateValueAndValidity();
+    });
+    
+    // Watch for bracket changes to load series
+    this.gameForm.get('playoffBracketId')?.valueChanges.subscribe(bracketId => {
+      if (bracketId) {
+        this.loadPlayoffSeries(bracketId);
+      } else {
+        this.playoffSeries = [];
+      }
+    });
+  }
+
+  loadPlayoffBrackets() {
+    this.api.getPlayoffBrackets().subscribe({
+      next: (brackets) => {
+        this.playoffBrackets = brackets.filter((b: any) => b.status === 'active' || b.status === 'setup');
+      },
+      error: (error) => {
+        console.error('Error loading playoff brackets:', error);
+      }
+    });
+  }
+
+  loadPlayoffSeries(bracketId: string) {
+    this.api.getPlayoffBracketSeries(bracketId).subscribe({
+      next: (series) => {
+        this.playoffSeries = series;
+      },
+      error: (error) => {
+        console.error('Error loading playoff series:', error);
+        this.playoffSeries = [];
+      }
+    });
+  }
+
+  onPlayoffBracketChange() {
+    const bracketId = this.gameForm.get('playoffBracketId')?.value;
+    if (bracketId) {
+      this.loadPlayoffSeries(bracketId);
+      // Get bracket to populate round info
+      this.api.getPlayoffBracket(bracketId).subscribe({
+        next: (bracket) => {
+          // Round ID will be set when series is selected
+        }
+      });
+    }
+  }
+
+  onPlayoffSeriesChange() {
+    const seriesId = this.gameForm.get('playoffSeriesId')?.value;
+    const bracketId = this.gameForm.get('playoffBracketId')?.value;
+    if (seriesId && bracketId) {
+      this.api.getPlayoffSeries(seriesId, bracketId).subscribe({
+        next: (series) => {
+          // Set round ID from series
+          this.gameForm.get('playoffRoundId')?.setValue(series.roundId || `round-${series.roundOrder}`);
+        }
+      });
+    }
   }
 
   loadAllData() {
@@ -186,7 +272,7 @@ export class AddGamesComponent implements OnInit {
       const formData = this.gameForm.value;
       
       // Transform the form data to match the API expectations
-      const gameData = {
+      const gameData: any = {
         seasonId: formData.season,
         divisionId: formData.division,
         homeClubId: formData.team1,
@@ -194,6 +280,14 @@ export class AddGamesComponent implements OnInit {
         date: new Date(`${formData.date}T${formData.time}`), // Combine date and time
         status: 'scheduled' // Set default status
       };
+
+      // Add playoff fields if this is a playoff game
+      if (formData.isPlayoff) {
+        gameData.isPlayoff = true;
+        gameData.playoffBracketId = formData.playoffBracketId;
+        gameData.playoffSeriesId = formData.playoffSeriesId;
+        gameData.playoffRoundId = formData.playoffRoundId;
+      }
       
       console.log('Sending game data:', gameData);
       
@@ -202,13 +296,41 @@ export class AddGamesComponent implements OnInit {
           console.log('Game added successfully:', game);
           console.log('Game ID:', game._id || game.id);
           
-          // Instead of navigating directly, go to schedule to see if the game appears
-          this.router.navigate(['/schedule']);
+          if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
+            // For playoff games, navigate to the series page
+            console.log('Game created - Playoff Series ID:', formData.playoffSeriesId);
+            console.log('Game created - Bracket ID:', formData.playoffBracketId);
+            alert('Playoff game created successfully and added to the series!');
+            // Ensure we have valid IDs before navigating - use string conversion to ensure proper format
+            const seriesId = String(formData.playoffSeriesId).trim();
+            const bracketId = String(formData.playoffBracketId).trim();
+            
+            if (seriesId && bracketId && seriesId !== 'undefined' && bracketId !== 'undefined') {
+              console.log('Navigating to /playoffs/series/' + seriesId + '?bracketId=' + bracketId);
+              this.router.navigate(['/playoffs', 'series', seriesId], {
+                queryParams: { bracketId: bracketId }
+              }).catch(err => {
+                console.error('Navigation error:', err);
+                console.error('Failed to navigate to series, falling back to bracket page');
+                // Fallback to bracket page if series navigation fails
+                this.router.navigate(['/playoffs']);
+              });
+            } else {
+              console.warn('Invalid IDs - Series:', seriesId, 'Bracket:', bracketId);
+              // Fallback to bracket page if IDs are missing or invalid
+              this.router.navigate(['/playoffs']);
+            }
+          } else {
+            // For regular games, go to schedule
+            alert('Game created successfully!');
+            this.router.navigate(['/schedule']);
+          }
         },
         error: (error) => {
           console.error('Error adding game:', error);
           console.error('Error details:', error.error);
           console.error('Status:', error.status);
+          alert('Error creating game: ' + (error.error?.message || error.message || 'Unknown error'));
         }
       });
     }

@@ -70,6 +70,21 @@ export const routes: Routes = [
     loadComponent: () => import('./standings/standings.component').then(m => m.StandingsComponent)
   },
   
+  // Lazy loaded routes - Playoffs
+  // More specific routes must come first
+  { 
+    path: 'playoffs/series/:id', 
+    loadComponent: () => import('./playoffs/playoff-series/playoff-series.component').then(m => m.PlayoffSeriesComponent)
+  },
+  { 
+    path: 'playoffs/:id', 
+    loadComponent: () => import('./playoffs/playoff-bracket/playoff-bracket.component').then(m => m.PlayoffBracketComponent)
+  },
+  { 
+    path: 'playoffs', 
+    loadComponent: () => import('./playoffs/playoff-bracket/playoff-bracket.component').then(m => m.PlayoffBracketComponent)
+  },
+  
   // Lazy loaded routes - Article
   { 
     path: 'article/:slug', 
@@ -177,6 +192,11 @@ export const routes: Routes = [
         path: 'admins', 
         loadComponent: () => import('./admin-panel/admins/admins.component').then(m => m.AdminsComponent),
         canActivate: [AdminPasswordGuard, superAdminGuard]
+      },
+      { 
+        path: 'playoff-setup', 
+        loadComponent: () => import('./admin-panel/playoff-setup/playoff-setup.component').then(m => m.PlayoffSetupComponent),
+        canActivate: [AdminPasswordGuard]
       },
     ]
   },

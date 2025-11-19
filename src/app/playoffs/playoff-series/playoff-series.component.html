@@ -1,0 +1,107 @@
+<div class="max-w-4xl mx-auto my-10 px-4">
+  <button (click)="router.navigate(['/playoffs'])" 
+    class="mb-4 text-blue-400 hover:text-blue-300">
+    ← Back to Bracket
+  </button>
+
+  <div *ngIf="loading$ | async" class="text-center py-8">
+    <div class="text-gray-400">Loading series...</div>
+  </div>
+
+  <div *ngIf="error$ | async" class="text-center py-8">
+    <div class="text-red-400">Error loading series: {{ error$ | async }}</div>
+  </div>
+
+  <div *ngIf="series$ | async as series" class="space-y-6">
+    <!-- Series Header -->
+    <div class="bg-gray-800 rounded-lg p-6">
+      <h1 class="text-2xl font-bold text-white mb-4">Series Details</h1>
+      
+      <div class="grid grid-cols-2 gap-6">
+        <!-- Home Team -->
+        <div class="text-center">
+          <div class="text-sm text-gray-400 mb-2">Seed #{{ series.homeSeed }}</div>
+          <div class="text-xl font-bold text-white mb-2">
+            {{ series.homeClub?.name || series.homeClubId?.name || 'TBD' }}
+          </div>
+          <div class="text-3xl font-bold"
+            [class.text-green-400]="getWinner(series) === (series.homeClub?.name || series.homeClubId?.name)"
+            [class.text-white]="getWinner(series) !== (series.homeClub?.name || series.homeClubId?.name)">
+            {{ series.homeWins || 0 }}
+          </div>
+        </div>
+
+        <!-- Away Team -->
+        <div *ngIf="series.status !== 'bye'" class="text-center">
+          <div class="text-sm text-gray-400 mb-2">Seed #{{ series.awaySeed }}</div>
+          <div class="text-xl font-bold text-white mb-2">
+            {{ series.awayClub?.name || series.awayClubId?.name || 'TBD' }}
+          </div>
+          <div class="text-3xl font-bold"
+            [class.text-green-400]="getWinner(series) === (series.awayClub?.name || series.awayClubId?.name)"
+            [class.text-white]="getWinner(series) !== (series.awayClub?.name || series.awayClubId?.name)">
+            {{ series.awayWins || 0 }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Series Status -->
+      <div class="mt-4 text-center">
+        <span *ngIf="series.status === 'completed'" class="px-4 py-2 bg-green-600 text-white rounded">
+          Series Complete
+        </span>
+        <span *ngIf="series.status === 'in-progress'" class="px-4 py-2 bg-yellow-600 text-white rounded">
+          Series In Progress
+        </span>
+        <span *ngIf="series.status === 'pending'" class="px-4 py-2 bg-gray-600 text-white rounded">
+          Series Pending
+        </span>
+        <span *ngIf="series.status === 'bye'" class="px-4 py-2 bg-gray-600 text-white rounded">
+          Bye
+        </span>
+      </div>
+
+      <!-- Winner -->
+      <div *ngIf="getWinner(series)" class="mt-4 text-center">
+        <div class="text-lg font-bold text-green-400">
+          Winner: {{ getWinner(series) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Games List -->
+    <div class="bg-gray-800 rounded-lg p-6">
+      <h2 class="text-xl font-bold text-white mb-4">Games</h2>
+      
+      <div *ngIf="series.gameDetails && series.gameDetails.length > 0" class="space-y-3">
+        <div *ngFor="let game of series.gameDetails" 
+          (click)="navigateToGame(game._id || game.id)"
+          class="bg-gray-700 rounded p-4 cursor-pointer hover:bg-gray-600 transition-colors">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-white font-medium">
+                {{ game.homeClubId?.name || 'TBD' }} vs {{ game.awayClubId?.name || 'TBD' }}
+              </div>
+              <div class="text-sm text-gray-400">
+                {{ game.date | date:'short' }}
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xl font-bold text-white">
+                {{ game.homeTeamScore || game.score?.home || 0 }} - {{ game.awayTeamScore || game.score?.away || 0 }}
+              </div>
+              <div class="text-sm text-gray-400">
+                {{ game.status }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!series.gameDetails || series.gameDetails.length === 0" class="text-center py-8 text-gray-400">
+        No games scheduled yet
+      </div>
+    </div>
+  </div>
+</div>
+

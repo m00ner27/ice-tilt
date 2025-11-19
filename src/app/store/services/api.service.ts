@@ -781,4 +781,135 @@ export class ApiService {
       })
     );
   }
+
+  // Playoff Bracket Methods
+  getPlayoffBrackets(seasonId?: string, divisionId?: string, status?: string): Observable<any[]> {
+    let url = `${this.apiUrl}/api/playoffs/brackets?`;
+    const params: string[] = [];
+    if (seasonId) params.push(`seasonId=${seasonId}`);
+    if (divisionId) params.push(`divisionId=${divisionId}`);
+    if (status) params.push(`status=${status}`);
+    url += params.join('&');
+    return this.http.get<any[]>(url);
+  }
+
+  getPlayoffBracket(bracketId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/playoffs/brackets/${bracketId}`);
+  }
+
+  createPlayoffBracket(bracketData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/playoffs/brackets`, bracketData, { headers });
+      })
+    );
+  }
+
+  updatePlayoffBracket(bracketId: string, bracketData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/playoffs/brackets/${bracketId}`, bracketData, { headers });
+      })
+    );
+  }
+
+  generatePlayoffMatchups(bracketId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/playoffs/brackets/${bracketId}/generate-matchups`, {}, { headers });
+      })
+    );
+  }
+
+  getPlayoffBracketSeries(bracketId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/playoffs/brackets/${bracketId}/series`);
+  }
+
+  getPlayoffSeries(seriesId: string, bracketId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/playoffs/series/${seriesId}?bracketId=${bracketId}`);
+  }
+
+  advancePlayoffSeries(seriesId: string, bracketId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/playoffs/series/${seriesId}/advance?bracketId=${bracketId}`, {}, { headers });
+      })
+    );
+  }
+
+  getPlayoffPlayerStats(bracketId?: string, seasonId?: string, clubId?: string): Observable<any> {
+    let url = `${this.apiUrl}/api/playoffs/stats/players?`;
+    const params: string[] = [];
+    if (bracketId) params.push(`bracketId=${bracketId}`);
+    if (seasonId) params.push(`seasonId=${seasonId}`);
+    if (clubId) params.push(`clubId=${clubId}`);
+    url += params.join('&');
+    return this.http.get<any>(url);
+  }
+
+  getPlayoffGoalieStats(bracketId?: string, seasonId?: string, clubId?: string): Observable<any> {
+    let url = `${this.apiUrl}/api/playoffs/stats/goalies?`;
+    const params: string[] = [];
+    if (bracketId) params.push(`bracketId=${bracketId}`);
+    if (seasonId) params.push(`seasonId=${seasonId}`);
+    if (clubId) params.push(`clubId=${clubId}`);
+    url += params.join('&');
+    return this.http.get<any>(url);
+  }
+
+  deletePlayoffBracket(bracketId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(`${this.apiUrl}/api/playoffs/brackets/${bracketId}`, { headers });
+      })
+    );
+  }
+
+  updateRoundMatchups(bracketId: string, roundOrder: number, matchups: any[]): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(
+          `${this.apiUrl}/api/playoffs/brackets/${bracketId}/rounds/${roundOrder}/matchups`,
+          { matchups },
+          { headers }
+        );
+      })
+    );
+  }
 }

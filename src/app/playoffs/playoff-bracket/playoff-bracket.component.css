@@ -1,0 +1,31 @@
+/* Bracket visualization styles */
+.min-w-max {
+  min-width: max-content;
+}
+
+/* Stats table styles */
+.sort-asc::after {
+  content: ' ▲';
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.sort-desc::after {
+  content: ' ▼';
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Ensure sticky columns work properly */
+.sticky {
+  position: sticky;
+  z-index: 10;
+}
+
+/* Table responsive styles */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+

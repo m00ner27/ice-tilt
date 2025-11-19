@@ -42,6 +42,55 @@
       <label class="block text-admin-text mb-2 font-medium">Time</label>
       <input type="time" formControlName="time" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
     </div>
+
+    <!-- Playoff Game Options -->
+    <div class="pt-4 border-t border-admin-accent">
+      <label class="flex items-center gap-2 mb-4">
+        <input type="checkbox" formControlName="isPlayoff" class="w-4 h-4">
+        <span class="text-admin-text font-medium">This is a Playoff Game</span>
+      </label>
+
+      <div *ngIf="isPlayoffGame" class="space-y-4 pl-6 border-l-2 border-admin-accent">
+        <div class="bg-blue-900 bg-opacity-30 border border-blue-600 rounded p-3 mb-4">
+          <p class="text-sm text-blue-200">
+            <strong>Note:</strong> For playoff games, make sure the Home Team and Away Team match the teams in the selected series. 
+            The game will be automatically added to the series when created.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Playoff Bracket *</label>
+          <select formControlName="playoffBracketId" (change)="onPlayoffBracketChange()" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+            <option value="" disabled selected>Select Bracket</option>
+            <option *ngFor="let bracket of playoffBrackets" [value]="bracket._id">{{ bracket.name }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Series *</label>
+          <select formControlName="playoffSeriesId" (change)="onPlayoffSeriesChange()" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+            [disabled]="!gameForm.get('playoffBracketId')?.value">
+            <option value="" disabled selected>Select Series</option>
+            <option *ngFor="let series of playoffSeries" [value]="series._id">
+              {{ series.homeClub?.name || series.homeClubId?.name || 'TBD' }} vs 
+              {{ series.awayClub?.name || series.awayClubId?.name || 'TBD' }}
+              (Round {{ series.roundOrder }})
+            </option>
+          </select>
+          <p class="text-xs text-admin-text mt-1">Select the series this game belongs to. Home/Away teams should match the series teams.</p>
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Round ID</label>
+          <input type="text" formControlName="playoffRoundId" readonly
+            class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-gray-400">
+          <p class="text-xs text-admin-text mt-1">Auto-filled from series selection</p>
+        </div>
+      </div>
+    </div>
+
     <div class="pt-4">
       <button type="submit" [disabled]="!gameForm.valid" class="w-full bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50">
         Add Game

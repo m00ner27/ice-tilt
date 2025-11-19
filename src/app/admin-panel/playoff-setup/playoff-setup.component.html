@@ -1,0 +1,397 @@
+<div class="max-w-4xl mx-auto my-10 bg-admin-card rounded-xl p-8 shadow-lg">
+  <h2 class="text-2xl font-bold text-admin-primary mb-6 text-center">Playoff Bracket Setup</h2>
+  
+  <!-- Bracket List View -->
+  <div *ngIf="viewMode === 'list'" class="space-y-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold text-admin-primary">All Playoff Brackets</h3>
+      <button (click)="switchToCreateMode()" 
+        class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+        <i class="fas fa-plus mr-2"></i>Create New Bracket
+      </button>
+    </div>
+    
+    <div *ngIf="bracketsLoading" class="text-center py-4">
+      <div class="text-admin-text">Loading brackets...</div>
+    </div>
+    
+    <div *ngIf="!bracketsLoading && brackets.length === 0" class="text-center py-8">
+      <p class="text-admin-text mb-4">No brackets found. Create your first bracket to get started.</p>
+      <button (click)="switchToCreateMode()" 
+        class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+        Create New Bracket
+      </button>
+    </div>
+    
+    <div *ngIf="!bracketsLoading && brackets.length > 0" class="overflow-x-auto">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-admin-hover">
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Name</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Season</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Division</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Status</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Teams</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Created</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bracket of brackets" class="hover:bg-admin-hover">
+            <td class="border border-admin-accent px-4 py-2 text-white">{{ bracket.name }}</td>
+            <td class="border border-admin-accent px-4 py-2 text-admin-text">
+              {{ getSeasonName(bracket.seasonId?._id || bracket.seasonId) }}
+            </td>
+            <td class="border border-admin-accent px-4 py-2 text-admin-text">
+              {{ getDivisionName(bracket.divisionId) }}
+            </td>
+            <td class="border border-admin-accent px-4 py-2">
+              <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getStatusBadgeClass(bracket.status)">
+                {{ bracket.status }}
+              </span>
+            </td>
+            <td class="border border-admin-accent px-4 py-2 text-admin-text">{{ bracket.numTeams }}</td>
+            <td class="border border-admin-accent px-4 py-2 text-admin-text text-sm">
+              {{ bracket.createdAt ? (bracket.createdAt | date:'short') : 'N/A' }}
+            </td>
+            <td class="border border-admin-accent px-4 py-2">
+              <div class="flex gap-2 flex-wrap">
+                <button (click)="viewBracket(bracket._id)" 
+                  class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                  View
+                </button>
+                <button (click)="editBracket(bracket)" 
+                  class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                  Edit
+                </button>
+                <button (click)="deleteBracket(bracket._id)" 
+                  class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                  Delete
+                </button>
+                <button (click)="openMatchupEditor(bracket, 1)" 
+                  *ngIf="canEditRound(bracket, 1)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 1
+                </button>
+                <button (click)="openMatchupEditor(bracket, 2)" 
+                  *ngIf="canEditRound(bracket, 2)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 2
+                </button>
+                <button (click)="openMatchupEditor(bracket, 3)" 
+                  *ngIf="canEditRound(bracket, 3)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 3
+                </button>
+                <button (click)="openMatchupEditor(bracket, 4)" 
+                  *ngIf="canEditRound(bracket, 4)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 4
+                </button>
+                <button (click)="openMatchupEditor(bracket, 5)" 
+                  *ngIf="canEditRound(bracket, 5)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 5
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Create/Edit Form View -->
+  <div *ngIf="viewMode === 'create' || viewMode === 'edit'">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold text-admin-primary">
+        {{ viewMode === 'edit' ? 'Edit Bracket' : 'Create New Bracket' }}
+      </h3>
+      <button (click)="viewMode = 'list'" 
+        class="bg-admin-hover text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>Back to List
+      </button>
+    </div>
+  
+  <!-- Progress Steps -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div *ngFor="let step of [1,2,3,4]" class="flex items-center flex-1">
+        <div class="flex flex-col items-center flex-1">
+          <div [class]="'w-10 h-10 rounded-full flex items-center justify-center font-bold ' + 
+            (currentStep >= step ? 'bg-admin-secondary text-white' : 'bg-admin-hover text-admin-text')">
+            {{ step }}
+          </div>
+          <div class="text-xs mt-2 text-admin-text text-center">
+            <span *ngIf="step === 1">Basic Info</span>
+            <span *ngIf="step === 2">Teams & Seeds</span>
+            <span *ngIf="step === 3">Rounds</span>
+            <span *ngIf="step === 4">Preview</span>
+          </div>
+        </div>
+        <div *ngIf="step < 4" class="flex-1 h-1 mx-2" 
+          [class]="currentStep > step ? 'bg-admin-secondary' : 'bg-admin-hover'"></div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!dataLoaded" class="text-center py-4">
+    <div class="text-admin-text">Loading data...</div>
+  </div>
+
+  <form [formGroup]="bracketForm" class="space-y-6" [class.opacity-50]="!dataLoaded" [class.pointer-events-none]="!dataLoaded">
+    
+    <!-- Step 1: Basic Information -->
+    <div *ngIf="currentStep === 1" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Basic Information</h3>
+      
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Bracket Name *</label>
+        <input type="text" formControlName="name" 
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+          placeholder="e.g., Season 1 Playoffs">
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Season *</label>
+        <select formControlName="seasonId" (change)="onSeasonChange()" 
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          <option value="" disabled selected>Select Season</option>
+          <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Division (Optional)</label>
+        <select formControlName="divisionId" (change)="onDivisionChange()" 
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          <option value="">All Divisions</option>
+          <option *ngFor="let division of filteredDivisions" [value]="division._id">{{ division.name }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Number of Teams *</label>
+        <input type="number" formControlName="numTeams" (change)="onNumTeamsChange()" 
+          min="2" max="32"
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <p class="text-sm text-admin-text mt-1">Enter any number (2-32). Byes will be automatically assigned to top seeds if needed.</p>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Division Logo (Optional)</label>
+        <div class="space-y-2">
+          <input type="file" accept="image/*" (change)="onLogoFileChange($event)" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          <div *ngIf="logoPreview" class="flex items-center gap-3">
+            <img [src]="logoPreview" alt="Logo Preview" class="w-16 h-16 object-contain rounded bg-admin-card">
+            <span *ngIf="uploadingLogo" class="text-admin-primary text-sm">Uploading...</span>
+          </div>
+        </div>
+        <input formControlName="logoUrl" type="text" class="hidden">
+      </div>
+    </div>
+
+    <!-- Step 2: Teams & Seeds -->
+    <div *ngIf="currentStep === 2" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Select Teams and Assign Seeds</h3>
+      <p class="text-sm text-admin-text mb-4">Assign each team a unique seed number from 1 to {{ bracketForm.get('numTeams')?.value }}. Seed 1 is the highest seed.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div *ngFor="let seeding of getSeedingsAsFormGroups(); let i = index" 
+          [formGroup]="seeding" class="bg-admin-hover p-4 rounded">
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <label class="block text-admin-text mb-2 font-medium text-sm">Seed {{ i + 1 }}</label>
+              <select formControlName="clubId" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                <option value="" disabled selected>Select Team</option>
+                <option *ngFor="let club of filteredClubs" [value]="club._id">{{ club.name }}</option>
+              </select>
+            </div>
+            <div class="w-20">
+              <label class="block text-admin-text mb-2 font-medium text-sm">Seed #</label>
+              <input type="number" formControlName="seed" min="1" [max]="bracketForm.get('numTeams')?.value"
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Round Configuration -->
+    <div *ngIf="currentStep === 3" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Round Configuration</h3>
+      <p class="text-sm text-admin-text mb-4">Configure each round's name and best-of format.</p>
+      
+      <div class="space-y-4">
+        <div *ngFor="let round of getRoundsAsFormGroups(); let i = index" 
+          [formGroup]="round" class="bg-admin-hover p-4 rounded">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-admin-text mb-2 font-medium">Round Name</label>
+              <input type="text" formControlName="name" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-admin-text mb-2 font-medium">Best Of</label>
+              <select formControlName="bestOf" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white">
+                <option [value]="3">Best of 3</option>
+                <option [value]="5">Best of 5</option>
+                <option [value]="7">Best of 7</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" formControlName="order">
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Preview -->
+    <div *ngIf="currentStep === 4" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Bracket Preview</h3>
+      
+      <div *ngIf="previewBracket" class="bg-admin-hover p-6 rounded">
+        <div class="mb-4">
+          <div class="flex items-center gap-3 mb-2">
+            <img *ngIf="previewBracket.logoUrl" [src]="getImageUrl(previewBracket.logoUrl)" 
+              alt="Bracket Logo" class="w-12 h-12 object-contain rounded">
+            <h4 class="font-bold text-admin-primary">{{ previewBracket.name }}</h4>
+          </div>
+          <p class="text-sm text-admin-text">Season: {{ getSeasonName(previewBracket.seasonId) }}</p>
+          <p class="text-sm text-admin-text">{{ previewBracket.numTeams }} teams, {{ previewBracket.numRounds }} rounds</p>
+        </div>
+
+        <div class="mb-4">
+          <h5 class="font-bold text-admin-text mb-2">Seedings:</h5>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div *ngFor="let seeding of previewBracket.seedings" 
+              class="bg-gray-700 p-2 rounded text-sm">
+              <span class="font-bold">#{{ seeding.seed }}</span> {{ seeding.clubName }}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h5 class="font-bold text-admin-text mb-2">Rounds:</h5>
+          <div class="space-y-2">
+            <div *ngFor="let round of previewBracket.rounds" 
+              class="bg-gray-700 p-2 rounded text-sm">
+              <span class="font-bold">{{ round.name }}</span> - Best of {{ round.bestOf }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <button type="button" (click)="saveAndGenerateMatchups()" 
+          class="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors font-semibold">
+          <i class="fas fa-check mr-2"></i>Save & Generate Matchups
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex justify-between pt-6 border-t border-admin-accent">
+      <button type="button" (click)="previousStep()" 
+        [disabled]="currentStep === 1"
+        class="bg-admin-hover text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors disabled:opacity-50">
+        Previous
+      </button>
+      <button type="button" (click)="nextStep()" 
+        [disabled]="currentStep === totalSteps"
+        class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50">
+        {{ currentStep === totalSteps ? 'Finish' : 'Next' }}
+      </button>
+    </div>
+  </form>
+  </div>
+  
+  <!-- Matchup Editor Modal -->
+  <div *ngIf="matchupEditorOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-admin-card rounded-xl p-8 shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-admin-primary">
+          Edit Round {{ editingRoundOrder }} Matchups
+        </h3>
+        <button (click)="closeMatchupEditor()" 
+          class="text-admin-text hover:text-white text-2xl">&times;</button>
+      </div>
+      
+      <div class="mb-6">
+        <h4 class="text-lg font-semibold text-admin-text mb-3">Available Teams:</h4>
+        <div class="flex flex-wrap gap-2">
+          <span *ngFor="let team of availableTeams" 
+            class="bg-admin-hover px-3 py-1 rounded text-sm text-white">
+            #{{ team.seed }} {{ team.clubName }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-lg font-semibold text-admin-text">Matchups:</h4>
+          <button (click)="autoGenerateMatchups()" 
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors text-sm">
+            Auto-Generate
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div *ngFor="let matchup of currentMatchups; let i = index" 
+            class="bg-admin-hover p-4 rounded">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-admin-text mb-2 font-medium text-sm">Home Team</label>
+                <select [(ngModel)]="matchup.homeClubId" 
+                  (ngModelChange)="updateMatchupSeed(matchup, 'home')"
+                  class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                  <option value="">Select Team</option>
+                  <option *ngFor="let team of availableTeams" [value]="team.clubId">
+                    #{{ team.seed }} {{ team.clubName }}
+                  </option>
+                </select>
+                <input type="hidden" [(ngModel)]="matchup.homeSeed">
+              </div>
+              <div>
+                <label class="block text-admin-text mb-2 font-medium text-sm">Away Team</label>
+                <select [(ngModel)]="matchup.awayClubId" 
+                  (ngModelChange)="updateMatchupSeed(matchup, 'away')"
+                  class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                  <option value="">Select Team (or leave empty for bye)</option>
+                  <option *ngFor="let team of availableTeams" [value]="team.clubId">
+                    #{{ team.seed }} {{ team.clubName }}
+                  </option>
+                </select>
+                <input type="hidden" [(ngModel)]="matchup.awaySeed">
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="block text-admin-text mb-2 font-medium text-sm">Status</label>
+              <select [(ngModel)]="matchup.status" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="bye">Bye</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex gap-4 justify-end">
+        <button (click)="closeMatchupEditor()" 
+          class="bg-admin-hover text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors">
+          Cancel
+        </button>
+        <button (click)="saveMatchups()" 
+          class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+          Save Matchups
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

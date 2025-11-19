@@ -1,0 +1,301 @@
+<div class="max-w-7xl mx-auto my-10 px-4">
+  <h1 class="text-3xl font-bold text-white mb-6 text-center">Playoff Bracket</h1>
+
+  <!-- Bracket Selector -->
+  <div *ngIf="allBrackets$ | async as allBrackets" class="mb-6">
+    <div *ngIf="allBrackets.length > 1" class="max-w-md mx-auto">
+      <label class="block text-white text-sm font-medium mb-2">Select Bracket:</label>
+      <select 
+        [value]="selectedBracketId || ''"
+        (change)="onBracketChange($any($event.target).value)"
+        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="" disabled>Choose a bracket...</option>
+        <option *ngFor="let bracket of getSortedBrackets(allBrackets)" [value]="bracket._id">
+          {{ getBracketDisplayName(bracket) }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading$ | async" class="text-center py-8">
+    <div class="text-gray-400">Loading bracket...</div>
+  </div>
+
+  <div *ngIf="error$ | async" class="text-center py-8">
+    <div class="text-red-400">Error loading bracket: {{ error$ | async }}</div>
+  </div>
+
+  <div *ngIf="bracket$ | async as bracket" class="space-y-8">
+    <div class="bg-gray-800 rounded-lg p-6 mb-6">
+      <div class="flex items-center gap-4 mb-2">
+        <img *ngIf="bracket.logoUrl" [src]="getImageUrl(bracket.logoUrl)" 
+          alt="Bracket Logo" class="w-16 h-16 object-contain rounded">
+        <h2 class="text-2xl font-bold text-white">{{ bracket.name }}</h2>
+      </div>
+      <p class="text-gray-400">{{ bracket.numTeams }} teams • {{ bracket.numRounds }} rounds</p>
+    </div>
+
+    <!-- Bracket Visualization -->
+    <div class="overflow-x-auto">
+      <div class="flex gap-8 min-w-max pb-8">
+        <!-- Render each round -->
+        <ng-container *ngFor="let roundOrder of getRoundNumbers(bracket)">
+          <div class="flex flex-col justify-center min-w-[200px]">
+            
+            <!-- Round Header -->
+            <div class="text-center mb-4">
+              <h3 class="text-lg font-bold text-white">
+                {{ getRoundName(bracket.rounds, roundOrder) }}
+              </h3>
+              <p class="text-sm text-gray-400">
+                Best of {{ getRoundBestOf(bracket.rounds, roundOrder) }}
+              </p>
+            </div>
+
+          <!-- Series in this round -->
+          <div class="space-y-4">
+            <div *ngFor="let series of getSeriesByRound(bracket.series || [], roundOrder)" 
+              (click)="navigateToSeries(series._id)"
+              class="bg-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-600 transition-colors border-2"
+              [class.border-green-500]="series.status === 'completed'"
+              [class.border-yellow-500]="series.status === 'in-progress'"
+              [class.border-gray-500]="series.status === 'pending' || series.status === 'bye'">
+              
+              <!-- Home Team -->
+              <div class="mb-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400">#{{ series.homeSeed }}</span>
+                    <img *ngIf="series.homeClubId?.logoUrl" 
+                      [src]="getImageUrl(series.homeClubId.logoUrl)" 
+                      [alt]="(series.homeClubId?.name || 'Team') + ' logo'" 
+                      class="w-6 h-6 object-contain">
+                    <span class="text-white font-medium">
+                      {{ series.homeClubId?.name || 'TBD' }}
+                    </span>
+                  </div>
+                  <span *ngIf="series.status !== 'bye'" 
+                    class="text-sm font-bold"
+                    [class.text-green-400]="series.winnerClubId === series.homeClubId?._id"
+                    [class.text-white]="series.winnerClubId !== series.homeClubId?._id">
+                    {{ series.homeWins || 0 }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Away Team -->
+              <div *ngIf="series.status !== 'bye'">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400">#{{ series.awaySeed }}</span>
+                    <img *ngIf="series.awayClubId?.logoUrl" 
+                      [src]="getImageUrl(series.awayClubId.logoUrl)" 
+                      [alt]="(series.awayClubId?.name || 'Team') + ' logo'" 
+                      class="w-6 h-6 object-contain">
+                    <span class="text-white font-medium">
+                      {{ series.awayClubId?.name || 'TBD' }}
+                    </span>
+                  </div>
+                  <span class="text-sm font-bold"
+                    [class.text-green-400]="series.winnerClubId === series.awayClubId?._id"
+                    [class.text-white]="series.winnerClubId !== series.awayClubId?._id">
+                    {{ series.awayWins || 0 }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Bye indicator -->
+              <div *ngIf="series.status === 'bye'" class="text-center text-gray-400 text-sm">
+                Bye
+              </div>
+
+              <!-- Series Status -->
+              <div class="mt-2 text-xs text-center">
+                <span *ngIf="series.status === 'completed'" class="text-green-400">Completed</span>
+                <span *ngIf="series.status === 'in-progress'" class="text-yellow-400">In Progress</span>
+                <span *ngIf="series.status === 'pending'" class="text-gray-400">Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        </ng-container>
+      </div>
+    </div>
+    
+    <!-- Player Statistics -->
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold text-white mb-4">Player Statistics</h2>
+      
+      <div *ngIf="statsLoading$ | async" class="text-center py-8">
+        <div class="text-gray-400">Loading player stats...</div>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedPlayerStats.length === 0" class="text-center py-8">
+        <p class="text-gray-400">No player statistics available for this bracket.</p>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedPlayerStats.length > 0" class="overflow-x-auto">
+        <table class="w-full border-collapse bg-gray-800 rounded-lg">
+          <thead>
+            <tr class="bg-gray-700">
+              <th class="sticky left-0 bg-gray-700 px-4 py-3 text-left text-white font-semibold border-r border-gray-600">#</th>
+              <th class="sticky left-12 bg-gray-700 px-4 py-3 text-left text-white font-semibold border-r border-gray-600 cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('name')" (click)="onSortPlayerColumn('name')">Player</th>
+              <th class="px-4 py-3 text-left text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('team')" (click)="onSortPlayerColumn('team')">Team</th>
+              <th class="px-4 py-3 text-center text-white font-semibold">Pos</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('gamesPlayed')" (click)="onSortPlayerColumn('gamesPlayed')">GP</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('goals')" (click)="onSortPlayerColumn('goals')">G</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('assists')" (click)="onSortPlayerColumn('assists')">A</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('points')" (click)="onSortPlayerColumn('points')">PTS</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('plusMinus')" (click)="onSortPlayerColumn('plusMinus')">+/-</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('shots')" (click)="onSortPlayerColumn('shots')">S</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('shotPercentage')" (click)="onSortPlayerColumn('shotPercentage')">S%</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('hits')" (click)="onSortPlayerColumn('hits')">H</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('blockedShots')" (click)="onSortPlayerColumn('blockedShots')">BS</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('penaltyMinutes')" (click)="onSortPlayerColumn('penaltyMinutes')">PIM</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('powerPlayGoals')" (click)="onSortPlayerColumn('powerPlayGoals')">PPG</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('shortHandedGoals')" (click)="onSortPlayerColumn('shortHandedGoals')">SHG</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('gameWinningGoals')" (click)="onSortPlayerColumn('gameWinningGoals')">GWG</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('takeaways')" (click)="onSortPlayerColumn('takeaways')">TK</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('giveaways')" (click)="onSortPlayerColumn('giveaways')">GV</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('passAttempts')" (click)="onSortPlayerColumn('passAttempts')">PA</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('passes')" (click)="onSortPlayerColumn('passes')">P</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('passPercentage')" (click)="onSortPlayerColumn('passPercentage')">P%</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('faceoffsWon')" (click)="onSortPlayerColumn('faceoffsWon')">FOW</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getPlayerSortClass('faceoffPercentage')" (click)="onSortPlayerColumn('faceoffPercentage')">FO%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let player of sortedPlayerStats; let i = index" 
+                class="border-t border-gray-700 hover:bg-gray-700 transition-colors">
+              <td class="sticky left-0 bg-gray-800 px-4 py-3 text-white border-r border-gray-600">{{ i + 1 }}</td>
+              <td class="sticky left-12 bg-gray-800 px-4 py-3 text-white border-r border-gray-600">
+                <div class="flex items-center gap-2">
+                  <img [src]="getImageUrl(player.teamLogo)" [alt]="player.team + ' logo'" class="w-6 h-6 object-contain">
+                  <span>{{ player.name }}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-white">{{ player.team }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ formatPosition(player.position) }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.gamesPlayed }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.goals }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.assists }}</td>
+              <td class="px-4 py-3 text-center text-white font-semibold">{{ player.points }}</td>
+              <td class="px-4 py-3 text-center text-white" 
+                  [class.text-green-400]="player.plusMinus > 0" 
+                  [class.text-red-400]="player.plusMinus < 0">
+                {{ player.plusMinus > 0 ? '+' : '' }}{{ player.plusMinus }}
+              </td>
+              <td class="px-4 py-3 text-center text-white">{{ player.shots }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.shotPercentage | number:'1.1-1' }}%</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.hits }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.blockedShots }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.penaltyMinutes }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.powerPlayGoals }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.shortHandedGoals }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.gameWinningGoals }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.takeaways }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.giveaways }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.passAttempts }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.passes }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.passPercentage | number:'1.1-1' }}%</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.faceoffsWon }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ player.faceoffPercentage | number:'1.1-1' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Goalie Statistics -->
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold text-white mb-4">Goalie Statistics</h2>
+      
+      <div *ngIf="statsLoading$ | async" class="text-center py-8">
+        <div class="text-gray-400">Loading goalie stats...</div>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedGoalieStats.length === 0" class="text-center py-8">
+        <p class="text-gray-400">No goalie statistics available for this bracket.</p>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedGoalieStats.length > 0" class="overflow-x-auto">
+        <table class="w-full border-collapse bg-gray-800 rounded-lg">
+          <thead>
+            <tr class="bg-gray-700">
+              <th class="sticky left-0 bg-gray-700 px-4 py-3 text-left text-white font-semibold border-r border-gray-600">#</th>
+              <th class="sticky left-12 bg-gray-700 px-4 py-3 text-left text-white font-semibold border-r border-gray-600 cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('name')" (click)="onSortGoalieColumn('name')">Player</th>
+              <th class="px-4 py-3 text-left text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('team')" (click)="onSortGoalieColumn('team')">Team</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('gamesPlayed')" (click)="onSortGoalieColumn('gamesPlayed')">GP</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('saves')" (click)="onSortGoalieColumn('saves')">SV</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('shotsAgainst')" (click)="onSortGoalieColumn('shotsAgainst')">SA</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('savePercentage')" (click)="onSortGoalieColumn('savePercentage')">SV%</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('goalsAgainstAverage')" (click)="onSortGoalieColumn('goalsAgainstAverage')">GAA</th>
+              <th class="px-4 py-3 text-center text-white font-semibold cursor-pointer hover:bg-gray-600" 
+                  [ngClass]="getGoalieSortClass('shutouts')" (click)="onSortGoalieColumn('shutouts')">SO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let goalie of sortedGoalieStats; let i = index" 
+                class="border-t border-gray-700 hover:bg-gray-700 transition-colors">
+              <td class="sticky left-0 bg-gray-800 px-4 py-3 text-white border-r border-gray-600">{{ i + 1 }}</td>
+              <td class="sticky left-12 bg-gray-800 px-4 py-3 text-white border-r border-gray-600">
+                <div class="flex items-center gap-2">
+                  <img [src]="getImageUrl(goalie.teamLogo)" [alt]="goalie.team + ' logo'" class="w-6 h-6 object-contain">
+                  <span>{{ goalie.name }}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-white">{{ goalie.team }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ goalie.gamesPlayed }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ goalie.saves }}</td>
+              <td class="px-4 py-3 text-center text-white">{{ goalie.shotsAgainst }}</td>
+              <td class="px-4 py-3 text-center text-white font-semibold">{{ goalie.savePercentage | number:'1.3-3' }}</td>
+              <td class="px-4 py-3 text-center text-white font-semibold">{{ goalie.goalsAgainstAverage | number:'1.2-2' }}</td>
+              <td class="px-4 py-3 text-center text-white font-semibold">{{ goalie.shutouts }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!(bracket$ | async) && !(loading$ | async)" class="text-center py-8">
+    <ng-container *ngIf="allBrackets$ | async as allBrackets">
+      <div *ngIf="allBrackets.length === 0">
+        <p class="text-gray-400 mb-4">No brackets found. Please create a bracket in the admin panel.</p>
+      </div>
+      <div *ngIf="allBrackets.length > 0 && !selectedBracketId">
+        <p class="text-gray-400">Please select a bracket from the dropdown above.</p>
+      </div>
+    </ng-container>
+  </div>
+</div>
+

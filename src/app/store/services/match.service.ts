@@ -65,6 +65,15 @@ export interface EashlMatch {
   eashlData?: any; 
   seasonId?: string; // Add seasonId
   eashlMatchId?: string; // Add eashlMatchId for merged games
+  // Playoff game flags
+  isPlayoff?: boolean;
+  playoffBracketId?: string;
+  playoffSeriesId?: string;
+  playoffRoundId?: string;
+  // Additional fields for reference
+  _id?: any;
+  homeClubId?: any;
+  awayClubId?: any;
 }
 
 @Injectable({
@@ -387,7 +396,16 @@ export class MatchService {
       playerStats: playerStats,
       eashlData: game.eashlData,
       seasonId: game.seasonId, // Populate seasonId
-      eashlMatchId: game.eashlMatchId // Add eashlMatchId for merged games
+      eashlMatchId: game.eashlMatchId, // Add eashlMatchId for merged games
+      // Preserve playoff flags for filtering
+      isPlayoff: game.isPlayoff,
+      playoffBracketId: game.playoffBracketId,
+      playoffSeriesId: game.playoffSeriesId,
+      playoffRoundId: game.playoffRoundId,
+      // Also preserve original game data for reference
+      _id: game._id,
+      homeClubId: game.homeClubId,
+      awayClubId: game.awayClubId
     };
   }
   

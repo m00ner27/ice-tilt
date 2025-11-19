@@ -97,10 +97,32 @@ export class ClubStatsService {
     console.log('Roster players:', roster.length);
     console.log('========================');
     
+    // Defensive filter: Exclude any playoff games that might have slipped through
+    // User wants playoff stats completely excluded from club detail page
+    const regularSeasonMatches = clubMatches.filter(match => {
+      const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+      const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+      
+      if (isPlayoff || hasPlayoffIds) {
+        console.warn('WARNING: Playoff game found in clubMatches, excluding:', {
+          id: match._id || match.id,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          isPlayoff: match.isPlayoff,
+          playoffBracketId: match.playoffBracketId,
+          playoffSeriesId: match.playoffSeriesId
+        });
+        return false;
+      }
+      return true;
+    });
+    
+    console.log('After defensive filter:', regularSeasonMatches.length, 'regular season matches (excluded', clubMatches.length - regularSeasonMatches.length, 'playoff games)');
+    
     // First, collect all players who played for this team from match data (including unsigned ones)
     const allPlayersWhoPlayed = new Set<string>();
     
-    clubMatches.forEach(match => {
+    regularSeasonMatches.forEach(match => {
       // Determine if the current club is home or away
       const isHomeTeam = match.homeClubId?._id === backendClub?._id || match.homeTeam === backendClub?.name;
       const isAwayTeam = match.awayClubId?._id === backendClub?._id || match.awayTeam === backendClub?.name;
@@ -400,8 +422,8 @@ export class ClubStatsService {
     console.log('Player stats map before processing matches:', Array.from(playerStatsMap.keys()));
 
     // Process matches to calculate stats
-    console.log('Processing', clubMatches.length, 'club matches for stats calculation');
-    clubMatches.forEach((match, index) => {
+    console.log('Processing', regularSeasonMatches.length, 'regular season matches for stats calculation (excluded', clubMatches.length - regularSeasonMatches.length, 'playoff games)');
+    regularSeasonMatches.forEach((match, index) => {
       console.log(`=== BEFORE MATCH ${index + 1} PROCESSING ===`);
       console.log('TeeKneeWeKnee stats before match:', playerStatsMap.get('TeeKneeWeKnee_skater'));
       console.log('AlxSkyes stats before match:', playerStatsMap.get('AlxSkyes_skater'));

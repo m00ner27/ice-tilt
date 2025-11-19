@@ -233,7 +233,8 @@ export class StandingsComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: ({ games, clubs, divisions }) => {
         // Clear existing data to prevent accumulation
-        this.games = games || [];
+        // Filter out playoff games - defensive check even though backend should exclude them
+        this.games = (games || []).filter((game: any) => !game.isPlayoff);
         this.clubs = clubs || [];
         this.divisions = divisions || [];
         this.divisionStandings = []; // Clear existing standings
@@ -374,9 +375,11 @@ export class StandingsComponent implements OnInit, OnDestroy {
     }
 
     // Process games with optimized score extraction
+    // Additional defensive filter to exclude playoff games
+    const regularSeasonGames = games.filter((game: any) => !game.isPlayoff);
     let gamesWithScores = 0;
     
-    for (const game of games) {
+    for (const game of regularSeasonGames) {
       // Optimized score extraction - try most common patterns first
       let homeScore: number | undefined;
       let awayScore: number | undefined;

@@ -10,6 +10,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AppState } from '../../store';
 import * as MatchesActions from '../../store/matches.actions';
+import * as PlayoffsActions from '../../store/playoffs/playoffs.actions';
 
 @Component({
   selector: 'app-admin-schedule',
@@ -274,22 +275,12 @@ export class AdminScheduleComponent implements OnInit {
   }
 
   getLinkedFileName(game: any): string {
-    console.log('getLinkedFileName called for game:', {
-      _id: game._id,
-      score: game.score,
-      homeTeamScore: game.homeTeamScore,
-      awayTeamScore: game.awayTeamScore,
-      eashlMatchId: game.eashlMatchId,
-      status: game.status
-    });
-    
     // If we have the actual game score, show it instead of the match ID
     if (game.score && typeof game.score.home !== 'undefined' && typeof game.score.away !== 'undefined') {
       const homeScore = game.score.home;
       const awayScore = game.score.away;
       const overtimeIndicator = game.isOvertime ? ' (OT)' : '';
       const result = `${game.homeTeam} ${homeScore} - ${awayScore} ${game.awayTeam}${overtimeIndicator}`;
-      console.log('Showing score from score object:', result);
       return result;
     }
     
@@ -299,21 +290,17 @@ export class AdminScheduleComponent implements OnInit {
       const awayScore = game.awayTeamScore;
       const overtimeIndicator = game.isOvertime ? ' (OT)' : '';
       const result = `${game.homeTeam} ${homeScore} - ${awayScore} ${game.awayTeam}${overtimeIndicator}`;
-      console.log('Showing score from direct fields:', result);
       return result;
     }
     
     // Fallback to the original method if score isn't available yet
     const linkedFile = game.eashlGames?.find((f: any) => f.matchId === game.eashlMatchId);
     if (linkedFile) {
-      console.log('Showing linked file label:', linkedFile.label);
       return linkedFile.label;
     }
     
     // Last fallback - just show the ID
-    const result = game.eashlMatchId ? `Match ID: ${game.eashlMatchId}` : '';
-    console.log('Showing match ID:', result);
-    return result;
+    return game.eashlMatchId ? `Match ID: ${game.eashlMatchId}` : '';
   }
 
   isForfeit(status: string): boolean {
@@ -1021,6 +1008,13 @@ export class AdminScheduleComponent implements OnInit {
             
             // Also reload the NgRx store and trigger storage event
             this.store.dispatch(MatchesActions.loadMatches());
+            
+            // If this was a playoff game, reload playoff brackets to update series records
+            if (game.isPlayoff && game.playoffBracketId) {
+              console.log('Unlinked playoff game stats, reloading playoff brackets...');
+              this.store.dispatch(PlayoffsActions.loadPlayoffBrackets({}));
+            }
+            
             const timestamp = Date.now().toString();
             localStorage.setItem('admin-data-updated', timestamp);
           }

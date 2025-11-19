@@ -83,6 +83,10 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       goalieStats: GoalieStats[] = [];
   matches: any[] = [];
   clubMatches: any[] = [];
+  // Playoff stats arrays
+  playoffClubMatches: any[] = [];
+  playoffSkaterStats: SkaterStats[] = [];
+  playoffGoalieStats: GoalieStats[] = [];
       
   // Track if we're switching clubs to prevent stale data
   private isSwitchingClubs: boolean = false;
@@ -348,13 +352,39 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         !this.isSwitchingClubs
       )
     ).subscribe(([matches, roster]) => {
+      // Filter out playoff games at the source before processing
+      const regularSeasonMatches = (matches || []).filter(match => {
+        const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+        const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+        
+        if (isPlayoff || hasPlayoffIds) {
+          console.log('[SOURCE FILTER] Excluding playoff game at source:', {
+            id: match._id || match.id,
+            homeTeam: match.homeTeam,
+            awayTeam: match.awayTeam,
+            isPlayoff: match.isPlayoff,
+            playoffBracketId: match.playoffBracketId,
+            playoffSeriesId: match.playoffSeriesId
+          });
+          return false;
+        }
+        return true;
+      });
+      
+      const playoffCount = (matches || []).length - regularSeasonMatches.length;
+      if (playoffCount > 0) {
+        console.log('[SOURCE FILTER] Filtered out', playoffCount, 'playoff games at source level');
+      }
+      
       console.log('Additional data loaded:', {
-        matchesCount: matches?.length || 0,
+        totalMatches: matches?.length || 0,
+        regularSeasonMatches: regularSeasonMatches.length,
+        playoffGamesExcluded: playoffCount,
         rosterCount: roster?.length || 0
       });
       
-      // Process additional data without blocking UI
-      this.processAdditionalData(matches, roster);
+      // Process additional data with only regular season matches
+      this.processAdditionalData(regularSeasonMatches, roster);
     });
   }
 
@@ -389,33 +419,91 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.signedPlayers = roster.filter(player => player && player.gamertag);
     this.rosterLoaded = true;
     
-    // Filter matches for current club
-    this.clubMatches = matches.filter(match => {
-      const homeMatch = match.homeClub?.name === this.backendClub?.name;
-      const awayMatch = match.awayClub?.name === this.backendClub?.name;
+    // Debug: Check for playoff games in matches
+    const playoffGamesInMatches = matches.filter(m => m.isPlayoff === true || m.isPlayoff === 'true');
+    console.log('Total matches:', matches.length);
+    console.log('Playoff games found in matches:', playoffGamesInMatches.length);
+    if (playoffGamesInMatches.length > 0) {
+      console.log('Sample playoff game:', {
+        id: playoffGamesInMatches[0]._id || playoffGamesInMatches[0].id,
+        isPlayoff: playoffGamesInMatches[0].isPlayoff,
+        homeTeam: playoffGamesInMatches[0].homeTeam,
+        awayTeam: playoffGamesInMatches[0].awayTeam
+      });
+    }
+    
+    // Separate regular season and playoff matches
+    const regularSeasonMatches: any[] = [];
+    const playoffMatches: any[] = [];
+    
+    matches.forEach(match => {
+      // Comprehensive playoff game detection
+      const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+      const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+      
+      // Check if match belongs to this club
+      const homeMatch = match.homeClub?.name === this.backendClub?.name || match.homeClubId?.name === this.backendClub?.name;
+      const awayMatch = match.awayClub?.name === this.backendClub?.name || match.awayClubId?.name === this.backendClub?.name;
       const homeTeamMatch = match.homeTeam === this.backendClub?.name;
       const awayTeamMatch = match.awayTeam === this.backendClub?.name;
-      const homeClubIdMatch = match.homeClub?._id === this.backendClub?._id;
-      const awayClubIdMatch = match.awayClub?._id === this.backendClub?._id;
+      const homeClubIdMatch = match.homeClub?._id === this.backendClub?._id || match.homeClubId?._id === this.backendClub?._id;
+      const awayClubIdMatch = match.awayClub?._id === this.backendClub?._id || match.awayClubId?._id === this.backendClub?._id;
       
-      return homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
+      const belongsToClub = homeMatch || awayMatch || homeTeamMatch || awayTeamMatch || homeClubIdMatch || awayClubIdMatch;
+      
+      if (!belongsToClub) return;
+      
+      if (isPlayoff || hasPlayoffIds) {
+        console.log('[SEPARATE TABLES] Adding playoff game to playoff matches:', {
+          id: match._id || match.id,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          isPlayoff: match.isPlayoff,
+          playoffBracketId: match.playoffBracketId
+        });
+        playoffMatches.push(match);
+      } else {
+        regularSeasonMatches.push(match);
+      }
     });
+    
+    // Set regular season matches (excluded from playoff stats)
+    this.clubMatches = regularSeasonMatches;
+    
+    // Set playoff matches (for separate tables)
+    this.playoffClubMatches = playoffMatches;
     
     console.log('Processed additional data:', {
       clubMatches: this.clubMatches.length,
+      playoffClubMatches: this.playoffClubMatches.length,
       signedPlayers: this.signedPlayers.length,
       clubName: this.backendClub.name
     });
     
-    // Recalculate club stats now that we have matches data
+    // Recalculate club stats now that we have matches data (excluding playoff games)
     if (this.club) {
-      const calculatedStats = this.calculateClubStats(this.backendClub._id, matches);
+      // Filter out playoff games before calculating stats - check multiple possible formats
+      const regularSeasonMatches = matches.filter(match => {
+        const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+        const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+        return !isPlayoff && !hasPlayoffIds;
+      });
+      const calculatedStats = this.calculateClubStats(this.backendClub._id, regularSeasonMatches);
       this.club.stats = calculatedStats;
       console.log('Updated club stats:', calculatedStats);
     }
     
-    // Now process stats with all data ready
+    // Now process stats with all data ready (regular season only)
     this.processPlayerStatsFromMatches(this.signedPlayers);
+    
+    // Process playoff stats separately for separate tables
+    if (this.playoffClubMatches.length > 0) {
+      this.processPlayoffStatsFromMatches(this.signedPlayers);
+    } else {
+      // Clear playoff stats if no playoff matches
+      this.playoffSkaterStats = [];
+      this.playoffGoalieStats = [];
+    }
   }
 
   private processAllData(club: any, matches: any[], roster: any[]) {
@@ -441,6 +529,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.goalieStats = [];
     this.matches = [];
     this.clubMatches = [];
+    this.playoffClubMatches = [];
+    this.playoffSkaterStats = [];
+    this.playoffGoalieStats = [];
     this.selectedSeasonId = '';
     this.currentClubId = '';
     this.loading = false;
@@ -478,22 +569,36 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
   private triggerStatsProcessingIfReady() {
     // Check if we have all required data to process stats
-    if (this.backendClub && this.clubMatches.length > 0 && this.signedPlayers.length > 0) {
+    if (this.backendClub && (this.clubMatches.length > 0 || this.playoffClubMatches.length > 0) && this.signedPlayers.length > 0) {
       console.log('All data ready, processing player stats');
       // Clear stats before processing new ones
       this.skaterStats = [];
       this.goalieStats = [];
+      this.playoffSkaterStats = [];
+      this.playoffGoalieStats = [];
       this.cdr.detectChanges();
-      this.processPlayerStatsFromMatches(this.signedPlayers);
+      
+      // Process regular season stats if we have regular season matches
+      if (this.clubMatches.length > 0) {
+        this.processPlayerStatsFromMatches(this.signedPlayers);
+      }
+      
+      // Process playoff stats if we have playoff matches
+      if (this.playoffClubMatches.length > 0) {
+        this.processPlayoffStatsFromMatches(this.signedPlayers);
+      }
     } else {
       console.log('Not ready for stats processing:', {
         hasBackendClub: !!this.backendClub,
         clubMatchesCount: this.clubMatches.length,
+        playoffClubMatchesCount: this.playoffClubMatches.length,
         signedPlayersCount: this.signedPlayers.length
       });
       // Clear stats if not ready
       this.skaterStats = [];
       this.goalieStats = [];
+      this.playoffSkaterStats = [];
+      this.playoffGoalieStats = [];
     }
   }
 
@@ -541,6 +646,50 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         console.log('=== END CLUB DETAIL COMPONENT - GOALIE STATS ===');
         this.cdr.detectChanges();
       }
+
+  private processPlayoffStatsFromMatches(roster: any[]) {
+    console.log('=== CLUB DETAIL PLAYOFF STATS DEBUG ===');
+    console.log('Processing playoff player stats from matches for club:', this.backendClub?.name);
+    console.log('Playoff club matches available:', this.playoffClubMatches.length);
+    console.log('Roster players:', roster.length);
+    console.log('========================');
+    
+    // Clear previous playoff stats before processing new ones
+    this.playoffSkaterStats = [];
+    this.playoffGoalieStats = [];
+    this.cdr.detectChanges();
+    
+    // Only process if we have playoff matches
+    if (this.playoffClubMatches.length === 0) {
+      console.log('No playoff matches found, skipping playoff stats processing');
+      return;
+    }
+    
+    // Use the service to process playoff stats
+    const { skaterStats, goalieStats } = this.clubStatsService.processPlayerStatsFromMatches(
+      this.playoffClubMatches,
+      roster,
+      this.backendClub
+    );
+    
+    this.playoffSkaterStats = skaterStats;
+    this.playoffGoalieStats = goalieStats;
+    
+    console.log('Playoff stats processing complete - triggering UI update');
+    console.log('=== CLUB DETAIL COMPONENT - PLAYOFF SKATER STATS ===');
+    this.playoffSkaterStats.slice(0, 3).forEach(player => {
+      console.log(`${player.name}: G=${player.goals}, A=${player.assists}, PTS=${player.points}`);
+    });
+    console.log('=== END CLUB DETAIL COMPONENT - PLAYOFF SKATER STATS ===');
+    
+    console.log('=== CLUB DETAIL COMPONENT - PLAYOFF GOALIE STATS ===');
+    this.playoffGoalieStats.forEach(goalie => {
+      console.log(`${goalie.name}: GP=${goalie.gamesPlayed}, SO=${goalie.shutouts}, GAA=${goalie.goalsAgainstAverage}`);
+    });
+    console.log('=== END CLUB DETAIL COMPONENT - PLAYOFF GOALIE STATS ===');
+    this.cdr.detectChanges();
+  }
+
   getImageUrl(logoUrl: string | undefined): string {
     return this.imageUrlService.getImageUrl(logoUrl);
   }
@@ -619,10 +768,29 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   calculateClubStats(clubId: string, matches: any[] = this.matches): any {
-    // Filter matches for this club
-    const clubMatches = matches.filter(match => 
-      match.homeTeam === this.backendClub?.name || match.awayTeam === this.backendClub?.name
-    );
+    // Filter matches for this club, excluding playoff games with comprehensive detection
+    const clubMatches = matches.filter(match => {
+      // Comprehensive playoff game detection
+      const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+      const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+      
+      if (isPlayoff || hasPlayoffIds) {
+        console.log('[CALCULATE STATS FILTER] Excluding playoff game:', {
+          id: match._id || match.id,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          isPlayoff: match.isPlayoff,
+          playoffBracketId: match.playoffBracketId
+        });
+        return false;
+      }
+      
+      // Check if match belongs to this club
+      const homeMatch = match.homeTeam === this.backendClub?.name || match.homeClub?.name === this.backendClub?.name || match.homeClub?._id === this.backendClub?._id;
+      const awayMatch = match.awayTeam === this.backendClub?.name || match.awayClub?.name === this.backendClub?.name || match.awayClub?._id === this.backendClub?._id;
+      
+      return homeMatch || awayMatch;
+    });
 
     if (clubMatches.length === 0) {
       return {
