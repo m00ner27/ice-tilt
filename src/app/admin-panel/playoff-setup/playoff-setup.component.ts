@@ -652,25 +652,40 @@ export class PlayoffSetupComponent implements OnInit {
           const previousRound = roundOrder - 1;
           const previousRoundSeries = fullBracket.series.filter((s: any) => s.roundOrder === previousRound);
           
+          // Helper function to get original seed from bracket seedings
+          const getOriginalSeed = (clubId: any): number | null => {
+            const clubIdStr = clubId?.toString();
+            const seeding = fullBracket.seedings?.find((s: any) => {
+              const seedingClubId = s.clubId?._id || s.clubId;
+              return seedingClubId?.toString() === clubIdStr;
+            });
+            return seeding?.seed || null;
+          };
+          
           this.availableTeams = [];
           previousRoundSeries.forEach((series: any) => {
             if (series.status === 'completed' && series.winnerClubId) {
               const winnerId = series.winnerClubId?._id || series.winnerClubId;
-              const winnerSeed = series.homeClubId?.toString() === winnerId?.toString() 
-                ? series.homeSeed 
-                : series.awaySeed;
-              this.availableTeams.push({
-                clubId: winnerId,
-                seed: winnerSeed,
-                clubName: this.getClubName(winnerId)
-              });
+              // Get original seed from bracket seedings, not from series
+              const originalSeed = getOriginalSeed(winnerId);
+              if (originalSeed !== null) {
+                this.availableTeams.push({
+                  clubId: winnerId,
+                  seed: originalSeed,
+                  clubName: this.getClubName(winnerId)
+                });
+              }
             } else if (series.status === 'bye' && series.homeClubId) {
               const byeId = series.homeClubId?._id || series.homeClubId;
-              this.availableTeams.push({
-                clubId: byeId,
-                seed: series.homeSeed,
-                clubName: this.getClubName(byeId)
-              });
+              // Get original seed from bracket seedings, not from series
+              const originalSeed = getOriginalSeed(byeId);
+              if (originalSeed !== null) {
+                this.availableTeams.push({
+                  clubId: byeId,
+                  seed: originalSeed,
+                  clubName: this.getClubName(byeId)
+                });
+              }
             }
           });
           
