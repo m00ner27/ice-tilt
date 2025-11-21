@@ -8,6 +8,7 @@ import { takeUntil, map } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
@@ -20,7 +21,7 @@ import { EashlMatch } from '../store/services/match.service';
 @Component({
   selector: 'app-schedule',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, AdSenseComponent],
   templateUrl: './schedule.component.html'
 })
 export class ScheduleComponent implements OnInit, OnDestroy {
@@ -52,6 +53,14 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   teamOptions: string[] = [];
   seasons: any[] = [];
   allClubs: any[] = [];
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
 
   constructor(
     private store: Store<AppState>,

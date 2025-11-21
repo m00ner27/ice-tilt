@@ -9,6 +9,7 @@ import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { LoggerService } from '../shared/services/logger.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 // Import selectors
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -26,7 +27,7 @@ interface Club {
 @Component({
   selector: 'app-club-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, AdSenseComponent],
   templateUrl: './club-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -41,6 +42,14 @@ export class ClubListComponent implements OnInit, OnDestroy {
   // Local state for filtering
   filteredClubs: Club[] = [];
   searchText: string = '';
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
 
   constructor(
     private store: Store<AppState>,

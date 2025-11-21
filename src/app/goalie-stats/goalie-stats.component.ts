@@ -6,6 +6,7 @@ import { ApiService } from '../store/services/api.service';
 import { forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 interface Season {
   _id: string;
@@ -58,7 +59,7 @@ interface GroupedGoalieStats {
 @Component({
   selector: 'app-goalie-stats',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule], // Add FormsModule
+  imports: [CommonModule, RouterModule, FormsModule, AdSenseComponent], // Add FormsModule
   templateUrl: './goalie-stats.component.html',
   styleUrl: './goalie-stats.component.css'
 })
@@ -76,6 +77,14 @@ export class GoalieStatsComponent implements OnInit {
   isLoading: boolean = true;
   sortColumn: string = 'savePercentage'; // Default sort by save percentage
   sortDirection: 'asc' | 'desc' = 'desc'; // Default sort direction
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
   
   constructor(
     private matchService: MatchService,

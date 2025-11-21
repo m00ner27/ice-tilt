@@ -6,11 +6,12 @@ import { TransactionsService } from '../store/services/transactions.service';
 import { ApiService } from '../store/services/api.service';
 import { RosterUpdateService } from '../store/services/roster-update.service';
 import { Transaction } from '../store/models/models/transaction.interface';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdSenseComponent],
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.css']
 })
@@ -38,6 +39,14 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   
   // Make Math available in template
   Math = Math;
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
   
   private destroy$ = new Subject<void>();
 

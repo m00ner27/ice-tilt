@@ -11,6 +11,7 @@ import { ApiService } from '../store/services/api.service';
 import { MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { LoggerService } from '../shared/services/logger.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 // Import selectors
 import * as SeasonsSelectors from '../store/seasons.selectors';
@@ -97,7 +98,7 @@ interface DivisionStandings {
 @Component({
   selector: 'app-standings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent],
   templateUrl: './standings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -122,6 +123,14 @@ export class StandingsComponent implements OnInit, OnDestroy {
   sortDirection: 'asc' | 'desc' = 'desc';
   isLoading: boolean = true; // Start with loading true
   dataLoaded: boolean = false; // Track if data has been loaded at least once
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
 
   constructor(
     private store: Store<AppState>,

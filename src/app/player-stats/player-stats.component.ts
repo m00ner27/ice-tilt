@@ -7,6 +7,7 @@ import { map, take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
@@ -80,7 +81,7 @@ interface GroupedPlayerStats {
 @Component({
   selector: 'app-player-stats',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdSenseComponent],
   templateUrl: './player-stats.component.html',
   styleUrl: './player-stats.component.css'
 })
@@ -107,6 +108,14 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   isLoading: boolean = true;
   sortColumn: string = 'points';
   sortDirection: 'asc' | 'desc' = 'desc';
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
   
   // Subscription management
   private dataSubscription?: Subscription;
