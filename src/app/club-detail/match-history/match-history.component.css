@@ -195,6 +195,28 @@
   margin: 0 4px;
 }
 
+.ot-indicator {
+  background-color: #f39c12;
+  color: white;
+  font-size: 0.7em;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-right: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .ot-indicator {
+    font-size: 0.65em;
+    padding: 2px 5px;
+    margin-left: 4px;
+  }
+}
+
 
 .no-matches {
   text-align: center;

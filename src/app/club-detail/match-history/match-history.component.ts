@@ -173,6 +173,26 @@ export class MatchHistoryComponent {
     return match.homeTeam === this.teamName ? 'Home' : 'Away';
   }
   
+  // Check if match went to overtime
+  isOvertime(match: EashlMatch): boolean {
+    return match.isOvertime === true;
+  }
+
+  // Check if match went to shootout
+  isShootout(match: EashlMatch): boolean {
+    return match.isShootout === true;
+  }
+
+  // Get overtime indicator text
+  getOvertimeIndicator(match: EashlMatch): string {
+    if (match.isShootout) {
+      return 'SO';
+    } else if (match.isOvertime) {
+      return 'OT';
+    }
+    return '';
+  }
+
   // Expose Math.min for template
   Math = Math;
 } 

@@ -24,6 +24,7 @@
           {{ getOpponent(match) }}
         </div>
         <div class="score">
+          <span *ngIf="getOvertimeIndicator(match)" class="ot-indicator">{{ getOvertimeIndicator(match) }}</span>
           <img [src]="getImageUrl(getOurClub(match)?.logoUrl)" [alt]="teamName" class="score-logo">
           <span class="score-value">{{ getOurScore(match) }}</span>
           <span class="score-separator">-</span>
