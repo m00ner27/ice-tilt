@@ -392,39 +392,157 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       console.log('Players data structure:', this.match.eashlData.players);
     }
 
-    // Get team IDs from EASHL data
-    const homeClubId = this.match.homeClub?.eashlClubId;
-    const awayClubId = this.match.awayClub?.eashlClubId;
+    // Get all available team keys from EASHL data
+    const availableTeamKeys = Object.keys(this.match.eashlData.players);
+    console.log('Available team keys in EASHL data:', availableTeamKeys);
     
-    console.log('Expected club IDs:', { homeClubId, awayClubId });
-    console.log('Expected club ID types:', { 
-      homeClubIdType: typeof homeClubId, 
-      awayClubIdType: typeof awayClubId 
-    });
-    console.log('Available player club IDs in EASHL data:', Object.keys(this.match.eashlData.players));
-    console.log('Available club ID types:', Object.keys(this.match.eashlData.players).map(id => ({ id, type: typeof id })));
-    
-    if (!homeClubId || !awayClubId) {
-      this.noStatsMessage = 'Team information not available for this game.';
+    if (availableTeamKeys.length === 0) {
+      this.noStatsMessage = 'No team data found in EASHL player data.';
       return;
     }
 
-    // Process players from both teams
-    const teamIds = [homeClubId.toString(), awayClubId.toString()];
+    // Get current team IDs (may have changed since game was played)
+    const homeClubId = this.match.homeClub?.eashlClubId;
+    const awayClubId = this.match.awayClub?.eashlClubId;
     
-    teamIds.forEach(teamId => {
-      console.log(`Looking for players for team ID: ${teamId} (type: ${typeof teamId})`);
-      const teamPlayers = this.match.eashlData.players[teamId];
-      console.log(`Found team players:`, teamPlayers);
+    console.log('Current club IDs:', { homeClubId, awayClubId });
+    console.log('Available player club IDs in EASHL data:', availableTeamKeys);
+    
+    // Get game's stored club IDs (these should match the clubs that played)
+    const gameHomeClubId = this.match.homeClubId?._id || this.match.homeClubId;
+    const gameAwayClubId = this.match.awayClubId?._id || this.match.awayClubId;
+    const currentHomeClubId = this.match.homeClub?._id;
+    const currentAwayClubId = this.match.awayClub?._id;
+    
+    console.log('Game stored club IDs:', { gameHomeClubId, gameAwayClubId });
+    console.log('Current club MongoDB IDs:', { currentHomeClubId, currentAwayClubId });
+
+    // Map to store which EASHL team key belongs to which team (home/away)
+    const teamKeyMapping: { home?: string; away?: string } = {};
+    let homeMatched = false;
+    let awayMatched = false;
+
+    // Step 1: Try primary matching by current eashlClubId
+    if (homeClubId) {
+      const homeKey = this.findTeamKey(homeClubId, availableTeamKeys);
+      if (homeKey) {
+        teamKeyMapping.home = homeKey;
+        homeMatched = true;
+        console.log(`[Team Matching] Home team matched by current eashlClubId: ${homeClubId} -> ${homeKey}`);
+      }
+    }
+
+    if (awayClubId) {
+      const awayKey = this.findTeamKey(awayClubId, availableTeamKeys);
+      if (awayKey) {
+        teamKeyMapping.away = awayKey;
+        awayMatched = true;
+        console.log(`[Team Matching] Away team matched by current eashlClubId: ${awayClubId} -> ${awayKey}`);
+      }
+    }
+
+    // Step 2: Fallback matching - if one team matched but the other didn't
+    if (homeMatched && !awayMatched && availableTeamKeys.length >= 2) {
+      // Find the unmatched key
+      const unmatchedKey = availableTeamKeys.find(key => key !== teamKeyMapping.home);
+      if (unmatchedKey) {
+        teamKeyMapping.away = unmatchedKey;
+        awayMatched = true;
+        console.log(`[Team Matching] Away team assigned via fallback (home matched): ${unmatchedKey}`);
+      }
+    } else if (awayMatched && !homeMatched && availableTeamKeys.length >= 2) {
+      // Find the unmatched key
+      const unmatchedKey = availableTeamKeys.find(key => key !== teamKeyMapping.away);
+      if (unmatchedKey) {
+        teamKeyMapping.home = unmatchedKey;
+        homeMatched = true;
+        console.log(`[Team Matching] Home team assigned via fallback (away matched): ${unmatchedKey}`);
+      }
+    }
+
+    // Step 3: If neither matched but we have exactly 2 keys, use game's stored club info
+    if (!homeMatched && !awayMatched && availableTeamKeys.length === 2) {
+      console.log('[Team Matching] Neither team matched by current eashlClubId, using fallback with game club IDs');
+      
+      // Try to match using eashlData.clubs if available
+      if (this.match.eashlData.clubs) {
+        const clubKeys = Object.keys(this.match.eashlData.clubs);
+        console.log('Available clubs in eashlData.clubs:', clubKeys);
+        
+        // Try to match clubs by checking if any club data matches current clubs
+        for (const clubKey of clubKeys) {
+          const clubData = this.match.eashlData.clubs[clubKey];
+          if (clubData) {
+            // Check if this club matches home or away by MongoDB ID
+            const clubMongoId = clubData._id || clubData.id;
+            if (clubMongoId && currentHomeClubId && clubMongoId.toString() === currentHomeClubId.toString()) {
+              const matchingPlayerKey = availableTeamKeys.find(key => key === clubKey || key === clubData.eashlClubId?.toString());
+              if (matchingPlayerKey) {
+                teamKeyMapping.home = matchingPlayerKey;
+                homeMatched = true;
+                console.log(`[Team Matching] Home team matched via eashlData.clubs: ${matchingPlayerKey}`);
+                break;
+              }
+            } else if (clubMongoId && currentAwayClubId && clubMongoId.toString() === currentAwayClubId.toString()) {
+              const matchingPlayerKey = availableTeamKeys.find(key => key === clubKey || key === clubData.eashlClubId?.toString());
+              if (matchingPlayerKey) {
+                teamKeyMapping.away = matchingPlayerKey;
+                awayMatched = true;
+                console.log(`[Team Matching] Away team matched via eashlData.clubs: ${matchingPlayerKey}`);
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // If still not matched, assign based on order (first key = home, second = away)
+      if (!homeMatched && !awayMatched) {
+        teamKeyMapping.home = availableTeamKeys[0];
+        teamKeyMapping.away = availableTeamKeys[1];
+        homeMatched = true;
+        awayMatched = true;
+        console.log(`[Team Matching] Both teams assigned via order fallback: home=${availableTeamKeys[0]}, away=${availableTeamKeys[1]}`);
+      } else if (homeMatched && !awayMatched) {
+        // Home matched but away didn't, assign remaining key
+        const remainingKey = availableTeamKeys.find(key => key !== teamKeyMapping.home);
+        if (remainingKey) {
+          teamKeyMapping.away = remainingKey;
+          awayMatched = true;
+          console.log(`[Team Matching] Away team assigned remaining key: ${remainingKey}`);
+        }
+      } else if (awayMatched && !homeMatched) {
+        // Away matched but home didn't, assign remaining key
+        const remainingKey = availableTeamKeys.find(key => key !== teamKeyMapping.away);
+        if (remainingKey) {
+          teamKeyMapping.home = remainingKey;
+          homeMatched = true;
+          console.log(`[Team Matching] Home team assigned remaining key: ${remainingKey}`);
+        }
+      }
+    }
+
+    // Final check: ensure we have both teams mapped
+    if (!teamKeyMapping.home || !teamKeyMapping.away) {
+      console.error('[Team Matching] Failed to map both teams. Mapping:', teamKeyMapping);
+      this.noStatsMessage = 'Unable to match team data for this game.';
+      return;
+    }
+
+    console.log('[Team Matching] Final team key mapping:', teamKeyMapping);
+
+    // Process players from both teams using the mapped keys
+    const teamsToProcess = [
+      { key: teamKeyMapping.home, isHome: true },
+      { key: teamKeyMapping.away, isHome: false }
+    ];
+
+    teamsToProcess.forEach(({ key, isHome }) => {
+      console.log(`Processing players for ${isHome ? 'home' : 'away'} team using key: ${key}`);
+      const teamPlayers = this.match.eashlData.players[key];
+      
       if (!teamPlayers) {
-        console.log(`No players found for team ID: ${teamId}`);
-        console.log('Available team IDs in EASHL data:', Object.keys(this.match.eashlData.players));
-        console.log('Checking if team ID exists with different type...');
-        // Try to find the team with different type conversion
-        const stringTeamId = teamId.toString();
-        const numberTeamId = parseInt(teamId);
-        console.log(`Trying string version: ${stringTeamId}`, this.match.eashlData.players[stringTeamId]);
-        console.log(`Trying number version: ${numberTeamId}`, this.match.eashlData.players[numberTeamId]);
+        console.warn(`No players found for team key: ${key}`);
         return;
       }
 
@@ -432,7 +550,6 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
       
       playersArray.forEach((playerData: any) => {
         const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
-        const isHomeTeam = teamId === homeClubId.toString();
         
         // Debug logging for merged games
         if (this.isMergedGame) {
@@ -528,7 +645,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         }
 
         // Add to appropriate team
-        if (isHomeTeam) {
+        if (isHome) {
           if (isGoalie) {
             this.homeTeamGoalies.push(statDisplay);
           } else {
@@ -543,6 +660,33 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
         }
       });
     });
+  }
+
+  // Helper method to find team key in available keys (handles type conversion)
+  private findTeamKey(targetId: string | number, availableKeys: string[]): string | null {
+    const targetStr = targetId.toString();
+    const targetNum = typeof targetId === 'number' ? targetId : parseInt(targetId);
+    
+    // Try exact string match
+    if (availableKeys.includes(targetStr)) {
+      return targetStr;
+    }
+    
+    // Try number match
+    if (!isNaN(targetNum)) {
+      const numKey = availableKeys.find(key => parseInt(key) === targetNum);
+      if (numKey) {
+        return numKey;
+      }
+    }
+    
+    // Try case-insensitive match
+    const caseInsensitiveKey = availableKeys.find(key => key.toLowerCase() === targetStr.toLowerCase());
+    if (caseInsensitiveKey) {
+      return caseInsensitiveKey;
+    }
+    
+    return null;
   }
 
   processManualStats(): void {
