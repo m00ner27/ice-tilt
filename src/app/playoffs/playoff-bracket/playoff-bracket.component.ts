@@ -8,11 +8,12 @@ import { map, take, filter } from 'rxjs/operators';
 import * as PlayoffsActions from '../../store/playoffs/playoffs.actions';
 import * as PlayoffsSelectors from '../../store/playoffs/playoffs.selectors';
 import { ImageUrlService } from '../../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../../components/adsense/adsense.component';
 
 @Component({
   selector: 'app-playoff-bracket',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AdSenseComponent],
   templateUrl: './playoff-bracket.component.html',
   styleUrl: './playoff-bracket.component.css'
 })
@@ -35,6 +36,14 @@ export class PlayoffBracketComponent implements OnInit, OnDestroy {
   playerSortDirection: 'asc' | 'desc' = 'desc';
   goalieSortColumn: string = 'savePercentage';
   goalieSortDirection: 'asc' | 'desc' = 'desc';
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
   
   private subscriptions = new Subscription();
 

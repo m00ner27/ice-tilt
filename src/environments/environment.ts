@@ -278,7 +278,7 @@ export const environment = {
   },
   adsense: {
     publisherId: 'ca-pub-5927679330958800', // Your actual AdSense publisher ID
-    enabled: false // Disabled until AdSense approval
+    enabled: true
   }
 };
 
