@@ -1,0 +1,177 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-admin-primary">Articles</h2>
+    <button 
+      (click)="switchToCreateMode()" 
+      class="bg-admin-accent text-white px-4 py-2 rounded-md hover:bg-admin-hover transition-colors"
+    >
+      <i class="fas fa-plus mr-2"></i>New Article
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center text-white py-10">
+    <p>Loading articles...</p>
+  </div>
+
+  <div *ngIf="error" class="bg-red-600 text-white p-4 rounded-lg mb-6">
+    {{ error }}
+  </div>
+
+  <!-- Articles List -->
+  <div *ngIf="!loading && !error && !isAddingArticle" class="space-y-4">
+    <div *ngIf="articles.length === 0" class="text-center text-gray-400 py-10">
+      <p>No articles found. Create your first article!</p>
+    </div>
+
+    <div *ngFor="let article of articles" class="bg-admin-card rounded-lg p-4 flex items-center justify-between">
+      <div class="flex items-center gap-4 flex-1">
+        <div *ngIf="article.imageUrl" class="w-20 h-20 flex-shrink-0">
+          <img [src]="getImageUrl(article.imageUrl)" [alt]="article.title" class="w-full h-full object-cover rounded">
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white mb-1">{{ article.title }}</h3>
+          <p class="text-sm text-gray-400 mb-1">{{ formatDate(article.date) }} • {{ article.author }}</p>
+          <div class="flex items-center gap-2">
+            <span [class]="article.published ? 'bg-green-600' : 'bg-gray-600'" class="px-2 py-1 rounded text-xs text-white">
+              {{ article.published ? 'Published' : 'Draft' }}
+            </span>
+            <span class="text-xs text-gray-500">/{{ article.slug }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button 
+          (click)="switchToEditMode(article)"
+          class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+        >
+          <i class="fas fa-edit mr-1"></i>Edit
+        </button>
+        <button 
+          (click)="deleteArticle(article)"
+          class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition-colors"
+        >
+          <i class="fas fa-trash mr-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Article Form -->
+  <div *ngIf="isAddingArticle" class="bg-admin-card rounded-lg p-6">
+    <h3 class="text-xl font-semibold text-admin-primary mb-6">
+      {{ editingArticle ? 'Edit Article' : 'Create Article' }}
+    </h3>
+    
+    <form [formGroup]="articleForm" (ngSubmit)="saveArticle()" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Title *</label>
+          <input 
+            formControlName="title" 
+            type="text" 
+            placeholder="Article title"
+            class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white"
+          >
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Slug *</label>
+          <input 
+            formControlName="slug" 
+            type="text" 
+            placeholder="url-friendly-slug"
+            class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white"
+          >
+          <p class="text-xs text-gray-400 mt-1">URL-friendly identifier (auto-generated from title)</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Author *</label>
+          <input 
+            formControlName="author" 
+            type="text" 
+            placeholder="Author name"
+            class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white"
+          >
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Date *</label>
+          <input 
+            formControlName="date" 
+            type="date"
+            class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white"
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Featured Image (Optional)</label>
+        <div class="space-y-2">
+          <input 
+            type="file" 
+            accept="image/*" 
+            (change)="onImageFileChange($event)" 
+            class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white"
+          >
+          <div *ngIf="imagePreview" class="flex items-center gap-3">
+            <img [src]="imagePreview" alt="Image Preview" class="w-32 h-32 object-cover rounded bg-admin-card">
+            <span *ngIf="uploadingImage" class="text-admin-primary text-sm">Uploading...</span>
+          </div>
+        </div>
+        <input formControlName="imageUrl" type="text" class="hidden">
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Lead (Optional)</label>
+        <textarea 
+          formControlName="lead" 
+          rows="2"
+          placeholder="Short summary or lead paragraph"
+          class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white"
+        ></textarea>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Body *</label>
+        <textarea 
+          formControlName="body" 
+          rows="15"
+          placeholder="Full article content (HTML supported)"
+          class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white font-mono text-sm"
+        ></textarea>
+        <p class="text-xs text-gray-400 mt-1">HTML is supported. Use &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, etc.</p>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2">
+          <input 
+            formControlName="published" 
+            type="checkbox"
+            class="w-4 h-4"
+          >
+          <span class="text-admin-text">Published (visible to public)</span>
+        </label>
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button 
+          type="submit"
+          class="bg-admin-accent text-white px-6 py-2 rounded-md hover:bg-admin-hover transition-colors"
+        >
+          {{ editingArticle ? 'Update Article' : 'Create Article' }}
+        </button>
+        <button 
+          type="button"
+          (click)="cancelForm()"
+          class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

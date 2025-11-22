@@ -942,4 +942,73 @@ export class ApiService {
       })
     );
   }
+
+  // Article Methods
+  getArticles(published?: boolean): Observable<any[]> {
+    let url = `${this.apiUrl}/api/articles`;
+    if (published !== undefined) {
+      url += `?published=${published}`;
+    }
+    return this.http.get<any[]>(url);
+  }
+
+  getArticleBySlug(slug: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/articles/${slug}`);
+  }
+
+  createArticle(article: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/articles`, article, { headers });
+      })
+    );
+  }
+
+  updateArticle(id: string, article: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/articles/${id}`, article, { headers });
+      })
+    );
+  }
+
+  deleteArticle(id: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(`${this.apiUrl}/api/articles/${id}`, { headers });
+      })
+    );
+  }
+
+  getAllArticlesForAdmin(): Observable<any[]> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any[]>(`${this.apiUrl}/api/articles/admin/all`, { headers });
+      })
+    );
+  }
 }

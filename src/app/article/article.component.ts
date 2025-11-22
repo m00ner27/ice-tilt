@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
+import { ApiService } from '../store/services/api.service';
+import { ImageUrlService } from '../shared/services/image-url.service';
 
 @Component({
   selector: 'app-article',
@@ -16,11 +18,15 @@ export class ArticleComponent implements OnInit {
   articleLead: string = '';
   articleBody: string = '';
   articleAuthor: string = '';
+  loading = true;
+  error: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private location: Location
+    private location: Location,
+    private apiService: ApiService,
+    private imageUrlService: ImageUrlService
   ) {}
 
   ngOnInit(): void {
@@ -31,7 +37,29 @@ export class ArticleComponent implements OnInit {
   }
 
   loadArticle(slug: string): void {
-    // Load article content based on the slug
+    this.loading = true;
+    this.error = null;
+    
+    this.apiService.getArticleBySlug(slug).subscribe({
+      next: (article) => {
+        this.articleTitle = article.title;
+        this.articleDate = this.formatDate(article.date);
+        this.articleImage = this.imageUrlService.getImageUrl(article.imageUrl, 'assets/images/square-default.png');
+        this.articleLead = article.lead || '';
+        this.articleBody = article.body;
+        this.articleAuthor = article.author;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading article:', err);
+        // Fallback to hardcoded articles for backward compatibility
+        this.loadHardcodedArticle(slug);
+      }
+    });
+  }
+
+  loadHardcodedArticle(slug: string): void {
+    // Load article content based on the slug (fallback)
     switch (slug) {
       case 'new-season-begins':
         this.loadNewSeasonArticle();
@@ -43,7 +71,18 @@ export class ArticleComponent implements OnInit {
         this.loadDefaultArticle();
         break;
     }
+    this.loading = false;
   }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
 
   loadNewSeasonArticle(): void {
     this.articleTitle = 'Welcome to the new ITHL!';

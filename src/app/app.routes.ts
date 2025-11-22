@@ -85,7 +85,11 @@ export const routes: Routes = [
     loadComponent: () => import('./playoffs/playoff-bracket/playoff-bracket.component').then(m => m.PlayoffBracketComponent)
   },
   
-  // Lazy loaded routes - Article
+  // Lazy loaded routes - Articles
+  { 
+    path: 'articles', 
+    loadComponent: () => import('./articles/articles.component').then(m => m.ArticlesComponent)
+  },
   { 
     path: 'article/:slug', 
     loadComponent: () => import('./article/article.component').then(m => m.ArticleComponent)
@@ -196,6 +200,11 @@ export const routes: Routes = [
       { 
         path: 'playoff-setup', 
         loadComponent: () => import('./admin-panel/playoff-setup/playoff-setup.component').then(m => m.PlayoffSetupComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'articles', 
+        loadComponent: () => import('./admin-panel/articles/articles.component').then(m => m.ArticlesComponent),
         canActivate: [AdminPasswordGuard]
       },
     ]
