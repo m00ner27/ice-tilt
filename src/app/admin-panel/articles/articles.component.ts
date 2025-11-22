@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../store/services/api.service';
@@ -34,6 +34,8 @@ export class ArticlesComponent implements OnInit {
   
   imagePreview: string | ArrayBuffer | null = null;
   uploadingImage = false;
+  
+  @ViewChild('bodyEditor') bodyEditor!: ElementRef<HTMLDivElement>;
 
   constructor(
     private apiService: ApiService,
@@ -62,6 +64,25 @@ export class ArticlesComponent implements OnInit {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '');
         this.articleForm.patchValue({ slug }, { emitEvent: false });
+      }
+    });
+
+    // Handle keyboard shortcuts for formatting
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && this.isAddingArticle) {
+        const editor = this.bodyEditor?.nativeElement;
+        if (editor && document.activeElement === editor) {
+          if (e.key === 'b') {
+            e.preventDefault();
+            this.formatText('bold');
+          } else if (e.key === 'i') {
+            e.preventDefault();
+            this.formatText('italic');
+          } else if (e.key === 'u') {
+            e.preventDefault();
+            this.formatText('underline');
+          }
+        }
       }
     });
   }
@@ -97,6 +118,14 @@ export class ArticlesComponent implements OnInit {
       published: false
     });
     this.imagePreview = null;
+    
+    // Clear editor content after view updates
+    setTimeout(() => {
+      const editor = this.bodyEditor?.nativeElement;
+      if (editor) {
+        editor.innerHTML = '';
+      }
+    }, 0);
   }
 
   switchToEditMode(article: Article): void {
@@ -113,6 +142,14 @@ export class ArticlesComponent implements OnInit {
       published: article.published
     });
     this.imagePreview = article.imageUrl ? this.imageUrlService.getImageUrl(article.imageUrl) : null;
+    
+    // Update editor content after view updates
+    setTimeout(() => {
+      const editor = this.bodyEditor?.nativeElement;
+      if (editor) {
+        editor.innerHTML = article.body || '';
+      }
+    }, 0);
   }
 
   cancelForm(): void {
@@ -120,6 +157,12 @@ export class ArticlesComponent implements OnInit {
     this.editingArticle = null;
     this.articleForm.reset();
     this.imagePreview = null;
+    
+    // Clear editor content
+    const editor = this.bodyEditor?.nativeElement;
+    if (editor) {
+      editor.innerHTML = '';
+    }
   }
 
   onImageFileChange(event: any): void {
@@ -216,6 +259,49 @@ export class ArticlesComponent implements OnInit {
       month: 'long', 
       day: 'numeric' 
     });
+  }
+
+  formatText(command: 'bold' | 'italic' | 'underline'): void {
+    const editor = this.bodyEditor?.nativeElement;
+    if (!editor) return;
+
+    // Restore selection if needed
+    editor.focus();
+    
+    // Use document.execCommand for formatting (deprecated but widely supported)
+    // For better support, we'll use the Selection API
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      // No selection, just apply format to future typing
+      document.execCommand(command, false);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) {
+      // No text selected, apply format to future typing
+      document.execCommand(command, false);
+      return;
+    }
+
+    // Apply formatting to selected text
+    document.execCommand(command, false);
+    
+    // Sync with form control
+    this.onBodyInput();
+  }
+
+  onBodyInput(): void {
+    const editor = this.bodyEditor?.nativeElement;
+    if (editor) {
+      const htmlContent = editor.innerHTML;
+      this.articleForm.patchValue({ body: htmlContent }, { emitEvent: false });
+    }
+  }
+
+  onBodyBlur(): void {
+    // Ensure content is synced when editor loses focus
+    this.onBodyInput();
   }
 }
 

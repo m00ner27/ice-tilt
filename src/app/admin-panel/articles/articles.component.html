@@ -136,13 +136,47 @@
 
       <div>
         <label class="block text-admin-text mb-2 font-medium">Body *</label>
-        <textarea 
-          formControlName="body" 
-          rows="15"
-          placeholder="Full article content (HTML supported)"
-          class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white font-mono text-sm"
-        ></textarea>
-        <p class="text-xs text-gray-400 mt-1">HTML is supported. Use &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, etc.</p>
+        <div class="border border-admin-accent rounded-md overflow-hidden">
+          <!-- Formatting Toolbar -->
+          <div class="bg-admin-hover border-b border-admin-accent p-2 flex gap-2">
+            <button 
+              type="button"
+              (click)="formatText('bold')"
+              class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-bold"
+              title="Bold (Ctrl+B)"
+            >
+              <i class="fas fa-bold"></i>
+            </button>
+            <button 
+              type="button"
+              (click)="formatText('italic')"
+              class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm italic"
+              title="Italic (Ctrl+I)"
+            >
+              <i class="fas fa-italic"></i>
+            </button>
+            <button 
+              type="button"
+              (click)="formatText('underline')"
+              class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm underline"
+              title="Underline (Ctrl+U)"
+            >
+              <i class="fas fa-underline"></i>
+            </button>
+          </div>
+          <!-- Content Editable Area -->
+          <div 
+            #bodyEditor
+            contenteditable="true"
+            (input)="onBodyInput()"
+            (blur)="onBodyBlur()"
+            class="w-full bg-admin-hover px-3 py-2 text-white min-h-[300px] focus:outline-none"
+            [innerHTML]="articleForm.get('body')?.value || ''"
+            style="white-space: pre-wrap;"
+          ></div>
+        </div>
+        <input formControlName="body" type="hidden">
+        <p class="text-xs text-gray-400 mt-1">Use the formatting buttons above or select text and use keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+U)</p>
       </div>
 
       <div>
