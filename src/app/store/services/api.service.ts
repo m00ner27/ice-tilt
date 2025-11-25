@@ -254,6 +254,20 @@ export class ApiService {
     );
   }
 
+  addGamesBulk(games: any[]): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/games/bulk`, games, { headers });
+      })
+    );
+  }
+
   getGames(): Observable<any[]> {
     const cacheKey = 'games';
     const observable = this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(

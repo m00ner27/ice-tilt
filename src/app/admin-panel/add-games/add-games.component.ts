@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../store/services/api.service';
@@ -46,6 +46,7 @@ export class AddGamesComponent implements OnInit {
   playoffBrackets: any[] = [];
   playoffSeries: any[] = [];
   isPlayoffGame = false;
+  submitting = false;
 
   constructor(
     private fb: FormBuilder,
@@ -55,15 +56,37 @@ export class AddGamesComponent implements OnInit {
     this.gameForm = this.fb.group({
       season: ['', Validators.required],
       division: ['', Validators.required],
-      team1: ['', Validators.required],
-      team2: ['', Validators.required],
       date: ['', Validators.required],
       time: ['', Validators.required],
       isPlayoff: [false],
       playoffBracketId: [''],
       playoffSeriesId: [''],
-      playoffRoundId: ['']
+      playoffRoundId: [''],
+      matchups: this.fb.array([this.createMatchupGroup()], [this.atLeastOneMatchup])
     });
+  }
+
+  get matchups(): FormArray {
+    return this.gameForm.get('matchups') as FormArray;
+  }
+
+  createMatchupGroup(): FormGroup {
+    return this.fb.group({
+      homeTeam: ['', Validators.required],
+      awayTeam: ['', Validators.required]
+    }, { validators: this.differentTeamsValidator });
+  }
+
+  atLeastOneMatchup: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const formArray = control as FormArray;
+    return formArray.length > 0 ? null : { atLeastOne: true };
+  }
+
+  differentTeamsValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const group = control as FormGroup;
+    const home = group.get('homeTeam')?.value;
+    const away = group.get('awayTeam')?.value;
+    return home && away && home === away ? { sameTeam: true } : null;
   }
 
   ngOnInit() {
@@ -227,7 +250,12 @@ export class AddGamesComponent implements OnInit {
     }
     // Clear division and teams when season changes
     this.filteredClubs = [];
-    this.gameForm.patchValue({ division: '', team1: '', team2: '' });
+    this.gameForm.patchValue({ division: '' });
+    // Clear all matchups
+    while (this.matchups.length > 0) {
+      this.matchups.removeAt(0);
+    }
+    this.matchups.push(this.createMatchupGroup());
   }
 
   onDivisionChange() {
@@ -264,73 +292,239 @@ export class AddGamesComponent implements OnInit {
       this.filteredClubs = [];
       console.log('No clubs available or missing season/division selection');
     }
-    this.gameForm.patchValue({ team1: '', team2: '' });
+    // Clear all matchups when division changes
+    while (this.matchups.length > 0) {
+      this.matchups.removeAt(0);
+    }
+    this.matchups.push(this.createMatchupGroup());
   }
 
-  submitGame() {
-    if (this.gameForm.valid) {
+  addMatchup() {
+    this.matchups.push(this.createMatchupGroup());
+  }
+
+  removeMatchup(index: number) {
+    if (this.matchups.length > 1) {
+      this.matchups.removeAt(index);
+    }
+  }
+
+  hasDuplicateMatchup(index: number): boolean {
+    const currentMatchup = this.matchups.at(index);
+    const homeTeam = currentMatchup.get('homeTeam')?.value;
+    const awayTeam = currentMatchup.get('awayTeam')?.value;
+
+    if (!homeTeam || !awayTeam) {
+      return false;
+    }
+
+    // Check if this exact matchup exists elsewhere
+    for (let i = 0; i < this.matchups.length; i++) {
+      if (i !== index) {
+        const otherMatchup = this.matchups.at(i);
+        const otherHome = otherMatchup.get('homeTeam')?.value;
+        const otherAway = otherMatchup.get('awayTeam')?.value;
+
+        // Check for exact duplicate (same home and away)
+        if (otherHome === homeTeam && otherAway === awayTeam) {
+          return true;
+        }
+
+        // Check for reverse duplicate (same teams, swapped)
+        if (otherHome === awayTeam && otherAway === homeTeam) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  submitGames() {
+    // Mark all form controls as touched to show validation errors
+    this.gameForm.markAllAsTouched();
+    
+    // Validate basic form fields
+    if (!this.gameForm.get('season')?.value || !this.gameForm.get('division')?.value || 
+        !this.gameForm.get('date')?.value || !this.gameForm.get('time')?.value) {
+      alert('Please fill in all required fields (Season, Division, Date, Time).');
+      return;
+    }
+
+    // Check if we have at least one matchup
+    if (this.matchups.length === 0) {
+      alert('Please add at least one matchup.');
+      return;
+    }
+
+    // Validate that at least one matchup has both teams selected
+    let hasValidMatchup = false;
+    for (let i = 0; i < this.matchups.length; i++) {
+      const matchup = this.matchups.at(i);
+      const homeTeam = matchup.get('homeTeam')?.value;
+      const awayTeam = matchup.get('awayTeam')?.value;
+      if (homeTeam && awayTeam && homeTeam !== awayTeam) {
+        hasValidMatchup = true;
+        break;
+      }
+    }
+
+    if (!hasValidMatchup) {
+      alert('Please select teams for at least one matchup.');
+      return;
+    }
+
+    // Check playoff fields if playoff game is selected
+    if (this.gameForm.get('isPlayoff')?.value) {
+      if (!this.gameForm.get('playoffBracketId')?.value || !this.gameForm.get('playoffSeriesId')?.value) {
+        alert('Please select a playoff bracket and series for playoff games.');
+        return;
+      }
+    }
+
+    // Proceed with submission
+    if (this.matchups.length > 0) {
+      this.submitting = true;
       const formData = this.gameForm.value;
       
-      // Transform the form data to match the API expectations
-      const gameData: any = {
-        seasonId: formData.season,
-        divisionId: formData.division,
-        homeClubId: formData.team1,
-        awayClubId: formData.team2,
-        date: new Date(`${formData.date}T${formData.time}`), // Combine date and time
-        status: 'scheduled' // Set default status
-      };
+      // Build array of game data from matchups
+      const gamesData: any[] = [];
+      const baseDate = new Date(`${formData.date}T${formData.time}`);
+      
+      // Track games by team combination to auto-space duplicates
+      const gameTimeMap = new Map<string, { count: number; lastTime: Date }>();
+      
+      for (const matchup of formData.matchups) {
+        if (matchup.homeTeam && matchup.awayTeam) {
+          // Create a key for this team combination (normalized - always use smaller ID first)
+          const teamKey = matchup.homeTeam < matchup.awayTeam 
+            ? `${matchup.homeTeam}-${matchup.awayTeam}`
+            : `${matchup.awayTeam}-${matchup.homeTeam}`;
+          
+          // Check if we've seen this team combination before
+          const existing = gameTimeMap.get(teamKey);
+          let gameDate: Date;
+          
+          if (existing) {
+            // Space this game 30 minutes after the last one
+            gameDate = new Date(existing.lastTime.getTime() + 30 * 60 * 1000);
+            existing.count++;
+            existing.lastTime = gameDate;
+          } else {
+            // First game with these teams - use base time
+            gameDate = new Date(baseDate);
+            gameTimeMap.set(teamKey, { count: 1, lastTime: gameDate });
+          }
+          
+          const gameData: any = {
+            seasonId: formData.season,
+            divisionId: formData.division,
+            homeClubId: matchup.homeTeam,
+            awayClubId: matchup.awayTeam,
+            date: gameDate,
+            status: 'scheduled' // Set default status
+          };
 
-      // Add playoff fields if this is a playoff game
-      if (formData.isPlayoff) {
-        gameData.isPlayoff = true;
-        gameData.playoffBracketId = formData.playoffBracketId;
-        gameData.playoffSeriesId = formData.playoffSeriesId;
-        gameData.playoffRoundId = formData.playoffRoundId;
+          // Add playoff fields if this is a playoff game
+          if (formData.isPlayoff) {
+            gameData.isPlayoff = true;
+            gameData.playoffBracketId = formData.playoffBracketId;
+            gameData.playoffSeriesId = formData.playoffSeriesId;
+            gameData.playoffRoundId = formData.playoffRoundId;
+          }
+
+          gamesData.push(gameData);
+        }
+      }
+
+      if (gamesData.length === 0) {
+        alert('Please add at least one valid matchup.');
+        this.submitting = false;
+        return;
       }
       
-      console.log('Sending game data:', gameData);
+      console.log('Sending bulk game data:', gamesData);
+      console.log('Number of games to create:', gamesData.length);
       
-      this.api.addGame(gameData).subscribe({
-        next: (game) => {
-          console.log('Game added successfully:', game);
-          console.log('Game ID:', game._id || game.id);
+      this.api.addGamesBulk(gamesData).subscribe({
+        next: (response) => {
+          console.log('Games added successfully:', response);
+          this.submitting = false;
           
-          if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
-            // For playoff games, navigate to the series page
-            console.log('Game created - Playoff Series ID:', formData.playoffSeriesId);
-            console.log('Game created - Bracket ID:', formData.playoffBracketId);
-            alert('Playoff game created successfully and added to the series!');
-            // Ensure we have valid IDs before navigating - use string conversion to ensure proper format
-            const seriesId = String(formData.playoffSeriesId).trim();
-            const bracketId = String(formData.playoffBracketId).trim();
-            
-            if (seriesId && bracketId && seriesId !== 'undefined' && bracketId !== 'undefined') {
-              console.log('Navigating to /playoffs/series/' + seriesId + '?bracketId=' + bracketId);
-              this.router.navigate(['/playoffs', 'series', seriesId], {
-                queryParams: { bracketId: bracketId }
-              }).catch(err => {
-                console.error('Navigation error:', err);
-                console.error('Failed to navigate to series, falling back to bracket page');
-                // Fallback to bracket page if series navigation fails
+          const successCount = response.success || 0;
+          const failureCount = response.failed || 0;
+          const total = response.total || gamesData.length;
+
+          if (failureCount === 0) {
+            // All games created successfully
+            if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
+              alert(`Successfully created ${successCount} playoff game(s)!`);
+              const seriesId = String(formData.playoffSeriesId).trim();
+              const bracketId = String(formData.playoffBracketId).trim();
+              
+              if (seriesId && bracketId && seriesId !== 'undefined' && bracketId !== 'undefined') {
+                this.router.navigate(['/playoffs', 'series', seriesId], {
+                  queryParams: { bracketId: bracketId }
+                }).catch(() => {
+                  this.router.navigate(['/playoffs']);
+                });
+              } else {
                 this.router.navigate(['/playoffs']);
-              });
+              }
             } else {
-              console.warn('Invalid IDs - Series:', seriesId, 'Bracket:', bracketId);
-              // Fallback to bracket page if IDs are missing or invalid
-              this.router.navigate(['/playoffs']);
+              alert(`Successfully created ${successCount} game(s)!`);
+              this.router.navigate(['/schedule']);
             }
           } else {
-            // For regular games, go to schedule
-            alert('Game created successfully!');
-            this.router.navigate(['/schedule']);
+            // Some games failed
+            let errorMessage = `Created ${successCount} of ${total} game(s). ${failureCount} failed.\n\n`;
+            
+            if (response.results) {
+              const failedGames = response.results.filter((r: any) => !r.success);
+              failedGames.forEach((failed: any, index: number) => {
+                errorMessage += `Game ${failed.index + 1}: ${failed.error}\n`;
+              });
+            }
+            
+            alert(errorMessage);
+            
+            // Still navigate on partial success
+            if (successCount > 0) {
+              if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
+                const seriesId = String(formData.playoffSeriesId).trim();
+                const bracketId = String(formData.playoffBracketId).trim();
+                if (seriesId && bracketId && seriesId !== 'undefined' && bracketId !== 'undefined') {
+                  this.router.navigate(['/playoffs', 'series', seriesId], {
+                    queryParams: { bracketId: bracketId }
+                  }).catch(() => {
+                    this.router.navigate(['/playoffs']);
+                  });
+                } else {
+                  this.router.navigate(['/playoffs']);
+                }
+              } else {
+                this.router.navigate(['/schedule']);
+              }
+            }
           }
         },
         error: (error) => {
-          console.error('Error adding game:', error);
+          console.error('Error adding games:', error);
           console.error('Error details:', error.error);
-          console.error('Status:', error.status);
-          alert('Error creating game: ' + (error.error?.message || error.message || 'Unknown error'));
+          console.error('Error status:', error.status);
+          console.error('Full error object:', JSON.stringify(error, null, 2));
+          this.submitting = false;
+          
+          let errorMessage = 'Unknown error';
+          if (error.error?.message) {
+            errorMessage = error.error.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          } else if (error.error) {
+            errorMessage = JSON.stringify(error.error);
+          }
+          
+          alert('Error creating games: ' + errorMessage);
         }
       });
     }
