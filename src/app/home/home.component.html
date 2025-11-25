@@ -6,8 +6,34 @@
     <div class="container mx-auto px-4">
       <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-inner">
-          <!-- News Item 1 -->
-          <div class="carousel-item active">
+          <!-- Loading State -->
+          <div *ngIf="articlesLoading" class="carousel-item active">
+            <div class="h-96 bg-cover bg-center rounded-lg relative flex items-center justify-center" style="background-image: url('assets/images/IMG_3840.jpg');">
+              <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-4"></div>
+                <p class="text-white text-xl">Loading articles...</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Dynamic Articles -->
+          <ng-container *ngIf="!articlesLoading && articles.length > 0">
+            <div *ngFor="let article of articles; let i = index"
+                 [class.carousel-item]="true"
+                 [class.active]="i === 0">
+              <a [routerLink]="['/article', article.slug]" class="block transition-transform duration-200 hover:scale-105">
+                <div class="h-96 bg-cover bg-center rounded-lg relative" [style.background-image]="'url(' + getArticleImageUrl(article.imageUrl) + ')'">
+                  <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
+                    <h3 class="text-white text-2xl m-0">{{ article.title }}</h3>
+                    <p *ngIf="article.lead" class="text-white text-sm mt-2 line-clamp-2">{{ article.lead }}</p>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </ng-container>
+          
+          <!-- Fallback if no articles -->
+          <div *ngIf="!articlesLoading && articles.length === 0" class="carousel-item active">
             <a [routerLink]="['/article', 'new-season-begins']" class="block transition-transform duration-200 hover:scale-105">
               <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
                 <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
@@ -16,53 +42,13 @@
               </div>
             </a>
           </div>
-          <!-- News Item 2 -->
-          <div class="carousel-item">
-            <a href="/article-2" class="block transition-transform duration-200 hover:scale-105">
-              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
-                  <h3 class="text-white text-2xl m-0">Top Plays of the Week</h3>
-                </div>
-              </div>
-            </a>
-          </div>
-          <!-- News Item 3 -->
-          <div class="carousel-item">
-            <a href="/article-3" class="block transition-transform duration-200 hover:scale-105">
-              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/news3.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
-                  <h3 class="text-white text-2xl m-0">Player Spotlight: Rising Star</h3>
-                </div>
-              </div>
-            </a>
-          </div>
-          <!-- News Item 4 -->
-          <div class="carousel-item">
-            <a [routerLink]="['/article', 'playoff-race-heats-up']" class="block transition-transform duration-200 hover:scale-105">
-              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/IMG_3840.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
-                  <h3 class="text-white text-2xl m-0">Playoff Race Heats Up: Final Push Begins</h3>
-                </div>
-              </div>
-            </a>
-          </div>
-          <!-- News Item 5 - Signing Up & Free Agents -->
-          <div class="carousel-item">
-            <a [routerLink]="['/article', 'signing-up-free-agents']" class="block transition-transform duration-200 hover:scale-105">
-              <div class="h-96 bg-cover bg-center rounded-lg relative" style="background-image: url('assets/images/hockey-fight.jpg');">
-                <div class="absolute bottom-5 left-5 right-5 bg-admin-primary bg-opacity-80 p-3 rounded">
-                  <h3 class="text-white text-2xl m-0">📝 Signing Up & Free Agents</h3>
-                </div>
-              </div>
-            </a>
-          </div>
         </div>
-        <!-- Carousel Controls -->
-        <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+        <!-- Carousel Controls (only show if we have multiple articles) -->
+        <button *ngIf="!articlesLoading && articles.length > 1" class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
           <span class="carousel-control-prev-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
           <span class="visually-hidden">Previous</span>
         </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+        <button *ngIf="!articlesLoading && articles.length > 1" class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
           <span class="carousel-control-next-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
           <span class="visually-hidden">Next</span>
         </button>

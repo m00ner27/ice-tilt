@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { ApiService } from '../store/services/api.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -38,6 +39,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   isLoading: boolean = true;
   hasError: boolean = false;
   
+  // Articles for carousel
+  articles: any[] = [];
+  articlesLoading: boolean = true;
+  articlesError: boolean = false;
+  
   // Progressive loading flags
   showAds: boolean = false;
 
@@ -63,7 +69,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   constructor(
     private matchService: MatchService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private apiService: ApiService
   ) {}
 
   getImageUrl(logoUrl: string | undefined): string {
@@ -76,11 +83,54 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Load articles first (for carousel)
+    this.loadArticles();
+    
     // Delay player stats loading to improve initial page load
     setTimeout(() => {
       this.loadPlayerStats();
     }, 500);
     this.setupProgressiveLoading();
+  }
+
+  loadArticles(): void {
+    this.articlesLoading = true;
+    this.articlesError = false;
+    
+    // Get only published articles, sorted by date (newest first)
+    this.apiService.getArticles(true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (articles) => {
+          // Get the 3 latest articles
+          this.articles = articles
+            .filter(article => article.published)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 3);
+          this.articlesLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading articles:', error);
+          this.articlesError = true;
+          this.articlesLoading = false;
+          // Fallback to empty array - carousel will show default items
+          this.articles = [];
+        }
+      });
+  }
+
+  getArticleImageUrl(imageUrl?: string): string {
+    return this.imageUrlService.getImageUrl(imageUrl, 'assets/images/IMG_3840.jpg');
+  }
+
+  formatArticleDate(dateString: string): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   }
 
   setupProgressiveLoading() {
