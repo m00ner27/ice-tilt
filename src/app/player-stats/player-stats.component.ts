@@ -69,6 +69,7 @@ interface PlayerStats {
   faceoffsWon: number;
   faceoffsLost: number;
   faceoffPercentage: number;
+  interceptions?: number;
   division?: string;
 }
 
@@ -523,7 +524,8 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       shotPercentage: 0,
       faceoffsWon: 0,
       faceoffsLost: 0,
-      faceoffPercentage: 0
+      faceoffPercentage: 0,
+      interceptions: 0
     };
   }
   
@@ -550,8 +552,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     existingStats.giveaways += parseInt(playerData.giveaways) || 0;
     existingStats.passAttempts += parseInt(playerData.passAttempts) || 0;
     existingStats.passes += parseInt(playerData.passes) || 0;
-    existingStats.faceoffsWon += parseInt(playerData.faceoffsWon) || 0;
-    existingStats.faceoffsLost += parseInt(playerData.faceoffsLost) || 0;
+      existingStats.faceoffsWon += parseInt(playerData.faceoffsWon) || 0;
+      existingStats.faceoffsLost += parseInt(playerData.faceoffsLost) || 0;
+      existingStats.interceptions = (existingStats.interceptions ?? 0) + (parseInt(playerData.interceptions) || 0);
   }
   
   private updatePlayerStatsFromEashl(existingStats: PlayerStats, playerData: any): void {
@@ -577,8 +580,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     existingStats.giveaways += parseInt(playerData.skgiveaways) || 0;
     existingStats.passAttempts += parseInt(playerData.skpassattempts) || 0;
     existingStats.passes += parseInt(playerData.skpasses) || 0;
-    existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
-    existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+      existingStats.faceoffsWon += parseInt(playerData.skfow) || 0;
+      existingStats.faceoffsLost += parseInt(playerData.skfol) || 0;
+      existingStats.interceptions = (existingStats.interceptions ?? 0) + (parseInt(playerData.skint) || parseInt(playerData.skinterceptions) || 0);
   }
   
   private finalizePlayerStats(statsMap: Map<number, PlayerStats>, teamDivisionMap: Map<string, string>): void {
@@ -711,6 +715,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
           break;
         case 'gameWinningGoals':
           comparison = a.gameWinningGoals - b.gameWinningGoals;
+          break;
+        case 'interceptions':
+          comparison = (a.interceptions || 0) - (b.interceptions || 0);
           break;
         case 'takeaways':
           comparison = a.takeaways - b.takeaways;

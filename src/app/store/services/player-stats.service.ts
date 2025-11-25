@@ -39,6 +39,7 @@ export class PlayerStatsService {
       giveaways: 0,
       faceoffPct: 0,
       blockedShots: 0,
+      interceptions: 0,
       passAttempts: 0,
       passes: 0,
       passPct: 0,
@@ -108,6 +109,7 @@ export class PlayerStatsService {
               stats.takeaways! += Number(playerData.sktakeaways) || 0;
               stats.giveaways! += Number(playerData.skgiveaways) || 0;
               stats.blockedShots! += Number(playerData.skblk) || 0;
+              stats.interceptions! += Number(playerData.skint) || Number(playerData.skinterceptions) || 0;
               
               // Extract pass statistics
               stats.passAttempts! += Number(playerData.skpassattempts) || 0;

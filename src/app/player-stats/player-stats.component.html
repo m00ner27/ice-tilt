@@ -72,6 +72,7 @@
               <th [ngClass]="getColumnSortClass('powerPlayGoals')" (click)="onSortColumn('powerPlayGoals')">PPG</th>
               <th [ngClass]="getColumnSortClass('shortHandedGoals')" (click)="onSortColumn('shortHandedGoals')">SHG</th>
               <th [ngClass]="getColumnSortClass('gameWinningGoals')" (click)="onSortColumn('gameWinningGoals')">GWG</th>
+              <th [ngClass]="getColumnSortClass('interceptions')" (click)="onSortColumn('interceptions')">INT</th>
               <th [ngClass]="getColumnSortClass('takeaways')" (click)="onSortColumn('takeaways')">TK</th>
               <th [ngClass]="getColumnSortClass('giveaways')" (click)="onSortColumn('giveaways')">GV</th>
               <th [ngClass]="getColumnSortClass('passAttempts')" (click)="onSortColumn('passAttempts')">PA</th>
@@ -109,6 +110,7 @@
               <td>{{ player.powerPlayGoals }}</td>
               <td>{{ player.shortHandedGoals }}</td>
               <td>{{ player.gameWinningGoals }}</td>
+              <td>{{ player.interceptions || 0 }}</td>
               <td>{{ player.takeaways }}</td>
               <td>{{ player.giveaways }}</td>
               <td>{{ player.passAttempts }}</td>
@@ -149,6 +151,7 @@
           <span class="legend-abbr">PPG</span> - Power Play Goals
           <span class="legend-abbr">SHG</span> - Short Handed Goals
           <span class="legend-abbr">GWG</span> - Game Winning Goals
+          <span class="legend-abbr">INT</span> - Interceptions
           <span class="legend-abbr">TK</span> - Takeaways
           <span class="legend-abbr">GV</span> - Giveaways
         </div>

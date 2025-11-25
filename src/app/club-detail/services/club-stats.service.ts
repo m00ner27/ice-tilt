@@ -848,7 +848,7 @@ playerStats.shutouts += (goalsAgainst === 0 && shotsAgainst > 0) ? 1 : 0;
                 console.log(`EASHL - Updated stats for ${playerData.name}: passes=${playerStats.passes}, passAttempts=${playerStats.passAttempts}`);
                 playerStats.faceoffsWon += playerData.faceoffsWon || playerData.skfow || 0;
                 playerStats.faceoffsLost += playerData.faceoffsLost || playerData.skfol || 0;
-                const interceptionsToAdd = parseInt(playerData.interceptions) || parseInt(playerData.skint) || 0;
+                const interceptionsToAdd = parseInt(playerData.interceptions) || parseInt(playerData.skint) || parseInt(playerData.skinterceptions) || 0;
                 playerStats.interceptions += interceptionsToAdd;
                 if (playerData.name && playerData.name.includes('Liskoilija')) {
                   console.log('🔍 LISKOILIJA INTERCEPTIONS DEBUG:', {

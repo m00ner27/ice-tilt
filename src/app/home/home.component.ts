@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
@@ -7,6 +7,8 @@ import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.c
 import { ApiService } from '../store/services/api.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+
+// Bootstrap will be available on window object
 
 interface AggregatedPlayer {
   playerId: number;
@@ -30,8 +32,11 @@ interface AggregatedPlayer {
   templateUrl: './home.component.html',
   imports: [CommonModule, RouterModule, AdSenseComponent]
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
+  @ViewChild('newsCarousel', { static: false }) carouselElement?: ElementRef;
+  private carouselInstance: any;
+  
   topGoals: AggregatedPlayer[] = [];
   topAssists: AggregatedPlayer[] = [];
   topPoints: AggregatedPlayer[] = [];
@@ -78,6 +83,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Dispose of carousel instance
+    if (this.carouselInstance) {
+      try {
+        this.carouselInstance.dispose();
+      } catch (error) {
+        console.error('Error disposing carousel:', error);
+      }
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -91,6 +104,42 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.loadPlayerStats();
     }, 500);
     this.setupProgressiveLoading();
+  }
+
+  ngAfterViewInit() {
+    // Initialize carousel after view is ready
+    setTimeout(() => {
+      this.initializeCarousel();
+    }, 100);
+  }
+
+  initializeCarousel() {
+    // Wait for Bootstrap to be available
+    if (typeof window !== 'undefined' && (window as any).bootstrap) {
+      const bootstrap = (window as any).bootstrap;
+      if (this.carouselElement && this.articles.length > 0) {
+        try {
+          // Dispose of existing carousel instance if any
+          if (this.carouselInstance) {
+            this.carouselInstance.dispose();
+          }
+          // Initialize new carousel
+          this.carouselInstance = new bootstrap.Carousel(this.carouselElement.nativeElement, {
+            interval: 5000,
+            ride: 'carousel',
+            wrap: true
+          });
+          console.log('Carousel initialized successfully');
+        } catch (error) {
+          console.error('Error initializing carousel:', error);
+        }
+      }
+    } else {
+      // Retry after a short delay if Bootstrap isn't loaded yet
+      setTimeout(() => {
+        this.initializeCarousel();
+      }, 100);
+    }
   }
 
   loadArticles(): void {
@@ -107,7 +156,18 @@ export class HomeComponent implements OnInit, OnDestroy {
             .filter(article => article.published)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .slice(0, 3);
+          
+          console.log('Loaded articles:', this.articles);
+          this.articles.forEach(article => {
+            console.log(`Article: ${article.title}, imageUrl: ${article.imageUrl}`);
+          });
+          
           this.articlesLoading = false;
+          
+          // Initialize carousel after articles are loaded
+          setTimeout(() => {
+            this.initializeCarousel();
+          }, 200);
         },
         error: (error) => {
           console.error('Error loading articles:', error);
@@ -120,7 +180,21 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   getArticleImageUrl(imageUrl?: string): string {
-    return this.imageUrlService.getImageUrl(imageUrl, 'assets/images/IMG_3840.jpg');
+    if (!imageUrl || imageUrl.trim() === '') {
+      return 'assets/images/IMG_3840.jpg';
+    }
+    const processedUrl = this.imageUrlService.getImageUrl(imageUrl, 'assets/images/IMG_3840.jpg');
+    console.log('Processing image URL:', { original: imageUrl, processed: processedUrl });
+    return processedUrl;
+  }
+
+  onArticleImageError(event: any): void {
+    console.log('Article image failed to load, URL was:', event.target.src);
+    event.target.src = 'assets/images/IMG_3840.jpg';
+  }
+
+  onArticleImageLoad(event: any, article: any): void {
+    console.log('Article image loaded successfully:', article.title, event.target.src);
   }
 
   formatArticleDate(dateString: string): string {

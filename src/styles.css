@@ -102,8 +102,7 @@ body {
     @apply h-[420px] w-full object-cover mb-4;
 }
 
-.carousel-item h5,
-.carousel-item p {
+.carousel-item h5 {
     @apply p-4 bg-white/80;
 }
 

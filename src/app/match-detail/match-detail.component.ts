@@ -202,7 +202,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           );
           
           if (eashlPlayer) {
-            const result = parseInt(eashlPlayer.skint) || 0;
+            const result = parseInt(eashlPlayer.skint) || parseInt(eashlPlayer.skinterceptions) || 0;
             console.log(`Found EASHL interceptions: ${result} for ${playerStat.name}`);
             return result;
           }
@@ -614,7 +614,7 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
           faceoffPercentage: isGoalie ? 0 : 
             ((parseInt(playerData.skfow) || 0) + (parseInt(playerData.skfol) || 0) > 0 ? 
               ((parseInt(playerData.skfow) || 0) / ((parseInt(playerData.skfow) || 0) + (parseInt(playerData.skfol) || 0)) * 100) : 0),
-          interceptions: isGoalie ? 0 : (parseInt(playerData.skint) || 0),
+          interceptions: isGoalie ? 0 : (parseInt(playerData.skint) || parseInt(playerData.skinterceptions) || 0),
           playerScore: parseInt(playerData.score) || 0,
           penaltyKillCorsiZone: isGoalie ? 0 : (parseInt(playerData.skpkc) || 0),
           // Goalie-specific stats - use EASHL data directly
