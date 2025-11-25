@@ -258,7 +258,6 @@ export class PlayoffBracketComponent implements OnInit, OnDestroy {
     
     const seasonName = this.getSeasonName(bracket.seasonId);
     const divisionName = this.getDivisionName(bracket.divisionId);
-    const status = bracket.status || 'setup';
     
     let displayName = bracket.name;
     if (seasonName) {
@@ -267,7 +266,6 @@ export class PlayoffBracketComponent implements OnInit, OnDestroy {
     if (divisionName && divisionName !== 'All Divisions') {
       displayName += ` (${divisionName})`;
     }
-    displayName += ` (${status})`;
     
     return displayName;
   }

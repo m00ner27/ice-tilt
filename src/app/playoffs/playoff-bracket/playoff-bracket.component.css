@@ -66,7 +66,7 @@
 
 /* Bracket Info Section */
 .bracket-header-card {
-  background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+  background: #1a252f;
   border: 1px solid rgba(52, 152, 219, 0.3);
   border-radius: 12px;
   padding: 1.5rem;
@@ -87,9 +87,9 @@
   height: 4rem;
   object-fit: contain;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 .bracket-header-title {
@@ -173,7 +173,7 @@
 
 /* Match/Series Cards */
 .series-card {
-  background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+  background: #1a252f;
   border-radius: 12px;
   padding: 1.25rem;
   cursor: pointer;
@@ -215,7 +215,7 @@
 /* Status-based Card Styling */
 .series-card.border-green-500 {
   border-color: #10b981;
-  background: linear-gradient(135deg, #1a252f 0%, rgba(16, 185, 129, 0.1) 100%);
+  background: #1a252f;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2),
               0 0 0 1px rgba(16, 185, 129, 0.2) inset,
               0 0 20px rgba(16, 185, 129, 0.1);
@@ -233,7 +233,7 @@
 
 .series-card.border-yellow-500 {
   border-color: #f59e0b;
-  background: linear-gradient(135deg, #1a252f 0%, rgba(245, 158, 11, 0.1) 100%);
+  background: #1a252f;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2),
               0 0 0 1px rgba(245, 158, 11, 0.2) inset,
               0 0 20px rgba(245, 158, 11, 0.1);
@@ -266,7 +266,7 @@
 
 .series-card.border-gray-500 {
   border-color: #64748b;
-  background: linear-gradient(135deg, #1a252f 0%, rgba(100, 116, 139, 0.05) 100%);
+  background: #1a252f;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
               0 0 0 1px rgba(100, 116, 139, 0.1) inset;
 }
@@ -332,9 +332,9 @@
   height: 2.5rem;
   object-fit: contain;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.25rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 
