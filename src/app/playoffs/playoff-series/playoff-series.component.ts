@@ -7,6 +7,7 @@ import { Observable, Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import * as PlayoffsActions from '../../store/playoffs/playoffs.actions';
 import * as PlayoffsSelectors from '../../store/playoffs/playoffs.selectors';
+import { ImageUrlService } from '../../shared/services/image-url.service';
 
 @Component({
   selector: 'app-playoff-series',
@@ -27,7 +28,8 @@ export class PlayoffSeriesComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private route: ActivatedRoute,
-    public router: Router
+    public router: Router,
+    private imageUrlService: ImageUrlService
   ) {
     this.series$ = this.store.select(PlayoffsSelectors.selectCurrentPlayoffSeries);
     this.loading$ = this.store.select(PlayoffsSelectors.selectPlayoffsLoading);
@@ -102,6 +104,16 @@ export class PlayoffSeriesComponent implements OnInit, OnDestroy {
       }
     }
     return null;
+  }
+
+  getImageUrl(logoUrl?: string): string {
+    return this.imageUrlService.getImageUrl(logoUrl);
+  }
+
+  isWinner(series: any, clubId: any): boolean {
+    if (!series.winnerClubId || !clubId) return false;
+    const clubIdValue = typeof clubId === 'object' && clubId !== null ? clubId._id : clubId;
+    return series.winnerClubId === clubIdValue;
   }
 }
 
