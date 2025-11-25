@@ -91,16 +91,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 60px;
-  min-width: 200px;
+  gap: 80px;
+  min-width: 250px;
   height: 40px;
   justify-self: center;
+  position: relative;
 }
 
 @media (max-width: 768px) {
   .scores-section {
-    gap: 20px;
-    min-width: 120px;
+    gap: 40px;
+    min-width: 180px;
     height: 30px;
   }
 }
@@ -149,16 +150,6 @@
   font-size: 1.25rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  padding: 0.5rem 1rem;
-  background: rgba(100, 116, 139, 0.1);
-  border: 2px solid rgba(100, 116, 139, 0.3);
-  border-radius: 50%;
-  width: 3.5rem;
-  height: 3.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 10;
   pointer-events: none;
 }
@@ -618,8 +609,8 @@ h4:has(+ .table-container .goalie-table) {
 
   .scores-section {
     order: 2;
-    gap: 15px;
-    min-width: 80px;
+    gap: 35px;
+    min-width: 120px;
     flex-shrink: 0;
   }
 
