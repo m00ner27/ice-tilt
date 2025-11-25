@@ -6,6 +6,29 @@
                 <a class="flex items-center font-bold" routerLink="/home">
                     <img src="assets/images/1ithlwords.png" alt="League Logo" class="h-8 w-auto mr-2 min-w-0">
                 </a>
+                <!-- Social Media Links -->
+                <div class="hidden md:flex items-center space-x-3 ml-4">
+                    <a href="https://discord.gg/2JyJ4MQCHG" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Discord">
+                        <i class="fab fa-discord text-xl"></i>
+                    </a>
+                    <a href="https://x.com/IceTiltHL" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Twitter/X">
+                        <i class="fab fa-x-twitter text-xl"></i>
+                    </a>
+                    <a href="https://www.instagram.com/icetilthl/" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Instagram">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="https://www.youtube.com/@icetilthl" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="YouTube">
+                        <i class="fab fa-youtube text-xl"></i>
+                    </a>
+                </div>
             </div>
             
             <!-- Desktop Navigation -->
@@ -59,6 +82,30 @@
                 <!-- TODO: Manager feature temporarily disabled -->
                 <!-- <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
+                
+                <!-- Mobile Social Media Links -->
+                <div class="pt-2 border-t border-gray-700 flex items-center justify-center space-x-4 py-3">
+                    <a href="https://discord.gg/2JyJ4MQCHG" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Discord">
+                        <i class="fab fa-discord text-2xl"></i>
+                    </a>
+                    <a href="https://x.com/IceTiltHL" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Twitter/X">
+                        <i class="fab fa-x-twitter text-2xl"></i>
+                    </a>
+                    <a href="https://www.instagram.com/icetilthl/" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Instagram">
+                        <i class="fab fa-instagram text-2xl"></i>
+                    </a>
+                    <a href="https://www.youtube.com/@icetilthl" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="YouTube">
+                        <i class="fab fa-youtube text-2xl"></i>
+                    </a>
+                </div>
                 
                 <!-- Mobile Auth Section -->
                 <div class="pt-2 border-t border-gray-700">
