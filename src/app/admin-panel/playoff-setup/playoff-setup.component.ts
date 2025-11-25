@@ -669,22 +669,22 @@ export class PlayoffSetupComponent implements OnInit {
               // Get original seed from bracket seedings, not from series
               const originalSeed = getOriginalSeed(winnerId);
               if (originalSeed !== null) {
-                this.availableTeams.push({
-                  clubId: winnerId,
+              this.availableTeams.push({
+                clubId: winnerId,
                   seed: originalSeed,
-                  clubName: this.getClubName(winnerId)
-                });
+                clubName: this.getClubName(winnerId)
+              });
               }
             } else if (series.status === 'bye' && series.homeClubId) {
               const byeId = series.homeClubId?._id || series.homeClubId;
               // Get original seed from bracket seedings, not from series
               const originalSeed = getOriginalSeed(byeId);
               if (originalSeed !== null) {
-                this.availableTeams.push({
-                  clubId: byeId,
+              this.availableTeams.push({
+                clubId: byeId,
                   seed: originalSeed,
-                  clubName: this.getClubName(byeId)
-                });
+                clubName: this.getClubName(byeId)
+              });
               }
             }
           });
