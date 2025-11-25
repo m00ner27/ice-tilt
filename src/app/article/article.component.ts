@@ -4,11 +4,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 @Component({
   selector: 'app-article',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AdSenseComponent],
   templateUrl: './article.component.html'
 })
 export class ArticleComponent implements OnInit {
@@ -20,6 +21,14 @@ export class ArticleComponent implements OnInit {
   articleAuthor: string = '';
   loading = true;
   error: string | null = null;
+
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
 
   constructor(
     private route: ActivatedRoute,
