@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 interface Article {
   _id: string;
@@ -19,7 +20,7 @@ interface Article {
 @Component({
   selector: 'app-articles',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AdSenseComponent],
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.css'
 })
@@ -27,6 +28,14 @@ export class ArticlesComponent implements OnInit {
   articles: Article[] = [];
   loading = true;
   error: string | null = null;
+
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
 
   constructor(
     private apiService: ApiService,
