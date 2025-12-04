@@ -641,7 +641,15 @@ export class GoalieStatsComponent implements OnInit {
       this.applyDivisionFilter();
       console.log('All Seasons combined stats:', this.groupedStats[0].stats.length, 'goalies');
         this.isLoading = false;
+        // Force change detection for mobile rendering
         this.cdr.detectChanges();
+        // Additional delayed change detection for mobile
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        }, 100);
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        }, 500);
       return;
     }
     
@@ -1004,12 +1012,24 @@ export class GoalieStatsComponent implements OnInit {
     console.log('Grouped by division:', this.groupedStats.length, 'groups');
     console.log('Division breakdown:', this.groupedStats.map(g => ({ division: g.division, goalies: g.stats.length })));
       this.isLoading = false;
+      // Force change detection for mobile rendering
       this.cdr.detectChanges();
+      // Additional delayed change detection for mobile
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 100);
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 500);
     },
     error: (error) => {
       console.error('Error fetching players for username mapping:', error);
       this.isLoading = false;
       this.cdr.detectChanges();
+      // Additional delayed change detection for mobile
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 100);
     }
   });
   }

@@ -696,6 +696,15 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     // Apply division filter
     this.applyDivisionFilter();
     this.isLoading = false;
+    // Force change detection for mobile rendering
+    this.cdr.detectChanges();
+    // Additional delayed change detection for mobile
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 100);
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 500);
   }
 
   applyDivisionFilter(): void {

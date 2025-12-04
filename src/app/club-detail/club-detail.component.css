@@ -92,6 +92,19 @@ app-match-history {
   .club-detail-container {
     padding: 5px;
     max-width: 100%;
+    display: block !important;
+    visibility: visible !important;
+    overflow-x: auto;
+  }
+  
+  app-club-roster-tables {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  app-club-stats-grid {
+    display: block !important;
+    visibility: visible !important;
   }
 }
 

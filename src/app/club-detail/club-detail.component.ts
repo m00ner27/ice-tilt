@@ -645,12 +645,24 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           }
         });
         console.log('=== END CLUB DETAIL COMPONENT - GOALIE STATS ===');
+        // Force change detection for mobile rendering
         this.cdr.detectChanges();
+        // Additional delayed change detection for mobile
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        }, 100);
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        }, 500);
         } catch (error) {
           console.error('Error processing player stats:', error);
           this.skaterStats = [];
           this.goalieStats = [];
           this.cdr.detectChanges();
+          // Additional delayed change detection for mobile
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 100);
         }
       }
 
@@ -694,13 +706,25 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.playoffGoalieStats.forEach(goalie => {
       console.log(`${goalie.name}: GP=${goalie.gamesPlayed}, SO=${goalie.shutouts}, GAA=${goalie.goalsAgainstAverage}`);
     });
-    console.log('=== END CLUB DETAIL COMPONENT - PLAYOFF GOALIE STATS ===');
-    this.cdr.detectChanges();
+      console.log('=== END CLUB DETAIL COMPONENT - PLAYOFF GOALIE STATS ===');
+      // Force change detection for mobile rendering
+      this.cdr.detectChanges();
+      // Additional delayed change detection for mobile
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 100);
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 500);
     } catch (error) {
       console.error('Error processing playoff stats:', error);
       this.playoffSkaterStats = [];
       this.playoffGoalieStats = [];
       this.cdr.detectChanges();
+      // Additional delayed change detection for mobile
+      setTimeout(() => {
+        this.cdr.detectChanges();
+      }, 100);
     }
   }
 

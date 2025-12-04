@@ -333,10 +333,22 @@ th.goalie-name.sticky-column {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .goalie-stats-table-container {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  .goalie-stats-table {
+    display: table !important;
+    visibility: visible !important;
+  }
+  
   .goalie-stats-table th,
   .goalie-stats-table td {
     padding: 8px 10px;
     font-size: 0.9em;
+    display: table-cell !important;
+    visibility: visible !important;
   }
   
   .goalie-name {
