@@ -162,11 +162,12 @@ export class GoalieStatsComponent implements OnInit {
           // Sort divisions by their order field (ascending)
           this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
           this.filterAndAggregateStats();
-          this.isLoading = false;
+          // Don't set isLoading = false here - let aggregateGoalieStats handle it
         },
         error: (err) => {
           console.error('Failed to load all divisions', err);
           this.isLoading = false;
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -181,11 +182,12 @@ export class GoalieStatsComponent implements OnInit {
           // Sort divisions by their order field (ascending)
           this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
           this.filterAndAggregateStats();
-          this.isLoading = false;
+          // Don't set isLoading = false here - let aggregateGoalieStats handle it
         },
         error: (err) => {
           console.error(`Failed to load divisions for season ${this.selectedSeasonId}`, err);
           this.isLoading = false;
+          this.cdr.detectChanges();
         }
       });
     }
@@ -641,13 +643,24 @@ export class GoalieStatsComponent implements OnInit {
       this.applyDivisionFilter();
       console.log('All Seasons combined stats:', this.groupedStats[0].stats.length, 'goalies');
         this.isLoading = false;
-        // Force change detection for mobile rendering
+        // Force change detection for mobile rendering - use multiple calls
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
         // Additional delayed change detection for mobile
         setTimeout(() => {
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        }, 50);
+        setTimeout(() => {
+          this.cdr.markForCheck();
           this.cdr.detectChanges();
         }, 100);
         setTimeout(() => {
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        }, 300);
+        setTimeout(() => {
+          this.cdr.markForCheck();
           this.cdr.detectChanges();
         }, 500);
       return;
@@ -1012,22 +1025,35 @@ export class GoalieStatsComponent implements OnInit {
     console.log('Grouped by division:', this.groupedStats.length, 'groups');
     console.log('Division breakdown:', this.groupedStats.map(g => ({ division: g.division, goalies: g.stats.length })));
       this.isLoading = false;
-      // Force change detection for mobile rendering
+      // Force change detection for mobile rendering - use multiple calls
+      this.cdr.markForCheck();
       this.cdr.detectChanges();
       // Additional delayed change detection for mobile
       setTimeout(() => {
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      }, 50);
+      setTimeout(() => {
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
       }, 100);
       setTimeout(() => {
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      }, 300);
+      setTimeout(() => {
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
       }, 500);
     },
     error: (error) => {
       console.error('Error fetching players for username mapping:', error);
       this.isLoading = false;
+      this.cdr.markForCheck();
       this.cdr.detectChanges();
       // Additional delayed change detection for mobile
       setTimeout(() => {
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
       }, 100);
     }

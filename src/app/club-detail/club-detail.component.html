@@ -32,11 +32,12 @@
   <app-adsense [config]="rectangleAdConfig"></app-adsense>
 
   <!-- Add a loading state -->
-  <div class="loading-stats" *ngIf="club && !club.stats">
+  <div class="loading-stats" *ngIf="isProcessingStats">
     Calculating team statistics...
   </div>
 
   <app-club-roster-tables 
+    *ngIf="!isProcessingStats"
     [signedPlayers]="signedPlayers"
     [skaterStats]="skaterStats"
     [goalieStats]="goalieStats"
