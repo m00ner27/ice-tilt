@@ -239,7 +239,8 @@ export class ClubStatsService {
     const globalUsernameToPlayerId = new Map<string, string>();
     const globalPlayerIdToPrimaryUsername = new Map<string, string>();
     
-    allPlayers.forEach((player: any) => {
+    // Helper function to process a player and add to maps
+    const processPlayerForMapping = (player: any) => {
       const playerId = (player._id || player.id)?.toString();
       if (!playerId) return;
       
@@ -279,7 +280,33 @@ export class ClubStatsService {
       if (primaryUsername) {
         globalPlayerIdToPrimaryUsername.set(playerId, primaryUsername);
       }
-    });
+    };
+    
+    // Process all players from getAllPlayers() if available
+    if (allPlayers && allPlayers.length > 0) {
+      console.log('Building username map from getAllPlayers() result');
+      allPlayers.forEach(processPlayerForMapping);
+    } else {
+      // Fallback: Build username map from roster data if getAllPlayers() failed
+      console.warn('WARNING: getAllPlayers() returned empty or failed, building username map from roster data');
+      if (roster && roster.length > 0) {
+        console.log('Roster data sample:', {
+          firstPlayer: roster[0],
+          hasUsernames: roster[0]?.usernames ? 'yes' : 'no',
+          usernamesLength: roster[0]?.usernames?.length || 0,
+          gamertag: roster[0]?.gamertag
+        });
+        roster.forEach(processPlayerForMapping);
+        console.log('Built username map from roster:', {
+          playersProcessed: roster.length,
+          usernameMapSize: globalUsernameToPlayerId.size,
+          primaryUsernameMapSize: globalPlayerIdToPrimaryUsername.size,
+          sampleMappings: Array.from(globalUsernameToPlayerId.entries()).slice(0, 5)
+        });
+      } else {
+        console.error('ERROR: Both getAllPlayers() and roster are empty - cannot build username map');
+      }
+    }
     
     console.log('Global username map size:', globalUsernameToPlayerId.size);
     console.log('Global playerId to primary username map size:', globalPlayerIdToPrimaryUsername.size);
@@ -292,6 +319,10 @@ export class ClubStatsService {
     if (arthuukinPlayerId && h0nsk1PlayerId) {
       console.log('DEBUG: Same playerId?', arthuukinPlayerId === h0nsk1PlayerId);
       console.log('DEBUG: Primary username for this playerId:', globalPlayerIdToPrimaryUsername.get(arthuukinPlayerId));
+    } else {
+      console.warn('DEBUG: Username mapping issue - arthuukin:', arthuukinPlayerId, 'h0nsk1_:', h0nsk1PlayerId);
+      // Log all usernames in the map to help debug
+      console.log('DEBUG: All usernames in map:', Array.from(globalUsernameToPlayerId.keys()).filter(k => k.includes('arthuukin') || k.includes('h0nsk')));
     }
     
     // Build username-to-playerId map from roster (for signed status and roster lookup)
