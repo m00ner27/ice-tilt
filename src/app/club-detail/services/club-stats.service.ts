@@ -151,9 +151,17 @@ export class ClubStatsService {
     
     // Defensive filter: Exclude any playoff games that might have slipped through
     // User wants playoff stats completely excluded from club detail page
+    // Note: clubMatches should already be filtered by the component, but we do a defensive check here
     const regularSeasonMatches = clubMatches.filter(match => {
+      // Only exclude if we're CERTAIN it's a playoff game
+      // Check isPlayoff flag (must be explicitly true, 'true', or 1)
       const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
-      const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+      
+      // Check for playoff IDs (must be truthy and not empty string)
+      const hasPlayoffBracketId = match.playoffBracketId && match.playoffBracketId !== '';
+      const hasPlayoffSeriesId = match.playoffSeriesId && match.playoffSeriesId !== '';
+      const hasPlayoffRoundId = match.playoffRoundId && match.playoffRoundId !== '';
+      const hasPlayoffIds = hasPlayoffBracketId || hasPlayoffSeriesId || hasPlayoffRoundId;
       
       if (isPlayoff || hasPlayoffIds) {
         console.warn('WARNING: Playoff game found in clubMatches, excluding:', {
@@ -162,7 +170,8 @@ export class ClubStatsService {
           awayTeam: match.awayTeam,
           isPlayoff: match.isPlayoff,
           playoffBracketId: match.playoffBracketId,
-          playoffSeriesId: match.playoffSeriesId
+          playoffSeriesId: match.playoffSeriesId,
+          playoffRoundId: match.playoffRoundId
         });
         return false;
       }
@@ -171,8 +180,60 @@ export class ClubStatsService {
     
     console.log('After defensive filter:', regularSeasonMatches.length, 'regular season matches (excluded', clubMatches.length - regularSeasonMatches.length, 'playoff games)');
     
+    // Determine which matches to use for processing
+    let matchesToProcess = regularSeasonMatches;
+    
+    // Debug: Log sample match to understand why they might be filtered out
+    if (regularSeasonMatches.length === 0 && clubMatches.length > 0) {
+      console.error('ERROR: All matches filtered out! Sample match:', {
+        id: clubMatches[0]?._id || clubMatches[0]?.id,
+        homeTeam: clubMatches[0]?.homeTeam,
+        awayTeam: clubMatches[0]?.awayTeam,
+        isPlayoff: clubMatches[0]?.isPlayoff,
+        playoffBracketId: clubMatches[0]?.playoffBracketId,
+        playoffSeriesId: clubMatches[0]?.playoffSeriesId,
+        playoffRoundId: clubMatches[0]?.playoffRoundId,
+        fullMatch: clubMatches[0]
+      });
+      // If all matches are filtered out, use the original clubMatches (component should have already filtered)
+      // This is a fallback to prevent empty stats
+      console.warn('WARNING: Using original clubMatches as fallback (component should have already filtered)');
+      matchesToProcess = clubMatches;
+      console.log('Using fallback matches:', matchesToProcess.length);
+    }
+    
     // Fetch all players to build global username-to-playerId map
-    const allPlayers = await firstValueFrom(this.apiService.getAllPlayers());
+    // Add timeout to prevent hanging on mobile
+    let allPlayers;
+    try {
+      const playersObservable = this.apiService.getAllPlayers();
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('getAllPlayers timeout after 10 seconds')), 10000)
+      );
+      
+      // Race between the observable and timeout
+      allPlayers = await Promise.race([
+        firstValueFrom(playersObservable),
+        timeoutPromise
+      ]) as any[];
+      
+      console.log('Successfully fetched all players for username mapping:', allPlayers?.length || 0);
+      
+      if (!allPlayers || allPlayers.length === 0) {
+        console.warn('WARNING: getAllPlayers returned empty array, continuing with empty username map');
+        allPlayers = [];
+      }
+    } catch (error) {
+      console.error('ERROR: Failed to fetch all players for username mapping:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      // Use empty array as fallback - stats will still be processed but without username aggregation
+      allPlayers = [];
+      console.warn('WARNING: Continuing without username mapping - stats may not be aggregated across usernames');
+    }
     
     // Build global username-to-playerId map from all players' usernames arrays
     const globalUsernameToPlayerId = new Map<string, string>();
@@ -241,7 +302,7 @@ export class ClubStatsService {
     // Use playerId instead of username to combine stats from multiple usernames
     const allPlayersWhoPlayed = new Set<string>(); // Store playerIds
     
-    regularSeasonMatches.forEach(match => {
+    matchesToProcess.forEach(match => {
       // Determine if the current club is home or away
       const isHomeTeam = match.homeClubId?._id === backendClub?._id || match.homeTeam === backendClub?.name;
       const isAwayTeam = match.awayClubId?._id === backendClub?._id || match.awayTeam === backendClub?.name;
@@ -681,8 +742,8 @@ export class ClubStatsService {
     console.log('Player stats map before processing matches:', Array.from(playerStatsMap.keys()));
 
     // Process matches to calculate stats
-    console.log('Processing', regularSeasonMatches.length, 'regular season matches for stats calculation (excluded', clubMatches.length - regularSeasonMatches.length, 'playoff games)');
-    regularSeasonMatches.forEach((match, index) => {
+    console.log('Processing', matchesToProcess.length, 'regular season matches for stats calculation (excluded', clubMatches.length - matchesToProcess.length, 'playoff games)');
+    matchesToProcess.forEach((match, index) => {
       console.log(`=== BEFORE MATCH ${index + 1} PROCESSING ===`);
       console.log('TeeKneeWeKnee stats before match:', playerStatsMap.get('TeeKneeWeKnee_skater'));
       console.log('AlxSkyes stats before match:', playerStatsMap.get('AlxSkyes_skater'));

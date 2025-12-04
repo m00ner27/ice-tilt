@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatchService, EashlMatch } from '../store/services/match.service';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, timeout, catchError, of } from 'rxjs';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
@@ -324,8 +324,25 @@ export class GoalieStatsComponent implements OnInit {
     console.log('🔍 AGGREGATE GOALIE STATS CALLED with', matches.length, 'matches');
     
     // Fetch all players to build username-to-playerId map
-    this.apiService.getAllPlayers().subscribe({
+    // Add timeout to prevent hanging on mobile (15 seconds)
+    this.apiService.getAllPlayers().pipe(
+      timeout(15000),
+      catchError((error) => {
+        console.error('Error or timeout fetching players for username mapping:', error);
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        console.warn('WARNING: Continuing without username mapping - stats may not be aggregated across usernames');
+        // Return empty array as fallback
+        return of([]);
+      })
+    ).subscribe({
       next: (allPlayers) => {
+        if (!allPlayers || allPlayers.length === 0) {
+          console.warn('WARNING: getAllPlayers returned empty array, continuing with empty username map');
+          allPlayers = [];
+        }
         // Build username-to-playerId map from all players' usernames arrays
         const usernameToPlayerId = new Map<string, string>();
         const playerIdToPrimaryUsername = new Map<string, string>();
@@ -1047,15 +1064,12 @@ export class GoalieStatsComponent implements OnInit {
       }, 500);
     },
     error: (error) => {
-      console.error('Error fetching players for username mapping:', error);
+      // This should rarely be called now since we're using catchError in the pipe
+      // But keep it as a safety net
+      console.error('Unexpected error in goalie stats subscription:', error);
       this.isLoading = false;
       this.cdr.markForCheck();
       this.cdr.detectChanges();
-      // Additional delayed change detection for mobile
-      setTimeout(() => {
-        this.cdr.markForCheck();
-        this.cdr.detectChanges();
-      }, 100);
     }
   });
   }
