@@ -810,6 +810,70 @@ export class ApiService {
     );
   }
 
+  // Add username to player
+  addPlayerUsername(playerId: string, username: string, platform: string): Observable<any> {
+    this.logger.log('ApiService: addPlayerUsername called for playerId:', playerId, 'username:', username);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post(`${this.apiUrl}/api/players/${playerId}/usernames`, { username, platform }, { headers });
+      })
+    );
+  }
+
+  // Remove username from player
+  removePlayerUsername(playerId: string, username: string): Observable<any> {
+    this.logger.log('ApiService: removePlayerUsername called for playerId:', playerId, 'username:', username);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete(`${this.apiUrl}/api/players/${playerId}/usernames?username=${encodeURIComponent(username)}`, { headers });
+      })
+    );
+  }
+
+  // Set primary username for player
+  setPrimaryPlayerUsername(playerId: string, username: string): Observable<any> {
+    this.logger.log('ApiService: setPrimaryPlayerUsername called for playerId:', playerId, 'username:', username);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put(`${this.apiUrl}/api/players/${playerId}/usernames/primary`, { username }, { headers });
+      })
+    );
+  }
+
+  // Restore/replace username for player
+  restorePlayerUsername(playerId: string, oldUsername: string, newUsername: string, platform: string): Observable<any> {
+    this.logger.log('ApiService: restorePlayerUsername called for playerId:', playerId, 'oldUsername:', oldUsername, 'newUsername:', newUsername);
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put(`${this.apiUrl}/api/players/${playerId}/usernames/restore`, { oldUsername, newUsername, platform }, { headers });
+      })
+    );
+  }
+
   // Add current user as admin (for testing)
   addMeAsAdmin(): Observable<any> {
     this.logger.log('ApiService: addMeAsAdmin called');
@@ -906,22 +970,26 @@ export class ApiService {
   }
 
   getPlayoffPlayerStats(bracketId?: string, seasonId?: string, clubId?: string): Observable<any> {
-    let url = `${this.apiUrl}/api/playoffs/stats/players?`;
+    let url = `${this.apiUrl}/api/playoffs/stats/players`;
     const params: string[] = [];
     if (bracketId) params.push(`bracketId=${bracketId}`);
     if (seasonId) params.push(`seasonId=${seasonId}`);
     if (clubId) params.push(`clubId=${clubId}`);
-    url += params.join('&');
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
     return this.http.get<any>(url);
   }
 
   getPlayoffGoalieStats(bracketId?: string, seasonId?: string, clubId?: string): Observable<any> {
-    let url = `${this.apiUrl}/api/playoffs/stats/goalies?`;
+    let url = `${this.apiUrl}/api/playoffs/stats/goalies`;
     const params: string[] = [];
     if (bracketId) params.push(`bracketId=${bracketId}`);
     if (seasonId) params.push(`seasonId=${seasonId}`);
     if (clubId) params.push(`clubId=${clubId}`);
-    url += params.join('&');
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
     return this.http.get<any>(url);
   }
 

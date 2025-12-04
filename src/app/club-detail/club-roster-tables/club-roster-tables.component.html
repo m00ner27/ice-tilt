@@ -11,13 +11,13 @@
       </thead>
       <tbody>
         <tr *ngFor="let player of signedPlayers" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
-          <td class="px-2 sm:px-4 py-2 sm:py-3 text-white">{{ player.gamertag || 'Unknown' }}</td>
+          <td class="px-2 sm:px-4 py-2 sm:py-3 text-white">{{ getPrimaryUsername(player) }}</td>
           <td class="px-2 sm:px-4 py-2 sm:py-3 text-white flex items-center gap-2">
-            <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
-            <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
-            {{ player.platform === 'PS5' ? 'PlayStation' : 'Xbox' }}
-            <span *ngIf="!player.platform || (player.platform !== 'PS5' && player.platform !== 'Xbox')" class="text-gray-400">
-              {{ player.platform || 'Unknown' }}
+            <img *ngIf="getPrimaryPlatform(player) === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
+            <img *ngIf="getPrimaryPlatform(player) === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+            {{ getPrimaryPlatform(player) === 'PS5' ? 'PlayStation' : 'Xbox' }}
+            <span *ngIf="getPrimaryPlatform(player) !== 'PS5' && getPrimaryPlatform(player) !== 'Xbox'" class="text-gray-400">
+              {{ getPrimaryPlatform(player) || 'Unknown' }}
             </span>
           </td>
         </tr>

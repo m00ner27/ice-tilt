@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -6,6 +6,7 @@ import { Observable, Subscription, combineLatest } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
+import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
@@ -124,7 +125,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
   ) {
     // Initialize selectors
     this.allMatches$ = this.store.select(MatchesSelectors.selectAllMatches);
@@ -353,7 +356,45 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   private aggregatePlayerStats(matches: any[], teamDivisionMap: Map<string, string>): void {
     console.log('Aggregating player stats for', matches.length, 'matches');
     
-    const statsMap = new Map<number, PlayerStats>();
+    // Fetch all players to build username-to-playerId map
+    this.apiService.getAllPlayers().subscribe({
+      next: (allPlayers) => {
+        // Build username-to-playerId map from all players' usernames arrays
+        const usernameToPlayerId = new Map<string, string>();
+        const playerIdToPrimaryUsername = new Map<string, string>();
+        
+        allPlayers.forEach((player: any) => {
+          const playerId = (player._id || player.id)?.toString();
+          if (!playerId) return;
+          
+          let usernames: string[] = [];
+          let primaryUsername = '';
+          
+          if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+            usernames = player.usernames.map((u: any) => {
+              const username = typeof u === 'string' ? u : (u?.username || '');
+              return username;
+            }).filter(Boolean);
+            primaryUsername = player.usernames.find((u: any) => u?.isPrimary)?.username || 
+                             (typeof player.usernames[0] === 'string' ? player.usernames[0] : player.usernames[0]?.username) || 
+                             '';
+          } else if (player.gamertag) {
+            usernames = [player.gamertag];
+            primaryUsername = player.gamertag;
+          }
+          
+          usernames.forEach(username => {
+            if (username) {
+              usernameToPlayerId.set(username.toLowerCase().trim(), playerId);
+            }
+          });
+          
+          if (primaryUsername) {
+            playerIdToPrimaryUsername.set(playerId, primaryUsername);
+          }
+        });
+        
+        const statsMap = new Map<string, PlayerStats>(); // Key by playerId string
     const teamLogoMap = new Map<string, string | undefined>();
 
     // Create a map of team names to their logos from all matches
@@ -363,13 +404,29 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     });
     
     matches.forEach(match => {
-      this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
+          this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap, usernameToPlayerId, playerIdToPrimaryUsername);
     });
     
     this.finalizePlayerStats(statsMap, teamDivisionMap);
+      },
+      error: (error) => {
+        console.error('Error fetching players for username mapping:', error);
+        // Fallback to old behavior if player fetch fails
+        const statsMap = new Map<string, PlayerStats>();
+        const teamLogoMap = new Map<string, string | undefined>();
+        matches.forEach(match => {
+          if (match.homeTeam) teamLogoMap.set(match.homeTeam, this.getImageUrl(match.homeClub?.logoUrl));
+          if (match.awayTeam) teamLogoMap.set(match.awayTeam, this.getImageUrl(match.awayClub?.logoUrl));
+        });
+        matches.forEach(match => {
+          this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap, new Map(), new Map());
+        });
+        this.finalizePlayerStats(statsMap, teamDivisionMap);
+      }
+    });
   }
   
-  private processMatchForPlayerStats(match: any, statsMap: Map<number, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): void {
+  private processMatchForPlayerStats(match: any, statsMap: Map<string, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>, usernameToPlayerId: Map<string, string>, playerIdToPrimaryUsername: Map<string, string>): void {
     // Skip if match has no relevant data
     if (!match.eashlData && !match.manualEntry) {
       return;
@@ -377,13 +434,13 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     
     // Check for manual entry first
     if (match.manualEntry) {
-      this.processManualPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
+      this.processManualPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap, usernameToPlayerId, playerIdToPrimaryUsername);
     } else if (match.eashlData?.players) {
-      this.processEashlPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap);
+      this.processEashlPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap, usernameToPlayerId, playerIdToPrimaryUsername);
     }
   }
   
-  private processManualPlayerStats(match: any, statsMap: Map<number, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): void {
+  private processManualPlayerStats(match: any, statsMap: Map<string, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>, usernameToPlayerId: Map<string, string>, playerIdToPrimaryUsername: Map<string, string>): void {
     if (match.playerStats && match.playerStats.length > 0) {
       match.playerStats.forEach((playerData: any) => {
         if (!playerData.position || this.isGoalie(playerData.position)) {
@@ -393,21 +450,16 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
         const teamName = playerData.team || 'Unknown';
         const playerName = playerData.name || 'Unknown';
         
-        // Try to find existing player by name first, then by ID
-        let existingKey = null;
-        for (const [key, stats] of Array.from(statsMap.entries())) {
-          if (stats.name === playerName) {
-            existingKey = key;
-            break;
-          }
-        }
+        // Find playerId by matching username
+        const normalizedName = playerName.toLowerCase().trim();
+        const playerId = usernameToPlayerId.get(normalizedName) || playerName; // Fallback to name if not found
+        const primaryUsername = playerIdToPrimaryUsername.get(playerId) || playerName;
         
-        const playerKey = existingKey || playerName;
-        let existingStats = statsMap.get(playerKey);
+        let existingStats = statsMap.get(playerId);
 
         if (!existingStats) {
-          existingStats = this.createNewPlayerStats(playerKey, playerName, teamName, teamLogoMap, teamDivisionMap);
-          statsMap.set(playerKey, existingStats);
+          existingStats = this.createNewPlayerStats(playerId, primaryUsername, teamName, teamLogoMap, teamDivisionMap);
+          statsMap.set(playerId, existingStats);
         }
 
         this.updatePlayerStats(existingStats, playerData);
@@ -415,7 +467,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     }
   }
   
-  private processEashlPlayerStats(match: any, statsMap: Map<number, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): void {
+  private processEashlPlayerStats(match: any, statsMap: Map<string, PlayerStats>, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>, usernameToPlayerId: Map<string, string>, playerIdToPrimaryUsername: Map<string, string>): void {
     // Get the two teams from the match
     const homeTeam = match.homeClub?.name || match.homeTeam || 'Unknown';
     const awayTeam = match.awayClub?.name || match.awayTeam || 'Unknown';
@@ -444,17 +496,22 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
             return; // Skip goalies
           }
 
-          const playerName = playerData.playername || 'Unknown';
-          const playerIdNum = parseInt(playerId);
-          let existingStats = statsMap.get(playerIdNum);
+          const playerName = playerData.playername || playerData.name || 'Unknown';
+          
+          // Find playerId by matching username
+          const normalizedName = playerName.toLowerCase().trim();
+          const dbPlayerId = usernameToPlayerId.get(normalizedName) || playerId; // Use EASHL playerId as fallback
+          const primaryUsername = playerIdToPrimaryUsername.get(dbPlayerId) || playerName;
+          
+          let existingStats = statsMap.get(dbPlayerId);
 
           if (!existingStats) {
-            existingStats = this.createNewPlayerStats(playerIdNum, playerName, assignedTeam, teamLogoMap, teamDivisionMap);
-            statsMap.set(playerIdNum, existingStats);
+            existingStats = this.createNewPlayerStats(dbPlayerId, primaryUsername, assignedTeam, teamLogoMap, teamDivisionMap);
+            statsMap.set(dbPlayerId, existingStats);
             
             // Debug logging for division assignment
             const assignedDivision = teamDivisionMap.get(assignedTeam) || 'Unknown';
-            console.log(`Player ${playerName} from team ${assignedTeam} assigned to division: ${assignedDivision}`);
+            console.log(`Player ${primaryUsername} from team ${assignedTeam} assigned to division: ${assignedDivision}`);
           }
 
           this.updatePlayerStatsFromEashl(existingStats, playerData);
@@ -498,7 +555,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   
   private createNewPlayerStats(playerKey: any, name: string, teamName: string, teamLogoMap: Map<string, string | undefined>, teamDivisionMap: Map<string, string>): PlayerStats {
     return {
-      playerId: playerKey,
+      playerId: parseInt(playerKey) || 0,
       name: name,
       team: teamName,
       teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
@@ -585,7 +642,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       existingStats.interceptions = (existingStats.interceptions ?? 0) + (parseInt(playerData.skint) || parseInt(playerData.skinterceptions) || 0);
   }
   
-  private finalizePlayerStats(statsMap: Map<number, PlayerStats>, teamDivisionMap: Map<string, string>): void {
+  private finalizePlayerStats(statsMap: Map<string, PlayerStats>, teamDivisionMap: Map<string, string>): void {
     console.log('Finalizing player stats for', statsMap.size, 'players');
     
     // Calculate percentages and ensure points are calculated correctly for all players

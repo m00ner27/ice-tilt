@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatchService, EashlMatch } from '../store/services/match.service';
 import { RouterModule } from '@angular/router';
@@ -89,7 +89,8 @@ export class GoalieStatsComponent implements OnInit {
   constructor(
     private matchService: MatchService,
     private apiService: ApiService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private cdr: ChangeDetectorRef
   ) { }
   
   ngOnInit(): void {
@@ -319,7 +320,46 @@ export class GoalieStatsComponent implements OnInit {
   
   aggregateGoalieStats(matches: EashlMatch[], teamDivisionMap: Map<string, string>): void {
     console.log('🔍 AGGREGATE GOALIE STATS CALLED with', matches.length, 'matches');
-    const statsMap = new Map<string, GoalieStats>();
+    
+    // Fetch all players to build username-to-playerId map
+    this.apiService.getAllPlayers().subscribe({
+      next: (allPlayers) => {
+        // Build username-to-playerId map from all players' usernames arrays
+        const usernameToPlayerId = new Map<string, string>();
+        const playerIdToPrimaryUsername = new Map<string, string>();
+        
+        allPlayers.forEach((player: any) => {
+          const playerId = (player._id || player.id)?.toString();
+          if (!playerId) return;
+          
+          let usernames: string[] = [];
+          let primaryUsername = '';
+          
+          if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+            usernames = player.usernames.map((u: any) => {
+              const username = typeof u === 'string' ? u : (u?.username || '');
+              return username;
+            }).filter(Boolean);
+            primaryUsername = player.usernames.find((u: any) => u?.isPrimary)?.username || 
+                             (typeof player.usernames[0] === 'string' ? player.usernames[0] : player.usernames[0]?.username) || 
+                             '';
+          } else if (player.gamertag) {
+            usernames = [player.gamertag];
+            primaryUsername = player.gamertag;
+          }
+          
+          usernames.forEach(username => {
+            if (username) {
+              usernameToPlayerId.set(username.toLowerCase().trim(), playerId);
+            }
+          });
+          
+          if (primaryUsername) {
+            playerIdToPrimaryUsername.set(playerId, primaryUsername);
+          }
+        });
+        
+        const statsMap = new Map<string, GoalieStats>(); // Key by playerId string
     const teamLogoMap = new Map<string, string | undefined>();
 
     console.log('Processing matches for goalie stats:', matches.length);
@@ -367,14 +407,19 @@ export class GoalieStatsComponent implements OnInit {
             console.log('Home goalie team name:', teamName, 'Season teams:', Array.from(allTeams));
             console.log('Match homeTeam:', match.homeTeam, 'Match awayTeam:', match.awayTeam);
             
-            // Use a combination of name and team for unique identification since playerId might be 0
-            const playerKey = `${player.gamertag}_${teamName}`;
+            // Find playerId by matching username
+            const normalizedName = player.gamertag?.toLowerCase().trim();
+            const playerId = normalizedName ? (usernameToPlayerId.get(normalizedName) || player.gamertag) : player.gamertag;
+            const primaryUsername = playerIdToPrimaryUsername.get(playerId) || player.gamertag;
+            
+            // Use playerId as key to combine stats from multiple usernames
+            const playerKey = playerId;
             let existingStats = statsMap.get(playerKey);
             
             if (!existingStats) {
               existingStats = {
-                playerId: parseInt(player.playerId) || 0,
-                name: player.gamertag,
+                playerId: parseInt(playerId) || 0,
+                name: primaryUsername,
                 team: teamName,
                 teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
                 number: parseInt(player.number) || 0,
@@ -429,14 +474,19 @@ export class GoalieStatsComponent implements OnInit {
             console.log('Away goalie team name:', teamName, 'Season teams:', Array.from(allTeams));
             console.log('Match homeTeam:', match.homeTeam, 'Match awayTeam:', match.awayTeam);
             
-            // Use a combination of name and team for unique identification since playerId might be 0
-            const playerKey = `${player.gamertag}_${teamName}`;
+            // Find playerId by matching username
+            const normalizedName = player.gamertag?.toLowerCase().trim();
+            const playerId = normalizedName ? (usernameToPlayerId.get(normalizedName) || player.gamertag) : player.gamertag;
+            const primaryUsername = playerIdToPrimaryUsername.get(playerId) || player.gamertag;
+            
+            // Use playerId as key to combine stats from multiple usernames
+            const playerKey = playerId;
             let existingStats = statsMap.get(playerKey);
             
             if (!existingStats) {
               existingStats = {
-                playerId: parseInt(player.playerId) || 0,
-                name: player.gamertag,
+                playerId: parseInt(playerId) || 0,
+                name: primaryUsername,
                 team: teamName,
                 teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
                 number: parseInt(player.number) || 0,
@@ -590,6 +640,8 @@ export class GoalieStatsComponent implements OnInit {
       
       this.applyDivisionFilter();
       console.log('All Seasons combined stats:', this.groupedStats[0].stats.length, 'goalies');
+        this.isLoading = false;
+        this.cdr.detectChanges();
       return;
     }
     
@@ -850,14 +902,21 @@ export class GoalieStatsComponent implements OnInit {
                 return; // Skip non-goalies or players without position
               }
 
-              const playerIdNum = parseInt(playerId);
-              const playerKey = `${playerData.playername || 'Unknown'}_${teamName}`;
+              const playerName = playerData.playername || playerData.name || 'Unknown';
+              
+              // Find playerId by matching username
+              const normalizedName = playerName.toLowerCase().trim();
+              const dbPlayerId = usernameToPlayerId.get(normalizedName) || playerId; // Use EASHL playerId as fallback
+              const primaryUsername = playerIdToPrimaryUsername.get(dbPlayerId) || playerName;
+              
+              // Use playerId as key to combine stats from multiple usernames
+              const playerKey = dbPlayerId;
               let existingStats = statsMap.get(playerKey);
 
               if (!existingStats) {
                 existingStats = {
-                  playerId: playerIdNum,
-                  name: playerData.playername || 'Unknown',
+                  playerId: parseInt(dbPlayerId) || 0,
+                  name: primaryUsername,
                   team: teamName,
                   teamLogo: teamLogoMap.get(teamName) || 'assets/images/1ithlwords.png',
                   number: parseInt(playerData.jerseynum) || 0,
@@ -944,6 +1003,15 @@ export class GoalieStatsComponent implements OnInit {
     this.applyDivisionFilter();
     console.log('Grouped by division:', this.groupedStats.length, 'groups');
     console.log('Division breakdown:', this.groupedStats.map(g => ({ division: g.division, goalies: g.stats.length })));
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    },
+    error: (error) => {
+      console.error('Error fetching players for username mapping:', error);
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
+  });
   }
 
   applyDivisionFilter(): void {

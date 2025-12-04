@@ -30,6 +30,12 @@ export class PlayersComponent implements OnInit, OnDestroy {
   currentPage: number = 1;
   itemsPerPage: number = 12; // Show 12 players per page (4 rows of 3)
   
+  // Username management
+  selectedPlayerForUsernames: any = null;
+  newUsername: string = '';
+  newPlatform: 'PS5' | 'Xbox' = 'PS5';
+  showUsernameModal: boolean = false;
+  
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -217,17 +223,26 @@ export class PlayersComponent implements OnInit, OnDestroy {
         const psnId = (player.psnId || '').toLowerCase();
         const xboxGamertag = (player.xboxGamertag || '').toLowerCase();
         
+        // Also search in usernames array
+        let matchesUsername = false;
+        if (player.usernames && Array.isArray(player.usernames)) {
+          matchesUsername = player.usernames.some((u: any) => 
+            (u.username || '').toLowerCase().includes(searchLower)
+          );
+        }
+        
         return gamertag.includes(searchLower) || 
                psnId.includes(searchLower) || 
-               xboxGamertag.includes(searchLower);
+               xboxGamertag.includes(searchLower) ||
+               matchesUsername;
       });
     }
     
     // Apply sorting
     if (this.sortBy === 'name') {
       filtered.sort((a, b) => {
-        const nameA = a.gamertag || '';
-        const nameB = b.gamertag || '';
+        const nameA = this.getPrimaryUsername(a);
+        const nameB = this.getPrimaryUsername(b);
         return this.sortOrder === 'asc' 
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA);
@@ -292,5 +307,141 @@ export class PlayersComponent implements OnInit, OnDestroy {
   getEndIndex(): number {
     const filtered = this.getFilteredPlayers();
     return Math.min(this.getStartIndex() + this.itemsPerPage, filtered.length);
+  }
+
+  // Username management methods
+  openManageUsernamesModal(player: any) {
+    this.selectedPlayerForUsernames = player;
+    this.newUsername = '';
+    this.newPlatform = 'PS5';
+    this.showUsernameModal = true;
+  }
+
+  closeManageUsernamesModal() {
+    this.showUsernameModal = false;
+    this.selectedPlayerForUsernames = null;
+    this.newUsername = '';
+  }
+
+  addUsername() {
+    if (!this.selectedPlayerForUsernames || !this.newUsername.trim()) {
+      return;
+    }
+
+    this.apiService.addPlayerUsername(
+      this.selectedPlayerForUsernames._id,
+      this.newUsername.trim(),
+      this.newPlatform
+    ).subscribe({
+      next: (updatedPlayer) => {
+        // Update the player in the local array
+        const index = this.players.findIndex(p => p._id === updatedPlayer._id);
+        if (index !== -1) {
+          this.players[index] = updatedPlayer;
+        }
+        this.newUsername = '';
+        this.loadPlayers(); // Reload to get fresh data
+      },
+      error: (error) => {
+        console.error('Error adding username:', error);
+        this.error = error.error?.message || 'Failed to add username';
+      }
+    });
+  }
+
+  removeUsername(username: string) {
+    if (!this.selectedPlayerForUsernames) {
+      return;
+    }
+
+    if (this.selectedPlayerForUsernames.usernames && this.selectedPlayerForUsernames.usernames.length <= 1) {
+      this.error = 'Cannot remove the last username';
+      return;
+    }
+
+    if (confirm(`Are you sure you want to remove username "${username}"?`)) {
+      this.apiService.removePlayerUsername(
+        this.selectedPlayerForUsernames._id,
+        username
+      ).subscribe({
+        next: (updatedPlayer) => {
+          // Update the player in the local array
+          const index = this.players.findIndex(p => p._id === updatedPlayer._id);
+          if (index !== -1) {
+            this.players[index] = updatedPlayer;
+          }
+          this.selectedPlayerForUsernames = updatedPlayer;
+          this.loadPlayers(); // Reload to get fresh data
+        },
+        error: (error) => {
+          console.error('Error removing username:', error);
+          this.error = error.error?.message || 'Failed to remove username';
+        }
+      });
+    }
+  }
+
+  setPrimaryUsername(username: string) {
+    if (!this.selectedPlayerForUsernames) {
+      return;
+    }
+
+    this.apiService.setPrimaryPlayerUsername(
+      this.selectedPlayerForUsernames._id,
+      username
+    ).subscribe({
+      next: (updatedPlayer) => {
+        // Update the player in the local array
+        const index = this.players.findIndex(p => p._id === updatedPlayer._id);
+        if (index !== -1) {
+          this.players[index] = updatedPlayer;
+        }
+        this.selectedPlayerForUsernames = updatedPlayer;
+        this.loadPlayers(); // Reload to get fresh data
+      },
+      error: (error) => {
+        console.error('Error setting primary username:', error);
+        this.error = error.error?.message || 'Failed to set primary username';
+      }
+    });
+  }
+
+  getPrimaryUsername(player: any): string {
+    if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+      const primary = player.usernames.find((u: any) => u.isPrimary);
+      return primary?.username || player.usernames[0]?.username || player.gamertag || 'Unknown';
+    }
+    return player.gamertag || 'Unknown';
+  }
+
+  // Helper method to restore a username (remove old, add new as primary)
+  restoreUsername(oldUsername: string, newUsername: string, platform: 'PS5' | 'Xbox' = 'PS5') {
+    if (!this.selectedPlayerForUsernames) {
+      return;
+    }
+
+    if (confirm(`Replace "${oldUsername}" with "${newUsername}" as the primary username?`)) {
+      this.apiService.restorePlayerUsername(
+        this.selectedPlayerForUsernames._id,
+        oldUsername,
+        newUsername,
+        platform
+      ).subscribe({
+        next: (updatedPlayer) => {
+          // Update the player in the local array
+          const index = this.players.findIndex(p => p._id === updatedPlayer._id);
+          if (index !== -1) {
+            this.players[index] = updatedPlayer;
+          }
+          this.selectedPlayerForUsernames = updatedPlayer;
+          this.loadPlayers(); // Reload to get fresh data
+          this.error = null;
+        },
+        error: (error) => {
+          console.error('Error restoring username:', error);
+          this.error = error.error?.message || 'Failed to restore username';
+        }
+      });
+    }
   }
 }

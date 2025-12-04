@@ -602,7 +602,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     }
   }
 
-  private processPlayerStatsFromMatches(roster: any[]) {
+  private async processPlayerStatsFromMatches(roster: any[]) {
         console.log('=== CLUB DETAIL DEBUG ===');
     console.log('Processing player stats from matches for club:', this.backendClub?.name);
     console.log('Club matches available:', this.clubMatches.length);
@@ -618,8 +618,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         this.goalieStats = [];
         this.cdr.detectChanges();
         
-        // Use the service to process stats
-        const { skaterStats, goalieStats } = this.clubStatsService.processPlayerStatsFromMatches(
+        try {
+          // Use the service to process stats (now async)
+          const { skaterStats, goalieStats } = await this.clubStatsService.processPlayerStatsFromMatches(
           this.clubMatches,
           roster,
           this.backendClub
@@ -645,9 +646,15 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         });
         console.log('=== END CLUB DETAIL COMPONENT - GOALIE STATS ===');
         this.cdr.detectChanges();
+        } catch (error) {
+          console.error('Error processing player stats:', error);
+          this.skaterStats = [];
+          this.goalieStats = [];
+          this.cdr.detectChanges();
+        }
       }
 
-  private processPlayoffStatsFromMatches(roster: any[]) {
+  private async processPlayoffStatsFromMatches(roster: any[]) {
     console.log('=== CLUB DETAIL PLAYOFF STATS DEBUG ===');
     console.log('Processing playoff player stats from matches for club:', this.backendClub?.name);
     console.log('Playoff club matches available:', this.playoffClubMatches.length);
@@ -665,8 +672,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Use the service to process playoff stats
-    const { skaterStats, goalieStats } = this.clubStatsService.processPlayerStatsFromMatches(
+    try {
+      // Use the service to process playoff stats (now async)
+      const { skaterStats, goalieStats } = await this.clubStatsService.processPlayerStatsFromMatches(
       this.playoffClubMatches,
       roster,
       this.backendClub
@@ -688,6 +696,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     });
     console.log('=== END CLUB DETAIL COMPONENT - PLAYOFF GOALIE STATS ===');
     this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error processing playoff stats:', error);
+      this.playoffSkaterStats = [];
+      this.playoffGoalieStats = [];
+      this.cdr.detectChanges();
+    }
   }
 
   getImageUrl(logoUrl: string | undefined): string {

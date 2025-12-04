@@ -69,4 +69,20 @@ export class ClubRosterTablesComponent {
   @Input() skaterStats: SkaterStats[] = [];
   @Input() goalieStats: GoalieStats[] = [];
   @Input() selectedSeasonId: string | null = null;
+
+  getPrimaryUsername(player: Player): string {
+    if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+      const primary = player.usernames.find(u => u.isPrimary);
+      return primary?.username || player.usernames[0]?.username || player.gamertag || 'Unknown';
+    }
+    return player.gamertag || 'Unknown';
+  }
+
+  getPrimaryPlatform(player: Player): string {
+    if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+      const primary = player.usernames.find(u => u.isPrimary);
+      return primary?.platform || player.usernames[0]?.platform || player.platform || 'PS5';
+    }
+    return player.platform || 'PS5';
+  }
 }

@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { ApiService } from '../../store/services/api.service';
+import { firstValueFrom } from 'rxjs';
 
 export interface SkaterStats {
   playerId: number;
@@ -62,6 +64,56 @@ export interface GoalieStats {
   providedIn: 'root'
 })
 export class ClubStatsService {
+  constructor(private apiService: ApiService) {}
+
+  /**
+   * Build username-to-playerId map from roster
+   * Maps all usernames (from usernames array and gamertag) to playerId and primary username
+   */
+  private buildRosterUsernameMap(roster: any[]): Map<string, { playerId: string, primaryUsername: string, allUsernames: string[] }> {
+    const map = new Map<string, { playerId: string, primaryUsername: string, allUsernames: string[] }>();
+    
+    roster.forEach((player) => {
+      const playerId = player._id || player.id;
+      if (!playerId) return;
+      
+      let usernames: string[] = [];
+      let primaryUsername = '';
+      
+      // Always include the gamertag for backward compatibility
+      if (player.gamertag) {
+        usernames.push(player.gamertag);
+        primaryUsername = player.gamertag; // Default primary to gamertag if not found in usernames array
+      }
+
+      if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+        player.usernames.forEach((u: any) => {
+          const username = typeof u === 'string' ? u : (u?.username || '');
+          if (username && !usernames.includes(username)) { // Avoid duplicates if gamertag is also in usernames
+            usernames.push(username);
+          }
+          if (u?.isPrimary) {
+            primaryUsername = username;
+          }
+        });
+      }
+      
+      // Ensure a primary username is set if one wasn't explicitly marked
+      if (!primaryUsername && usernames.length > 0) {
+        primaryUsername = usernames[0];
+      }
+
+      // Map each username to the player info
+      usernames.forEach(username => {
+        if (username) {
+          const normalizedUsername = username.toLowerCase().trim();
+          map.set(normalizedUsername, { playerId: playerId.toString(), primaryUsername, allUsernames: usernames });
+        }
+      });
+    });
+    
+    return map;
+  }
 
   private findPlayerInEashlData(eashlData: any, playerName: string, clubName: string): any {
     if (!eashlData || !eashlData.players) return null;
@@ -86,11 +138,11 @@ export class ClubStatsService {
   /**
    * Process player stats from matches for a club
    */
-  processPlayerStatsFromMatches(
+  async processPlayerStatsFromMatches(
     clubMatches: any[],
     roster: any[],
     backendClub: any
-  ): { skaterStats: SkaterStats[], goalieStats: GoalieStats[] } {
+  ): Promise<{ skaterStats: SkaterStats[], goalieStats: GoalieStats[] }> {
     console.log('=== CLUB STATS SERVICE DEBUG ===');
     console.log('Processing player stats from matches for club:', backendClub?.name);
     console.log('Club matches available:', clubMatches.length);
@@ -119,8 +171,75 @@ export class ClubStatsService {
     
     console.log('After defensive filter:', regularSeasonMatches.length, 'regular season matches (excluded', clubMatches.length - regularSeasonMatches.length, 'playoff games)');
     
+    // Fetch all players to build global username-to-playerId map
+    const allPlayers = await firstValueFrom(this.apiService.getAllPlayers());
+    
+    // Build global username-to-playerId map from all players' usernames arrays
+    const globalUsernameToPlayerId = new Map<string, string>();
+    const globalPlayerIdToPrimaryUsername = new Map<string, string>();
+    
+    allPlayers.forEach((player: any) => {
+      const playerId = (player._id || player.id)?.toString();
+      if (!playerId) return;
+      
+      let usernames: string[] = [];
+      let primaryUsername = '';
+      
+      // Always include gamertag for backward compatibility
+      if (player.gamertag) {
+        usernames.push(player.gamertag);
+        primaryUsername = player.gamertag; // Default primary to gamertag
+      }
+      
+      if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+        player.usernames.forEach((u: any) => {
+          const username = typeof u === 'string' ? u : (u?.username || '');
+          if (username && !usernames.includes(username)) {
+            usernames.push(username);
+          }
+          if (u?.isPrimary) {
+            primaryUsername = username;
+          }
+        });
+      }
+      
+      // Ensure a primary username is set
+      if (!primaryUsername && usernames.length > 0) {
+        primaryUsername = usernames[0];
+      }
+      
+      // Map each username to playerId
+      usernames.forEach(username => {
+        if (username) {
+          globalUsernameToPlayerId.set(username.toLowerCase().trim(), playerId);
+        }
+      });
+      
+      if (primaryUsername) {
+        globalPlayerIdToPrimaryUsername.set(playerId, primaryUsername);
+      }
+    });
+    
+    console.log('Global username map size:', globalUsernameToPlayerId.size);
+    console.log('Global playerId to primary username map size:', globalPlayerIdToPrimaryUsername.size);
+    
+    // Debug: Check if Arthuukin and H0nsk1_ are mapped correctly
+    const arthuukinPlayerId = globalUsernameToPlayerId.get('arthuukin');
+    const h0nsk1PlayerId = globalUsernameToPlayerId.get('h0nsk1_');
+    console.log('DEBUG: arthuukin -> playerId:', arthuukinPlayerId);
+    console.log('DEBUG: h0nsk1_ -> playerId:', h0nsk1PlayerId);
+    if (arthuukinPlayerId && h0nsk1PlayerId) {
+      console.log('DEBUG: Same playerId?', arthuukinPlayerId === h0nsk1PlayerId);
+      console.log('DEBUG: Primary username for this playerId:', globalPlayerIdToPrimaryUsername.get(arthuukinPlayerId));
+    }
+    
+    // Build username-to-playerId map from roster (for signed status and roster lookup)
+    const rosterUsernameMap = this.buildRosterUsernameMap(roster);
+    console.log('Roster username map:', Array.from(rosterUsernameMap.entries()).map(([key, value]) => `${key} -> ${value.playerId} (primary: ${value.primaryUsername})`));
+    
     // First, collect all players who played for this team from match data (including unsigned ones)
-    const allPlayersWhoPlayed = new Set<string>();
+    // Use playerId instead of username to combine stats from multiple usernames
+    const allPlayersWhoPlayed = new Set<string>(); // Store playerIds
     
     regularSeasonMatches.forEach(match => {
       // Determine if the current club is home or away
@@ -136,8 +255,24 @@ export class ClubStatsService {
         });
         ourPlayers.forEach((playerData: any) => {
           if (playerData && playerData.name) {
-            console.log('Adding manual player to collection:', playerData.name);
+            // Find playerId by matching username - use global map first
+            const normalizedName = playerData.name.toLowerCase().trim();
+            const playerId = globalUsernameToPlayerId.get(normalizedName);
+            if (playerId) {
+              console.log('Adding manual player to collection:', playerData.name, '-> playerId:', playerId);
+              allPlayersWhoPlayed.add(playerId);
+            } else {
+              // Fallback to roster map if not in global map
+              const playerInfo = rosterUsernameMap.get(normalizedName);
+              if (playerInfo) {
+                console.log('Adding manual player to collection (from roster):', playerData.name, '-> playerId:', playerInfo.playerId);
+                allPlayersWhoPlayed.add(playerInfo.playerId);
+              } else {
+                // If not found anywhere, use name as fallback (unsigned player)
+                console.log('Adding manual player to collection (not found):', playerData.name);
             allPlayersWhoPlayed.add(playerData.name);
+              }
+            }
           }
         });
       } else if (match.eashlData?.players) {
@@ -199,10 +334,12 @@ export class ClubStatsService {
             continue;
           }
           
-          // Check if any player in this team is on our roster (case-insensitive)
-          const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
-          );
+          // Check if any player in this team is on our roster (case-insensitive, check all usernames)
+          const teamContainsRosterPlayer = teamPlayers.some((player: any) => {
+            const playerName = player.name?.toLowerCase().trim();
+            if (!playerName) return false;
+            return rosterUsernameMap.has(playerName);
+          });
           console.log(`Team ${teamKey} contains roster player:`, teamContainsRosterPlayer);
           if (teamContainsRosterPlayer) {
             ourTeamKey = teamKey;
@@ -284,17 +421,35 @@ export class ClubStatsService {
           }
           
           console.log('Team players:', teamPlayers.map((p: any) => p.name));
-          const teamContainsRosterPlayer = teamPlayers.some((player: any) => 
-            roster.some(rosterPlayer => rosterPlayer.gamertag?.toLowerCase() === player.name?.toLowerCase())
-          );
+          const teamContainsRosterPlayer = teamPlayers.some((player: any) => {
+            const playerName = player.name?.toLowerCase().trim();
+            if (!playerName) return false;
+            return rosterUsernameMap.has(playerName);
+          });
           console.log('Team', ourTeamKey, 'contains roster players:', teamContainsRosterPlayer);
           console.log('Roster players:', roster.map(p => p.gamertag).join(', '));
           console.log('Team players:', teamPlayers.map((p: any) => p.name).join(', '));
 
           teamPlayers.forEach((playerData: any) => {
             if (playerData && playerData.name) {
-              console.log('Adding EASHL player to collection:', {name: playerData.name, team: playerData.team, clubname: playerData.clubname, ishome: playerData.ishome});
+              // Find playerId by matching username - use global map first
+              const normalizedName = playerData.name.toLowerCase().trim();
+              const playerId = globalUsernameToPlayerId.get(normalizedName);
+              if (playerId) {
+                console.log('Adding EASHL player to collection:', playerData.name, '-> playerId:', playerId);
+                allPlayersWhoPlayed.add(playerId);
+              } else {
+                // Fallback to roster map if not in global map
+                const playerInfo = rosterUsernameMap.get(normalizedName);
+                if (playerInfo) {
+                  console.log('Adding EASHL player to collection (from roster):', playerData.name, '-> playerId:', playerInfo.playerId);
+                  allPlayersWhoPlayed.add(playerInfo.playerId);
+                } else {
+                  // If not found anywhere, use name as fallback (unsigned player)
+                  console.log('Adding EASHL player to collection (not found):', playerData.name);
               allPlayersWhoPlayed.add(playerData.name);
+                }
+              }
             }
           });
         } else {
@@ -303,20 +458,110 @@ export class ClubStatsService {
       }
     });
 
-    // Create a set of roster player names for quick lookup (case-insensitive)
-    const rosterPlayerNames = new Set(roster.map(p => p.gamertag?.toLowerCase()).filter(Boolean));
-    console.log('Roster player names for stats processing:', Array.from(rosterPlayerNames));
+    // Create a set of roster playerIds for quick lookup
+    const rosterPlayerIds = new Set(roster.map(p => {
+      const id = (p._id || p.id)?.toString();
+      return id;
+    }).filter(Boolean));
+    console.log('Roster player IDs for stats processing:', Array.from(rosterPlayerIds));
+    
+    // Debug: Check if Arthuukin/H0nsk1_ playerId is in roster
+    if (arthuukinPlayerId || h0nsk1PlayerId) {
+      const playerIdToCheck = arthuukinPlayerId || h0nsk1PlayerId;
+      console.log('DEBUG: Is playerId in roster?', rosterPlayerIds.has(playerIdToCheck));
+      console.log('DEBUG: Roster contains playerId?', Array.from(rosterPlayerIds).includes(playerIdToCheck));
+    }
+    
+    // Create a set of roster player names (primary usernames) for quick lookup
+    const rosterPlayerNames = new Set<string>();
+    roster.forEach(p => {
+      let primaryUsername = '';
+      if (p.usernames && Array.isArray(p.usernames) && p.usernames.length > 0) {
+        const primary = p.usernames.find((u: any) => u?.isPrimary);
+        primaryUsername = primary?.username || p.usernames[0]?.username || '';
+      } else if (p.gamertag) {
+        primaryUsername = p.gamertag;
+      }
+      if (primaryUsername) {
+        rosterPlayerNames.add(primaryUsername.toLowerCase());
+      }
+    });
 
     // Initialize player stats map with all players who played for this club
+    // Key by playerId to combine stats from multiple usernames
     const initialPlayerStatsMap = new Map<string, any>();
-    allPlayersWhoPlayed.forEach(playerName => {
-      const player = roster.find(p => p.gamertag === playerName); // Find roster player to get _id/id and number
-      const playerId = player?._id || player?.id || playerName; // Use roster ID if available, otherwise name
-      const playerNumber = player?.number || 0;
+    allPlayersWhoPlayed.forEach(playerIdOrName => {
+      // Get primary username from global map (playerIdOrName should be a playerId if found in global map)
+      let primaryUsername = globalPlayerIdToPrimaryUsername.get(playerIdOrName) || playerIdOrName;
+      let player: any = null;
+      let playerNumber = 0;
+      
+      // Try to find by ID first (playerIdOrName is a playerId if it came from global map)
+      player = roster.find(p => (p._id || p.id)?.toString() === playerIdOrName);
+      
+      // If not found by ID, it might be a name (unsigned player)
+      if (!player && !globalPlayerIdToPrimaryUsername.has(playerIdOrName)) {
+        // This is likely an unsigned player name, try to find in roster by username
+        const playerInfo = Array.from(rosterUsernameMap.entries()).find(([username, info]) => 
+          info.playerId === playerIdOrName
+        );
+        if (playerInfo) {
+          const playerInfoValue = playerInfo[1];
+          player = roster.find(p => (p._id || p.id)?.toString() === playerInfoValue.playerId);
+          primaryUsername = playerInfoValue.primaryUsername;
+        } else {
+          // Fallback: try to find by gamertag match
+          player = roster.find(p => {
+            const normalizedGamertag = p.gamertag?.toLowerCase().trim();
+            return normalizedGamertag === playerIdOrName.toLowerCase().trim();
+          });
+          if (player) {
+            const playerInfo = rosterUsernameMap.get(playerIdOrName.toLowerCase().trim());
+            primaryUsername = playerInfo?.primaryUsername || player.gamertag || playerIdOrName;
+          }
+        }
+      } else if (player) {
+        // Found by ID, get primary username from global map first, then roster
+        const playerIdStr = (player._id || player.id)?.toString();
+        primaryUsername = globalPlayerIdToPrimaryUsername.get(playerIdStr) || primaryUsername;
+        if (!primaryUsername || primaryUsername === playerIdOrName) {
+          // Fallback to roster map or player data
+          const playerInfo = Array.from(rosterUsernameMap.values()).find(info => info.playerId === playerIdStr);
+          if (playerInfo) {
+            primaryUsername = playerInfo.primaryUsername;
+          } else if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+            const primary = player.usernames.find((u: any) => u.isPrimary);
+            primaryUsername = primary?.username || player.usernames[0]?.username || player.gamertag || playerIdOrName;
+          } else {
+            primaryUsername = player.gamertag || playerIdOrName;
+          }
+        }
+      }
+      
+      // Use playerIdOrName as playerId if it's already a playerId, otherwise use player's ID or fallback to name
+      let finalPlayerId: string;
+      if (globalPlayerIdToPrimaryUsername.has(playerIdOrName)) {
+        // playerIdOrName is already a playerId from the global map
+        finalPlayerId = playerIdOrName;
+      } else if (player) {
+        // Found player in roster, use their ID
+        const playerIdValue = player._id || player.id;
+        finalPlayerId = playerIdValue ? String(playerIdValue) : playerIdOrName;
+      } else {
+        // Fallback to playerIdOrName (might be a name for unsigned player)
+        finalPlayerId = String(playerIdOrName);
+      }
+      const playerId: string = finalPlayerId;
+      playerNumber = player?.number || 0;
+      
+      // Debug logging for Arthuukin/H0nsk1_
+      if (playerIdOrName && (String(playerIdOrName).toLowerCase().includes('arthuukin') || String(playerIdOrName).toLowerCase().includes('h0nsk1'))) {
+        console.log('DEBUG INIT: playerIdOrName:', playerIdOrName, 'finalPlayerId:', finalPlayerId, 'isInRoster:', rosterPlayerIds.has(finalPlayerId));
+      }
 
       const baseSkaterStats: SkaterStats = {
         playerId: parseInt(playerId) || 0,
-        name: playerName,
+        name: primaryUsername, // Use primary username for display
         number: playerNumber,
         position: 'Unknown', // Will be determined by game performance
         role: 'skater', // Track the role
@@ -349,12 +594,12 @@ export class ClubStatsService {
         interceptions: 0,
         playerScore: 0,
         penaltyKillCorsiZone: 0,
-        isSigned: rosterPlayerNames.has(playerName?.toLowerCase())
+        isSigned: rosterPlayerIds.has(playerId)
       };
 
       const baseGoalieStats: GoalieStats = {
         playerId: parseInt(playerId) || 0,
-        name: playerName,
+        name: primaryUsername, // Use primary username for display
         number: playerNumber,
         position: 'G',
         role: 'goalie', // Track the role
@@ -369,26 +614,40 @@ export class ClubStatsService {
         goalsAgainstAverage: 0,
         shutouts: 0,
         otl: 0,
-        isSigned: rosterPlayerNames.has(playerName?.toLowerCase())
+        isSigned: rosterPlayerIds.has(playerId)
       };
 
-      // Create separate entries for skater and goalie roles
-      initialPlayerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
-      initialPlayerStatsMap.set(`${playerName}_goalie`, baseGoalieStats);
+      // Create separate entries for skater and goalie roles, keyed by playerId
+      initialPlayerStatsMap.set(`${playerId}_skater`, baseSkaterStats);
+      initialPlayerStatsMap.set(`${playerId}_goalie`, baseGoalieStats);
     });
 
     // Also initialize stats for roster players who might not have played yet
     roster.forEach(player => {
-      if (!player || !player.gamertag) return;
+      if (!player) return;
 
-      const playerName = player.gamertag;
-      const playerId = player._id || player.id;
+      const playerId = (player._id || player.id)?.toString();
+      if (!playerId) return;
+      
+      // Get primary username from global map first, then fallback to roster data
+      let primaryUsername = globalPlayerIdToPrimaryUsername.get(playerId);
+      if (!primaryUsername) {
+        if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+          const primary = player.usernames.find((u: any) => u.isPrimary);
+          primaryUsername = primary?.username || player.usernames[0]?.username || player.gamertag || '';
+        } else {
+          primaryUsername = player.gamertag || '';
+        }
+      }
+      
+      if (!primaryUsername) return; // Skip if no username at all
+      
       const playerNumber = player.number || 0;
 
-      if (!initialPlayerStatsMap.has(`${playerName}_skater`)) {
+      if (!initialPlayerStatsMap.has(`${playerId}_skater`)) {
         const baseSkaterStats: SkaterStats = {
           playerId: parseInt(playerId) || 0,
-          name: playerName,
+          name: primaryUsername,
           number: playerNumber,
           position: 'Unknown',
           role: 'skater',
@@ -398,13 +657,13 @@ export class ClubStatsService {
           faceoffsLost: 0, faceoffPercentage: 0, interceptions: 0, playerScore: 0, penaltyKillCorsiZone: 0,
           isSigned: true
         };
-        initialPlayerStatsMap.set(`${playerName}_skater`, baseSkaterStats);
+        initialPlayerStatsMap.set(`${playerId}_skater`, baseSkaterStats);
       }
 
-      if (!initialPlayerStatsMap.has(`${playerName}_goalie`)) {
+      if (!initialPlayerStatsMap.has(`${playerId}_goalie`)) {
         const baseGoalieStats: GoalieStats = {
           playerId: parseInt(playerId) || 0,
-          name: playerName,
+          name: primaryUsername,
           number: playerNumber,
           position: 'G',
           role: 'goalie',
@@ -412,7 +671,7 @@ export class ClubStatsService {
           saves: 0, shotsAgainst: 0, goalsAgainst: 0, savePercentage: 0, goalsAgainstAverage: 0, shutouts: 0, otl: 0,
           isSigned: true
         };
-        initialPlayerStatsMap.set(`${playerName}_goalie`, baseGoalieStats);
+        initialPlayerStatsMap.set(`${playerId}_goalie`, baseGoalieStats);
       }
     });
 
@@ -490,32 +749,68 @@ export class ClubStatsService {
           const isGoalie = playerData.position === 'G' || playerData.position === 'goalie';
           const roleSuffix = isGoalie ? '_goalie' : '_skater';
           
-          let matchingKey = null;
-          const expectedKey = `${playerName}${roleSuffix}`;
+          // Find playerId by matching username - use global map first
+          const normalizedName = playerName.toLowerCase().trim();
+          let playerId: string | undefined = globalUsernameToPlayerId.get(normalizedName);
+          let primaryUsername = playerId ? globalPlayerIdToPrimaryUsername.get(playerId) : undefined;
           
-          console.log(`Looking for key: ${expectedKey}`);
-          console.log(`PlayerStatsMap has key:`, playerStatsMap.has(expectedKey));
-          console.log(`Available keys:`, Array.from(playerStatsMap.keys()));
-          
-          if (playerStatsMap.has(expectedKey)) {
-            matchingKey = expectedKey;
-            console.log(`Found exact match: ${matchingKey}`);
+          // Fallback to roster map if not in global map
+          if (!playerId) {
+            const playerInfo = rosterUsernameMap.get(normalizedName);
+            if (playerInfo) {
+              playerId = playerInfo.playerId;
+              primaryUsername = playerInfo.primaryUsername;
           } else {
-            console.log(`No exact match, searching for partial match...`);
-            for (const [key, stats] of playerStatsMap.entries()) {
-              if (key.endsWith(roleSuffix) && (stats.name === playerName || 
-                  stats.name.includes(playerName) || 
-                  playerName.includes(stats.name))) {
-                matchingKey = key;
-                console.log(`Found partial match: ${key} for player ${playerName}`);
-                break;
-              }
+              // If not found anywhere, use name as fallback (unsigned player)
+              playerId = playerName;
+              primaryUsername = playerName;
             }
           }
+          
+          // Ensure playerId is always a string
+          const finalPlayerId: string = playerId || playerName;
+          
+          const matchingKey = `${finalPlayerId}${roleSuffix}`;
+          
+          console.log(`Looking for key: ${matchingKey} (playerName: ${playerName}, playerId: ${finalPlayerId}, primaryUsername: ${primaryUsername})`);
+          console.log(`PlayerStatsMap has key:`, playerStatsMap.has(matchingKey));
+          
+          // Create stats entry if it doesn't exist (for unsigned players)
+          if (!playerStatsMap.has(matchingKey)) {
+            const baseStats = isGoalie ? {
+              playerId: parseInt(finalPlayerId) || 0,
+              name: primaryUsername || playerName,
+              number: 0,
+              position: 'G',
+              role: 'goalie' as const,
+              gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0,
+              saves: 0, shotsAgainst: 0, goalsAgainst: 0, savePercentage: 0, goalsAgainstAverage: 0, shutouts: 0, otl: 0,
+              isSigned: rosterPlayerIds.has(finalPlayerId)
+            } : {
+              playerId: parseInt(finalPlayerId) || 0,
+              name: primaryUsername || playerName,
+              number: 0,
+              position: 'Unknown',
+              role: 'skater' as const,
+              gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0, goals: 0, assists: 0, points: 0, plusMinus: 0,
+              shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, penaltyAssists: 0, penaltyPercentage: 0, ppg: 0, shg: 0, gwg: 0,
+              takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0,
+              faceoffsWon: 0, faceoffsLost: 0, faceoffPercentage: 0, interceptions: 0, playerScore: 0, penaltyKillCorsiZone: 0,
+              isSigned: rosterPlayerIds.has(finalPlayerId)
+            };
+            playerStatsMap.set(matchingKey, baseStats);
+          }
 
-          console.log(`Final matchingKey: ${matchingKey}`);
-          if (matchingKey) {
+          if (playerStatsMap.has(matchingKey)) {
             const playerStats = playerStatsMap.get(matchingKey);
+            // Update isSigned status if player is in roster
+            if (!playerStats.isSigned && rosterPlayerIds.has(finalPlayerId)) {
+              playerStats.isSigned = true;
+            }
+            // Update name to primary username if it changed
+            if (primaryUsername && playerStats.name !== primaryUsername) {
+              playerStats.name = primaryUsername;
+            }
             playerStats.gamesPlayed++;
             if (won) playerStats.wins++;
             else if (lost) playerStats.losses++;
@@ -746,27 +1041,72 @@ playerStats.shutouts += (goalsAgainst === 0 && shotsAgainst > 0) ? 1 : 0;
             console.log(`Stats processing - EASHL player ${playerData.name} gameWinningGoals:`, playerData.gameWinningGoals);
             console.log(`Stats processing - EASHL player ${playerData.name} penaltyKillCorsiZone:`, playerData.penaltyKillCorsiZone);
 
-            const playerName = playerData.name;
-            const isGoalie = playerData.position === 'goalie'; // EASHL data uses 'goalie' string
+            const playerName = playerData.name || playerData.playername;
+            const isGoalie = playerData.position === 'goalie' || playerData.position === 'G'; // EASHL data uses 'goalie' string
             const roleSuffix = isGoalie ? '_goalie' : '_skater';
             
-            let matchingKey = null;
+            // Find playerId by matching username - use global map first
+            const normalizedName = playerName?.toLowerCase().trim();
+            let playerId: string | undefined = normalizedName ? globalUsernameToPlayerId.get(normalizedName) : undefined;
+            let primaryUsername = playerId ? globalPlayerIdToPrimaryUsername.get(playerId) : undefined;
             
-            if (playerStatsMap.has(`${playerName}${roleSuffix}`)) {
-              matchingKey = `${playerName}${roleSuffix}`;
+            // Fallback to roster map if not in global map
+            if (!playerId && normalizedName) {
+              const playerInfo = rosterUsernameMap.get(normalizedName);
+              if (playerInfo) {
+                playerId = playerInfo.playerId;
+                primaryUsername = playerInfo.primaryUsername;
             } else {
-              for (const [key, stats] of playerStatsMap.entries()) {
-                if (key.endsWith(roleSuffix) && (stats.name === playerName || 
-                    stats.name.includes(playerName) || 
-                    playerName.includes(stats.name))) {
-                  matchingKey = key;
-                  break;
-                }
+                // If not found anywhere, use name as fallback (unsigned player)
+                playerId = playerName || 'Unknown';
+                primaryUsername = playerName || 'Unknown';
               }
+            } else if (!playerId) {
+              playerId = playerName || 'Unknown';
+              primaryUsername = playerName || 'Unknown';
+            }
+            
+            // Ensure playerId is always a string
+            const finalPlayerId: string = playerId || playerName || 'Unknown';
+            
+            const matchingKey = `${finalPlayerId}${roleSuffix}`;
+            
+            // Create stats entry if it doesn't exist (for unsigned players)
+            if (!playerStatsMap.has(matchingKey)) {
+              const baseStats = isGoalie ? {
+                playerId: parseInt(finalPlayerId) || 0,
+                name: primaryUsername || playerName || 'Unknown',
+                number: 0,
+                position: 'G',
+                role: 'goalie' as const,
+                gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0,
+                saves: 0, shotsAgainst: 0, goalsAgainst: 0, savePercentage: 0, goalsAgainstAverage: 0, shutouts: 0, otl: 0,
+                isSigned: rosterPlayerIds.has(finalPlayerId)
+              } : {
+                playerId: parseInt(finalPlayerId) || 0,
+                name: primaryUsername || playerName || 'Unknown',
+                number: 0,
+                position: 'Unknown',
+                role: 'skater' as const,
+                gamesPlayed: 0, wins: 0, losses: 0, otLosses: 0, goals: 0, assists: 0, points: 0, plusMinus: 0,
+                shots: 0, shotPercentage: 0, hits: 0, blockedShots: 0, pim: 0, penaltyAssists: 0, penaltyPercentage: 0, ppg: 0, shg: 0, gwg: 0,
+                takeaways: 0, giveaways: 0, passes: 0, passAttempts: 0, passPercentage: 0,
+                faceoffsWon: 0, faceoffsLost: 0, faceoffPercentage: 0, interceptions: 0, playerScore: 0, penaltyKillCorsiZone: 0,
+                isSigned: rosterPlayerIds.has(finalPlayerId)
+              };
+              playerStatsMap.set(matchingKey, baseStats);
             }
 
-            if (matchingKey) {
+            if (playerStatsMap.has(matchingKey)) {
               const playerStats = playerStatsMap.get(matchingKey);
+              // Update isSigned status if player is in roster
+              if (!playerStats.isSigned && rosterPlayerIds.has(finalPlayerId)) {
+                playerStats.isSigned = true;
+              }
+              // Update name to primary username if it changed
+              if (primaryUsername && playerStats.name !== primaryUsername) {
+                playerStats.name = primaryUsername;
+              }
               playerStats.gamesPlayed++;
               if (won) playerStats.wins++;
               else if (lost) playerStats.losses++;
@@ -888,7 +1228,7 @@ playerStats.shutouts += (goalsAgainst === 0 && shotsAgainst > 0) ? 1 : 0;
       });
 
     // Convert map to array and calculate percentages
-    const allPlayers = Array.from(playerStatsMap.values()).map(stats => {
+    const allPlayerStats = Array.from(playerStatsMap.values()).map(stats => {
       stats.shotPercentage = stats.shots > 0 ? (stats.goals / stats.shots) * 100 : 0;
       stats.passPercentage = stats.passAttempts > 0 ? (stats.passes / stats.passAttempts) * 100 : 0;
       const totalFaceoffs = stats.faceoffsWon + stats.faceoffsLost;
@@ -911,16 +1251,16 @@ playerStats.shutouts += (goalsAgainst === 0 && shotsAgainst > 0) ? 1 : 0;
 
     // Categorize players based on their role
     // Include ALL players who played for this club (not just current roster)
-    const skaterStats = allPlayers.filter(player => 
+    const skaterStats = allPlayerStats.filter(player => 
       player.role === 'skater' && player.gamesPlayed > 0
     );
     
-    const goalieStats = allPlayers.filter(player => 
+    const goalieStats = allPlayerStats.filter(player => 
       player.role === 'goalie' && player.gamesPlayed > 0
     );
     
     console.log('Player categorization:');
-    const allPlayersWithGames = allPlayers.filter(p => p.gamesPlayed > 0);
+    const allPlayersWithGames = allPlayerStats.filter(p => p.gamesPlayed > 0);
     console.log('All players with games:', allPlayersWithGames.map(p => ({ 
       name: p.name, 
       position: p.position, 

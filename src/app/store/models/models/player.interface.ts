@@ -17,6 +17,7 @@ export interface Player {
     discordUsername?: string;
     discordId?: string;
     gamertag?: string;
+    usernames?: { username: string; platform: 'PS5' | 'Xbox'; isPrimary: boolean; addedAt: Date }[];
     clubLogo?: string;
     platform?: 'PS5' | 'Xbox';
     
