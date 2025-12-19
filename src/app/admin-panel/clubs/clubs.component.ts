@@ -695,12 +695,20 @@ export class ClubsComponent implements OnInit, OnDestroy {
       eashlClubId: ''
     });
     
+    // Get region name from regionId if needed
+    let regionName = club.region;
+    if (!regionName && (club as any).regionId) {
+      // If club has regionId but no region name, find it from regions list
+      const regionObj = this.regions.find(r => r._id === (club as any).regionId?._id || r._id === (club as any).regionId);
+      regionName = regionObj?.name || regionObj?.key || '';
+    }
+    
     // Set basic form values
     this.clubForm.patchValue({
       name: club.name,
       logo: club.logoUrl,
       color: club.primaryColour || '#ffffff',
-      region: club.region,
+      region: regionName,
       eashlClubId: club.eashlClubId
     });
     
@@ -768,13 +776,21 @@ export class ClubsComponent implements OnInit, OnDestroy {
       }
     });
     
+    // Find the regionId from the selected region name
+    const selectedRegion = this.regions.find(r => (r.name || r.key) === form.region);
+    if (!selectedRegion) {
+      console.error('Selected region not found:', form.region);
+      alert('Please select a valid region.');
+      return;
+    }
+    
     // Create a clean update object with only the fields that should be updated
     const updated: any = {
       _id: this.editingClub._id, // Include the club ID for the API call
       name: form.name,
       primaryColour: form.color,
       seasons: seasons,
-      region: form.region,
+      regionId: selectedRegion._id, // Use regionId instead of region
       eashlClubId: form.eashlClubId
     };
     
