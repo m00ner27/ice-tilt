@@ -746,18 +746,33 @@ export class ClubsComponent implements OnInit, OnDestroy {
   updateClub(): void {
     if (!this.editingClub) {
       console.error('No club selected for editing');
+      alert('No club selected for editing');
       return;
     }
     
+    console.log('Updating club:', this.editingClub._id);
+    console.log('Form valid:', this.clubForm.valid);
+    console.log('Form value:', this.clubForm.value);
     
     if (!this.clubForm.valid) {
       console.error('Form is not valid');
-      console.error('Form errors:', this.getFormErrors());
+      const errors = this.getFormErrors();
+      console.error('Form errors:', errors);
       this.clubForm.markAllAsTouched();
+      
+      // Show specific error messages
+      if (errors.region) {
+        alert('Please select a valid region.');
+      } else if (errors.name) {
+        alert('Please enter a club name.');
+      } else {
+        alert('Please fix the form errors before updating.');
+      }
       return;
     }
     
     const form = this.clubForm.value;
+    console.log('Form data:', form);
     
     // Build seasons array from form data
     const seasons: any[] = [];
@@ -780,9 +795,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
     const selectedRegion = this.regions.find(r => (r.name || r.key) === form.region);
     if (!selectedRegion) {
       console.error('Selected region not found:', form.region);
+      console.error('Available regions:', this.regions);
       alert('Please select a valid region.');
       return;
     }
+    
+    console.log('Selected region:', selectedRegion);
     
     // Create a clean update object with only the fields that should be updated
     const updated: any = {
@@ -797,8 +815,11 @@ export class ClubsComponent implements OnInit, OnDestroy {
     // Always include logoUrl from form (backend will preserve existing if empty)
     updated.logoUrl = form.logo || '';
     
+    console.log('Sending update request:', updated);
+    
     this.api.updateClub(updated).subscribe({
       next: (updatedClub) => {
+        console.log('Club updated successfully:', updatedClub);
         // Clear clubs cache FIRST before reloading to ensure fresh data
         this.api.invalidateClubsCache();
         
@@ -827,7 +848,27 @@ export class ClubsComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error updating club:', error);
-        alert('Failed to update club. Please try again.');
+        console.error('Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          error: error.error
+        });
+        
+        let errorMessage = 'Failed to update club. ';
+        if (error.error?.message) {
+          errorMessage += error.error.message;
+        } else if (error.status === 400) {
+          errorMessage += 'Invalid data provided.';
+        } else if (error.status === 403) {
+          errorMessage += 'You do not have permission to update this club.';
+        } else if (error.status === 404) {
+          errorMessage += 'Club not found.';
+        } else {
+          errorMessage += 'Please try again.';
+        }
+        
+        alert(errorMessage);
       }
     });
   }
@@ -933,9 +974,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
       }
       
       // Check if a tournament is assigned - if so, seasons are optional
-      // Check both the component property and the form's tournament assignment
-      const hasTournament = this.selectedTournamentForAssignment !== null && 
-                           this.selectedTournamentForAssignment !== undefined;
+      // Check both the component property (for new clubs) and existing club tournaments (for editing)
+      const hasTournamentForNewClub = this.selectedTournamentForAssignment !== null && 
+                                      this.selectedTournamentForAssignment !== undefined;
+      const hasTournamentForExistingClub = this.editingClub?.tournaments && 
+                                          this.editingClub.tournaments.length > 0;
+      const hasTournament = hasTournamentForNewClub || hasTournamentForExistingClub;
       
       const hasSelectedSeason = this.seasons.some(season => {
         const seasonControlName = `season_${season._id}`;
