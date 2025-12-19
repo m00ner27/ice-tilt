@@ -94,7 +94,12 @@ export class MatchHistoryComponent {
   
   // Navigate to match detail page
   navigateToMatchDetail(match: EashlMatch): void {
-    this.router.navigate(['/match', match.id], { 
+    const matchId = match.id || (match as any)._id;
+    if (!matchId) {
+      console.error('Match ID is undefined:', match);
+      return;
+    }
+    this.router.navigate(['/match', matchId], { 
       state: { 
         match: match,
         teamName: this.teamName

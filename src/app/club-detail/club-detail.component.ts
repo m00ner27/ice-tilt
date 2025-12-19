@@ -6,6 +6,7 @@ import { Observable, Subject, combineLatest } from 'rxjs';
 import { takeUntil, filter, debounceTime, take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
+import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { ClubStatsService, SkaterStats, GoalieStats } from './services/club-stats.service';
 import { MatchHistoryComponent } from './match-history/match-history.component';
@@ -112,6 +113,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     private router: Router,
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
+    private apiService: ApiService,
     private imageUrlService: ImageUrlService,
     private clubStatsService: ClubStatsService,
     private cdr: ChangeDetectorRef
@@ -208,16 +210,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Reset season selection for the new club
         this.selectedSeasonId = '';
         
+        // Set up combined observable to wait for roster data
+        this.setupCombinedDataSubscription();
+        
         // Trigger season selection now that we have the club data
         this.selectSeasonForClub();
-        
-        // Load roster for the selected season (or default season)
-        if (this.selectedSeasonId) {
-          this.ngrxApiService.loadClubRoster(club._id, this.selectedSeasonId);
-        }
-        
-        // Set up combined observable to wait for all data
-        this.setupCombinedDataSubscription();
       }
     });
 
@@ -267,9 +264,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   private loadAdditionalDataInBackground() {
-    // Load seasons and matches in parallel without blocking the UI
+    // Load seasons (still needed for season selector)
     this.ngrxApiService.loadSeasons();
-    this.ngrxApiService.loadMatches();
+    // Don't load all matches anymore - we'll use optimized endpoints
   }
 
   selectSeasonForClub() {
@@ -284,11 +281,21 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     if (clubSeasons.length > 0) {
       // Select the first season the club participates in
       const firstClubSeason = clubSeasons[0];
-      this.onSeasonChange(firstClubSeason._id);
+      this.selectedSeasonId = firstClubSeason._id;
+      if (this.backendClub) {
+        this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
+        // Load optimized data for auto-selected season
+        this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
+      }
     } else if (this.seasons && this.seasons.length > 0) {
       // Fallback to first available season if club has no seasons
       const firstSeason = this.seasons[0];
-      this.onSeasonChange(firstSeason._id);
+      this.selectedSeasonId = firstSeason._id;
+      if (this.backendClub) {
+        this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
+        // Load optimized data for auto-selected season
+        this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
+      }
     }
   }
 
@@ -301,6 +308,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.selectedSeasonId = seasonId;
     if (this.backendClub) {
       this.ngrxApiService.loadClubRoster(this.backendClub._id, seasonId);
+      // Load optimized stats and matches for this season
+      this.loadOptimizedClubData(this.backendClub._id, seasonId);
     }
   }
 
@@ -342,53 +351,184 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Load additional data progressively
+    // Load roster and then trigger optimized data loading
+    this.clubRoster$.pipe(
+      takeUntil(this.destroy$),
+      filter(roster => roster !== null && roster !== undefined && !this.isSwitchingClubs)
+    ).subscribe(roster => {
+      if (this.backendClub && this.selectedSeasonId) {
+        console.log('Roster loaded, loading optimized club data');
+        this.signedPlayers = roster.filter(player => player && player.gamertag);
+        this.rosterLoaded = true;
+        // Load optimized stats and matches
+        this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
+      }
+    });
+
+    // Keep old subscription as fallback for when optimized endpoint doesn't work
+    // This will trigger if matches are loaded but stats are still empty
     combineLatest([
       this.matches$,
       this.clubRoster$
     ]).pipe(
       takeUntil(this.destroy$),
-      debounceTime(50), // Reduced delay
+      debounceTime(200), // Small delay to let optimized endpoint finish first
       filter(([matches, roster]) => 
         matches !== null && 
+        matches.length > 0 &&
         roster !== null && 
-        !this.isSwitchingClubs
+        !this.isSwitchingClubs &&
+        this.backendClub !== null
       )
     ).subscribe(([matches, roster]) => {
-      // Filter out playoff games at the source before processing
-      const regularSeasonMatches = (matches || []).filter(match => {
-        const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
-        const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
-        
-        if (isPlayoff || hasPlayoffIds) {
-          console.log('[SOURCE FILTER] Excluding playoff game at source:', {
-            id: match._id || match.id,
-            homeTeam: match.homeTeam,
-            awayTeam: match.awayTeam,
-            isPlayoff: match.isPlayoff,
-            playoffBracketId: match.playoffBracketId,
-            playoffSeriesId: match.playoffSeriesId
-          });
-          return false;
-        }
-        return true;
-      });
-      
-      const playoffCount = (matches || []).length - regularSeasonMatches.length;
-      if (playoffCount > 0) {
-        console.log('[SOURCE FILTER] Filtered out', playoffCount, 'playoff games at source level');
+      // Only use fallback if stats are still empty (optimized endpoint failed or returned empty)
+      if (this.skaterStats.length === 0 && this.goalieStats.length === 0) {
+        console.log('Fallback: Processing matches with old method (optimized endpoint returned no stats)');
+        const regularSeasonMatches = (matches || []).filter(match => {
+          const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
+          const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
+          return !isPlayoff && !hasPlayoffIds;
+        });
+        this.processAdditionalData(regularSeasonMatches, roster);
       }
-      
-      console.log('Additional data loaded:', {
-        totalMatches: matches?.length || 0,
-        regularSeasonMatches: regularSeasonMatches.length,
-        playoffGamesExcluded: playoffCount,
-        rosterCount: roster?.length || 0
-      });
-      
-      // Process additional data with only regular season matches
-      this.processAdditionalData(regularSeasonMatches, roster);
     });
+  }
+
+  private loadOptimizedClubData(clubId: string, seasonId: string) {
+    if (!clubId || !seasonId) {
+      console.warn('Cannot load optimized club data - missing clubId or seasonId');
+      return;
+    }
+
+    console.log('Loading optimized club data for:', clubId, seasonId);
+    this.isProcessingStats = true;
+
+    // Load stats and matches in parallel
+    combineLatest([
+      this.apiService.getClubStats(clubId, seasonId),
+      this.apiService.getClubMatches(clubId, seasonId, 50, 0, false)
+    ]).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: ([statsData, matchesData]) => {
+        console.log('Optimized club data loaded:', { 
+          stats: statsData, 
+          matches: matchesData,
+          skaterStatsCount: statsData?.skaterStats?.length || 0,
+          goalieStatsCount: statsData?.goalieStats?.length || 0,
+          matchesCount: matchesData?.matches?.length || 0,
+          hasTeamRecord: !!statsData?.teamRecord
+        });
+        
+        // Debug: Log the full statsData structure
+        console.log('Full statsData structure:', JSON.stringify(statsData, null, 2));
+        console.log('statsData keys:', Object.keys(statsData || {}));
+        
+        // Check if we got valid stats data
+        const hasStats = (statsData?.skaterStats?.length > 0) || (statsData?.goalieStats?.length > 0);
+        
+        if (!hasStats) {
+          console.warn('Backend returned empty stats - this might be normal if no games have been played yet');
+          console.warn('statsData:', statsData);
+          // Set empty arrays so UI shows "No stats available" instead of loading forever
+          this.skaterStats = [];
+          this.goalieStats = [];
+          this.isProcessingStats = false;
+          this.cdr.detectChanges();
+          return;
+        }
+        
+        // Update player stats
+        this.skaterStats = statsData.skaterStats || [];
+        this.goalieStats = statsData.goalieStats || [];
+        
+        // Debug: Log first skater and goalie to verify structure
+        if (this.skaterStats.length > 0) {
+          console.log('First skater stat:', this.skaterStats[0]);
+        }
+        if (this.goalieStats.length > 0) {
+          console.log('First goalie stat:', this.goalieStats[0]);
+        }
+
+        // Update matches - transform _id to id and map score fields for compatibility
+        if (matchesData?.matches) {
+          this.clubMatches = matchesData.matches.map((match: any) => ({
+            ...match,
+            id: match._id || match.id,
+            // Map backend score fields to frontend expected fields
+            homeScore: match.homeTeamScore ?? match.homeScore ?? match.score?.home ?? 0,
+            awayScore: match.awayTeamScore ?? match.awayScore ?? match.score?.away ?? 0,
+            // Extract team names from populated club objects
+            homeTeam: match.homeClubId?.name || match.homeTeam || 'Unknown',
+            awayTeam: match.awayClubId?.name || match.awayTeam || 'Unknown',
+            // Also preserve original fields for backwards compatibility
+            homeTeamScore: match.homeTeamScore,
+            awayTeamScore: match.awayTeamScore
+          }));
+          this.matchesLoaded = true;
+        }
+
+        // Calculate full club stats from matches (points, goalsFor, goalsAgainst, streak, etc.)
+        if (this.club && this.backendClub && this.clubMatches && this.clubMatches.length > 0) {
+          const calculatedStats = this.calculateClubStats(this.backendClub._id.toString(), this.clubMatches);
+          // Merge with teamRecord from backend to ensure consistency
+          if (statsData?.teamRecord) {
+            this.club.stats = {
+              ...calculatedStats,
+              // Use backend teamRecord values as source of truth for wins/losses/gamesPlayed
+              wins: statsData.teamRecord.wins,
+              losses: statsData.teamRecord.losses,
+              otLosses: statsData.teamRecord.otLosses,
+              gamesPlayed: statsData.teamRecord.gamesPlayed
+            };
+          } else {
+            this.club.stats = calculatedStats;
+          }
+          console.log('Calculated and set club stats:', this.club.stats);
+        } else if (statsData?.teamRecord && this.club) {
+          // Fallback: if no matches, use teamRecord but initialize other fields
+          this.club.stats = {
+            ...statsData.teamRecord,
+            points: statsData.teamRecord.wins * 2 + statsData.teamRecord.otLosses,
+            winPercentage: statsData.teamRecord.gamesPlayed > 0 
+              ? (statsData.teamRecord.wins / statsData.teamRecord.gamesPlayed) * 100 
+              : 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifferential: 0,
+            streakCount: 0,
+            streakType: '-' as 'W' | 'L' | 'OTL' | '-',
+            lastTen: []
+          };
+        }
+
+        console.log('Stats updated:', {
+          skaterStats: this.skaterStats.length,
+          goalieStats: this.goalieStats.length,
+          clubStats: this.club?.stats
+        });
+
+        this.isProcessingStats = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading optimized club data:', error);
+        this.isProcessingStats = false;
+        // Fallback to old method if optimized endpoint fails
+        console.warn('Falling back to old method');
+        this.fallbackToOldMethod(clubId, seasonId);
+      }
+    });
+  }
+
+  private fallbackToOldMethod(clubId: string, seasonId: string) {
+    console.warn('Falling back to old method for loading club data');
+    // Clear stats to trigger fallback subscription
+    this.skaterStats = [];
+    this.goalieStats = [];
+    // Load all matches as fallback
+    this.ngrxApiService.loadMatches();
+    // The old subscription will handle processing when matches load
   }
 
   private processClubData(club: any) {
@@ -861,26 +1001,47 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   }
 
   calculateClubStats(clubId: string, matches: any[] = this.matches): any {
-    // Filter matches for this club, excluding playoff games with comprehensive detection
+    if (!this.backendClub) {
+      console.warn('Cannot calculate club stats - backendClub not set');
+      return {
+        wins: 0,
+        losses: 0,
+        otLosses: 0,
+        points: 0,
+        gamesPlayed: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        winPercentage: 0,
+        goalDifferential: 0,
+        streakCount: 0,
+        streakType: '-' as 'W' | 'L' | 'OTL' | '-',
+        lastTen: []
+      };
+    }
+
+    // Matches from backend are already filtered by club, but filter out playoff games if needed
+    // and ensure we only process matches for this club
     const clubMatches = matches.filter(match => {
-      // Comprehensive playoff game detection
+      // Comprehensive playoff game detection (should already be filtered by backend, but double-check)
       const isPlayoff = match.isPlayoff === true || match.isPlayoff === 'true' || match.isPlayoff === 1;
       const hasPlayoffIds = match.playoffBracketId || match.playoffSeriesId || match.playoffRoundId;
       
       if (isPlayoff || hasPlayoffIds) {
-        console.log('[CALCULATE STATS FILTER] Excluding playoff game:', {
-          id: match._id || match.id,
-          homeTeam: match.homeTeam,
-          awayTeam: match.awayTeam,
-          isPlayoff: match.isPlayoff,
-          playoffBracketId: match.playoffBracketId
-        });
         return false;
       }
       
-      // Check if match belongs to this club
-      const homeMatch = match.homeTeam === this.backendClub?.name || match.homeClub?.name === this.backendClub?.name || match.homeClub?._id === this.backendClub?._id;
-      const awayMatch = match.awayTeam === this.backendClub?.name || match.awayClub?.name === this.backendClub?.name || match.awayClub?._id === this.backendClub?._id;
+      // Verify match belongs to this club (backend should already filter, but verify)
+      const homeMatch = match.homeTeam === this.backendClub?.name ||
+                       match.homeClub?.name === this.backendClub?.name ||
+                       match.homeClubId?.name === this.backendClub?.name ||
+                       (match.homeClubId?._id && match.homeClubId._id.toString() === this.backendClub?._id?.toString()) ||
+                       (match.homeClub?._id && match.homeClub._id.toString() === this.backendClub?._id?.toString());
+      
+      const awayMatch = match.awayTeam === this.backendClub?.name ||
+                       match.awayClub?.name === this.backendClub?.name ||
+                       match.awayClubId?.name === this.backendClub?.name ||
+                       (match.awayClubId?._id && match.awayClubId._id.toString() === this.backendClub?._id?.toString()) ||
+                       (match.awayClub?._id && match.awayClub._id.toString() === this.backendClub?._id?.toString());
       
       return homeMatch || awayMatch;
     });
@@ -909,11 +1070,24 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     let goalsAgainst = 0;
     const lastTenResults: Array<'W' | 'L' | 'OTL'> = [];
 
+    // Sort matches by date (oldest first) to ensure streak calculation is correct
+    const sortedMatches = [...clubMatches].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+      const dateB = b.date ? new Date(b.date).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+      return dateA - dateB;
+    });
+
     // Process each match
-    clubMatches.forEach(match => {
-      const isHomeTeam = match.homeTeam === this.backendClub?.name;
-      const ourScore = isHomeTeam ? match.homeScore : match.awayScore;
-      const opponentScore = isHomeTeam ? match.awayScore : match.homeScore;
+    sortedMatches.forEach(match => {
+      // Determine if we're the home team - check multiple possible field formats
+      const isHomeTeam = match.homeTeam === this.backendClub?.name ||
+                        match.homeClub?.name === this.backendClub?.name ||
+                        match.homeClubId?.name === this.backendClub?.name ||
+                        (match.homeClubId?._id && match.homeClubId._id.toString() === this.backendClub?._id?.toString()) ||
+                        (match.homeClub?._id && match.homeClub._id.toString() === this.backendClub?._id?.toString());
+      
+      const ourScore = Number(isHomeTeam ? (match.homeScore ?? match.homeTeamScore ?? 0) : (match.awayScore ?? match.awayTeamScore ?? 0));
+      const opponentScore = Number(isHomeTeam ? (match.awayScore ?? match.awayTeamScore ?? 0) : (match.homeScore ?? match.homeTeamScore ?? 0));
       
       goalsFor += ourScore;
       goalsAgainst += opponentScore;

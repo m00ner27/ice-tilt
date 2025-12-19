@@ -321,6 +321,56 @@ export class ApiService {
     return this.cacheService.getOrFetch(cacheKey, observable, 5 * 60 * 1000); // Cache for 5 minutes
   }
 
+  getStandings(seasonId: string, divisionId?: string): Observable<any[]> {
+    const cacheKey = divisionId 
+      ? `standings-${seasonId}-${divisionId}` 
+      : `standings-${seasonId}`;
+    let url = `${this.apiUrl}/api/standings/${seasonId}`;
+    if (divisionId) {
+      url += `?divisionId=${divisionId}`;
+    }
+    const observable = this.http.get<any[]>(url).pipe(
+      catchError(error => {
+        this.logger.error('=== API SERVICE: getStandings Error ===', error, error.status, error.message);
+        throw error;
+      })
+    );
+    // Cache standings for 2 minutes (they change less frequently than games)
+    return this.cacheService.getOrFetch(cacheKey, observable, 2 * 60 * 1000);
+  }
+
+  getClubMatches(clubId: string, seasonId?: string, limit: number = 50, offset: number = 0, includePlayoffs: boolean = false): Observable<any> {
+    const cacheKey = `club-matches-${clubId}-${seasonId || 'all'}-${limit}-${offset}`;
+    let url = `${this.apiUrl}/api/clubs/${clubId}/matches?limit=${limit}&offset=${offset}&includePlayoffs=${includePlayoffs}`;
+    if (seasonId) {
+      url += `&seasonId=${seasonId}`;
+    }
+    const observable = this.http.get<any>(url).pipe(
+      catchError(error => {
+        this.logger.error('=== API SERVICE: getClubMatches Error ===', error, error.status, error.message);
+        throw error;
+      })
+    );
+    // Cache for 1 minute (matches change when games are updated)
+    return this.cacheService.getOrFetch(cacheKey, observable, 60 * 1000);
+  }
+
+  getClubStats(clubId: string, seasonId?: string): Observable<any> {
+    const cacheKey = `club-stats-${clubId}-${seasonId || 'all'}`;
+    let url = `${this.apiUrl}/api/clubs/${clubId}/stats`;
+    if (seasonId) {
+      url += `?seasonId=${seasonId}`;
+    }
+    const observable = this.http.get<any>(url).pipe(
+      catchError(error => {
+        this.logger.error('=== API SERVICE: getClubStats Error ===', error, error.status, error.message);
+        throw error;
+      })
+    );
+    // Cache for 2 minutes (stats change when games are updated)
+    return this.cacheService.getOrFetch(cacheKey, observable, 2 * 60 * 1000);
+  }
+
   deleteGame(gameId: string): Observable<any> {
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }

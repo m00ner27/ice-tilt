@@ -233,28 +233,26 @@ export class StandingsComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true; // Set loading state
+    this.divisionStandings = []; // Clear existing standings
     
-    // Load only season-specific data in parallel
+    // Load standings from server (optimized - no need to load all games)
+    // Still load divisions for display purposes
     forkJoin({
-      games: this.apiService.getGamesBySeason(this.selectedSeasonId),
-      clubs: this.apiService.getClubsBySeason(this.selectedSeasonId),
+      standings: this.apiService.getStandings(this.selectedSeasonId),
       divisions: this.apiService.getDivisionsBySeason(this.selectedSeasonId)
     }).subscribe({
-      next: ({ games, clubs, divisions }) => {
-        // Clear existing data to prevent accumulation
-        // Filter out playoff games - defensive check even though backend should exclude them
-        this.games = (games || []).filter((game: any) => !game.isPlayoff);
-        this.clubs = clubs || [];
+      next: ({ standings, divisions }) => {
+        // Standings are already calculated server-side and grouped by division
+        // Map to the expected format
         this.divisions = divisions || [];
-        this.divisionStandings = []; // Clear existing standings
+        this.divisionStandings = standings || [];
         
         this.isLoading = false;
-        
-        this.calculateStandings();
+        this.dataLoaded = true;
         this.cdr.markForCheck();
       },
       error: (error) => {
-        this.logger.error('Error loading season-specific data:', error);
+        this.logger.error('Error loading standings:', error);
         this.isLoading = false;
         this.cdr.markForCheck();
       }
@@ -267,9 +265,12 @@ export class StandingsComponent implements OnInit, OnDestroy {
     // Load divisions for the selected season
     this.ngrxApiService.loadDivisionsBySeason(this.selectedSeasonId);
     
-    this.calculateStandings();
+    // Load standings from server instead of calculating client-side
+    this.loadSeasonSpecificData();
   }
 
+  // Deprecated: Client-side calculation replaced by server-side aggregation
+  // Keeping for reference but no longer called
   calculateStandings(): void {
     this.isLoading = true;
     
