@@ -1,0 +1,25 @@
+/* Additional styles if needed */
+.bg-admin-card {
+  background-color: #1f2937;
+}
+
+.bg-admin-hover {
+  background-color: #374151;
+}
+
+.text-admin-primary {
+  color: #60a5fa;
+}
+
+.text-admin-text {
+  color: #d1d5db;
+}
+
+.bg-admin-secondary {
+  background-color: #3b82f6;
+}
+
+.border-admin-accent {
+  border-color: #4b5563;
+}
+

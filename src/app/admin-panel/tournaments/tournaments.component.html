@@ -1,0 +1,100 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-admin-primary">Tournaments</h2>
+    <button class="bg-admin-secondary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors" (click)="isAddingTournament = true">
+      <i class="fas fa-plus"></i>
+      Add Tournament
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-8">
+    <div class="text-gray-400">Loading tournaments...</div>
+  </div>
+
+  <!-- Tournaments List -->
+  <div class="bg-admin-card rounded-xl p-6 shadow-lg" *ngIf="!loading">
+    <h3 class="text-lg font-semibold text-admin-primary mb-4">All Tournaments</h3>
+    <div class="space-y-2">
+      <div class="flex items-center justify-between p-3 bg-admin-hover rounded-lg cursor-pointer hover:bg-admin-accent transition-colors" 
+           *ngFor="let tournament of tournaments" 
+           [class.bg-admin-accent]="selectedTournament?._id === tournament._id"
+           (click)="selectTournament(tournament)">
+        <div class="flex items-center gap-3 flex-1">
+          <img *ngIf="tournament.logoUrl" 
+               [src]="getImageUrl(tournament.logoUrl)" 
+               [alt]="tournament.name + ' logo'" 
+               class="w-10 h-10 object-contain rounded"
+               (error)="onImageError($event)">
+          <div class="flex-1">
+            <h4 class="text-white font-medium">{{ tournament.name }}</h4>
+            <p class="text-admin-text text-sm">
+              {{ tournament.startDate | date:'MMM d, y' }} - {{ tournament.endDate | date:'MMM d, y' }}
+              <span *ngIf="tournament.isActive" class="ml-2 text-green-400">● Active</span>
+              <span *ngIf="!tournament.isActive" class="ml-2 text-gray-400">● Inactive</span>
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button class="text-admin-primary hover:text-white p-1 rounded transition-colors" (click)="editTournament(tournament); $event.stopPropagation()">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="text-red-500 hover:text-red-300 p-1 rounded transition-colors" (click)="deleteTournament(tournament); $event.stopPropagation()">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+      <div *ngIf="tournaments.length === 0" class="text-center py-8 text-admin-text">
+        <p>No tournaments found. Create one to get started.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tournament Form Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isAddingTournament">
+    <div class="bg-admin-card rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-admin-primary mb-6">{{ editingTournament ? 'Edit Tournament' : 'Add Tournament' }}</h3>
+      <form [formGroup]="tournamentForm" (ngSubmit)="editingTournament ? updateTournament() : addTournament()">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Tournament Name</label>
+            <input formControlName="name" type="text" placeholder="Enter tournament name" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Start Date</label>
+            <input formControlName="startDate" type="date" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">End Date</label>
+            <input formControlName="endDate" type="date" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Tournament Logo</label>
+            <div class="space-y-2">
+              <input type="file" accept="image/*" (change)="onTournamentLogoFileChange($event)" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <div *ngIf="tournamentLogoPreview" class="flex items-center gap-3">
+                <img [src]="getImageUrl(tournamentLogoPreview)" alt="Logo Preview" class="w-16 h-16 object-contain rounded">
+                <span *ngIf="uploadingTournamentLogo" class="text-admin-primary text-sm">Uploading...</span>
+              </div>
+            </div>
+            <input formControlName="logoUrl" type="text" class="hidden">
+          </div>
+          <div>
+            <label class="flex items-center gap-2 text-admin-text">
+              <input formControlName="isActive" type="checkbox" class="rounded">
+              <span class="font-medium">Active Tournament</span>
+            </label>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50" [disabled]="!tournamentForm.valid">
+            {{ editingTournament ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="bg-admin-accent text-white px-4 py-2 rounded hover:bg-admin-hover transition-colors" (click)="cancelTournamentForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

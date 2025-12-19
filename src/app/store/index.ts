@@ -11,6 +11,7 @@ import { usersReducer, initialState as usersInitialState } from './users.reducer
 import { divisionsReducer, initialState as divisionsInitialState } from './divisions.reducer';
 import { managersReducer, initialState as managersInitialState } from './managers.reducer';
 import { playoffsReducer, initialState as playoffsInitialState } from './playoffs/playoffs.reducer';
+import { tournamentsReducer, initialState as tournamentsInitialState } from './tournaments/tournaments.reducer';
 
 // Root state interface
 export interface AppState {
@@ -23,6 +24,7 @@ export interface AppState {
   divisions: any; // Will be typed properly in divisions.reducer
   managers: any; // Will be typed properly in managers.reducer
   playoffs: any; // Will be typed properly in playoffs.reducer
+  tournaments: any; // Will be typed properly in tournaments.reducer
 }
 
 // Root reducer map
@@ -36,6 +38,7 @@ export const reducers: ActionReducerMap<AppState> = {
   divisions: divisionsReducer,
   managers: managersReducer,
   playoffs: playoffsReducer,
+  tournaments: tournamentsReducer,
 };
 
 // Meta reducers for development
@@ -52,4 +55,5 @@ export const initialState: AppState = {
   divisions: divisionsInitialState,
   managers: managersInitialState,
   playoffs: playoffsInitialState,
+  tournaments: tournamentsInitialState,
 };

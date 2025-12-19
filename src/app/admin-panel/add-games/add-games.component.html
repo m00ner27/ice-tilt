@@ -6,11 +6,31 @@
   </div>
   
   <form [formGroup]="gameForm" (ngSubmit)="submitGames()" class="space-y-6" [class.opacity-50]="!dataLoaded" [class.pointer-events-none]="!dataLoaded">
+    <!-- Game Type Selector -->
+    <div class="bg-admin-hover rounded-lg p-6 space-y-4">
+      <h3 class="text-xl font-semibold text-admin-primary mb-4">Game Type</h3>
+      <div class="flex gap-4">
+        <button type="button" (click)="onGameTypeChange('season')"
+                [class.bg-admin-secondary]="gameType === 'season'"
+                [class.bg-gray-700]="gameType !== 'season'"
+                class="px-6 py-3 rounded-lg text-white hover:bg-blue-700 transition-colors">
+          <i class="fas fa-calendar-alt mr-2"></i>Season Games
+        </button>
+        <button type="button" (click)="onGameTypeChange('tournament')"
+                [class.bg-admin-secondary]="gameType === 'tournament'"
+                [class.bg-gray-700]="gameType !== 'tournament'"
+                class="px-6 py-3 rounded-lg text-white hover:bg-purple-700 transition-colors">
+          <i class="fas fa-trophy mr-2"></i>Tournament Games
+        </button>
+      </div>
+    </div>
+
     <!-- Shared Fields Section -->
     <div class="bg-admin-hover rounded-lg p-6 space-y-4">
       <h3 class="text-xl font-semibold text-admin-primary mb-4">Game Details (Shared for all games)</h3>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Season/Division Fields (shown when gameType === 'season') -->
+      <div *ngIf="gameType === 'season'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-admin-text mb-2 font-medium">Season *</label>
           <select formControlName="season" (change)="onSeasonChange()" 
@@ -36,7 +56,64 @@
             Division is required
           </div>
         </div>
+      </div>
 
+      <!-- Tournament Fields (shown when gameType === 'tournament') -->
+      <div *ngIf="gameType === 'tournament'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Tournament *</label>
+          <select formControlName="tournamentId" (change)="onTournamentChange()" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+            [class.border-red-500]="gameForm.get('tournamentId')?.invalid && gameForm.get('tournamentId')?.touched">
+            <option value="" disabled selected>Select Tournament</option>
+            <option *ngFor="let tournament of tournaments" [value]="tournament._id">{{ tournament.name }}</option>
+          </select>
+          <div *ngIf="gameForm.get('tournamentId')?.invalid && gameForm.get('tournamentId')?.touched" class="text-red-400 text-xs mt-1">
+            Tournament is required
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Bracket *</label>
+          <select formControlName="tournamentBracketId" (change)="onTournamentBracketChange()" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+            [class.border-red-500]="gameForm.get('tournamentBracketId')?.invalid && gameForm.get('tournamentBracketId')?.touched">
+            <option value="" disabled selected>Select Bracket</option>
+            <option *ngFor="let bracket of tournamentBrackets" [value]="bracket._id">{{ bracket.name }}</option>
+          </select>
+          <div *ngIf="gameForm.get('tournamentBracketId')?.invalid && gameForm.get('tournamentBracketId')?.touched" class="text-red-400 text-xs mt-1">
+            Bracket is required
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Series *</label>
+          <select formControlName="tournamentSeriesId" (change)="onTournamentSeriesChange()" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+            [class.border-red-500]="gameForm.get('tournamentSeriesId')?.invalid && gameForm.get('tournamentSeriesId')?.touched">
+            <option value="" disabled selected>Select Series</option>
+            <option *ngFor="let series of tournamentSeries" [value]="series._id">
+              {{ series.homeClub?.name || series.homeClubId?.name || 'TBD' }} vs 
+              {{ series.awayClub?.name || series.awayClubId?.name || 'TBD' }}
+              (Round {{ series.roundOrder }})
+            </option>
+          </select>
+          <div *ngIf="gameForm.get('tournamentSeriesId')?.invalid && gameForm.get('tournamentSeriesId')?.touched" class="text-red-400 text-xs mt-1">
+            Series is required
+          </div>
+          <p class="text-xs text-admin-text mt-1">Select the series these games belong to. Home/Away teams should match the series teams.</p>
+        </div>
+
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Round ID</label>
+          <input type="text" formControlName="tournamentRoundId" readonly
+            class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-gray-400">
+          <p class="text-xs text-admin-text mt-1">Auto-filled from series selection</p>
+        </div>
+      </div>
+
+      <!-- Date and Time (shared for both game types) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div>
           <label class="block text-admin-text mb-2 font-medium">Date *</label>
           <input type="date" formControlName="date" 
@@ -59,8 +136,8 @@
       </div>
     </div>
 
-    <!-- Playoff Game Options -->
-    <div class="bg-admin-hover rounded-lg p-6 space-y-4">
+    <!-- Playoff Game Options (only shown for season games) -->
+    <div *ngIf="gameType === 'season'" class="bg-admin-hover rounded-lg p-6 space-y-4">
       <label class="flex items-center gap-2 mb-4">
         <input type="checkbox" formControlName="isPlayoff" class="w-4 h-4">
         <span class="text-admin-text font-medium">These are Playoff Games</span>

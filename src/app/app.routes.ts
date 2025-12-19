@@ -85,6 +85,21 @@ export const routes: Routes = [
     loadComponent: () => import('./playoffs/playoff-bracket/playoff-bracket.component').then(m => m.PlayoffBracketComponent)
   },
   
+  // Lazy loaded routes - Tournaments
+  // More specific routes must come first
+  { 
+    path: 'tournaments/series/:id', 
+    loadComponent: () => import('./tournaments/tournament-series/tournament-series.component').then(m => m.TournamentSeriesComponent)
+  },
+  { 
+    path: 'tournaments/:id', 
+    loadComponent: () => import('./tournaments/tournament-bracket/tournament-bracket.component').then(m => m.TournamentBracketComponent)
+  },
+  { 
+    path: 'tournaments', 
+    loadComponent: () => import('./tournaments/tournament-bracket/tournament-bracket.component').then(m => m.TournamentBracketComponent)
+  },
+  
   // Lazy loaded routes - Articles
   { 
     path: 'articles', 
@@ -200,6 +215,21 @@ export const routes: Routes = [
       { 
         path: 'playoff-setup', 
         loadComponent: () => import('./admin-panel/playoff-setup/playoff-setup.component').then(m => m.PlayoffSetupComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'tournaments', 
+        loadComponent: () => import('./admin-panel/tournaments/tournaments.component').then(m => m.TournamentsComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'tournament-setup', 
+        loadComponent: () => import('./admin-panel/tournament-setup/tournament-setup.component').then(m => m.TournamentSetupComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'club-deletion', 
+        loadComponent: () => import('./admin-panel/club-deletion/club-deletion.component').then(m => m.ClubDeletionComponent),
         canActivate: [AdminPasswordGuard]
       },
       { 

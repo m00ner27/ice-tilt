@@ -1075,6 +1075,299 @@ export class ApiService {
     );
   }
 
+  // Tournament Methods
+  getTournaments(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/tournaments`);
+  }
+
+  getTournamentById(tournamentId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/tournaments/${tournamentId}`);
+  }
+
+  createTournament(tournamentData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/tournaments`, tournamentData, { headers });
+      })
+    );
+  }
+
+  updateTournament(tournamentId: string, tournamentData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/tournaments/${tournamentId}`, tournamentData, { headers });
+      })
+    );
+  }
+
+  deleteTournament(tournamentId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(`${this.apiUrl}/api/tournaments/${tournamentId}`, { headers });
+      })
+    );
+  }
+
+  // Tournament Bracket Methods
+  getTournamentBrackets(tournamentId?: string, status?: string): Observable<any[]> {
+    let url = `${this.apiUrl}/api/tournaments/brackets?`;
+    const params: string[] = [];
+    if (tournamentId) params.push(`tournamentId=${tournamentId}`);
+    if (status) params.push(`status=${status}`);
+    url += params.join('&');
+    return this.http.get<any[]>(url);
+  }
+
+  getTournamentBracketById(bracketId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/tournaments/brackets/${bracketId}`);
+  }
+
+  createTournamentBracket(bracketData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/tournaments/brackets`, bracketData, { headers });
+      })
+    );
+  }
+
+  updateTournamentBracket(bracketId: string, bracketData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/tournaments/brackets/${bracketId}`, bracketData, { headers });
+      })
+    );
+  }
+
+  deleteTournamentBracket(bracketId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(`${this.apiUrl}/api/tournaments/brackets/${bracketId}`, { headers });
+      })
+    );
+  }
+
+  generateTournamentMatchups(bracketId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/tournaments/brackets/${bracketId}/generate-matchups`, {}, { headers });
+      })
+    );
+  }
+
+  getTournamentBracketSeries(bracketId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/tournaments/brackets/${bracketId}/series`);
+  }
+
+  getTournamentSeries(seriesId: string, bracketId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/tournaments/series/${seriesId}?bracketId=${bracketId}`);
+  }
+
+  advanceTournamentSeries(seriesId: string, bracketId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/tournaments/series/${seriesId}/advance?bracketId=${bracketId}`, {}, { headers });
+      })
+    );
+  }
+
+  getTournamentPlayerStats(bracketId?: string, tournamentId?: string, clubId?: string): Observable<any> {
+    let url = `${this.apiUrl}/api/tournaments/stats/players`;
+    const params: string[] = [];
+    if (bracketId) params.push(`bracketId=${bracketId}`);
+    if (tournamentId) params.push(`tournamentId=${tournamentId}`);
+    if (clubId) params.push(`clubId=${clubId}`);
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    return this.http.get<any>(url);
+  }
+
+  getTournamentGoalieStats(bracketId?: string, tournamentId?: string, clubId?: string): Observable<any> {
+    let url = `${this.apiUrl}/api/tournaments/stats/goalies`;
+    const params: string[] = [];
+    if (bracketId) params.push(`bracketId=${bracketId}`);
+    if (tournamentId) params.push(`tournamentId=${tournamentId}`);
+    if (clubId) params.push(`clubId=${clubId}`);
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    return this.http.get<any>(url);
+  }
+
+  // Tournament Club Assignment Methods
+  getClubsByTournament(tournamentId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/tournament/${tournamentId}`);
+  }
+
+  assignClubToTournament(clubId: string, tournamentId: string, rosterData?: any[]): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(
+          `${this.apiUrl}/api/clubs/${clubId}/assign-tournament`,
+          { tournamentId, roster: rosterData },
+          { headers }
+        );
+      })
+    );
+  }
+
+  removeClubFromTournament(clubId: string, tournamentId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(
+          `${this.apiUrl}/api/clubs/${clubId}/remove-tournament/${tournamentId}`,
+          { headers }
+        );
+      })
+    );
+  }
+
+  removeClubFromSeason(clubId: string, seasonId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(
+          `${this.apiUrl}/api/clubs/${clubId}/remove-season/${seasonId}`,
+          { headers }
+        );
+      })
+    );
+  }
+
+  getClubTournamentRoster(clubId: string, tournamentId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/clubs/${clubId}/roster/tournament?tournamentId=${tournamentId}`);
+  }
+
+  addPlayerToTournamentRoster(clubId: string, playerId: string, tournamentId: string, addedBy?: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(
+          `${this.apiUrl}/api/clubs/${clubId}/roster/tournament/player`,
+          { playerId, tournamentId, addedBy },
+          { headers }
+        );
+      })
+    );
+  }
+
+  removePlayerFromTournamentRoster(clubId: string, playerId: string, tournamentId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(
+          `${this.apiUrl}/api/clubs/${clubId}/roster/tournament/player/${playerId}?tournamentId=${tournamentId}`,
+          { headers }
+        );
+      })
+    );
+  }
+
+  cloneRosterToTournament(clubId: string, tournamentId: string, sourceId: string, sourceType: 'season' | 'tournament'): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        // Use the new route that supports both season and tournament sources
+        const body: any = { tournamentId };
+        if (sourceType === 'season') {
+          body.sourceSeasonId = sourceId;
+        } else if (sourceType === 'tournament') {
+          body.sourceTournamentId = sourceId;
+        }
+        return this.http.post<any>(
+          `${this.apiUrl}/api/clubs/${clubId}/roster/tournament/clone`,
+          body,
+          { headers }
+        );
+      })
+    );
+  }
+
+  // Legacy method for backward compatibility
+  cloneRosterFromSeasonToTournament(clubId: string, sourceSeasonId: string, tournamentId: string): Observable<any> {
+    return this.cloneRosterToTournament(clubId, tournamentId, sourceSeasonId, 'season');
+  }
+
   // Article Methods
   getArticles(published?: boolean): Observable<any[]> {
     let url = `${this.apiUrl}/api/articles`;

@@ -1,0 +1,317 @@
+<div class="max-w-4xl mx-auto my-10 bg-admin-card rounded-xl p-8 shadow-lg">
+  <h2 class="text-2xl font-bold text-admin-primary mb-6 text-center">Tournament Bracket Setup</h2>
+  
+  <!-- Bracket List View -->
+  <div *ngIf="viewMode === 'list'" class="space-y-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold text-admin-primary">All Tournament Brackets</h3>
+      <button (click)="switchToCreateMode()" 
+        class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+        <i class="fas fa-plus mr-2"></i>Create New Bracket
+      </button>
+    </div>
+    
+    <div *ngIf="bracketsLoading" class="text-center py-4">
+      <div class="text-admin-text">Loading brackets...</div>
+    </div>
+    
+    <div *ngIf="!bracketsLoading && brackets.length === 0" class="text-center py-8">
+      <p class="text-admin-text mb-4">No brackets found. Create your first bracket to get started.</p>
+      <button (click)="switchToCreateMode()" 
+        class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+        Create New Bracket
+      </button>
+    </div>
+    
+    <div *ngIf="!bracketsLoading && brackets.length > 0" class="overflow-x-auto">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-admin-hover">
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Name</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Tournament</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Status</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Teams</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Created</th>
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bracket of brackets" class="hover:bg-admin-hover">
+            <td class="border border-admin-accent px-4 py-2 text-white">{{ bracket.name }}</td>
+            <td class="border border-admin-accent px-4 py-2 text-admin-text">
+              {{ getTournamentName(bracket.tournamentId?._id || bracket.tournamentId) }}
+            </td>
+            <td class="border border-admin-accent px-4 py-2">
+              <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getStatusBadgeClass(bracket.status)">
+                {{ bracket.status }}
+              </span>
+            </td>
+            <td class="border border-admin-accent px-4 py-2 text-admin-text">{{ bracket.numTeams }}</td>
+            <td class="border border-admin-accent px-4 py-2 text-admin-text text-sm">
+              {{ bracket.createdAt ? (bracket.createdAt | date:'short') : 'N/A' }}
+            </td>
+            <td class="border border-admin-accent px-4 py-2">
+              <div class="flex gap-2 flex-wrap">
+                <button (click)="viewBracket(bracket._id)" 
+                  class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                  View
+                </button>
+                <button (click)="editBracket(bracket)" 
+                  class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                  Edit
+                </button>
+                <button (click)="deleteBracket(bracket._id)" 
+                  class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                  Delete
+                </button>
+                <button (click)="generateMatchups()" 
+                  *ngIf="bracket.status === 'setup'"
+                  class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                  Generate Matchups
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Create/Edit Form View -->
+  <div *ngIf="viewMode === 'create' || viewMode === 'edit'">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold text-admin-primary">
+        {{ viewMode === 'edit' ? 'Edit Bracket' : 'Create New Bracket' }}
+      </h3>
+      <button (click)="viewMode = 'list'" 
+        class="bg-admin-hover text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>Back to List
+      </button>
+    </div>
+  
+  <!-- Progress Steps -->
+  <div class="mb-8">
+    <div class="flex justify-between items-center">
+      <div *ngFor="let step of [1,2,3,4]" class="flex items-center flex-1">
+        <div class="flex flex-col items-center flex-1">
+          <div [class]="'w-10 h-10 rounded-full flex items-center justify-center font-bold ' + 
+            (currentStep >= step ? 'bg-admin-secondary text-white' : 'bg-admin-hover text-admin-text')">
+            {{ step }}
+          </div>
+          <div class="text-xs mt-2 text-admin-text text-center">
+            <span *ngIf="step === 1">Basic Info</span>
+            <span *ngIf="step === 2">Teams & Seeds</span>
+            <span *ngIf="step === 3">Rounds</span>
+            <span *ngIf="step === 4">Preview</span>
+          </div>
+        </div>
+        <div *ngIf="step < 4" class="flex-1 h-1 mx-2" 
+          [class]="currentStep > step ? 'bg-admin-secondary' : 'bg-admin-hover'"></div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!dataLoaded" class="text-center py-4">
+    <div class="text-admin-text">Loading data...</div>
+  </div>
+
+  <form [formGroup]="bracketForm" class="space-y-6" [class.opacity-50]="!dataLoaded" [class.pointer-events-none]="!dataLoaded">
+    
+    <!-- Step 1: Basic Information -->
+    <div *ngIf="currentStep === 1" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Basic Information</h3>
+      
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Bracket Name *</label>
+        <input type="text" formControlName="name" 
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+          placeholder="e.g., Summer Tournament Bracket">
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Tournament *</label>
+        <select formControlName="tournamentId" (change)="onTournamentChange()" 
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          <option value="" disabled selected>Select Tournament</option>
+          <option *ngFor="let tournament of tournaments" [value]="tournament._id">{{ tournament.name }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Tournament Format *</label>
+        <select formControlName="format" (change)="onFormatChange()"
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          <option value="single-elimination">Single Elimination</option>
+          <option value="placement-bracket">Placement Bracket (8 teams, all play 3 series)</option>
+          <option value="double-elimination">Double Elimination (Coming Soon)</option>
+          <option value="round-robin">Round Robin (Coming Soon)</option>
+        </select>
+        <p class="text-sm text-admin-text mt-1">
+          <span *ngIf="bracketForm.get('format')?.value === 'placement-bracket'">
+            All teams play exactly 3 series to determine final seeding 1-8. Requires exactly 8 teams.
+          </span>
+          <span *ngIf="bracketForm.get('format')?.value === 'single-elimination'">
+            Standard bracket format. Teams are eliminated after one loss.
+          </span>
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Number of Teams *</label>
+        <input type="number" formControlName="numTeams" (change)="onNumTeamsChange()" 
+          [min]="bracketForm.get('format')?.value === 'placement-bracket' ? 8 : 2"
+          [max]="bracketForm.get('format')?.value === 'placement-bracket' ? 8 : 32"
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+          [disabled]="bracketForm.get('format')?.value === 'placement-bracket'">
+        <p class="text-sm text-admin-text mt-1">
+          <span *ngIf="bracketForm.get('format')?.value === 'placement-bracket'">
+            Placement bracket requires exactly 8 teams.
+          </span>
+          <span *ngIf="bracketForm.get('format')?.value !== 'placement-bracket'">
+            Enter any number (2-32). Byes will be automatically assigned to top seeds if needed.
+          </span>
+        </p>
+      </div>
+
+      <div>
+        <label class="flex items-center gap-2 mb-2">
+          <input type="checkbox" formControlName="manualMatchups" class="w-4 h-4">
+          <span class="text-admin-text font-medium">Allow Manual Matchup Selection</span>
+        </label>
+        <p class="text-sm text-admin-text mt-1 ml-6">
+          When enabled, you can manually set matchups for each round (similar to playoffs). 
+          Otherwise, matchups are automatically generated based on seeding.
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-admin-text mb-2 font-medium">Bracket Logo (Optional)</label>
+        <div class="space-y-2">
+          <input type="file" accept="image/*" (change)="onLogoFileChange($event)" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          <div *ngIf="logoPreview" class="flex items-center gap-3">
+            <img [src]="logoPreview" alt="Logo Preview" class="w-16 h-16 object-contain rounded bg-admin-card">
+            <span *ngIf="uploadingLogo" class="text-admin-primary text-sm">Uploading...</span>
+          </div>
+        </div>
+        <input formControlName="logoUrl" type="text" class="hidden">
+      </div>
+    </div>
+
+    <!-- Step 2: Teams & Seeds -->
+    <div *ngIf="currentStep === 2" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Select Teams and Assign Seeds</h3>
+      <p class="text-sm text-admin-text mb-4">Assign each team a unique seed number from 1 to {{ bracketForm.get('numTeams')?.value }}. Seed 1 is the highest seed.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div *ngFor="let seeding of getSeedingsAsFormGroups(); let i = index" 
+          [formGroup]="seeding" class="bg-admin-hover p-4 rounded">
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <label class="block text-admin-text mb-2 font-medium text-sm">Seed {{ i + 1 }}</label>
+              <select formControlName="clubId" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                <option value="" disabled selected>Select Team</option>
+                <option *ngFor="let club of filteredClubs" [value]="club._id">{{ club.name }}</option>
+              </select>
+            </div>
+            <div class="w-20">
+              <label class="block text-admin-text mb-2 font-medium text-sm">Seed #</label>
+              <input type="number" formControlName="seed" min="1" [max]="bracketForm.get('numTeams')?.value"
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Round Configuration -->
+    <div *ngIf="currentStep === 3" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Round Configuration</h3>
+      <p class="text-sm text-admin-text mb-4">Configure each round's name and best-of format.</p>
+      
+      <div class="space-y-4">
+        <div *ngFor="let round of getRoundsAsFormGroups(); let i = index" 
+          [formGroup]="round" class="bg-admin-hover p-4 rounded">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-admin-text mb-2 font-medium">Round Name</label>
+              <input type="text" formControlName="name" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block text-admin-text mb-2 font-medium">Best Of</label>
+              <select formControlName="bestOf" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white">
+                <option [value]="3">Best of 3</option>
+                <option [value]="5">Best of 5</option>
+                <option [value]="7">Best of 7</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" formControlName="order">
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Preview -->
+    <div *ngIf="currentStep === 4" class="space-y-4">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Bracket Preview</h3>
+      
+      <div *ngIf="previewBracket" class="bg-admin-hover p-6 rounded">
+        <div class="mb-4">
+          <div class="flex items-center gap-3 mb-2">
+            <img *ngIf="previewBracket.logoUrl" [src]="getImageUrl(previewBracket.logoUrl)" 
+              alt="Bracket Logo" class="w-12 h-12 object-contain rounded">
+            <h4 class="font-bold text-admin-primary">{{ previewBracket.name }}</h4>
+          </div>
+          <p class="text-sm text-admin-text">Tournament: {{ getTournamentName(previewBracket.tournamentId) }}</p>
+          <p class="text-sm text-admin-text">{{ previewBracket.numTeams }} teams, {{ previewBracket.numRounds }} rounds</p>
+        </div>
+
+        <div class="mb-4">
+          <h5 class="font-bold text-admin-text mb-2">Seedings:</h5>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div *ngFor="let seeding of previewBracket.seedings" 
+              class="bg-gray-700 p-2 rounded text-sm">
+              <span class="font-bold">#{{ seeding.seed }}</span> {{ seeding.clubName }}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h5 class="font-bold text-admin-text mb-2">Rounds:</h5>
+          <div class="space-y-2">
+            <div *ngFor="let round of previewBracket.rounds" 
+              class="bg-gray-700 p-2 rounded text-sm">
+              <span class="font-bold">{{ round.name }}</span> - Best of {{ round.bestOf }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <button type="button" (click)="saveAndGenerateMatchups()" 
+          class="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors font-semibold">
+          <i class="fas fa-check mr-2"></i>Save & Generate Matchups
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex justify-between pt-6 border-t border-admin-accent">
+      <button type="button" (click)="previousStep()" 
+        [disabled]="currentStep === 1"
+        class="bg-admin-hover text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors disabled:opacity-50">
+        Previous
+      </button>
+      <button type="button" (click)="nextStep()" 
+        [disabled]="currentStep === totalSteps"
+        class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50">
+        {{ currentStep === totalSteps ? 'Finish' : 'Next' }}
+      </button>
+    </div>
+  </form>
+  </div>
+</div>
+

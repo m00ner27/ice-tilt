@@ -22,6 +22,7 @@ interface Club {
   logoUrl: string;
   primaryColour: string;
   seasons: any[];
+  tournaments?: any[];
   roster?: Player[];
   region: string;
   eashlClubId: string;
@@ -56,6 +57,15 @@ interface Season {
   name: string;
 }
 
+interface RosterContext {
+  id: string; // 'season-{seasonId}' or 'tournament-{tournamentId}'
+  type: 'season' | 'tournament';
+  name: string; // Season or tournament name
+  roster: Player[];
+  seasonId?: string;
+  tournamentId?: string;
+}
+
 @Component({
   selector: 'app-clubs',
   standalone: true,
@@ -69,6 +79,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
   editingClub: Club | null = null;
   seasons: Season[] = [];
   divisions: Division[] = [];
+  tournaments: any[] = [];
   freeAgents$: any;
   adminLoading$: any;
   adminError$: any;
@@ -99,6 +110,22 @@ export class ClubsComponent implements OnInit, OnDestroy {
   
   // Expose Math for template use
   Math = Math;
+  
+  // Tournament assignment
+  showTournamentAssignment = false;
+  selectedTournamentForAssignment: string | null = null;
+  selectedSourceSeasonForClone: string | null = null;
+  tournamentAssignmentMode: 'new' | 'existing' = 'new';
+  
+  // Roster context management
+  seasonRosters: RosterContext[] = [];
+  tournamentRosters: RosterContext[] = [];
+  activeRosterContext: string | null = null;
+  loadingRosters = false;
+  
+  // View mode: 'season' or 'tournament'
+  viewMode: 'season' | 'tournament' = 'season';
+  selectedTournamentId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -136,29 +163,48 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   get filteredRoster(): Player[] {
-    const filtered = (this.selectedClub?.roster || []).filter(p => !!p && p.gamertag);
-    return filtered;
+    if (!this.activeRosterContext) {
+      return [];
+    }
+    
+    // Find the active roster context
+    const activeContext = [...this.seasonRosters, ...this.tournamentRosters]
+      .find(ctx => ctx.id === this.activeRosterContext);
+    
+    if (!activeContext) {
+      return [];
+    }
+    
+    return (activeContext.roster || []).filter(p => !!p && p.gamertag);
+  }
+  
+  get activeRosterContextData(): RosterContext | null {
+    if (!this.activeRosterContext) {
+      return null;
+    }
+    
+    return [...this.seasonRosters, ...this.tournamentRosters]
+      .find(ctx => ctx.id === this.activeRosterContext) || null;
   }
 
   get availableFreeAgents(): Player[] {
+    const activeContext = this.getActiveRosterContext();
+    
     // Use season-specific free agents if available, otherwise fallback to general free agents
     const freeAgentsToUse = this.seasonFreeAgents.length > 0 ? this.seasonFreeAgents : this.freeAgents;
-    const seasonId = this.selectedSeasonId;
     
     if (!freeAgentsToUse || freeAgentsToUse.length === 0) {
       return [];
     }
     
-    // Get player IDs that are already on ANY club's roster for this season
-    const allRosterPlayerIds = this.clubs
-      .filter(club => club.roster && club.roster.length > 0)
-      .flatMap(club => club.roster!)
-      .filter(p => p && p._id)
-      .map(p => p._id);
+    // Get player IDs that are already on the active roster
+    const activeRosterPlayerIds = activeContext 
+      ? activeContext.roster.filter(p => p && p._id).map(p => p._id)
+      : [];
     
-    // Filter out players who are already on ANY club's roster
+    // Filter out players who are already on the active roster
     let filtered = freeAgentsToUse.filter(player => 
-      !allRosterPlayerIds.includes(player._id)
+      !activeRosterPlayerIds.includes(player._id)
     );
     
     // Apply search filter
@@ -283,8 +329,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
           }
         });
         
-        // Auto-select the first season by default
-        if (this.seasons.length > 0) {
+        // Auto-select the first season by default (only if in season mode)
+        if (this.seasons.length > 0 && this.viewMode === 'season') {
           this.selectedSeasonId = this.seasons[0]._id;
           // Load clubs for the first season
           this.loadClubsForSeason(this.seasons[0]._id);
@@ -295,6 +341,17 @@ export class ClubsComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading seasons:', error);
         this.seasons = [];
+      }
+    });
+    
+    // Load tournaments
+    this.api.getTournaments().subscribe({
+      next: (tournaments) => {
+        this.tournaments = tournaments || [];
+      },
+      error: (error) => {
+        console.error('Error loading tournaments:', error);
+        this.tournaments = [];
       }
     });
   }
@@ -475,16 +532,60 @@ export class ClubsComponent implements OnInit, OnDestroy {
     const seasonId = event.target.value;
 
     this.selectedSeasonId = seasonId;
+    this.viewMode = 'season';
     this.loadClubsForSeason(seasonId);
     this.loadFreeAgentsForSeason(seasonId);
     this.updateSeasonFreeAgents();
+  }
+  
+  onTournamentChange(event: any): void {
+    const tournamentId = event.target.value;
+    
+    this.selectedTournamentId = tournamentId;
+    this.viewMode = 'tournament';
+    this.loadClubsForTournament(tournamentId);
+  }
+  
+  onViewModeChange(mode: 'season' | 'tournament'): void {
+    this.viewMode = mode;
+    if (mode === 'season' && this.selectedSeasonId) {
+      this.loadClubsForSeason(this.selectedSeasonId);
+    } else if (mode === 'tournament' && this.selectedTournamentId) {
+      this.loadClubsForTournament(this.selectedTournamentId);
+    } else {
+      this.clubs = [];
+    }
+  }
+  
+  private loadClubsForTournament(tournamentId: string): void {
+    // Clear cache first to ensure fresh data
+    this.api.invalidateClubsCache();
+    
+    // Load all clubs and filter by tournament
+    this.api.getClubs().subscribe({
+      next: (allClubs) => {
+        // Filter clubs that are assigned to this tournament
+        this.clubs = (allClubs || []).filter(club => 
+          club.tournaments && club.tournaments.some((tournament: any) => {
+            const tournamentIdValue = typeof tournament.tournamentId === 'object' && tournament.tournamentId._id
+              ? tournament.tournamentId._id
+              : tournament.tournamentId;
+            return tournamentIdValue === tournamentId;
+          })
+        ).sort((a, b) => a.name.localeCompare(b.name));
+      },
+      error: (error) => {
+        console.error('Error loading clubs for tournament:', error);
+        this.clubs = [];
+      }
+    });
   }
 
   addClub(): void {
     if (this.clubForm.valid) {
       const form = this.clubForm.value;
       
-      // Build seasons array from form data
+      // Build seasons array from form data (optional if tournament is assigned)
       const seasons: any[] = [];
       this.seasons.forEach(season => {
         const seasonControlName = `season_${season._id}`;
@@ -508,15 +609,22 @@ export class ClubsComponent implements OnInit, OnDestroy {
         return;
       }
       
-      const clubData = {
+      const clubData: any = {
         name: form.name,
         logoUrl: form.logo,
         primaryColour: form.color,
-        seasons: seasons,
+        seasons: seasons.length > 0 ? seasons : [], // Allow empty seasons array
         regionId: selectedRegion._id, // Use regionId instead of region
         eashlClubId: form.eashlClubId
       };
       
+      // Add tournament assignment if provided
+      if (this.selectedTournamentForAssignment && this.tournamentAssignmentMode === 'new') {
+        clubData.tournaments = [{
+          tournamentId: this.selectedTournamentForAssignment,
+          roster: []
+        }];
+      }
       
       this.api.addClub(clubData).subscribe({
         next: (newClub) => {
@@ -526,12 +634,48 @@ export class ClubsComponent implements OnInit, OnDestroy {
           // Clear clubs cache to ensure fresh data is loaded
           this.api.invalidateClubsCache();
           
+          // If tournament was assigned, handle roster cloning
+          if (this.selectedTournamentForAssignment && this.selectedSourceSeasonForClone && newClub._id) {
+            this.api.cloneRosterToTournament(
+              newClub._id,
+              this.selectedTournamentForAssignment,
+              this.selectedSourceSeasonForClone,
+              'season'
+            ).subscribe({
+              next: () => {
+                console.log('Roster cloned to tournament successfully');
+              },
+              error: (error) => {
+                console.error('Error cloning roster to tournament:', error);
+              }
+            });
+          }
+          
+          // Refresh clubs list based on current view mode
+          if (this.viewMode === 'tournament' && this.selectedTournamentId) {
+            this.loadClubsForTournament(this.selectedTournamentId);
+          } else if (this.viewMode === 'season' && this.selectedSeasonId) {
+            this.loadClubsForSeason(this.selectedSeasonId);
+          }
+          
+          this.closeTournamentAssignment();
           this.cancelClubForm();
         },
         error: (error) => {
           console.error('Error creating club:', error);
+          alert('Failed to create club. Please check that at least one season or tournament is assigned.');
         }
       });
+    } else {
+      // Show validation errors
+      const errors = this.getFormErrors();
+      if (errors.noSeasonsSelected) {
+        alert('Please select at least one season, or assign the club to a tournament.');
+      } else if (errors.incompleteSeasons) {
+        alert('Please select a division for each selected season.');
+      } else {
+        alert('Please fill in all required fields.');
+      }
     }
   }
 
@@ -673,13 +817,42 @@ export class ClubsComponent implements OnInit, OnDestroy {
   }
 
   deleteClub(club: Club): void {
-    if (confirm('Are you sure you want to delete this club?')) {
-      this.api.deleteClub(club._id!).subscribe(() => {
-        this.clubs = this.clubs.filter(c => c._id !== club._id);
-        
-        // Clear clubs cache to ensure fresh data is loaded
+    // Check view mode to determine if we should remove from season/tournament or delete entirely
+    if (this.viewMode === 'season' && this.selectedSeasonId) {
+      // Remove from season
+      if (confirm(`Are you sure you want to remove ${club.name} from ${this.getSelectedSeasonName()}?`)) {
+        this.api.removeClubFromSeason(club._id!, this.selectedSeasonId).subscribe({
+          next: () => {
+            // Reload clubs for the season
+            this.loadClubsForSeason(this.selectedSeasonId!);
         this.api.invalidateClubsCache();
-      });
+            alert(`${club.name} has been removed from ${this.getSelectedSeasonName()}`);
+          },
+          error: (error) => {
+            console.error('Error removing club from season:', error);
+            alert('Failed to remove club from season. Please try again.');
+          }
+        });
+      }
+    } else if (this.viewMode === 'tournament' && this.selectedTournamentId) {
+      // Remove from tournament
+      if (confirm(`Are you sure you want to remove ${club.name} from ${this.getSelectedTournamentViewName()}?`)) {
+        this.api.removeClubFromTournament(club._id!, this.selectedTournamentId).subscribe({
+          next: () => {
+            // Reload clubs for the tournament
+            this.loadClubsForTournament(this.selectedTournamentId!);
+            this.api.invalidateClubsCache();
+            alert(`${club.name} has been removed from ${this.getSelectedTournamentViewName()}`);
+          },
+          error: (error) => {
+            console.error('Error removing club from tournament:', error);
+            alert('Failed to remove club from tournament. Please try again.');
+          }
+        });
+      }
+    } else {
+      // No season/tournament selected - show warning
+      alert('Please select a season or tournament first. To permanently delete a club, use the "Club Deletion" admin panel.');
     }
   }
 
@@ -702,6 +875,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.editingClub = null;
     this.isAddingClub = false;
     this.logoPreview = null;
+    this.closeTournamentAssignment();
   }
 
   getFormErrors(): any {
@@ -742,16 +916,23 @@ export class ClubsComponent implements OnInit, OnDestroy {
         return null; // Skip validation if seasons not loaded yet
       }
       
+      // Check if a tournament is assigned - if so, seasons are optional
+      // Check both the component property and the form's tournament assignment
+      const hasTournament = this.selectedTournamentForAssignment !== null && 
+                           this.selectedTournamentForAssignment !== undefined;
+      
       const hasSelectedSeason = this.seasons.some(season => {
         const seasonControlName = `season_${season._id}`;
         return formGroup.get(seasonControlName)?.value === true;
       });
       
-      if (!hasSelectedSeason) {
+      // If no tournament is assigned, at least one season is required
+      if (!hasTournament && !hasSelectedSeason) {
         return { noSeasonsSelected: true };
       }
       
-      // Check that all selected seasons have divisions
+      // If seasons are selected, they must have divisions
+      if (hasSelectedSeason) {
       const hasInvalidSeasons = this.seasons.some(season => {
         const seasonControlName = `season_${season._id}`;
         const divisionControlName = `division_${season._id}`;
@@ -766,8 +947,11 @@ export class ClubsComponent implements OnInit, OnDestroy {
       
       if (hasInvalidSeasons) {
         return { incompleteSeasons: true };
+        }
       }
       
+      // If tournament is assigned but no seasons, that's valid
+      // If no tournament and no seasons, that's invalid (handled above)
       return null;
     };
   }
@@ -824,13 +1008,44 @@ export class ClubsComponent implements OnInit, OnDestroy {
 
   viewClubDetails(club: Club): void {
     this.selectedClub = club;
-    if (club._id) {
-      const selectedSeasonId = this.selectedSeasonId;
-      if (selectedSeasonId) {
-        this.api.getClubRoster(club._id, selectedSeasonId).subscribe({
-          next: (roster) => {
-            // Map roster data to Player objects
-            const mappedRoster = roster.map((player: any): Player => ({
+    this.seasonRosters = [];
+    this.tournamentRosters = [];
+    this.activeRosterContext = null;
+    
+    if (!club._id) {
+      return;
+    }
+    
+    this.loadingRosters = true;
+    
+    // Load all season rosters
+    this.loadSeasonRosters(club);
+    
+    // Load all tournament rosters
+    this.loadTournamentRosters(club);
+  }
+  
+  private loadSeasonRosters(club: Club): void {
+    if (!club._id || !club.seasons || club.seasons.length === 0) {
+      this.loadingRosters = false;
+      return;
+    }
+    
+    const seasonRosterPromises = club.seasons.map((seasonInfo: any) => {
+      let seasonId = seasonInfo.seasonId;
+      if (typeof seasonId === 'object' && seasonId._id) {
+        seasonId = seasonId._id;
+      }
+      
+      if (!seasonId) {
+        return Promise.resolve(null);
+      }
+      
+      const season = this.seasons.find(s => s._id === seasonId);
+      const seasonName = season ? season.name : 'Unknown Season';
+      
+      return this.api.getClubRoster(club._id!, seasonId).toPromise().then(roster => {
+        const mappedRoster = (roster || []).map((player: any): Player => ({
               _id: player._id,
               gamertag: player.gamertag || player.discordUsername || 'Unknown',
               discordId: player.discordId,
@@ -841,21 +1056,111 @@ export class ClubsComponent implements OnInit, OnDestroy {
               playerProfile: player.playerProfile
             }));
             
-            // Update both selectedClub and the clubs array
-            this.selectedClub = { ...this.selectedClub!, roster: mappedRoster };
-            
-            // Also update the roster in the clubs array to ensure filtering works correctly
-            const clubIndex = this.clubs.findIndex(c => c._id === club._id);
-            if (clubIndex > -1) {
-              this.clubs[clubIndex] = { ...this.clubs[clubIndex], roster: mappedRoster };
-            }
-          },
-          error: (error) => {
-            console.error('Error fetching roster:', error);
-          }
-        });
+        return {
+          id: `season-${seasonId}`,
+          type: 'season' as const,
+          name: seasonName,
+          roster: mappedRoster,
+          seasonId: seasonId
+        } as RosterContext;
+      }).catch(error => {
+        console.error(`Error fetching season roster for ${seasonName}:`, error);
+        return null;
+      });
+    });
+    
+    Promise.all(seasonRosterPromises).then(results => {
+      this.seasonRosters = results.filter((r): r is RosterContext => r !== null);
+      
+      // Set first season roster as active if no active context
+      if (!this.activeRosterContext && this.seasonRosters.length > 0) {
+        this.activeRosterContext = this.seasonRosters[0].id;
       }
+      
+      this.loadingRosters = false;
+    });
+  }
+  
+  private loadTournamentRosters(club: Club): void {
+    if (!club._id) {
+      return;
     }
+    
+    if (!club.tournaments || club.tournaments.length === 0) {
+      // No tournaments assigned - loading is handled by loadSeasonRosters
+      return;
+    }
+    
+    const tournamentRosterPromises = club.tournaments.map((tournamentInfo: any) => {
+      let tournamentId = tournamentInfo.tournamentId;
+      if (typeof tournamentId === 'object' && tournamentId._id) {
+        tournamentId = tournamentId._id;
+      }
+      
+      if (!tournamentId) {
+        return Promise.resolve(null);
+      }
+      
+      const tournament = this.tournaments.find(t => t._id === tournamentId);
+      const tournamentName = tournament ? tournament.name : 'Unknown Tournament';
+      
+      return this.api.getClubTournamentRoster(club._id!, tournamentId).toPromise().then(roster => {
+        const mappedRoster = (roster || []).map((player: any): Player => ({
+          _id: player._id,
+          gamertag: player.gamertag || player.discordUsername || 'Unknown',
+          discordId: player.discordId,
+          discordUsername: player.discordUsername,
+          platform: player.platform || 'PS5',
+          position: player.playerProfile?.position || 'C',
+          status: player.playerProfile?.status || 'Signed',
+          playerProfile: player.playerProfile
+        }));
+        
+        return {
+          id: `tournament-${tournamentId}`,
+          type: 'tournament' as const,
+          name: tournamentName,
+          roster: mappedRoster,
+          tournamentId: tournamentId
+        } as RosterContext;
+      }).catch(error => {
+        console.error(`Error fetching tournament roster for ${tournamentName}:`, error);
+        return null;
+      });
+        });
+    
+    Promise.all(tournamentRosterPromises).then(results => {
+      this.tournamentRosters = results.filter((r): r is RosterContext => r !== null);
+      
+      // Set first tournament roster as active if no season rosters and no active context
+      if (!this.activeRosterContext && this.seasonRosters.length === 0 && this.tournamentRosters.length > 0) {
+        this.activeRosterContext = this.tournamentRosters[0].id;
+      }
+    });
+  }
+  
+  setActiveRosterContext(contextId: string): void {
+    this.activeRosterContext = contextId;
+    
+    // Update free agents list based on active context
+    const activeContext = this.getActiveRosterContext();
+    if (activeContext && activeContext.type === 'season' && activeContext.seasonId) {
+      this.selectedSeasonId = activeContext.seasonId;
+      this.loadFreeAgentsForSeason(activeContext.seasonId);
+      this.updateSeasonFreeAgents();
+    }
+  }
+  
+  getClubSeasonRosters(): RosterContext[] {
+    return this.seasonRosters;
+  }
+  
+  getClubTournamentRosters(): RosterContext[] {
+    return this.tournamentRosters;
+  }
+  
+  getActiveRosterContext(): RosterContext | null {
+    return this.activeRosterContextData;
   }
 
   addPlayer(club: Club, player: Player): void {
@@ -864,18 +1169,24 @@ export class ClubsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const selectedSeasonId = this.selectedSeasonId;
-    if (!selectedSeasonId) {
-      console.error('No season selected');
+    const activeContext = this.getActiveRosterContext();
+    if (!activeContext) {
+      console.error('No active roster context');
       return;
     }
 
-    this.api.addPlayerToClub(club._id, player._id, selectedSeasonId).subscribe({
+    if (activeContext.type === 'season') {
+      if (!activeContext.seasonId) {
+        console.error('No season ID in active context');
+        return;
+      }
+      
+      this.api.addPlayerToClub(club._id, player._id, activeContext.seasonId).subscribe({
       next: () => {
         // Log transaction
-        this.logPlayerSigning(club, player, selectedSeasonId);
+          this.logPlayerSigning(club, player, activeContext.seasonId!);
         
-        // Refresh the selected club if it's the one we just updated
+          // Refresh the selected club rosters
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(club);
         }
@@ -883,32 +1194,34 @@ export class ClubsComponent implements OnInit, OnDestroy {
         // Refresh free agents list for the current season
         this.updateFreeAgentsList();
         
-        // Update the clubs list to reflect the change
-        const clubIndex = this.clubs.findIndex(c => c._id === club._id);
-        if (clubIndex > -1 && club._id) {
-          // Refresh just this club's roster
-          this.api.getClubRoster(club._id, selectedSeasonId).subscribe(roster => {
-            const mappedRoster = roster.map((player: any): Player => ({
-              _id: player._id,
-              gamertag: player.gamertag || player.discordUsername || 'Unknown',
-              discordId: player.discordId,
-              discordUsername: player.discordUsername,
-              platform: player.platform || 'PS5',
-              position: player.playerProfile?.position || 'C',
-              status: player.playerProfile?.status || 'Signed',
-              playerProfile: player.playerProfile
-            }));
-            this.clubs[clubIndex] = { ...this.clubs[clubIndex], roster: mappedRoster };
-          });
+          // Trigger storage event to notify club detail component
+          localStorage.setItem('roster-updated', Date.now().toString());
+        },
+        error: (error) => {
+          console.error('Error adding player:', error);
+        }
+      });
+    } else if (activeContext.type === 'tournament') {
+      if (!activeContext.tournamentId) {
+        console.error('No tournament ID in active context');
+        return;
+      }
+      
+      this.api.addPlayerToTournamentRoster(club._id, player._id, activeContext.tournamentId).subscribe({
+        next: () => {
+          // Refresh the selected club rosters
+          if (this.selectedClub && this.selectedClub._id === club._id) {
+            this.viewClubDetails(club);
         }
         
-        // Trigger storage event to notify club detail component
+          // Trigger storage event
         localStorage.setItem('roster-updated', Date.now().toString());
       },
       error: (error) => {
-        console.error('Error adding player:', error);
+          console.error('Error adding player to tournament roster:', error);
       }
     });
+    }
   }
 
   removePlayerFromRoster(club: Club, player: Player): void {
@@ -917,18 +1230,24 @@ export class ClubsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const selectedSeasonId = this.selectedSeasonId;
-    if (!selectedSeasonId) {
-      console.error('No season selected');
+    const activeContext = this.getActiveRosterContext();
+    if (!activeContext) {
+      console.error('No active roster context');
       return;
     }
 
-    this.api.removePlayerFromClub(club._id, player._id, selectedSeasonId).subscribe({
+    if (activeContext.type === 'season') {
+      if (!activeContext.seasonId) {
+        console.error('No season ID in active context');
+        return;
+      }
+      
+      this.api.removePlayerFromClub(club._id, player._id, activeContext.seasonId).subscribe({
       next: () => {
         // Log transaction
-        this.logPlayerRelease(club, player, selectedSeasonId);
+          this.logPlayerRelease(club, player, activeContext.seasonId!);
         
-        // Refresh the selected club if it's the one we just updated
+          // Refresh the selected club rosters
         if (this.selectedClub && this.selectedClub._id === club._id) {
           this.viewClubDetails(club);
         }
@@ -936,32 +1255,34 @@ export class ClubsComponent implements OnInit, OnDestroy {
         // Refresh free agents list for the current season
         this.updateFreeAgentsList();
         
-        // Update the clubs list to reflect the change
-        const clubIndex = this.clubs.findIndex(c => c._id === club._id);
-        if (clubIndex > -1 && club._id) {
-          // Refresh just this club's roster
-          this.api.getClubRoster(club._id, selectedSeasonId).subscribe(roster => {
-            const mappedRoster = roster.map((player: any): Player => ({
-              _id: player._id,
-              gamertag: player.gamertag || player.discordUsername || 'Unknown',
-              discordId: player.discordId,
-              discordUsername: player.discordUsername,
-              platform: player.platform || 'PS5',
-              position: player.playerProfile?.position || 'C',
-              status: player.playerProfile?.status || 'Signed',
-              playerProfile: player.playerProfile
-            }));
-            this.clubs[clubIndex] = { ...this.clubs[clubIndex], roster: mappedRoster };
-          });
+          // Trigger storage event to notify club detail component
+          localStorage.setItem('roster-updated', Date.now().toString());
+        },
+        error: (error) => {
+          console.error('Error removing player:', error);
+        }
+      });
+    } else if (activeContext.type === 'tournament') {
+      if (!activeContext.tournamentId) {
+        console.error('No tournament ID in active context');
+        return;
+      }
+      
+      this.api.removePlayerFromTournamentRoster(club._id, player._id, activeContext.tournamentId).subscribe({
+        next: () => {
+          // Refresh the selected club rosters
+          if (this.selectedClub && this.selectedClub._id === club._id) {
+            this.viewClubDetails(club);
         }
         
-        // Trigger storage event to notify club detail component
+          // Trigger storage event
         localStorage.setItem('roster-updated', Date.now().toString());
       },
       error: (error) => {
-        console.error('Error removing player:', error);
+          console.error('Error removing player from tournament roster:', error);
       }
     });
+    }
   }
   
 
@@ -1075,5 +1396,174 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.freeAgentSortBy = 'gamertag';
     this.freeAgentSortOrder = 'asc';
     this.currentFreeAgentPage = 1;
+  }
+
+  // Tournament Assignment Methods
+  openTournamentAssignment(club: Club | null = null, mode: 'new' | 'existing' = 'new'): void {
+    this.tournamentAssignmentMode = mode;
+    this.showTournamentAssignment = true;
+    // Don't clear tournament assignment if we're in 'new' mode and already have one selected
+    if (mode === 'new' && !this.selectedTournamentForAssignment) {
+      this.selectedTournamentForAssignment = null;
+    } else if (mode === 'existing') {
+      this.selectedTournamentForAssignment = null;
+    }
+    this.selectedSourceSeasonForClone = null;
+    if (mode === 'existing' && club) {
+      this.selectedClub = club;
+    }
+  }
+
+  closeTournamentAssignment(): void {
+    this.showTournamentAssignment = false;
+    // Don't clear selectedTournamentForAssignment if we're in 'new' mode and it's set
+    // Only clear it if we're closing without assigning
+    if (this.tournamentAssignmentMode === 'existing') {
+      this.selectedTournamentForAssignment = null;
+    }
+    this.selectedSourceSeasonForClone = null;
+    // Trigger form validation update when tournament assignment changes
+    if (this.clubForm) {
+      this.clubForm.updateValueAndValidity();
+    }
+  }
+
+  assignTournamentToNewClub(): void {
+    if (!this.selectedTournamentForAssignment) {
+      alert('Please select a tournament');
+      return;
+    }
+
+    if (this.tournamentAssignmentMode === 'new') {
+      // Store the tournament ID and close the modal
+      // The tournament assignment will be handled in addClub()
+      this.showTournamentAssignment = false;
+      // Keep selectedTournamentForAssignment set so validation knows a tournament is assigned
+      // Force form validation to re-run by marking the form as dirty and updating validity
+      if (this.clubForm) {
+        // Mark form as touched to trigger validation display
+        this.clubForm.markAllAsTouched();
+        // Update validity - this will re-run all validators including our custom one
+        this.clubForm.updateValueAndValidity();
+        // Also mark the form as dirty so Angular knows it changed
+        this.clubForm.markAsDirty();
+      }
+      return;
+    }
+    
+    // For existing clubs, use the original method
+    this.assignClubToTournament();
+  }
+  
+  assignClubToTournament(): void {
+    if (!this.selectedTournamentForAssignment) {
+      alert('Please select a tournament');
+      return;
+    }
+
+    // Assign existing club to tournament
+    if (!this.selectedClub?._id) {
+      alert('No club selected');
+      return;
+    }
+
+    if (this.selectedSourceSeasonForClone) {
+      // Clone roster from season
+      this.api.cloneRosterToTournament(
+        this.selectedClub._id,
+        this.selectedTournamentForAssignment,
+        this.selectedSourceSeasonForClone,
+        'season'
+      ).subscribe({
+        next: (response) => {
+          alert('Club assigned to tournament and roster cloned successfully!');
+          this.closeTournamentAssignment();
+          
+          // Refresh club data - reload the full club to get updated tournaments array
+          this.api.getClubs().subscribe({
+            next: (allClubs) => {
+              const updatedClub = allClubs.find((c: Club) => c._id === this.selectedClub?._id);
+              if (updatedClub) {
+                this.selectedClub = updatedClub;
+                this.viewClubDetails(updatedClub);
+              }
+            }
+          });
+          
+          // Trigger storage event to notify other components
+          localStorage.setItem('admin-data-updated', Date.now().toString());
+          // Also dispatch custom event for same-window updates
+          window.dispatchEvent(new Event('admin-data-updated'));
+        },
+        error: (error) => {
+          console.error('Error assigning club to tournament:', error);
+          alert('Failed to assign club to tournament. Please try again.');
+        }
+      });
+    } else {
+      // Assign without cloning roster
+      this.api.assignClubToTournament(
+        this.selectedClub._id,
+        this.selectedTournamentForAssignment,
+        []
+      ).subscribe({
+        next: (response) => {
+          alert('Club assigned to tournament successfully!');
+          this.closeTournamentAssignment();
+          
+          // Refresh club data - reload the full club to get updated tournaments array
+          this.api.getClubs().subscribe({
+            next: (allClubs) => {
+              const updatedClub = allClubs.find((c: Club) => c._id === this.selectedClub?._id);
+              if (updatedClub) {
+                this.selectedClub = updatedClub;
+                this.viewClubDetails(updatedClub);
+              }
+            }
+          });
+          
+          // Trigger storage event to notify other components
+          localStorage.setItem('admin-data-updated', Date.now().toString());
+          // Also dispatch custom event for same-window updates
+          window.dispatchEvent(new Event('admin-data-updated'));
+        },
+        error: (error) => {
+          console.error('Error assigning club to tournament:', error);
+          alert('Failed to assign club to tournament. Please try again.');
+        }
+      });
+    }
+  }
+
+  getClubSeasons(club: Club): any[] {
+    if (!club || !club.seasons) return [];
+    return club.seasons.map((season: any) => {
+      const seasonId = typeof season.seasonId === 'object' ? season.seasonId._id : season.seasonId;
+      const seasonObj = this.seasons.find(s => s._id === seasonId);
+      return {
+        _id: seasonId,
+        name: seasonObj?.name || 'Unknown Season'
+      };
+    });
+  }
+
+  getSelectedTournamentName(): string {
+    if (!this.selectedTournamentForAssignment) return 'Unknown';
+    const tournament = this.tournaments.find(t => t._id === this.selectedTournamentForAssignment);
+    return tournament?.name || 'Unknown';
+  }
+  
+  getSelectedTournamentViewName(): string {
+    if (!this.selectedTournamentId) return 'Tournament';
+    const tournament = this.tournaments.find(t => t._id === this.selectedTournamentId);
+    return tournament?.name || 'Tournament';
+  }
+  
+  removeTournamentAssignment(): void {
+    this.selectedTournamentForAssignment = null;
+    // Trigger form validation update
+    if (this.clubForm) {
+      this.clubForm.updateValueAndValidity();
+    }
   }
 } 

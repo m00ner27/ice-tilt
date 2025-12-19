@@ -27,6 +27,19 @@ interface Club {
   name: string;
   logoUrl: string;
   seasons: any[];
+  tournaments?: any[];
+}
+
+interface Tournament {
+  _id: string;
+  name: string;
+}
+
+interface TournamentBracket {
+  _id: string;
+  name: string;
+  tournamentId: string | any;
+  status: string;
 }
 
 @Component({
@@ -47,6 +60,13 @@ export class AddGamesComponent implements OnInit {
   playoffSeries: any[] = [];
   isPlayoffGame = false;
   submitting = false;
+  
+  // Tournament fields
+  gameType: 'season' | 'tournament' = 'season';
+  tournaments: Tournament[] = [];
+  tournamentBrackets: TournamentBracket[] = [];
+  tournamentSeries: any[] = [];
+  isTournamentGame = false;
 
   constructor(
     private fb: FormBuilder,
@@ -54,14 +74,20 @@ export class AddGamesComponent implements OnInit {
     private router: Router
   ) {
     this.gameForm = this.fb.group({
-      season: ['', Validators.required],
-      division: ['', Validators.required],
+      season: [''],
+      division: [''],
       date: ['', Validators.required],
       time: ['', Validators.required],
       isPlayoff: [false],
       playoffBracketId: [''],
       playoffSeriesId: [''],
       playoffRoundId: [''],
+      // Tournament fields
+      tournamentId: [''],
+      tournamentBracketId: [''],
+      tournamentSeriesId: [''],
+      tournamentRoundId: [''],
+      isTournament: [false],
       matchups: this.fb.array([this.createMatchupGroup()], [this.atLeastOneMatchup])
     });
   }
@@ -92,6 +118,10 @@ export class AddGamesComponent implements OnInit {
   ngOnInit() {
     this.loadAllData();
     this.loadPlayoffBrackets();
+    this.loadTournaments();
+    
+    // Watch for game type changes
+    // Note: We'll handle this via a method that gets called from the template
     
     // Watch for playoff checkbox changes
     this.gameForm.get('isPlayoff')?.valueChanges.subscribe(isPlayoff => {
@@ -119,6 +149,16 @@ export class AddGamesComponent implements OnInit {
         this.loadPlayoffSeries(bracketId);
       } else {
         this.playoffSeries = [];
+      }
+    });
+    
+    // Watch for tournament bracket changes to load series
+    this.gameForm.get('tournamentBracketId')?.valueChanges.subscribe(bracketId => {
+      if (bracketId) {
+        this.loadTournamentSeries(bracketId);
+      } else {
+        this.tournamentSeries = [];
+        this.gameForm.patchValue({ tournamentSeriesId: '', tournamentRoundId: '' });
       }
     });
   }
@@ -192,6 +232,182 @@ export class AddGamesComponent implements OnInit {
         this.dataLoaded = true; // Still set to true to allow form interaction
       }
     });
+  }
+
+  loadTournaments() {
+    this.api.getTournaments().subscribe({
+      next: (tournaments) => {
+        this.tournaments = tournaments || [];
+      },
+      error: (error) => {
+        console.error('Error loading tournaments:', error);
+        this.tournaments = [];
+      }
+    });
+  }
+
+  onGameTypeChange(gameType: 'season' | 'tournament') {
+    this.gameType = gameType;
+    this.isTournamentGame = gameType === 'tournament';
+    
+    // Reset form fields based on game type
+    if (gameType === 'tournament') {
+      // Tournament mode - clear season/division, require tournament fields
+      this.gameForm.get('season')?.clearValidators();
+      this.gameForm.get('division')?.clearValidators();
+      this.gameForm.get('season')?.setValue('');
+      this.gameForm.get('division')?.setValue('');
+      this.gameForm.get('isTournament')?.setValue(true);
+      this.gameForm.get('tournamentId')?.setValidators(Validators.required);
+      this.gameForm.get('tournamentBracketId')?.setValidators(Validators.required);
+      this.gameForm.get('tournamentSeriesId')?.setValidators(Validators.required);
+      // Disable bracket and series selectors until tournament is selected
+      this.gameForm.get('tournamentBracketId')?.disable();
+      this.gameForm.get('tournamentSeriesId')?.disable();
+      this.filteredDivisions = [];
+      this.filteredClubs = [];
+    } else {
+      // Season mode - require season/division, clear tournament fields
+      this.gameForm.get('season')?.setValidators(Validators.required);
+      this.gameForm.get('division')?.setValidators(Validators.required);
+      this.gameForm.get('isTournament')?.setValue(false);
+      this.gameForm.get('tournamentId')?.clearValidators();
+      this.gameForm.get('tournamentBracketId')?.clearValidators();
+      this.gameForm.get('tournamentSeriesId')?.clearValidators();
+      this.gameForm.get('tournamentId')?.setValue('');
+      this.gameForm.get('tournamentBracketId')?.setValue('');
+      this.gameForm.get('tournamentSeriesId')?.setValue('');
+      this.gameForm.get('tournamentRoundId')?.setValue('');
+      this.tournamentBrackets = [];
+      this.tournamentSeries = [];
+    }
+    
+    // Update validity
+    this.gameForm.get('season')?.updateValueAndValidity();
+    this.gameForm.get('division')?.updateValueAndValidity();
+    this.gameForm.get('tournamentId')?.updateValueAndValidity();
+    this.gameForm.get('tournamentBracketId')?.updateValueAndValidity();
+    this.gameForm.get('tournamentSeriesId')?.updateValueAndValidity();
+    
+    // Clear matchups
+    while (this.matchups.length > 0) {
+      this.matchups.removeAt(0);
+    }
+    this.matchups.push(this.createMatchupGroup());
+  }
+
+  onTournamentChange() {
+    const tournamentId = this.gameForm.get('tournamentId')?.value;
+    if (tournamentId) {
+      this.loadTournamentBrackets(tournamentId);
+      // Enable bracket selector
+      this.gameForm.get('tournamentBracketId')?.enable();
+    } else {
+      this.tournamentBrackets = [];
+      this.tournamentSeries = [];
+      this.filteredClubs = [];
+      // Disable bracket selector
+      this.gameForm.get('tournamentBracketId')?.disable();
+    }
+    this.gameForm.patchValue({ tournamentBracketId: '', tournamentSeriesId: '', tournamentRoundId: '' });
+    // Clear matchups
+    while (this.matchups.length > 0) {
+      this.matchups.removeAt(0);
+    }
+    this.matchups.push(this.createMatchupGroup());
+  }
+
+  loadTournamentBrackets(tournamentId: string) {
+    this.api.getTournamentBrackets(tournamentId).subscribe({
+      next: (brackets) => {
+        this.tournamentBrackets = (brackets || []).filter((b: any) => b.status === 'active' || b.status === 'setup');
+      },
+      error: (error) => {
+        console.error('Error loading tournament brackets:', error);
+        this.tournamentBrackets = [];
+      }
+    });
+  }
+
+  onTournamentBracketChange() {
+    const bracketId = this.gameForm.get('tournamentBracketId')?.value;
+    if (bracketId) {
+      this.loadTournamentSeries(bracketId);
+      // Enable series selector
+      this.gameForm.get('tournamentSeriesId')?.enable();
+      // Get bracket to populate round info
+      this.api.getTournamentBracketById(bracketId).subscribe({
+        next: (bracket) => {
+          // Round ID will be set when series is selected
+        }
+      });
+    } else {
+      this.tournamentSeries = [];
+      // Disable series selector
+      this.gameForm.get('tournamentSeriesId')?.disable();
+      this.gameForm.patchValue({ tournamentSeriesId: '', tournamentRoundId: '' });
+    }
+  }
+
+  loadTournamentSeries(bracketId: string) {
+    this.api.getTournamentBracketSeries(bracketId).subscribe({
+      next: (series) => {
+        this.tournamentSeries = series;
+        // Filter clubs based on teams in the series
+        this.updateFilteredClubsForTournament();
+      },
+      error: (error) => {
+        console.error('Error loading tournament series:', error);
+        this.tournamentSeries = [];
+      }
+    });
+  }
+
+  onTournamentSeriesChange() {
+    const seriesId = this.gameForm.get('tournamentSeriesId')?.value;
+    const bracketId = this.gameForm.get('tournamentBracketId')?.value;
+    if (seriesId && bracketId) {
+      this.api.getTournamentSeries(seriesId, bracketId).subscribe({
+        next: (series) => {
+          // Set round ID from series
+          this.gameForm.get('tournamentRoundId')?.setValue(series.roundId || `round-${series.roundOrder}`);
+          // Update filtered clubs based on series teams
+          this.updateFilteredClubsForTournament();
+        }
+      });
+    }
+  }
+
+  updateFilteredClubsForTournament() {
+    const seriesId = this.gameForm.get('tournamentSeriesId')?.value;
+    const bracketId = this.gameForm.get('tournamentBracketId')?.value;
+    const tournamentId = this.gameForm.get('tournamentId')?.value;
+    
+    if (seriesId && bracketId) {
+      // Find the series to get the teams
+      const series = this.tournamentSeries.find(s => s._id === seriesId);
+      if (series) {
+        const homeClubId = typeof series.homeClubId === 'object' ? series.homeClubId._id : series.homeClubId;
+        const awayClubId = typeof series.awayClubId === 'object' ? series.awayClubId._id : series.awayClubId;
+        
+        // Filter clubs to only show the teams in this series
+        this.filteredClubs = this.clubs.filter(club => 
+          club._id === homeClubId || club._id === awayClubId
+        );
+      }
+    } else if (tournamentId) {
+      // If no series selected, show all clubs in the tournament
+      this.filteredClubs = this.clubs.filter(club => {
+        return club.tournaments && club.tournaments.some((tournament: any) => {
+          const tId = typeof tournament.tournamentId === 'object' 
+            ? tournament.tournamentId._id 
+            : tournament.tournamentId;
+          return tId === tournamentId;
+        });
+      }).sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      this.filteredClubs = [];
+    }
   }
 
   loadSeasons() {
@@ -344,11 +560,22 @@ export class AddGamesComponent implements OnInit {
     // Mark all form controls as touched to show validation errors
     this.gameForm.markAllAsTouched();
     
-    // Validate basic form fields
+    // Validate based on game type
+    if (this.gameType === 'season') {
+      // Season games require season and division
     if (!this.gameForm.get('season')?.value || !this.gameForm.get('division')?.value || 
         !this.gameForm.get('date')?.value || !this.gameForm.get('time')?.value) {
       alert('Please fill in all required fields (Season, Division, Date, Time).');
       return;
+      }
+    } else {
+      // Tournament games require tournament, bracket, and series
+      if (!this.gameForm.get('tournamentId')?.value || !this.gameForm.get('tournamentBracketId')?.value || 
+          !this.gameForm.get('tournamentSeriesId')?.value || !this.gameForm.get('date')?.value || 
+          !this.gameForm.get('time')?.value) {
+        alert('Please fill in all required fields (Tournament, Bracket, Series, Date, Time).');
+        return;
+      }
     }
 
     // Check if we have at least one matchup
@@ -417,13 +644,16 @@ export class AddGamesComponent implements OnInit {
           }
           
           const gameData: any = {
-            seasonId: formData.season,
-            divisionId: formData.division,
             homeClubId: matchup.homeTeam,
             awayClubId: matchup.awayTeam,
             date: gameDate,
             status: 'scheduled' // Set default status
           };
+
+          // Add fields based on game type
+          if (this.gameType === 'season') {
+            gameData.seasonId = formData.season;
+            gameData.divisionId = formData.division;
 
           // Add playoff fields if this is a playoff game
           if (formData.isPlayoff) {
@@ -431,6 +661,16 @@ export class AddGamesComponent implements OnInit {
             gameData.playoffBracketId = formData.playoffBracketId;
             gameData.playoffSeriesId = formData.playoffSeriesId;
             gameData.playoffRoundId = formData.playoffRoundId;
+            }
+          } else {
+            // Tournament game - use placeholder for seasonId/divisionId or make them optional
+            gameData.seasonId = 'tournament'; // Placeholder value
+            gameData.divisionId = 'tournament'; // Placeholder value
+            gameData.isTournament = true;
+            gameData.tournamentId = formData.tournamentId;
+            gameData.tournamentBracketId = formData.tournamentBracketId;
+            gameData.tournamentSeriesId = formData.tournamentSeriesId;
+            gameData.tournamentRoundId = formData.tournamentRoundId;
           }
 
           gamesData.push(gameData);
@@ -457,7 +697,21 @@ export class AddGamesComponent implements OnInit {
 
           if (failureCount === 0) {
             // All games created successfully
-            if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
+            if (this.gameType === 'tournament' && formData.tournamentBracketId && formData.tournamentSeriesId) {
+              alert(`Successfully created ${successCount} tournament game(s)!`);
+              const seriesId = String(formData.tournamentSeriesId).trim();
+              const bracketId = String(formData.tournamentBracketId).trim();
+              
+              if (seriesId && bracketId && seriesId !== 'undefined' && bracketId !== 'undefined') {
+                this.router.navigate(['/tournaments', 'series', seriesId], {
+                  queryParams: { bracketId: bracketId }
+                }).catch(() => {
+                  this.router.navigate(['/tournaments']);
+                });
+              } else {
+                this.router.navigate(['/tournaments']);
+              }
+            } else if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
               alert(`Successfully created ${successCount} playoff game(s)!`);
               const seriesId = String(formData.playoffSeriesId).trim();
               const bracketId = String(formData.playoffBracketId).trim();
@@ -490,7 +744,19 @@ export class AddGamesComponent implements OnInit {
             
             // Still navigate on partial success
             if (successCount > 0) {
-              if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
+              if (this.gameType === 'tournament' && formData.tournamentBracketId && formData.tournamentSeriesId) {
+                const seriesId = String(formData.tournamentSeriesId).trim();
+                const bracketId = String(formData.tournamentBracketId).trim();
+                if (seriesId && bracketId && seriesId !== 'undefined' && bracketId !== 'undefined') {
+                  this.router.navigate(['/tournaments', 'series', seriesId], {
+                    queryParams: { bracketId: bracketId }
+                  }).catch(() => {
+                    this.router.navigate(['/tournaments']);
+                  });
+                } else {
+                  this.router.navigate(['/tournaments']);
+                }
+              } else if (formData.isPlayoff && formData.playoffBracketId && formData.playoffSeriesId) {
                 const seriesId = String(formData.playoffSeriesId).trim();
                 const bracketId = String(formData.playoffBracketId).trim();
                 if (seriesId && bracketId && seriesId !== 'undefined' && bracketId !== 'undefined') {

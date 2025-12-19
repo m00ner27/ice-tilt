@@ -102,10 +102,13 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   groupedStats: GroupedPlayerStats[] = [];
   filteredGroupedStats: GroupedPlayerStats[] = [];
   selectedSeasonId: string | null = null;
+  selectedTournamentId: string | null = null;
   selectedDivisionId: string = 'all-divisions';
   seasons: Season[] = [];
+  tournaments: any[] = [];
   divisions: Division[] = [];
   includePlayoffs: boolean = false;
+  statsMode: 'season' | 'tournament' = 'season';
   
   isLoading: boolean = true;
   sortColumn: string = 'points';
@@ -158,6 +161,17 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     this.ngrxApiService.loadClubs();
     this.ngrxApiService.loadSeasons();
     this.ngrxApiService.loadDivisions();
+    
+    // Load tournaments
+    this.apiService.getTournaments().subscribe({
+      next: (tournaments) => {
+        this.tournaments = tournaments || [];
+      },
+      error: (error) => {
+        console.error('Error loading tournaments:', error);
+        this.tournaments = [];
+      }
+    });
     
     // Subscribe to data changes
     this.dataSubscription = combineLatest([
@@ -264,15 +278,29 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   private processStats(matches: any[], clubs: Club[], divisions: Division[]): void {
-    console.log('Processing stats for season:', this.selectedSeasonId);
-    
-    if (this.selectedSeasonId) {
+    if (this.statsMode === 'tournament' && this.selectedTournamentId) {
+      this.processTournamentStats(matches, clubs);
+    } else if (this.selectedSeasonId) {
       this.processSpecificSeasonStats(matches, clubs, divisions);
     }
     
     this.applyDivisionFilter();
   }
   
+  private processTournamentStats(matches: any[], clubs: Club[]): void {
+    console.log('Processing tournament stats:', this.selectedTournamentId);
+    
+    // Filter matches to only include tournament games
+    let filteredMatches = matches.filter(match => {
+      return match.isTournament === true && match.tournamentId === this.selectedTournamentId;
+    });
+    
+    // Tournaments don't have divisions, so use empty map
+    const teamDivisionMap = new Map<string, string>();
+    
+    // Process stats for the filtered matches
+    this.aggregatePlayerStats(filteredMatches, teamDivisionMap);
+  }
   
   private processSpecificSeasonStats(matches: any[], clubs: Club[], divisions: Division[]): void {
     console.log('Processing specific season stats:', this.selectedSeasonId);
@@ -286,6 +314,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     if (!this.includePlayoffs) {
       filteredMatches = filteredMatches.filter(match => !this.isPlayoffGame(match));
     }
+    
+    // Also filter out tournament games when in season mode
+    filteredMatches = filteredMatches.filter(match => !match.isTournament);
     
     // Create team division map for the selected season
     const teamDivisionMap = new Map<string, string>();
