@@ -461,6 +461,19 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
             // Extract team names from populated club objects
             homeTeam: match.homeClubId?.name || match.homeTeam || 'Unknown',
             awayTeam: match.awayClubId?.name || match.awayTeam || 'Unknown',
+            // Set homeClub and awayClub objects with logo URLs for match history display
+            homeClub: match.homeClubId ? {
+              _id: match.homeClubId._id || match.homeClubId,
+              name: match.homeClubId.name,
+              logoUrl: match.homeClubId.logoUrl,
+              eashlClubId: match.homeClubId.eashlClubId
+            } : undefined,
+            awayClub: match.awayClubId ? {
+              _id: match.awayClubId._id || match.awayClubId,
+              name: match.awayClubId.name,
+              logoUrl: match.awayClubId.logoUrl,
+              eashlClubId: match.awayClubId.eashlClubId
+            } : undefined,
             // Also preserve original fields for backwards compatibility
             homeTeamScore: match.homeTeamScore,
             awayTeamScore: match.awayTeamScore

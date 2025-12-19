@@ -200,4 +200,12 @@ export class MatchHistoryComponent {
 
   // Expose Math.min for template
   Math = Math;
+
+  // Handle image load errors by hiding the broken image
+  handleImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+    }
+  }
 } 

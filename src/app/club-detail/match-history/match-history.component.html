@@ -20,16 +20,28 @@
       <div class="match-details">
         <div class="opponent">
           <span class="vs">vs</span> 
-          <img [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" [alt]="getOpponent(match)" class="opponent-logo">
+          <img *ngIf="getOpponentClub(match)?.logoUrl" 
+               [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" 
+               [alt]="getOpponent(match) + ' logo'" 
+               class="opponent-logo"
+               (error)="handleImageError($event)">
           {{ getOpponent(match) }}
         </div>
         <div class="score">
           <span *ngIf="getOvertimeIndicator(match)" class="ot-indicator">{{ getOvertimeIndicator(match) }}</span>
-          <img [src]="getImageUrl(getOurClub(match)?.logoUrl)" [alt]="teamName" class="score-logo">
+          <img *ngIf="getOurClub(match)?.logoUrl" 
+               [src]="getImageUrl(getOurClub(match)?.logoUrl)" 
+               [alt]="teamName + ' logo'" 
+               class="score-logo"
+               (error)="handleImageError($event)">
           <span class="score-value">{{ getOurScore(match) }}</span>
           <span class="score-separator">-</span>
           <span class="score-value">{{ getOpponentScore(match) }}</span>
-          <img [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" [alt]="getOpponent(match)" class="score-logo">
+          <img *ngIf="getOpponentClub(match)?.logoUrl" 
+               [src]="getImageUrl(getOpponentClub(match)?.logoUrl)" 
+               [alt]="getOpponent(match) + ' logo'" 
+               class="score-logo"
+               (error)="handleImageError($event)">
         </div>
       </div>
       <div class="view-details">View details</div>
