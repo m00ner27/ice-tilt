@@ -448,6 +448,16 @@
   gap: 1rem;
 }
 
+.placement-bracket-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem;
+}
+
+.placement-bracket-section:last-child {
+  margin-bottom: 0;
+}
+
 /* ============================================
    RESPONSIVE DESIGN
    ============================================ */

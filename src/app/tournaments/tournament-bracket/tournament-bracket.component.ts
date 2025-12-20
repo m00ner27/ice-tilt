@@ -31,6 +31,7 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
   selectedBracketId: string | null = null;
   selectedTournamentId: string | null = null;
   private selectedTournamentId$ = new BehaviorSubject<string | null>(null);
+  allBracketsForTournament: any[] = [];
   
   playerStats: any[] = [];
   goalieStats: any[] = [];
@@ -90,11 +91,37 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
     this.store.dispatch(TournamentsActions.loadTournaments());
     this.store.dispatch(TournamentsActions.loadTournamentBrackets({}));
     
-    // Subscribe to bracket changes and load stats
+    // Auto-select most recent tournament immediately when tournaments load
     this.subscriptions.add(
-      this.bracket$.subscribe(bracket => {
-        if (bracket && bracket._id) {
-          this.loadStatsForBracket(bracket._id);
+      this.store.select(TournamentsSelectors.selectAllTournaments).pipe(
+        filter(tournaments => tournaments !== null && tournaments !== undefined && tournaments.length > 0),
+        take(1)
+      ).subscribe(tournaments => {
+        if (tournaments && tournaments.length > 0 && !this.selectedTournamentId) {
+          // Sort tournaments by date (most recent first) and select the first one
+          const sortedTournaments = [...tournaments].sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA; // Most recent first
+          });
+          const mostRecentTournament = sortedTournaments[0];
+          if (mostRecentTournament && mostRecentTournament._id) {
+            this.selectedTournamentId = mostRecentTournament._id;
+            this.selectedTournamentId$.next(mostRecentTournament._id);
+            // Reload brackets for the selected tournament
+            this.store.dispatch(TournamentsActions.loadTournamentBrackets({ tournamentId: mostRecentTournament._id }));
+          }
+        }
+      })
+    );
+    
+    // Subscribe to filtered brackets to track all brackets for selected tournament
+    this.subscriptions.add(
+      this.filteredBrackets$.subscribe(brackets => {
+        this.allBracketsForTournament = brackets || [];
+        // Load stats for the entire tournament when brackets are available
+        if (this.selectedTournamentId && brackets.length > 0) {
+          this.loadStatsForTournament(this.selectedTournamentId);
         }
       })
     );
@@ -135,59 +162,11 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
             this.selectedTournamentId$.next(tournamentId);
           }
         });
-      } else {
-        // Wait for brackets and tournaments to load, then select the first one
-        combineLatest([
-          this.store.select(TournamentsSelectors.selectTournamentsLoading).pipe(filter(loading => !loading)),
-          this.store.select(TournamentsSelectors.selectAllTournamentBrackets)
-        ]).pipe(
-          filter(([_, brackets]) => brackets !== null && brackets !== undefined),
-          take(1)
-        ).subscribe(([_, brackets]) => {
-          if (brackets && brackets.length > 0) {
-            // Sort brackets: active first, then by creation date (newest first)
-            const sortedBrackets = this.getSortedBrackets(brackets);
-            const bracketToLoad = sortedBrackets[0];
-            
-            if (bracketToLoad && bracketToLoad._id) {
-              this.bracketId = bracketToLoad._id;
-              this.selectedBracketId = bracketToLoad._id;
-              
-              // Set selected tournament based on bracket
-              const tournamentId = typeof bracketToLoad.tournamentId === 'object' && bracketToLoad.tournamentId !== null
-                ? (bracketToLoad.tournamentId as any)._id
-                : bracketToLoad.tournamentId;
-              if (tournamentId) {
-                this.selectedTournamentId = tournamentId;
-                this.selectedTournamentId$.next(tournamentId);
-              }
-              
-              this.store.dispatch(TournamentsActions.loadTournamentBracket({ bracketId: bracketToLoad._id }));
-            }
-          }
-        });
       }
+      // Note: Tournament auto-selection is handled in the ngOnInit subscription above
     });
     
-    // Also subscribe to filteredBrackets$ to auto-select when brackets become available
-    this.subscriptions.add(
-      this.filteredBrackets$.pipe(
-        filter(brackets => brackets && brackets.length > 0),
-        take(1)
-      ).subscribe(filteredBrackets => {
-        // Only auto-select if no bracket is currently selected
-        if (!this.selectedBracketId && filteredBrackets.length > 0) {
-          const sortedBrackets = this.getSortedBrackets(filteredBrackets);
-          const bracketToLoad = sortedBrackets[0];
-          
-          if (bracketToLoad && bracketToLoad._id && !this.bracketId) {
-            this.bracketId = bracketToLoad._id;
-            this.selectedBracketId = bracketToLoad._id;
-            this.store.dispatch(TournamentsActions.loadTournamentBracket({ bracketId: bracketToLoad._id }));
-          }
-        }
-      })
-    );
+    // Load all brackets for selected tournament (no need to load individual brackets anymore)
   }
   
   ngOnDestroy() {
@@ -199,13 +178,69 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
     this.store.dispatch(TournamentsActions.loadTournamentGoalieStats({ bracketId }));
   }
 
+  loadStatsForTournament(tournamentId: string) {
+    // Load combined stats for all brackets in the tournament
+    this.store.dispatch(TournamentsActions.loadTournamentPlayerStats({ tournamentId }));
+    this.store.dispatch(TournamentsActions.loadTournamentGoalieStats({ tournamentId }));
+  }
+
   getSeriesByRound(series: any[], roundOrder: number): any[] {
     return series.filter(s => s.roundOrder === roundOrder);
   }
 
-  getRoundName(rounds: any[], roundOrder: number): string {
+  getSeriesByRoundAndType(series: any[], roundOrder: number, placementBracketType: string): any[] {
+    if (!series || series.length === 0) return [];
+    const filtered = series.filter(s => {
+      const matchesRound = s.roundOrder === roundOrder;
+      // Check if placementBracketType matches, or if it's undefined and we need to infer
+      const matchesType = s.placementBracketType === placementBracketType;
+      return matchesRound && matchesType;
+    });
+    // If no series found with the type, and it's round 2 of placement bracket,
+    // try to split by index (first 2 are winners, last 2 are losers)
+    if (filtered.length === 0 && roundOrder === 2) {
+      const round2Series = series.filter(s => s.roundOrder === roundOrder);
+      if (round2Series.length === 4) {
+        // First 2 are winners, last 2 are losers
+        if (placementBracketType === 'winners') {
+          return round2Series.slice(0, 2);
+        } else if (placementBracketType === 'losers') {
+          return round2Series.slice(2, 4);
+        }
+      }
+    }
+    return filtered;
+  }
+
+  isPlacementBracketRound2(bracket: any, roundOrder: number): boolean {
+    return bracket.format === 'placement-bracket' && roundOrder === 2;
+  }
+
+  getRoundName(rounds: any[], roundOrder: number, bracket?: any): string {
     const round = rounds.find(r => r.order === roundOrder);
-    return round ? round.name : `Round ${roundOrder}`;
+    if (!round) return `Round ${roundOrder}`;
+    
+    // For placement brackets, swap round names if they have the old order
+    // Old order in DB: order 1 = "Final Placement", order 3 = "Initial Matchups"
+    // New order we want: order 1 = "Initial Matchups" (left), order 3 = "Final Placement" (right)
+    // When displaying rounds 1, 2, 3 from left to right:
+    // - If round with order 1 has name "Final Placement", we're displaying it on the left but it should say "Initial Matchups"
+    // - If round with order 3 has name "Initial Matchups", we're displaying it on the right but it should say "Final Placement"
+    if (bracket?.format === 'placement-bracket' && bracket?.numRounds === 3) {
+      // Check if this is the old order (order 1 = Final Placement)
+      const round1 = rounds.find(r => r.order === 1);
+      if (round1 && round1.name === 'Final Placement') {
+        // This bracket has old order, swap the names
+        if (roundOrder === 1) {
+          return 'Initial Matchups'; // Display "Initial Matchups" for order 1 (left)
+        }
+        if (roundOrder === 3) {
+          return 'Final Placement'; // Display "Final Placement" for order 3 (right)
+        }
+      }
+    }
+    
+    return round.name;
   }
 
   getRoundBestOf(rounds: any[], roundOrder: number): number {
@@ -219,23 +254,26 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
     for (let i = 1; i <= bracket.numRounds; i++) {
       rounds.push(i);
     }
-    // Reverse so final round appears first (left side)
-    // But we need to map round order to series roundOrder
-    return rounds.reverse();
+    // Don't reverse - show rounds in order (1, 2, 3) with round 1 (Initial Matchups) on the left
+    return rounds;
   }
 
   // Map display round order to series roundOrder
-  // Rounds have order: 3, 2, 1 (for display)
-  // Series have roundOrder: 1, 2, 3 (actual round numbers)
+  // Now rounds are in order (1, 2, 3), so displayRoundOrder matches series roundOrder
   getSeriesRoundOrder(displayRoundOrder: number, numRounds: number): number {
-    // displayRoundOrder is 3, 2, 1 (from reversed getRoundNumbers)
-    // We need to convert to series roundOrder: 1, 2, 3
-    return numRounds - displayRoundOrder + 1;
+    return displayRoundOrder;
   }
 
   navigateToSeries(seriesId: string) {
-    if (this.bracketId) {
-      this.router.navigate(['/tournaments/series', seriesId], { queryParams: { bracketId: this.bracketId } });
+    // Find the bracket that contains this series
+    const bracket = this.allBracketsForTournament.find(b => 
+      b.series && b.series.some((s: any) => s._id === seriesId)
+    );
+    if (bracket && bracket._id) {
+      this.router.navigate(['/tournaments/series', seriesId], { queryParams: { bracketId: bracket._id } });
+    } else {
+      // Fallback: navigate without bracketId
+      this.router.navigate(['/tournaments/series', seriesId]);
     }
   }
 
@@ -256,18 +294,13 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
     this.selectedBracketId = null;
     this.bracketId = null;
     
-    // If a tournament is selected, load the first bracket for that tournament
+    // Reload brackets for the selected tournament to ensure fresh data with populated clubs
     if (tournamentIdValue) {
-      this.filteredBrackets$.pipe(take(1)).subscribe(brackets => {
-        if (brackets && brackets.length > 0) {
-          const sortedBrackets = this.getSortedBrackets(brackets);
-          const bracketToLoad = sortedBrackets[0];
-          
-          if (bracketToLoad && bracketToLoad._id) {
-            this.onBracketChange(bracketToLoad._id);
-          }
-        }
-      });
+      this.store.dispatch(TournamentsActions.loadTournamentBrackets({ tournamentId: tournamentIdValue }));
+      this.loadStatsForTournament(tournamentIdValue);
+    } else {
+      // Reload all brackets if no tournament selected
+      this.store.dispatch(TournamentsActions.loadTournamentBrackets({}));
     }
   }
   

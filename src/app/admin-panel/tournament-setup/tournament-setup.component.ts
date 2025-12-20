@@ -236,7 +236,9 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     
     // Create rounds
     for (let i = 0; i < numRounds; i++) {
-      const roundOrder = numRounds - i;
+      // For placement bracket, rounds are in order: 1, 2, 3 (not reversed)
+      // For single elimination, rounds are reversed: Final (1), Semifinal (2), etc.
+      const roundOrder = format === 'placement-bracket' ? (i + 1) : (numRounds - i);
       const roundName = format === 'placement-bracket' 
         ? roundNames[i] 
         : (roundNames[Math.min(i, roundNames.length - 1)] || `Round ${roundOrder}`);

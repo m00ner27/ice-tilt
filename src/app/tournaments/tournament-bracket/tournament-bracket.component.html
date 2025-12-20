@@ -4,165 +4,326 @@
   
   <h1 class="text-3xl font-bold text-white mb-6 text-center">Tournament Bracket</h1>
 
-  <!-- Tournament and Bracket Selectors -->
-  <div class="mb-6 max-w-2xl mx-auto space-y-4">
-    <!-- Tournament Selector -->
+  <!-- Tournament Selector -->
+  <div class="mb-6 max-w-2xl mx-auto">
     <div *ngIf="tournaments$ | async as tournaments">
-      <div *ngIf="tournaments.length > 1" class="mb-4">
-        <label class="block text-white text-sm font-medium mb-2">Select Tournament:</label>
-        <select 
-          [value]="selectedTournamentId || ''"
-          (change)="onTournamentChange($any($event.target).value)"
-          class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-          <option value="">All Tournaments</option>
-          <option *ngFor="let tournament of tournaments" [value]="tournament._id">
-            {{ tournament.name }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Bracket Selector -->
-    <div *ngIf="filteredBrackets$ | async as filteredBrackets">
-      <div *ngIf="filteredBrackets.length > 0" class="mb-4">
-        <label class="block text-white text-sm font-medium mb-2">Select Bracket:</label>
-        <select 
-          [value]="selectedBracketId || ''"
-          (change)="onBracketChange($any($event.target).value)"
-          class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-          <option value="" disabled>Choose a bracket...</option>
-          <option *ngFor="let bracket of getSortedBrackets(filteredBrackets)" [value]="bracket._id">
-            {{ getBracketDisplayName(bracket) }}
-          </option>
-        </select>
-      </div>
+      <label class="block text-white text-sm font-medium mb-2">Select Tournament:</label>
+      <select 
+        [value]="selectedTournamentId || ''"
+        (change)="onTournamentChange($any($event.target).value)"
+        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+        <option value="" disabled>Choose a tournament...</option>
+        <option *ngFor="let tournament of tournaments" [value]="tournament._id">
+          {{ tournament.name }}
+        </option>
+      </select>
     </div>
   </div>
 
   <div *ngIf="loading$ | async" class="text-center py-8">
-    <div class="text-gray-400">Loading bracket...</div>
+    <div class="text-gray-400">Loading brackets...</div>
   </div>
 
   <div *ngIf="error$ | async" class="text-center py-8">
-    <div class="text-red-400">Error loading bracket: {{ error$ | async }}</div>
+    <div class="text-red-400">Error loading brackets: {{ error$ | async }}</div>
   </div>
 
-  <div *ngIf="bracket$ | async as bracket" class="space-y-8">
-    <div class="bracket-header-card">
-      <div class="flex items-center gap-4 mb-2">
-        <img *ngIf="bracket.logoUrl" [src]="getImageUrl(bracket.logoUrl)" 
-          alt="Bracket Logo" class="bracket-header-logo">
-        <h2 class="bracket-header-title">{{ bracket.name }}</h2>
-      </div>
-      <p class="bracket-header-meta">{{ bracket.numTeams }} teams • {{ bracket.numRounds }} rounds</p>
+  <!-- Show all brackets for selected tournament -->
+  <ng-container *ngIf="filteredBrackets$ | async as filteredBrackets">
+    <div *ngIf="filteredBrackets.length === 0 && !(loading$ | async)" class="text-center py-8">
+      <p class="text-gray-400">No brackets found for this tournament. Please create a bracket in the admin panel.</p>
     </div>
 
-    <!-- Bracket Visualization -->
-    <div class="bracket-scroll-container">
-      <div class="bracket-rounds-container">
-        <!-- Render each round -->
-        <ng-container *ngFor="let displayRoundOrder of getRoundNumbers(bracket)">
-          <div class="round-column">
-            
-            <!-- Round Header -->
-            <div class="round-header">
-              <h3 class="round-title">
-                {{ getRoundName(bracket.rounds, displayRoundOrder) }}
-              </h3>
-              <div class="best-of-badge">
-                Best of {{ getRoundBestOf(bracket.rounds, displayRoundOrder) }}
-              </div>
-            </div>
-
-          <!-- Series in this round -->
-          <div class="round-series-container">
-            <div *ngFor="let series of getSeriesByRound(bracket.series || [], getSeriesRoundOrder(displayRoundOrder, bracket.numRounds))" 
-              (click)="navigateToSeries(series._id)"
-              class="series-card"
-              [class.border-green-500]="series.status === 'completed'"
-              [class.border-yellow-500]="series.status === 'in-progress'"
-              [class.border-gray-500]="series.status === 'pending' || series.status === 'bye'">
-              
-              <!-- Home Team -->
-              <div class="team-row"
-                   [class.winner]="series.status === 'completed' && series.winnerClubId === series.homeClubId?._id">
-                <div class="flex items-center justify-between">
-                  <div class="team-info">
-                    <span class="seed-badge">#{{ series.homeSeed }}</span>
-                    <img *ngIf="series.homeClubId?.logoUrl" 
-                      [src]="getImageUrl(series.homeClubId.logoUrl)" 
-                      [alt]="(series.homeClubId?.name || 'Team') + ' logo'" 
-                      class="team-logo-bracket">
-                    <span class="team-name-bracket">
-                      {{ series.homeClubId?.name || 'TBD' }}
-                    </span>
-                  </div>
-                  <span *ngIf="series.status !== 'bye'" 
-                    class="team-score"
-                    [class.winner-score]="series.winnerClubId === series.homeClubId?._id">
-                    {{ series.homeWins || 0 }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Away Team -->
-              <div *ngIf="series.status !== 'bye'" 
-                   class="team-row"
-                   [class.winner]="series.status === 'completed' && series.winnerClubId === series.awayClubId?._id">
-                <div class="flex items-center justify-between">
-                  <div class="team-info">
-                    <span class="seed-badge">#{{ series.awaySeed }}</span>
-                    <img *ngIf="series.awayClubId?.logoUrl" 
-                      [src]="getImageUrl(series.awayClubId.logoUrl)" 
-                      [alt]="(series.awayClubId?.name || 'Team') + ' logo'" 
-                      class="team-logo-bracket">
-                    <span class="team-name-bracket">
-                      {{ series.awayClubId?.name || 'TBD' }}
-                    </span>
-                  </div>
-                  <span class="team-score"
-                    [class.winner-score]="series.winnerClubId === series.awayClubId?._id">
-                    {{ series.awayWins || 0 }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Bye indicator -->
-              <div *ngIf="series.status === 'bye'" class="bye-indicator">
-                Bye
-              </div>
-
-              <!-- Series Status -->
-              <div class="series-status"
-                   [ngClass]="{
-                     'completed': series.status === 'completed',
-                     'in-progress': series.status === 'in-progress',
-                     'pending': series.status === 'pending'
-                   }">
-                <span *ngIf="series.status === 'completed'">Completed</span>
-                <span *ngIf="series.status === 'in-progress'">In Progress</span>
-                <span *ngIf="series.status === 'pending'">Pending</span>
-              </div>
-            </div>
-          </div>
+    <!-- Display each bracket -->
+    <div *ngFor="let bracket of getSortedBrackets(filteredBrackets)" class="space-y-8 mb-12">
+      <div class="bracket-header-card">
+        <div class="flex items-center gap-4 mb-2">
+          <img *ngIf="bracket.logoUrl" [src]="getImageUrl(bracket.logoUrl)" 
+            alt="Bracket Logo" class="bracket-header-logo">
+          <h2 class="bracket-header-title">{{ bracket.name }}</h2>
         </div>
-        </ng-container>
+        <p class="bracket-header-meta">{{ bracket.numTeams }} teams • {{ bracket.numRounds }} rounds</p>
+      </div>
+
+      <!-- Bracket Visualization -->
+      <div class="bracket-scroll-container">
+        <div class="bracket-rounds-container">
+          <!-- Render each round -->
+          <ng-container *ngFor="let displayRoundOrder of getRoundNumbers(bracket)">
+            <div class="round-column">
+              <ng-container *ngIf="isPlacementBracketRound2(bracket, getSeriesRoundOrder(displayRoundOrder, bracket.numRounds)); else normalRound">
+                <!-- Placement Bracket Round 2: Split into Winners and Losers -->
+                <ng-container *ngIf="getSeriesRoundOrder(displayRoundOrder, bracket.numRounds) as seriesRoundOrder">
+                  <!-- Winners Bracket Section -->
+                  <div class="placement-bracket-section">
+                    <div class="round-header">
+                      <h3 class="round-title">Winners Bracket</h3>
+                      <div class="best-of-badge">
+                        Best of {{ getRoundBestOf(bracket.rounds, seriesRoundOrder) }}
+                      </div>
+                    </div>
+                    <div class="round-series-container">
+                      <div *ngFor="let series of getSeriesByRoundAndType(bracket.series || [], seriesRoundOrder, 'winners')" 
+                        (click)="navigateToSeries(series._id)"
+                        class="series-card"
+                        [class.border-green-500]="series.status === 'completed'"
+                        [class.border-yellow-500]="series.status === 'in-progress'"
+                        [class.border-gray-500]="series.status === 'pending' || series.status === 'bye'">
+                        
+                        <!-- Home Team -->
+                        <div class="team-row"
+                             [class.winner]="series.status === 'completed' && series.winnerClubId === series.homeClubId?._id">
+                          <div class="flex items-center justify-between">
+                            <div class="team-info">
+                              <span class="seed-badge">#{{ series.homeSeed }}</span>
+                              <img *ngIf="series.homeClubId?.logoUrl" 
+                                [src]="getImageUrl(series.homeClubId.logoUrl)" 
+                                [alt]="(series.homeClubId?.name || 'Team') + ' logo'" 
+                                class="team-logo-bracket">
+                              <span class="team-name-bracket">
+                                {{ series.homeClubId?.name || 'TBD' }}
+                              </span>
+                            </div>
+                            <span *ngIf="series.status !== 'bye'" 
+                              class="team-score"
+                              [class.winner-score]="series.winnerClubId === series.homeClubId?._id">
+                              {{ series.homeWins || 0 }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Away Team -->
+                        <div *ngIf="series.status !== 'bye'" 
+                             class="team-row"
+                             [class.winner]="series.status === 'completed' && series.winnerClubId === series.awayClubId?._id">
+                          <div class="flex items-center justify-between">
+                            <div class="team-info">
+                              <span class="seed-badge">#{{ series.awaySeed }}</span>
+                              <img *ngIf="series.awayClubId?.logoUrl" 
+                                [src]="getImageUrl(series.awayClubId.logoUrl)" 
+                                [alt]="(series.awayClubId?.name || 'Team') + ' logo'" 
+                                class="team-logo-bracket">
+                              <span class="team-name-bracket">
+                                {{ series.awayClubId?.name || 'TBD' }}
+                              </span>
+                            </div>
+                            <span class="team-score"
+                              [class.winner-score]="series.winnerClubId === series.awayClubId?._id">
+                              {{ series.awayWins || 0 }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Bye indicator -->
+                        <div *ngIf="series.status === 'bye'" class="bye-indicator">
+                          Bye
+                        </div>
+
+                        <!-- Series Status -->
+                        <div class="series-status"
+                             [ngClass]="{
+                               'completed': series.status === 'completed',
+                               'in-progress': series.status === 'in-progress',
+                               'pending': series.status === 'pending'
+                             }">
+                          <span *ngIf="series.status === 'completed'">Completed</span>
+                          <span *ngIf="series.status === 'in-progress'">In Progress</span>
+                          <span *ngIf="series.status === 'pending'">Pending</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Losers Bracket Section -->
+                  <div class="placement-bracket-section">
+                    <div class="round-header">
+                      <h3 class="round-title">Losers Bracket</h3>
+                      <div class="best-of-badge">
+                        Best of {{ getRoundBestOf(bracket.rounds, seriesRoundOrder) }}
+                      </div>
+                    </div>
+                    <div class="round-series-container">
+                      <div *ngFor="let series of getSeriesByRoundAndType(bracket.series || [], seriesRoundOrder, 'losers')" 
+                        (click)="navigateToSeries(series._id)"
+                        class="series-card"
+                        [class.border-green-500]="series.status === 'completed'"
+                        [class.border-yellow-500]="series.status === 'in-progress'"
+                        [class.border-gray-500]="series.status === 'pending' || series.status === 'bye'">
+                        
+                        <!-- Home Team -->
+                        <div class="team-row"
+                             [class.winner]="series.status === 'completed' && series.winnerClubId === series.homeClubId?._id">
+                          <div class="flex items-center justify-between">
+                            <div class="team-info">
+                              <span class="seed-badge">#{{ series.homeSeed }}</span>
+                              <img *ngIf="series.homeClubId?.logoUrl" 
+                                [src]="getImageUrl(series.homeClubId.logoUrl)" 
+                                [alt]="(series.homeClubId?.name || 'Team') + ' logo'" 
+                                class="team-logo-bracket">
+                              <span class="team-name-bracket">
+                                {{ series.homeClubId?.name || 'TBD' }}
+                              </span>
+                            </div>
+                            <span *ngIf="series.status !== 'bye'" 
+                              class="team-score"
+                              [class.winner-score]="series.winnerClubId === series.homeClubId?._id">
+                              {{ series.homeWins || 0 }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Away Team -->
+                        <div *ngIf="series.status !== 'bye'" 
+                             class="team-row"
+                             [class.winner]="series.status === 'completed' && series.winnerClubId === series.awayClubId?._id">
+                          <div class="flex items-center justify-between">
+                            <div class="team-info">
+                              <span class="seed-badge">#{{ series.awaySeed }}</span>
+                              <img *ngIf="series.awayClubId?.logoUrl" 
+                                [src]="getImageUrl(series.awayClubId.logoUrl)" 
+                                [alt]="(series.awayClubId?.name || 'Team') + ' logo'" 
+                                class="team-logo-bracket">
+                              <span class="team-name-bracket">
+                                {{ series.awayClubId?.name || 'TBD' }}
+                              </span>
+                            </div>
+                            <span class="team-score"
+                              [class.winner-score]="series.winnerClubId === series.awayClubId?._id">
+                              {{ series.awayWins || 0 }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Bye indicator -->
+                        <div *ngIf="series.status === 'bye'" class="bye-indicator">
+                          Bye
+                        </div>
+
+                        <!-- Series Status -->
+                        <div class="series-status"
+                             [ngClass]="{
+                               'completed': series.status === 'completed',
+                               'in-progress': series.status === 'in-progress',
+                               'pending': series.status === 'pending'
+                             }">
+                          <span *ngIf="series.status === 'completed'">Completed</span>
+                          <span *ngIf="series.status === 'in-progress'">In Progress</span>
+                          <span *ngIf="series.status === 'pending'">Pending</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </ng-container>
+
+              <!-- Normal Round Display (non-placement bracket round 2) -->
+              <ng-template #normalRound>
+                <ng-container *ngIf="getSeriesRoundOrder(displayRoundOrder, bracket.numRounds) as seriesRoundOrder">
+                  <!-- Round Header -->
+                  <div class="round-header">
+                    <h3 class="round-title">
+                      {{ getRoundName(bracket.rounds, seriesRoundOrder, bracket) }}
+                    </h3>
+                    <div class="best-of-badge">
+                      Best of {{ getRoundBestOf(bracket.rounds, seriesRoundOrder) }}
+                    </div>
+                  </div>
+
+                  <!-- Series in this round -->
+                  <div class="round-series-container">
+                    <div *ngFor="let series of getSeriesByRound(bracket.series || [], seriesRoundOrder)" 
+                      (click)="navigateToSeries(series._id)"
+                      class="series-card"
+                      [class.border-green-500]="series.status === 'completed'"
+                      [class.border-yellow-500]="series.status === 'in-progress'"
+                      [class.border-gray-500]="series.status === 'pending' || series.status === 'bye'">
+                      
+                      <!-- Home Team -->
+                      <div class="team-row"
+                           [class.winner]="series.status === 'completed' && series.winnerClubId === series.homeClubId?._id">
+                        <div class="flex items-center justify-between">
+                          <div class="team-info">
+                            <span class="seed-badge">#{{ series.homeSeed }}</span>
+                            <img *ngIf="series.homeClubId?.logoUrl" 
+                              [src]="getImageUrl(series.homeClubId.logoUrl)" 
+                              [alt]="(series.homeClubId?.name || 'Team') + ' logo'" 
+                              class="team-logo-bracket">
+                            <span class="team-name-bracket">
+                              {{ series.homeClubId?.name || 'TBD' }}
+                            </span>
+                          </div>
+                          <span *ngIf="series.status !== 'bye'" 
+                            class="team-score"
+                            [class.winner-score]="series.winnerClubId === series.homeClubId?._id">
+                            {{ series.homeWins || 0 }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Away Team -->
+                      <div *ngIf="series.status !== 'bye'" 
+                           class="team-row"
+                           [class.winner]="series.status === 'completed' && series.winnerClubId === series.awayClubId?._id">
+                        <div class="flex items-center justify-between">
+                          <div class="team-info">
+                            <span class="seed-badge">#{{ series.awaySeed }}</span>
+                            <img *ngIf="series.awayClubId?.logoUrl" 
+                              [src]="getImageUrl(series.awayClubId.logoUrl)" 
+                              [alt]="(series.awayClubId?.name || 'Team') + ' logo'" 
+                              class="team-logo-bracket">
+                            <span class="team-name-bracket">
+                              {{ series.awayClubId?.name || 'TBD' }}
+                            </span>
+                          </div>
+                          <span class="team-score"
+                            [class.winner-score]="series.winnerClubId === series.awayClubId?._id">
+                            {{ series.awayWins || 0 }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Bye indicator -->
+                      <div *ngIf="series.status === 'bye'" class="bye-indicator">
+                        Bye
+                      </div>
+
+                      <!-- Series Status -->
+                      <div class="series-status"
+                           [ngClass]="{
+                             'completed': series.status === 'completed',
+                             'in-progress': series.status === 'in-progress',
+                             'pending': series.status === 'pending'
+                           }">
+                        <span *ngIf="series.status === 'completed'">Completed</span>
+                        <span *ngIf="series.status === 'in-progress'">In Progress</span>
+                        <span *ngIf="series.status === 'pending'">Pending</span>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+              </ng-template>
+            </div>
+          </ng-container>
+        </div>
       </div>
     </div>
+  </ng-container>
     
     <!-- AdSense Banner Ad -->
     <app-adsense [config]="bannerAdConfig"></app-adsense>
     
+  <!-- Combined Statistics for All Brackets in Tournament -->
+  <ng-container *ngIf="selectedTournamentId">
     <!-- Player Statistics -->
     <div class="mt-12">
-      <h2 class="text-2xl font-bold text-white mb-4">Player Statistics</h2>
+      <h2 class="text-2xl font-bold text-white mb-4">Player Statistics (All Brackets)</h2>
       
       <div *ngIf="statsLoading$ | async" class="text-center py-8">
         <div class="text-gray-400">Loading player stats...</div>
       </div>
       
       <div *ngIf="!(statsLoading$ | async) && sortedPlayerStats.length === 0" class="text-center py-8">
-        <p class="text-gray-400">No player statistics available for this bracket.</p>
+        <p class="text-gray-400">No player statistics available for this tournament.</p>
       </div>
       
       <div *ngIf="!(statsLoading$ | async) && sortedPlayerStats.length > 0" class="playoff-stats-table-container">
@@ -241,14 +402,14 @@
     
     <!-- Goalie Statistics -->
     <div class="mt-12">
-      <h2 class="text-2xl font-bold text-white mb-4">Goalie Statistics</h2>
+      <h2 class="text-2xl font-bold text-white mb-4">Goalie Statistics (All Brackets)</h2>
       
       <div *ngIf="statsLoading$ | async" class="text-center py-8">
         <div class="text-gray-400">Loading goalie stats...</div>
       </div>
       
       <div *ngIf="!(statsLoading$ | async) && sortedGoalieStats.length === 0" class="text-center py-8">
-        <p class="text-gray-400">No goalie statistics available for this bracket.</p>
+        <p class="text-gray-400">No goalie statistics available for this tournament.</p>
       </div>
       
       <div *ngIf="!(statsLoading$ | async) && sortedGoalieStats.length > 0" class="playoff-stats-table-container">
@@ -289,17 +450,11 @@
         </table>
       </div>
     </div>
-  </div>
+  </ng-container>
 
-  <div *ngIf="!(bracket$ | async) && !(loading$ | async)" class="text-center py-8">
-    <ng-container *ngIf="allBrackets$ | async as allBrackets">
-      <div *ngIf="allBrackets.length === 0">
-        <p class="text-gray-400 mb-4">No brackets found. Please create a bracket in the admin panel.</p>
-      </div>
-      <div *ngIf="allBrackets.length > 0 && !selectedBracketId">
-        <p class="text-gray-400">Please select a bracket from the dropdown above.</p>
-      </div>
-    </ng-container>
+  <!-- Show message if no tournament is selected -->
+  <div *ngIf="!selectedTournamentId && !(loading$ | async)" class="text-center py-8">
+    <p class="text-gray-400">Please select a tournament to view brackets and statistics.</p>
   </div>
 </div>
 
