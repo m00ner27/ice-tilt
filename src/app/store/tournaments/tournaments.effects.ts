@@ -123,7 +123,42 @@ export class TournamentsEffects {
         mergeMap(({ bracketId }) =>
           this.apiService.generateTournamentMatchups(bracketId).pipe(
             map((bracket) => TournamentsActions.generateTournamentMatchupsSuccess({ bracket })),
-            catchError((error) => of(TournamentsActions.generateTournamentMatchupsFailure({ error })))
+            catchError((error) => {
+              try {
+                // Handle 400 error (matchups already exist) more gracefully
+                let errorMessage = 'Unknown error';
+                let errorStatus = 0;
+                
+                if (error) {
+                  if (typeof error === 'object') {
+                    errorStatus = error.status || error.error?.status || 0;
+                    errorMessage = error.error?.message || error.message || 'Unknown error';
+                  } else if (typeof error === 'string') {
+                    errorMessage = error;
+                  }
+                }
+                
+                // If matchups already exist, reload the bracket instead of failing
+                if (errorStatus === 400 && (errorMessage.includes('already generated') || errorMessage.includes('Matchups already'))) {
+                  return this.apiService.getTournamentBracketById(bracketId).pipe(
+                    map((bracket) => TournamentsActions.generateTournamentMatchupsSuccess({ bracket })),
+                    catchError((reloadError) => {
+                      const safeError = reloadError || { message: 'Failed to reload bracket' };
+                      return of(TournamentsActions.generateTournamentMatchupsFailure({ error: safeError }));
+                    })
+                  );
+                }
+                
+                // Return a safe error object
+                const safeError = error || { message: 'Unknown error occurred' };
+                return of(TournamentsActions.generateTournamentMatchupsFailure({ error: safeError }));
+              } catch (e) {
+                // If anything goes wrong in error handling, return a safe error
+                return of(TournamentsActions.generateTournamentMatchupsFailure({ 
+                  error: { message: 'Error generating matchups', originalError: String(e) }
+                }));
+              }
+            })
           )
         )
       )

@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '../../store';
 import { forkJoin } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { map, take, filter } from 'rxjs/operators';
 import { ApiService } from '../../store/services/api.service';
 import { ImageUrlService } from '../../shared/services/image-url.service';
 import * as TournamentsActions from '../../store/tournaments/tournaments.actions';
@@ -443,50 +443,121 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       }));
       
       // Wait for update, then generate matchups
-      const updateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).subscribe(bracket => {
-        if (bracket && bracket._id === this.existingBracket._id && bracket._id) {
+      const updateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+        filter(bracket => bracket !== null && bracket._id === this.existingBracket._id),
+        take(1)
+      ).subscribe(bracket => {
+        if (bracket && bracket._id) {
           this.existingBracket = bracket;
-          updateSubscription.unsubscribe();
+          const bracketId = bracket._id;
           
           // Generate matchups after update
-          this.store.dispatch(TournamentsActions.generateTournamentMatchups({ bracketId: bracket._id }));
+          this.store.dispatch(TournamentsActions.generateTournamentMatchups({ bracketId }));
           
-          const generateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).subscribe(updatedBracket => {
-            if (updatedBracket && updatedBracket._id === bracket._id && updatedBracket.series && updatedBracket.series.length > 0) {
-              alert('Bracket updated and matchups generated successfully!');
-              this.viewMode = 'list';
-              this.loadBrackets();
-              generateSubscription.unsubscribe();
-            }
+          // Wait for matchups to be generated or handle error
+          const generateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+            filter(updatedBracket => 
+              updatedBracket !== null && 
+              updatedBracket._id === bracketId && 
+              updatedBracket.series && 
+              updatedBracket.series.length > 0
+            ),
+            take(1)
+          ).subscribe(updatedBracket => {
+            alert('Bracket updated and matchups generated successfully!');
+            this.viewMode = 'list';
+            this.loadBrackets();
+            generateSubscription.unsubscribe();
           });
+          
+          // Handle errors after a delay - use timeout to check if matchups weren't generated
+          const errorCheckTimeout = setTimeout(() => {
+            // Check if we still don't have series after 2 seconds
+            this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(take(1)).subscribe(currentBracket => {
+              if (currentBracket && currentBracket._id === bracket._id && (!currentBracket.series || currentBracket.series.length === 0)) {
+                // Check for error
+                this.store.select(TournamentsSelectors.selectTournamentsError).pipe(take(1)).subscribe(error => {
+                  if (error) {
+                    console.error('Error generating matchups:', error);
+                    const errorMessage = error?.message || error?.error?.message || '';
+                    if (errorMessage.includes('already generated')) {
+                      alert('Bracket updated successfully! Matchups were already generated.');
+                    } else {
+                      alert('Bracket updated, but there was an error generating matchups. You can generate them manually.');
+                    }
+                    this.viewMode = 'list';
+                    this.loadBrackets();
+                  }
+                });
+              }
+            });
+          }, 2000);
+          
+          // Clear timeout if matchups are generated successfully
+          generateSubscription.add(() => clearTimeout(errorCheckTimeout));
         }
+        updateSubscription.unsubscribe();
       });
     } else {
       // Create new bracket
       this.store.dispatch(TournamentsActions.createTournamentBracket({ bracketData }));
       
       // Wait for creation, then generate matchups
-      let createSubscription: any;
-      createSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).subscribe(bracket => {
+      const createSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+        filter(bracket => bracket !== null && bracket._id !== undefined),
+        take(1)
+      ).subscribe(bracket => {
         if (bracket && bracket._id) {
           this.existingBracket = bracket;
           const bracketId = bracket._id;
-          if (createSubscription) {
-            createSubscription.unsubscribe();
-          }
           
           // Generate matchups after creation
           this.store.dispatch(TournamentsActions.generateTournamentMatchups({ bracketId }));
           
-          const generateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).subscribe(updatedBracket => {
-            if (updatedBracket && updatedBracket._id === bracketId && updatedBracket.series && updatedBracket.series.length > 0) {
-              alert('Bracket created and matchups generated successfully!');
-              this.viewMode = 'list';
-              this.loadBrackets();
-              generateSubscription.unsubscribe();
-            }
+          // Wait for matchups to be generated
+          const generateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+            filter(updatedBracket => 
+              updatedBracket !== null && 
+              updatedBracket._id === bracketId && 
+              updatedBracket.series && 
+              updatedBracket.series.length > 0
+            ),
+            take(1)
+          ).subscribe(updatedBracket => {
+            alert('Bracket created and matchups generated successfully!');
+            this.viewMode = 'list';
+            this.loadBrackets();
+            generateSubscription.unsubscribe();
           });
+          
+          // Handle errors from generate matchups - use a timeout to check if matchups weren't generated
+          const errorCheckTimeout = setTimeout(() => {
+            // Check if we still don't have series after 2 seconds
+            this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(take(1)).subscribe(currentBracket => {
+              if (currentBracket && currentBracket._id === bracketId && (!currentBracket.series || currentBracket.series.length === 0)) {
+                // Check for error
+                this.store.select(TournamentsSelectors.selectTournamentsError).pipe(take(1)).subscribe(error => {
+                  if (error) {
+                    console.error('Error generating matchups:', error);
+                    const errorMessage = error?.message || error?.error?.message || '';
+                    if (errorMessage.includes('already generated')) {
+                      alert('Bracket created successfully! Matchups were already generated.');
+                    } else {
+                      alert('Bracket created, but there was an error generating matchups. You can generate them manually.');
+                    }
+                  } else {
+                    // No error but no series - might still be loading
+                    console.log('Matchups may still be generating...');
+                  }
+                });
+              }
+            });
+          }, 2000);
+          
+          // Clear timeout if matchups are generated successfully
+          generateSubscription.add(() => clearTimeout(errorCheckTimeout));
         }
+        createSubscription.unsubscribe();
       });
     }
   }
