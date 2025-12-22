@@ -1436,4 +1436,110 @@ export class ApiService {
       })
     );
   }
+
+  // ===== RANKINGS =====
+
+  // Public methods
+  getRankings(region?: string): Observable<any> {
+    const url = region 
+      ? `${this.apiUrl}/api/rankings?region=${region}`
+      : `${this.apiUrl}/api/rankings`;
+    return this.http.get<any>(url);
+  }
+
+  getRankingPointsByClub(clubId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/rankings/points/club/${clubId}`);
+  }
+
+  getRankingConfig(region?: string): Observable<any> {
+    const url = region
+      ? `${this.apiUrl}/api/rankings/config?region=${region}`
+      : `${this.apiUrl}/api/rankings/config`;
+    return this.http.get<any>(url);
+  }
+
+  // Admin methods
+  getRankingPointsBySeason(seasonId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any>(`${this.apiUrl}/api/rankings/points/season/${seasonId}`, { headers });
+      })
+    );
+  }
+
+  getClubsBySeasonForRankings(seasonId: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.get<any>(`${this.apiUrl}/api/rankings/clubs/season/${seasonId}`, { headers });
+      })
+    );
+  }
+
+  createOrUpdateRankingPoints(data: { clubId: string; seasonId: string; placementRP: number; playoffRP: number }): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/rankings/points`, data, { headers });
+      })
+    );
+  }
+
+  updateRankingPoints(id: string, data: { placementRP?: number; playoffRP?: number }): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/rankings/points/${id}`, data, { headers });
+      })
+    );
+  }
+
+  deleteRankingPoints(id: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete<any>(`${this.apiUrl}/api/rankings/points/${id}`, { headers });
+      })
+    );
+  }
+
+  updateRankingConfig(region: string, activeSeasonIds: string[]): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/rankings/config`, { region, activeSeasonIds }, { headers });
+      })
+    );
+  }
 }

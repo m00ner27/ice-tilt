@@ -29,6 +29,33 @@ module.exports = {
         '3xl': '24px',
         'full': '9999px',
       },
+      maxWidth: {
+        '7xl': '80rem', // Reduce from default 80rem to make it smaller
+        '6xl': '72rem',
+        '5xl': '64rem',
+      },
+      spacing: {
+        // Reduce spacing on larger screens
+        '18': '4.5rem',
+        '22': '5.5rem',
+      },
+    },
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1rem',
+        sm: '1.5rem',
+        lg: '2rem',
+        xl: '2rem',
+        '2xl': '2rem',
+      },
+      screens: {
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1400px', // Reduce from default 1536px
+      },
     },
   },
   plugins: [

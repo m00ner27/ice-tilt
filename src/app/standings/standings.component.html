@@ -39,13 +39,7 @@
         {{ divisionStanding.division.name }}
       </h2>
       
-      <!-- Check if all teams have 0 games played -->
-      <div *ngIf="hasNoCompletedGames(divisionStanding.standings)" class="text-center text-white py-8 bg-admin-card rounded-lg mb-5">
-        <p class="text-lg mb-2">No games have been played yet in this division.</p>
-        <p class="text-sm opacity-80">Standings will appear once games are completed and scores are recorded.</p>
-      </div>
-      
-      <div class="w-full overflow-x-auto" *ngIf="!hasNoCompletedGames(divisionStanding.standings)">
+      <div class="w-full overflow-x-auto">
         <table class="w-full bg-admin-card text-white border-collapse mb-5 text-sm sm:text-base" style="border-collapse: separate; border-spacing: 0;">
           <thead class="bg-admin-accent">
             <tr>

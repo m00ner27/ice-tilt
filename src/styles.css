@@ -30,6 +30,32 @@ body {
     overflow-x: hidden;
 }
 
+/* Scale down the app on larger screens */
+@media (min-width: 1280px) {
+    html {
+        font-size: 87.5%; /* 14px base instead of 16px (87.5% of 16px) */
+    }
+}
+
+@media (min-width: 1536px) {
+    html {
+        font-size: 81.25%; /* 13px base (81.25% of 16px) */
+    }
+}
+
+/* Reduce container max-widths on larger screens */
+@media (min-width: 1280px) {
+    .container {
+        max-width: 90% !important;
+    }
+}
+
+@media (min-width: 1536px) {
+    .container {
+        max-width: 85% !important;
+    }
+}
+
   
 /* Custom component styles that can't be easily replaced with Tailwind utilities */
 

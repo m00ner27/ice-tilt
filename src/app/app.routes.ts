@@ -69,6 +69,10 @@ export const routes: Routes = [
     path: 'standings', 
     loadComponent: () => import('./standings/standings.component').then(m => m.StandingsComponent)
   },
+  { 
+    path: 'rankings', 
+    loadComponent: () => import('./rankings/rankings.component').then(m => m.RankingsComponent)
+  },
   
   // Lazy loaded routes - Playoffs
   // More specific routes must come first
@@ -225,6 +229,11 @@ export const routes: Routes = [
       { 
         path: 'tournament-setup', 
         loadComponent: () => import('./admin-panel/tournament-setup/tournament-setup.component').then(m => m.TournamentSetupComponent),
+        canActivate: [AdminPasswordGuard]
+      },
+      { 
+        path: 'rankings', 
+        loadComponent: () => import('./admin-panel/rankings/rankings.component').then(m => m.RankingsAdminComponent),
         canActivate: [AdminPasswordGuard]
       },
       { 

@@ -1,0 +1,129 @@
+<div class="min-h-screen bg-gray-900 text-white py-8">
+  <div class="container mx-auto px-4">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold mb-4">Club Rankings</h1>
+      <p class="text-gray-400">Track club performance across multiple seasons</p>
+    </div>
+
+    <!-- Region Filter -->
+    <div class="mb-6">
+      <label for="region-select" class="block text-sm font-medium text-gray-300 mb-2">
+        Filter by Region
+      </label>
+      <select
+        id="region-select"
+        [(ngModel)]="selectedRegion"
+        (change)="onRegionChange()"
+        class="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="all">All Regions</option>
+        <option value="north-america">North America</option>
+        <option value="europe">Europe</option>
+      </select>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6">
+      {{ error }}
+    </div>
+
+    <!-- Rankings Table -->
+    <div *ngIf="!isLoading && !error" class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead class="bg-gray-700">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
+                (click)="onSort('rank')"
+              >
+                <div class="flex items-center gap-2">
+                  Rank
+                  <i class="fas" [ngClass]="getSortIcon('rank')"></i>
+                </div>
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
+                (click)="onSort('clubName')"
+              >
+                <div class="flex items-center gap-2">
+                  Club
+                  <i class="fas" [ngClass]="getSortIcon('clubName')"></i>
+                </div>
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
+                (click)="onSort('totalRP')"
+              >
+                <div class="flex items-center gap-2">
+                  Total RP
+                  <i class="fas" [ngClass]="getSortIcon('totalRP')"></i>
+                </div>
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Season Breakdown
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-gray-800 divide-y divide-gray-700">
+            <tr *ngFor="let entry of filteredRankings" class="hover:bg-gray-700 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                #{{ entry.rank }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-3">
+                  <img
+                    [src]="getLogoUrl(entry.clubLogo)"
+                    [alt]="entry.clubName"
+                    class="h-10 w-10 rounded-full object-cover"
+                    onerror="this.src='assets/images/square-default.png'"
+                  />
+                  <a
+                    [routerLink]="['/clubs', entry.clubId]"
+                    class="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    {{ entry.clubName }}
+                  </a>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-yellow-400">
+                {{ entry.totalRP }}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-300">
+                <div class="space-y-1">
+                  <div
+                    *ngFor="let season of entry.seasons"
+                    class="flex items-center justify-between gap-4 py-1"
+                  >
+                    <span class="text-gray-400">{{ season.seasonName }}:</span>
+                    <span class="font-medium">
+                      {{ season.totalRP }} RP
+                      <span class="text-gray-500 text-xs ml-1">
+                        ({{ season.placementRP }} + {{ season.playoffRP }})
+                      </span>
+                    </span>
+                  </div>
+                  <div *ngIf="entry.seasons.length === 0" class="text-gray-500 text-xs">
+                    No season data available
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredRankings.length === 0" class="text-center py-12 text-gray-400">
+        <p>No rankings available for the selected region.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
