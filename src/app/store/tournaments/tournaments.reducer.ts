@@ -193,6 +193,21 @@ export const tournamentsReducer = createReducer(
     error,
   })),
 
+  // Update Round Matchups
+  on(TournamentsActions.updateTournamentRoundMatchups, (state) => ({ ...state, loading: true, error: null })),
+  on(TournamentsActions.updateTournamentRoundMatchupsSuccess, (state, { bracket }) => ({
+    ...state,
+    brackets: state.brackets.map((b) => (b._id === bracket._id ? bracket : b)),
+    currentBracket: state.currentBracket?._id === bracket._id ? bracket : state.currentBracket,
+    loading: false,
+    error: null,
+  })),
+  on(TournamentsActions.updateTournamentRoundMatchupsFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error,
+  })),
+
   // Load Player Stats
   on(TournamentsActions.loadTournamentPlayerStats, (state) => ({ ...state, statsLoading: true, statsError: null })),
   on(TournamentsActions.loadTournamentPlayerStatsSuccess, (state, { stats }) => ({

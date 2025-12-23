@@ -63,7 +63,11 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   editingRoundOrder: number | null = null;
   matchupEditorOpen = false;
   availableTeams: any[] = [];
+  availableWinners: any[] = [];
+  availableLosers: any[] = [];
   currentMatchups: any[] = [];
+  winnersMatchups: any[] = [];
+  losersMatchups: any[] = [];
   
   // Logo upload
   logoPreview: string | null = null;
@@ -727,6 +731,612 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   getClubName(clubId: any): string {
     const club = this.clubs.find(c => c._id === (clubId?._id || clubId));
     return club ? club.name : 'Unknown';
+  }
+
+  openMatchupEditor(bracket: any, roundOrder: number) {
+    this.editingBracket = bracket;
+    this.editingRoundOrder = roundOrder;
+    
+    // Load full bracket details
+    this.store.dispatch(TournamentsActions.loadTournamentBracket({ bracketId: bracket._id }));
+    
+    this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(take(1)).subscribe(fullBracket => {
+      if (fullBracket) {
+        this.editingBracket = fullBracket;
+        const isPlacementBracket = fullBracket.format === 'placement-bracket';
+        
+        // Get available teams (winners from previous round or all seedings for round 1)
+        if (roundOrder === 1) {
+          // Round 1 - use seedings
+          this.availableTeams = fullBracket.seedings
+            .map((s: any) => ({
+              clubId: s.clubId?._id || s.clubId,
+              seed: s.seed,
+              clubName: this.getClubName(s.clubId?._id || s.clubId)
+            }))
+            .sort((a: any, b: any) => a.seed - b.seed);
+        } else {
+          // Subsequent rounds - get teams from previous round
+          const previousRound = roundOrder - 1;
+          const previousRoundSeries = fullBracket.series.filter((s: any) => s.roundOrder === previousRound);
+          
+          // Helper function to get original seed from bracket seedings
+          const getOriginalSeed = (clubId: any): number | null => {
+            const clubIdStr = clubId?.toString();
+            const seeding = fullBracket.seedings?.find((s: any) => {
+              const seedingClubId = s.clubId?._id || s.clubId;
+              return seedingClubId?.toString() === clubIdStr;
+            });
+            return seeding?.seed || null;
+          };
+          
+          // Helper function to add team to available teams if not already present
+          const addTeamIfNotPresent = (clubId: any) => {
+            const clubIdStr = clubId?.toString();
+            const existingTeam = this.availableTeams.find(t => t.clubId.toString() === clubIdStr);
+            if (!existingTeam) {
+              const originalSeed = getOriginalSeed(clubId);
+              if (originalSeed !== null) {
+                this.availableTeams.push({
+                  clubId: clubId,
+                  seed: originalSeed,
+                  clubName: this.getClubName(clubId)
+                });
+              }
+            }
+          };
+          
+          this.availableTeams = [];
+          previousRoundSeries.forEach((series: any) => {
+            if (series.status === 'completed') {
+              // For placement brackets, include both winner and loser
+              // For single elimination, only include winner
+              if (series.winnerClubId) {
+                const winnerId = series.winnerClubId?._id || series.winnerClubId;
+                addTeamIfNotPresent(winnerId);
+              }
+              
+              // Include loser for placement brackets
+              if (isPlacementBracket && series.homeClubId && series.awayClubId) {
+                const winnerId = series.winnerClubId?._id || series.winnerClubId;
+                const homeId = series.homeClubId?._id || series.homeClubId;
+                const awayId = series.awayClubId?._id || series.awayClubId;
+                
+                // Determine loser (the team that didn't win)
+                const loserId = winnerId?.toString() === homeId?.toString() ? awayId : homeId;
+                if (loserId) {
+                  addTeamIfNotPresent(loserId);
+                }
+              }
+            } else if (series.status === 'bye' && series.homeClubId) {
+              const byeId = series.homeClubId?._id || series.homeClubId;
+              addTeamIfNotPresent(byeId);
+            } else if (isPlacementBracket && series.status !== 'completed') {
+              // For placement brackets, if series is not completed yet, still include both teams
+              // This allows setting up round 2 before round 1 is complete
+              if (series.homeClubId) {
+                addTeamIfNotPresent(series.homeClubId?._id || series.homeClubId);
+              }
+              if (series.awayClubId) {
+                addTeamIfNotPresent(series.awayClubId?._id || series.awayClubId);
+              }
+            }
+          });
+          
+          // Sort by seed
+          this.availableTeams.sort((a: any, b: any) => a.seed - b.seed);
+          
+          // For placement bracket round 2, separate winners and losers
+          if (isPlacementBracket && roundOrder === 2) {
+            this.availableWinners = [];
+            this.availableLosers = [];
+            
+            previousRoundSeries.forEach((series: any) => {
+              if (series.status === 'completed' && series.winnerClubId && series.homeClubId && series.awayClubId) {
+                const winnerId = series.winnerClubId?._id || series.winnerClubId;
+                const homeId = series.homeClubId?._id || series.homeClubId;
+                const awayId = series.awayClubId?._id || series.awayClubId;
+                const loserId = winnerId?.toString() === homeId?.toString() ? awayId : homeId;
+                
+                // Add winner
+                const winnerSeed = getOriginalSeed(winnerId);
+                if (winnerSeed !== null) {
+                  this.availableWinners.push({
+                    clubId: winnerId,
+                    seed: winnerSeed,
+                    clubName: this.getClubName(winnerId)
+                  });
+                }
+                
+                // Add loser
+                const loserSeed = getOriginalSeed(loserId);
+                if (loserSeed !== null) {
+                  this.availableLosers.push({
+                    clubId: loserId,
+                    seed: loserSeed,
+                    clubName: this.getClubName(loserId)
+                  });
+                }
+              } else if (series.status === 'bye' && series.homeClubId) {
+                // Bye goes to winners bracket
+                const byeId = series.homeClubId?._id || series.homeClubId;
+                const byeSeed = getOriginalSeed(byeId);
+                if (byeSeed !== null) {
+                  this.availableWinners.push({
+                    clubId: byeId,
+                    seed: byeSeed,
+                    clubName: this.getClubName(byeId)
+                  });
+                }
+              } else if (series.status !== 'completed' && series.homeClubId && series.awayClubId) {
+                // If not completed, add both teams to both brackets (for setup before round 1 completes)
+                const homeId = series.homeClubId?._id || series.homeClubId;
+                const awayId = series.awayClubId?._id || series.awayClubId;
+                const homeSeed = getOriginalSeed(homeId);
+                const awaySeed = getOriginalSeed(awayId);
+                
+                if (homeSeed !== null) {
+                  this.availableWinners.push({
+                    clubId: homeId,
+                    seed: homeSeed,
+                    clubName: this.getClubName(homeId)
+                  });
+                  this.availableLosers.push({
+                    clubId: homeId,
+                    seed: homeSeed,
+                    clubName: this.getClubName(homeId)
+                  });
+                }
+                if (awaySeed !== null) {
+                  this.availableWinners.push({
+                    clubId: awayId,
+                    seed: awaySeed,
+                    clubName: this.getClubName(awayId)
+                  });
+                  this.availableLosers.push({
+                    clubId: awayId,
+                    seed: awaySeed,
+                    clubName: this.getClubName(awayId)
+                  });
+                }
+              }
+            });
+            
+            // Sort by seed
+            this.availableWinners.sort((a: any, b: any) => a.seed - b.seed);
+            this.availableLosers.sort((a: any, b: any) => a.seed - b.seed);
+          } else {
+            // Not placement bracket round 2, clear these
+            this.availableWinners = [];
+            this.availableLosers = [];
+          }
+        }
+        
+        // Get current matchups for this round
+        const roundSeries = fullBracket.series.filter((s: any) => s.roundOrder === roundOrder);
+        
+        // For placement bracket round 2, separate winners and losers matchups
+        if (isPlacementBracket && roundOrder === 2) {
+          this.winnersMatchups = [];
+          this.losersMatchups = [];
+          
+          roundSeries.forEach((series: any) => {
+            const matchup = {
+              _id: series._id,
+              homeClubId: series.homeClubId?._id || series.homeClubId,
+              awayClubId: series.awayClubId?._id || series.awayClubId,
+              homeSeed: series.homeSeed,
+              awaySeed: series.awaySeed,
+              status: series.status,
+              homeWins: series.homeWins || 0,
+              awayWins: series.awayWins || 0,
+              placementBracketType: series.placementBracketType || 'winners'
+            };
+            
+            if (series.placementBracketType === 'losers') {
+              this.losersMatchups.push(matchup);
+            } else {
+              // Only add to winners if it's explicitly winners or undefined (default to winners)
+              // But limit to 2 matchups for winners bracket
+              if (this.winnersMatchups.length < 2) {
+                this.winnersMatchups.push(matchup);
+              }
+            }
+          });
+          
+          // Ensure we have exactly 2 matchups for winners and 2 for losers
+          // If we have more, trim; if less, add empty ones
+          const expectedWinnersMatchups = 2;
+          const expectedLosersMatchups = 2;
+          
+          // Trim winners if too many
+          if (this.winnersMatchups.length > expectedWinnersMatchups) {
+            this.winnersMatchups = this.winnersMatchups.slice(0, expectedWinnersMatchups);
+          }
+          
+          // Trim losers if too many
+          if (this.losersMatchups.length > expectedLosersMatchups) {
+            this.losersMatchups = this.losersMatchups.slice(0, expectedLosersMatchups);
+          }
+          
+          // Add empty matchups if needed
+          while (this.winnersMatchups.length < expectedWinnersMatchups) {
+            this.winnersMatchups.push({
+              homeClubId: '',
+              awayClubId: '',
+              homeSeed: null,
+              awaySeed: null,
+              status: 'pending',
+              homeWins: 0,
+              awayWins: 0,
+              placementBracketType: 'winners'
+            });
+          }
+          
+          while (this.losersMatchups.length < expectedLosersMatchups) {
+            this.losersMatchups.push({
+              homeClubId: '',
+              awayClubId: '',
+              homeSeed: null,
+              awaySeed: null,
+              status: 'pending',
+              homeWins: 0,
+              awayWins: 0,
+              placementBracketType: 'losers'
+            });
+          }
+          
+          // Combine for currentMatchups (for backwards compatibility)
+          this.currentMatchups = [...this.winnersMatchups, ...this.losersMatchups];
+        } else {
+          // Not placement bracket round 2, use standard logic
+          this.winnersMatchups = [];
+          this.losersMatchups = [];
+          this.currentMatchups = roundSeries.map((series: any) => ({
+            _id: series._id,
+            homeClubId: series.homeClubId?._id || series.homeClubId,
+            awayClubId: series.awayClubId?._id || series.awayClubId,
+            homeSeed: series.homeSeed,
+            awaySeed: series.awaySeed,
+            status: series.status,
+            homeWins: series.homeWins || 0,
+            awayWins: series.awayWins || 0,
+            placementBracketType: series.placementBracketType
+          }));
+          
+          // If no matchups exist, create empty ones
+          if (this.currentMatchups.length === 0) {
+            const numMatchups = Math.ceil(this.availableTeams.length / 2);
+            for (let i = 0; i < numMatchups; i++) {
+              this.currentMatchups.push({
+                homeClubId: '',
+                awayClubId: '',
+                homeSeed: null,
+                awaySeed: null,
+                status: 'pending',
+                homeWins: 0,
+                awayWins: 0
+              });
+            }
+          }
+        }
+        
+        this.matchupEditorOpen = true;
+      }
+    });
+  }
+
+  closeMatchupEditor() {
+    this.matchupEditorOpen = false;
+    this.editingBracket = null;
+    this.editingRoundOrder = null;
+    this.availableTeams = [];
+    this.availableWinners = [];
+    this.availableLosers = [];
+    this.currentMatchups = [];
+    this.winnersMatchups = [];
+    this.losersMatchups = [];
+  }
+
+  autoGenerateMatchups() {
+    if (!this.editingBracket || this.editingRoundOrder === null) return;
+    
+    const isPlacementBracket = this.editingBracket.format === 'placement-bracket';
+    const isRound2 = this.editingRoundOrder === 2;
+    
+    if (isPlacementBracket && isRound2) {
+      // Generate winners and losers matchups separately
+      const generateMatchupsForBracket = (teams: any[], bracketType: string) => {
+        const matchups: any[] = [];
+        const teamsCopy = [...teams];
+        
+        while (teamsCopy.length > 0) {
+          if (teamsCopy.length === 1) {
+            // Bye
+            matchups.push({
+              homeClubId: teamsCopy[0].clubId,
+              homeSeed: teamsCopy[0].seed,
+              status: 'bye',
+              homeWins: 0,
+              awayWins: 0,
+              placementBracketType: bracketType
+            });
+            teamsCopy.shift();
+          } else {
+            // Matchup: highest vs lowest
+            const home = teamsCopy.shift()!;
+            const away = teamsCopy.pop()!;
+            matchups.push({
+              homeClubId: home.clubId,
+              awayClubId: away.clubId,
+              homeSeed: home.seed,
+              awaySeed: away.seed,
+              status: 'pending',
+              homeWins: 0,
+              awayWins: 0,
+              placementBracketType: bracketType
+            });
+          }
+        }
+        
+        return matchups;
+      };
+      
+      this.winnersMatchups = generateMatchupsForBracket(this.availableWinners, 'winners');
+      this.losersMatchups = generateMatchupsForBracket(this.availableLosers, 'losers');
+      this.currentMatchups = [...this.winnersMatchups, ...this.losersMatchups];
+    } else {
+      // Standard bracket: highest vs lowest remaining seed
+      const teams = [...this.availableTeams];
+      const matchups: any[] = [];
+      
+      while (teams.length > 0) {
+        if (teams.length === 1) {
+          // Bye
+          matchups.push({
+            homeClubId: teams[0].clubId,
+            homeSeed: teams[0].seed,
+            status: 'bye',
+            homeWins: 0,
+            awayWins: 0
+          });
+          teams.shift();
+        } else {
+          // Matchup: highest vs lowest
+          const home = teams.shift()!;
+          const away = teams.pop()!;
+          matchups.push({
+            homeClubId: home.clubId,
+            awayClubId: away.clubId,
+            homeSeed: home.seed,
+            awaySeed: away.seed,
+            status: 'pending',
+            homeWins: 0,
+            awayWins: 0
+          });
+        }
+      }
+      
+      this.currentMatchups = matchups;
+    }
+  }
+
+  saveMatchups() {
+    if (!this.editingBracket || this.editingRoundOrder === null) {
+      alert('No bracket or round selected');
+      return;
+    }
+    
+    const isPlacementBracket = this.editingBracket.format === 'placement-bracket';
+    const isRound2 = this.editingRoundOrder === 2;
+    
+    // For placement bracket round 2, use winners and losers matchups
+    let matchupsToSave: any[] = [];
+    if (isPlacementBracket && isRound2) {
+      matchupsToSave = [...this.winnersMatchups, ...this.losersMatchups];
+      
+      // Validate winners bracket
+      const winnersTeamIds: string[] = [];
+      for (const matchup of this.winnersMatchups) {
+        if (matchup.status === 'bye') {
+          if (matchup.homeClubId) winnersTeamIds.push(matchup.homeClubId.toString());
+        } else {
+          if (matchup.homeClubId) winnersTeamIds.push(matchup.homeClubId.toString());
+          if (matchup.awayClubId) winnersTeamIds.push(matchup.awayClubId.toString());
+        }
+      }
+      
+      // Validate losers bracket
+      const losersTeamIds: string[] = [];
+      for (const matchup of this.losersMatchups) {
+        if (matchup.status === 'bye') {
+          if (matchup.homeClubId) losersTeamIds.push(matchup.homeClubId.toString());
+        } else {
+          if (matchup.homeClubId) losersTeamIds.push(matchup.homeClubId.toString());
+          if (matchup.awayClubId) losersTeamIds.push(matchup.awayClubId.toString());
+        }
+      }
+      
+      // Check for duplicates within each bracket
+      const uniqueWinners = new Set(winnersTeamIds);
+      const uniqueLosers = new Set(losersTeamIds);
+      
+      if (winnersTeamIds.length !== uniqueWinners.size) {
+        alert('No team can appear twice in the winners bracket');
+        return;
+      }
+      
+      if (losersTeamIds.length !== uniqueLosers.size) {
+        alert('No team can appear twice in the losers bracket');
+        return;
+      }
+      
+      // Check all available teams are included
+      const availableWinnersIds = new Set(this.availableWinners.map(t => t.clubId.toString()));
+      const availableLosersIds = new Set(this.availableLosers.map(t => t.clubId.toString()));
+      const assignedWinnersIds = new Set(winnersTeamIds);
+      const assignedLosersIds = new Set(losersTeamIds);
+      
+      const missingWinners = Array.from(availableWinnersIds).filter(id => !assignedWinnersIds.has(id));
+      const missingLosers = Array.from(availableLosersIds).filter(id => !assignedLosersIds.has(id));
+      
+      if (missingWinners.length > 0) {
+        alert(`All winners must be assigned. Missing ${missingWinners.length} team(s).`);
+        return;
+      }
+      
+      if (missingLosers.length > 0) {
+        alert(`All losers must be assigned. Missing ${missingLosers.length} team(s).`);
+        return;
+      }
+    } else {
+      // Standard validation
+      matchupsToSave = this.currentMatchups;
+      
+      const allTeamIds: string[] = [];
+      for (const matchup of matchupsToSave) {
+        if (matchup.status === 'bye') {
+          if (matchup.homeClubId) {
+            allTeamIds.push(matchup.homeClubId.toString());
+          }
+        } else {
+          if (matchup.homeClubId) allTeamIds.push(matchup.homeClubId.toString());
+          if (matchup.awayClubId) allTeamIds.push(matchup.awayClubId.toString());
+        }
+      }
+      
+      const uniqueTeamIds = new Set(allTeamIds);
+      if (allTeamIds.length !== uniqueTeamIds.size) {
+        alert('No team can appear twice in the same round');
+        return;
+      }
+      
+      // Check all available teams are included
+      const availableTeamIds = new Set(this.availableTeams.map(t => t.clubId.toString()));
+      const assignedTeamIds = new Set(allTeamIds);
+      const missingTeams = Array.from(availableTeamIds).filter(id => !assignedTeamIds.has(id));
+      
+      if (missingTeams.length > 0) {
+        alert(`All teams must be assigned. Missing ${missingTeams.length} team(s).`);
+        return;
+      }
+    }
+    
+    // Clean up matchups - remove empty strings, convert to null/undefined
+    const cleanedMatchups = matchupsToSave.map(matchup => ({
+      ...matchup,
+      homeClubId: matchup.homeClubId && matchup.homeClubId !== '' ? matchup.homeClubId : undefined,
+      awayClubId: matchup.awayClubId && matchup.awayClubId !== '' ? matchup.awayClubId : undefined,
+      homeSeed: matchup.homeSeed || null,
+      awaySeed: matchup.awaySeed || null
+    }));
+    
+    console.log('Saving matchups:', cleanedMatchups);
+    console.log('Bracket ID:', this.editingBracket._id);
+    console.log('Round Order:', this.editingRoundOrder);
+    
+    // Dispatch action to update matchups
+    this.store.dispatch(TournamentsActions.updateTournamentRoundMatchups({
+      bracketId: this.editingBracket._id,
+      roundOrder: this.editingRoundOrder!,
+      matchups: cleanedMatchups
+    }));
+    
+    // Subscribe to success or error
+    let successReceived = false;
+    let subscription: any;
+    let errorSubscription: any;
+    
+    // Subscribe to errors first (before dispatch completes)
+    errorSubscription = this.store.select(TournamentsSelectors.selectTournamentsError).subscribe(error => {
+      if (error && !successReceived) {
+        console.error('Error updating matchups:', error);
+        // Handle different error formats
+        let errorMessage = 'Unknown error';
+        if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        } else if (error?.error) {
+          errorMessage = String(error.error);
+        }
+        alert('Error updating matchups: ' + errorMessage);
+        successReceived = true; // Prevent duplicate alerts
+        if (subscription) subscription.unsubscribe();
+        if (errorSubscription) errorSubscription.unsubscribe();
+      }
+    });
+    
+    subscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).subscribe(bracket => {
+      if (bracket && bracket._id === this.editingBracket._id && !successReceived) {
+        // Small delay to ensure this isn't from a previous update
+        setTimeout(() => {
+          if (!successReceived) {
+            successReceived = true;
+            alert('Matchups updated successfully!');
+            this.closeMatchupEditor();
+            this.loadBrackets();
+            if (subscription) subscription.unsubscribe();
+            if (errorSubscription) errorSubscription.unsubscribe();
+          }
+        }, 100);
+      }
+    });
+    
+    // Set timeout to check if update didn't complete
+    setTimeout(() => {
+      if (!successReceived) {
+        if (subscription) subscription.unsubscribe();
+        if (errorSubscription) errorSubscription.unsubscribe();
+        // Check if there's an error
+        this.store.select(TournamentsSelectors.selectTournamentsError).pipe(take(1)).subscribe(error => {
+          if (error) {
+            alert('Error updating matchups: ' + (error.message || error.error?.message || 'Unknown error'));
+          } else {
+            alert('Update may still be processing. Please check the bracket to confirm.');
+          }
+        });
+      }
+    }, 5000);
+  }
+
+  canEditRound(bracket: any, roundOrder: number): boolean {
+    if (roundOrder === 1) {
+      // Round 1 can always be edited if bracket has seedings
+      return bracket.seedings && bracket.seedings.length > 0;
+    } else {
+      // Subsequent rounds can be edited if previous round has completed series
+      const previousRound = roundOrder - 1;
+      const previousRoundSeries = bracket.series?.filter((s: any) => s.roundOrder === previousRound) || [];
+      return previousRoundSeries.some((s: any) => s.status === 'completed' || s.status === 'bye');
+    }
+  }
+
+  updateMatchupSeed(matchup: any, side: 'home' | 'away') {
+    const clubId = side === 'home' ? matchup.homeClubId : matchup.awayClubId;
+    if (clubId) {
+      // For placement bracket round 2, check winners or losers based on bracket type
+      let team;
+      if (this.editingBracket?.format === 'placement-bracket' && this.editingRoundOrder === 2) {
+        if (matchup.placementBracketType === 'losers') {
+          team = this.availableLosers.find(t => t.clubId.toString() === clubId.toString());
+        } else {
+          team = this.availableWinners.find(t => t.clubId.toString() === clubId.toString());
+        }
+      } else {
+        team = this.availableTeams.find(t => t.clubId.toString() === clubId.toString());
+      }
+      
+      if (team) {
+        if (side === 'home') {
+          matchup.homeSeed = team.seed;
+        } else {
+          matchup.awaySeed = team.seed;
+        }
+      }
+    }
   }
 }
 

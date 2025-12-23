@@ -69,11 +69,244 @@
                   class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
                   Generate Matchups
                 </button>
+                <button (click)="openMatchupEditor(bracket, 1)" 
+                  *ngIf="canEditRound(bracket, 1)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 1
+                </button>
+                <button (click)="openMatchupEditor(bracket, 2)" 
+                  *ngIf="canEditRound(bracket, 2)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 2
+                </button>
+                <button (click)="openMatchupEditor(bracket, 3)" 
+                  *ngIf="canEditRound(bracket, 3)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 3
+                </button>
+                <button (click)="openMatchupEditor(bracket, 4)" 
+                  *ngIf="canEditRound(bracket, 4)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 4
+                </button>
+                <button (click)="openMatchupEditor(bracket, 5)" 
+                  *ngIf="canEditRound(bracket, 5)"
+                  class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors">
+                  Edit Round 5
+                </button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+  
+  <!-- Matchup Editor Modal -->
+  <div *ngIf="matchupEditorOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-admin-card rounded-xl p-8 shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-admin-primary">
+          Edit Round {{ editingRoundOrder }} Matchups
+        </h3>
+        <button (click)="closeMatchupEditor()" 
+          class="text-admin-text hover:text-white text-2xl">&times;</button>
+      </div>
+      
+      <!-- Show different UI for placement bracket round 2 -->
+      <div *ngIf="editingBracket?.format === 'placement-bracket' && editingRoundOrder === 2" class="mb-6">
+        <!-- Winners Bracket Section -->
+        <div class="mb-6">
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-lg font-semibold text-green-400">Winners Bracket:</h4>
+            <button (click)="autoGenerateMatchups()" 
+              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors text-sm">
+              Auto-Generate All
+            </button>
+          </div>
+          <div class="mb-3">
+            <p class="text-sm text-admin-text mb-2">Available Winners:</p>
+            <div class="flex flex-wrap gap-2">
+              <span *ngFor="let team of availableWinners" 
+                class="bg-green-900 px-3 py-1 rounded text-sm text-white">
+                #{{ team.seed }} {{ team.clubName }}
+              </span>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div *ngFor="let matchup of winnersMatchups; let i = index" 
+              class="bg-green-900/30 border border-green-600 p-4 rounded">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-admin-text mb-2 font-medium text-sm">Home Team</label>
+                  <select [(ngModel)]="matchup.homeClubId" 
+                    (ngModelChange)="updateMatchupSeed(matchup, 'home')"
+                    class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                    <option value="">Select Team</option>
+                    <option *ngFor="let team of availableWinners" [value]="team.clubId">
+                      #{{ team.seed }} {{ team.clubName }}
+                    </option>
+                  </select>
+                  <input type="hidden" [(ngModel)]="matchup.homeSeed">
+                </div>
+                <div>
+                  <label class="block text-admin-text mb-2 font-medium text-sm">Away Team</label>
+                  <select [(ngModel)]="matchup.awayClubId" 
+                    (ngModelChange)="updateMatchupSeed(matchup, 'away')"
+                    class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                    <option value="">Select Team (or leave empty for bye)</option>
+                    <option *ngFor="let team of availableWinners" [value]="team.clubId">
+                      #{{ team.seed }} {{ team.clubName }}
+                    </option>
+                  </select>
+                  <input type="hidden" [(ngModel)]="matchup.awaySeed">
+                </div>
+              </div>
+              <div class="mt-2">
+                <label class="block text-admin-text mb-2 font-medium text-sm">Status</label>
+                <select [(ngModel)]="matchup.status" 
+                  class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="bye">Bye</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Losers Bracket Section -->
+        <div class="mb-6">
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-lg font-semibold text-red-400">Losers Bracket:</h4>
+          </div>
+          <div class="mb-3">
+            <p class="text-sm text-admin-text mb-2">Available Losers:</p>
+            <div class="flex flex-wrap gap-2">
+              <span *ngFor="let team of availableLosers" 
+                class="bg-red-900 px-3 py-1 rounded text-sm text-white">
+                #{{ team.seed }} {{ team.clubName }}
+              </span>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div *ngFor="let matchup of losersMatchups; let i = index" 
+              class="bg-red-900/30 border border-red-600 p-4 rounded">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-admin-text mb-2 font-medium text-sm">Home Team</label>
+                  <select [(ngModel)]="matchup.homeClubId" 
+                    (ngModelChange)="updateMatchupSeed(matchup, 'home')"
+                    class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                    <option value="">Select Team</option>
+                    <option *ngFor="let team of availableLosers" [value]="team.clubId">
+                      #{{ team.seed }} {{ team.clubName }}
+                    </option>
+                  </select>
+                  <input type="hidden" [(ngModel)]="matchup.homeSeed">
+                </div>
+                <div>
+                  <label class="block text-admin-text mb-2 font-medium text-sm">Away Team</label>
+                  <select [(ngModel)]="matchup.awayClubId" 
+                    (ngModelChange)="updateMatchupSeed(matchup, 'away')"
+                    class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                    <option value="">Select Team (or leave empty for bye)</option>
+                    <option *ngFor="let team of availableLosers" [value]="team.clubId">
+                      #{{ team.seed }} {{ team.clubName }}
+                    </option>
+                  </select>
+                  <input type="hidden" [(ngModel)]="matchup.awaySeed">
+                </div>
+              </div>
+              <div class="mt-2">
+                <label class="block text-admin-text mb-2 font-medium text-sm">Status</label>
+                <select [(ngModel)]="matchup.status" 
+                  class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="bye">Bye</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Standard UI for non-placement bracket round 2 or other rounds -->
+      <div *ngIf="!(editingBracket?.format === 'placement-bracket' && editingRoundOrder === 2)" class="mb-6">
+        <h4 class="text-lg font-semibold text-admin-text mb-3">Available Teams:</h4>
+        <div class="flex flex-wrap gap-2">
+          <span *ngFor="let team of availableTeams" 
+            class="bg-admin-hover px-3 py-1 rounded text-sm text-white">
+            #{{ team.seed }} {{ team.clubName }}
+          </span>
+        </div>
+      </div>
+      
+      <div *ngIf="!(editingBracket?.format === 'placement-bracket' && editingRoundOrder === 2)" class="mb-6">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-lg font-semibold text-admin-text">Matchups:</h4>
+          <button (click)="autoGenerateMatchups()" 
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors text-sm">
+            Auto-Generate
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div *ngFor="let matchup of currentMatchups; let i = index" 
+            class="bg-admin-hover p-4 rounded">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-admin-text mb-2 font-medium text-sm">Home Team</label>
+                <select [(ngModel)]="matchup.homeClubId" 
+                  (ngModelChange)="updateMatchupSeed(matchup, 'home')"
+                  class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                  <option value="">Select Team</option>
+                  <option *ngFor="let team of availableTeams" [value]="team.clubId">
+                    #{{ team.seed }} {{ team.clubName }}
+                  </option>
+                </select>
+                <input type="hidden" [(ngModel)]="matchup.homeSeed">
+              </div>
+              <div>
+                <label class="block text-admin-text mb-2 font-medium text-sm">Away Team</label>
+                <select [(ngModel)]="matchup.awayClubId" 
+                  (ngModelChange)="updateMatchupSeed(matchup, 'away')"
+                  class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                  <option value="">Select Team (or leave empty for bye)</option>
+                  <option *ngFor="let team of availableTeams" [value]="team.clubId">
+                    #{{ team.seed }} {{ team.clubName }}
+                  </option>
+                </select>
+                <input type="hidden" [(ngModel)]="matchup.awaySeed">
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="block text-admin-text mb-2 font-medium text-sm">Status</label>
+              <select [(ngModel)]="matchup.status" 
+                class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-white text-sm">
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="bye">Bye</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex gap-4 justify-end">
+        <button (click)="closeMatchupEditor()" 
+          class="bg-admin-hover text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors">
+          Cancel
+        </button>
+        <button (click)="saveMatchups()" 
+          class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+          Save Matchups
+        </button>
+      </div>
     </div>
   </div>
   

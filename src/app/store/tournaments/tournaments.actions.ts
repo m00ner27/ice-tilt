@@ -247,6 +247,20 @@ export const deleteTournamentBracketFailure = createAction(
   props<{ error: any }>()
 );
 
+// Update Round Matchups Actions
+export const updateTournamentRoundMatchups = createAction(
+  '[Tournaments] Update Round Matchups',
+  props<{ bracketId: string; roundOrder: number; matchups: any[] }>()
+);
+export const updateTournamentRoundMatchupsSuccess = createAction(
+  '[Tournaments] Update Round Matchups Success',
+  props<{ bracket: TournamentBracket }>()
+);
+export const updateTournamentRoundMatchupsFailure = createAction(
+  '[Tournaments] Update Round Matchups Failure',
+  props<{ error: any }>()
+);
+
 // Clear Actions
 export const clearTournamentBrackets = createAction('[Tournaments] Clear Brackets');
 export const clearCurrentTournamentBracket = createAction('[Tournaments] Clear Current Bracket');

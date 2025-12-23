@@ -18,6 +18,7 @@ export class TournamentsEffects {
   loadSeries$: any;
   loadSeriesById$: any;
   advanceSeries$: any;
+  updateRoundMatchups$: any;
   loadPlayerStats$: any;
   loadGoalieStats$: any;
 
@@ -198,6 +199,27 @@ export class TournamentsEffects {
           this.apiService.advanceTournamentSeries(seriesId, bracketId).pipe(
             map((bracket) => TournamentsActions.advanceTournamentSeriesSuccess({ bracket })),
             catchError((error) => of(TournamentsActions.advanceTournamentSeriesFailure({ error })))
+          )
+        )
+      )
+    );
+
+    // Update Round Matchups Effect
+    this.updateRoundMatchups$ = createEffect(() =>
+      this.actions$.pipe(
+        ofType(TournamentsActions.updateTournamentRoundMatchups),
+        mergeMap(({ bracketId, roundOrder, matchups }) =>
+          this.apiService.updateTournamentRoundMatchups(bracketId, roundOrder, matchups).pipe(
+            map((bracket) => TournamentsActions.updateTournamentRoundMatchupsSuccess({ bracket })),
+            catchError((error) => {
+              console.error('[Tournament Effects] Error updating round matchups:', error);
+              // Extract error message from HTTP error response
+              const errorMessage = error?.error?.message || error?.message || 'Unknown error';
+              console.error('[Tournament Effects] Error message:', errorMessage);
+              return of(TournamentsActions.updateTournamentRoundMatchupsFailure({ 
+                error: { ...error, message: errorMessage } 
+              }));
+            })
           )
         )
       )

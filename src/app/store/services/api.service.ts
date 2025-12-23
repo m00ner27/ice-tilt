@@ -1196,6 +1196,24 @@ export class ApiService {
     );
   }
 
+  updateTournamentRoundMatchups(bracketId: string, roundOrder: number, matchups: any[]): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(
+          `${this.apiUrl}/api/tournaments/brackets/${bracketId}/rounds/${roundOrder}/matchups`,
+          { matchups },
+          { headers }
+        );
+      })
+    );
+  }
+
   getTournamentBracketSeries(bracketId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/tournaments/brackets/${bracketId}/series`);
   }
