@@ -1,128 +1,186 @@
-<div class="min-h-screen bg-gray-900 text-white py-8">
-  <div class="container mx-auto px-4">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold mb-4">Club Rankings</h1>
-      <p class="text-gray-400">Track club performance across multiple seasons</p>
+<div class="p-3 sm:p-5 max-w-full mx-auto text-white">
+  <!-- Content Container - Same width for all sections -->
+  <div class="w-full max-w-5xl mx-auto">
+    <!-- Championship Logo -->
+    <div class="mb-5">
+      <img src="assets/images/ithl-championship.png" alt="Ice Tilt Championship Logo" class="w-full h-auto object-contain">
     </div>
 
+    <!-- Ranking Points System Description -->
+    <div class="mb-5 p-3 sm:p-4 bg-admin-card rounded-lg">
+    <h2 class="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-admin-primary">How Ranking Points Work</h2>
+    <p class="text-white mb-3 sm:mb-4 text-sm sm:text-base">
+      Clubs earn Ranking Points (RP) throughout the year based on performance across the Fall , Winter, and Spring seasons.
+    </p>
+    
+    <ul class="list-disc list-inside text-white space-y-1 mb-3 sm:mb-4 ml-4 text-sm sm:text-base">
+      <li>Fall : NA S22 / EU S10</li>
+      <li>Winter: NA S23 / EU S11</li>
+      <li>Spring: NA S24 / EU S12</li>
+    </ul>
+    
+    <div class="space-y-4">
+      <!-- Regular Season RP -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">Regular Season RP</h3>
+        <p class="text-white mb-2 text-sm sm:text-base">
+          After each season, clubs earn RP based on final overall placement:
+        </p>
+        <p class="text-white opacity-80 italic mb-2 text-sm sm:text-base">
+          Placement RP = (Total Clubs in Season + 1) – Final Placement
+        </p>
+        <p class="text-white text-xs sm:text-sm">
+          <strong>Example:</strong> 1st place in a 30-team season → 30 RP | 10th place → 21 RP
+        </p>
+      </div>
+
+      <!-- Playoff RP -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">Playoff RP</h3>
+        <p class="text-white mb-2 text-sm sm:text-base">
+          Additional RP is awarded for playoff performance:
+        </p>
+        <ul class="list-disc list-inside text-white space-y-1 ml-4 text-sm sm:text-base">
+          <li>🏆 Champion: +5 RP</li>
+          <li>🥈 Finalist: +3 RP</li>
+          <li>🥉 Semifinalist: +2 RP</li>
+        </ul>
+        <p class="text-white opacity-80 text-xs sm:text-sm mt-2 italic">
+          (Playoff RP is not cumulative — clubs receive only the highest applicable bonus.)
+        </p>
+      </div>
+
+      <!-- Yearly Rankings -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">Yearly Rankings</h3>
+        <ul class="list-disc list-inside text-white space-y-1 ml-4 text-sm sm:text-base">
+          <li>RP earned across all three seasons are combined into a yearly total</li>
+          <li>Clubs are ranked by total RP</li>
+          <li>The Top 16 clubs qualify for the ITHL Championship</li>
+        </ul>
+      </div>
+
+      <!-- ITHL Championship -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">ITHL Championship</h3>
+        <ul class="list-disc list-inside text-white space-y-1 ml-4 text-sm sm:text-base">
+          <li>Held after the Spring season (Estimate: July)</li>
+          <li>3-4 weeks long</li>
+          <li>Features the 16 top-ranked clubs of the year</li>
+          <li>If clubs opt out, the next club in the rankings will be invited</li>
+          <li>Tournaments for both North America and Europe</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
     <!-- Region Filter -->
-    <div class="mb-6">
-      <label for="region-select" class="block text-sm font-medium text-gray-300 mb-2">
-        Filter by Region
-      </label>
+    <div class="flex items-center gap-2 mb-5 p-3 sm:p-4 bg-admin-card rounded-lg">
+      <label for="region-select" class="font-medium text-white text-sm sm:text-base">Filter by Region:</label>
       <select
         id="region-select"
         [(ngModel)]="selectedRegion"
         (change)="onRegionChange()"
-        class="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="px-2 sm:px-3 py-1 sm:py-2 bg-admin-hover text-white rounded text-xs sm:text-sm cursor-pointer focus:outline-none focus:border-admin-primary"
       >
-        <option value="all">All Regions</option>
         <option value="north-america">North America</option>
         <option value="europe">Europe</option>
       </select>
     </div>
 
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    <div *ngIf="isLoading" class="text-center text-white py-10 text-xl">
+      <p>Loading rankings...</p>
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error && !isLoading" class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6">
-      {{ error }}
+    <div *ngIf="error && !isLoading" class="text-center text-red-500 py-8 bg-red-500/10 rounded-lg my-5">
+      <p>{{ error }}</p>
     </div>
 
     <!-- Rankings Table -->
-    <div *ngIf="!isLoading && !error" class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-700">
-          <thead class="bg-gray-700">
-            <tr>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
-                (click)="onSort('rank')"
-              >
-                <div class="flex items-center gap-2">
-                  Rank
-                  <i class="fas" [ngClass]="getSortIcon('rank')"></i>
-                </div>
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
-                (click)="onSort('clubName')"
-              >
-                <div class="flex items-center gap-2">
-                  Club
-                  <i class="fas" [ngClass]="getSortIcon('clubName')"></i>
-                </div>
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600"
-                (click)="onSort('totalRP')"
-              >
-                <div class="flex items-center gap-2">
-                  Total RP
-                  <i class="fas" [ngClass]="getSortIcon('totalRP')"></i>
-                </div>
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Season Breakdown
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-gray-800 divide-y divide-gray-700">
-            <tr *ngFor="let entry of filteredRankings" class="hover:bg-gray-700 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                #{{ entry.rank }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center gap-3">
-                  <img
-                    [src]="getLogoUrl(entry.clubLogo)"
-                    [alt]="entry.clubName"
-                    class="h-10 w-10 rounded-full object-cover"
-                    onerror="this.src='assets/images/square-default.png'"
-                  />
-                  <a
-                    [routerLink]="['/clubs', entry.clubId]"
-                    class="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    {{ entry.clubName }}
-                  </a>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-yellow-400">
-                {{ entry.totalRP }}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-300">
-                <div class="space-y-1">
-                  <div
-                    *ngFor="let season of entry.seasons"
-                    class="flex items-center justify-between gap-4 py-1"
-                  >
-                    <span class="text-gray-400">{{ season.seasonName }}:</span>
-                    <span class="font-medium">
-                      {{ season.totalRP }} RP
-                      <span class="text-gray-500 text-xs ml-1">
-                        ({{ season.placementRP }} + {{ season.playoffRP }})
-                      </span>
+    <div *ngIf="!isLoading && !error && filteredRankings.length > 0" class="mb-8">
+      <div class="w-full overflow-x-auto">
+        <table class="w-full bg-admin-card text-white border-collapse mb-5 text-sm sm:text-base" style="border-collapse: separate; border-spacing: 0;">
+        <thead class="bg-admin-accent">
+          <tr>
+            <th
+              class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm"
+              (click)="onSort('rank')"
+            >
+              <div class="flex items-center justify-center gap-2">
+                RANK
+                <i class="fas" [ngClass]="getSortIcon('rank')"></i>
+              </div>
+            </th>
+            <th
+              class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm"
+              (click)="onSort('clubName')"
+            >
+              <div class="flex items-center justify-center gap-2">
+                CLUB
+                <i class="fas" [ngClass]="getSortIcon('clubName')"></i>
+              </div>
+            </th>
+            <th
+              class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm"
+              (click)="onSort('totalRP')"
+            >
+              <div class="flex items-center justify-center gap-2">
+                TOTAL RP
+                <i class="fas" [ngClass]="getSortIcon('totalRP')"></i>
+              </div>
+            </th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">
+              SEASON BREAKDOWN
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of filteredRankings; let isLast = last" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+            <td class="text-center p-2 sm:p-3 font-bold text-sm sm:text-lg">{{ entry.rank }}</td>
+            <td class="text-left p-2 sm:p-3">
+              <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <img
+                  class="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded flex-shrink-0"
+                  [src]="getLogoUrl(entry.clubLogo)"
+                  [alt]="entry.clubName + ' logo'"
+                  onerror="this.src='assets/images/square-default.png'"
+                />
+                <span class="font-medium text-xs sm:text-sm truncate min-w-0">
+                  <a [routerLink]="['/clubs', entry.clubId]" class="text-white hover:text-admin-primary transition-colors">{{ entry.clubName }}</a>
+                </span>
+              </div>
+            </td>
+            <td class="text-center p-2 sm:p-3 font-semibold text-xs sm:text-sm text-admin-primary">{{ entry.totalRP }}</td>
+            <td class="text-left p-2 sm:p-3 text-xs sm:text-sm">
+              <div class="space-y-1">
+                <div
+                  *ngFor="let season of entry.seasons"
+                  class="flex items-center justify-between gap-2 sm:gap-4 py-1"
+                >
+                  <span class="text-white opacity-80">{{ season.seasonName }}:</span>
+                  <span class="font-medium text-white">
+                    {{ season.totalRP }} RP
+                    <span class="text-white opacity-60 text-xs ml-1">
+                      ({{ season.placementRP }} + {{ season.playoffRP }})
                     </span>
-                  </div>
-                  <div *ngIf="entry.seasons.length === 0" class="text-gray-500 text-xs">
-                    No season data available
-                  </div>
+                  </span>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <div *ngIf="entry.seasons.length === 0" class="text-white opacity-60 text-xs">
+                  No season data available
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
       </div>
+    </div>
 
-      <!-- Empty State -->
-      <div *ngIf="filteredRankings.length === 0" class="text-center py-12 text-gray-400">
-        <p>No rankings available for the selected region.</p>
-      </div>
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !error && filteredRankings.length === 0" class="text-center text-white py-10 text-lg">
+      <p>No rankings available for the selected region.</p>
     </div>
   </div>
 </div>

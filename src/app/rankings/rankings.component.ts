@@ -34,7 +34,7 @@ export class RankingsComponent implements OnInit, OnDestroy {
   
   rankings: RankingEntry[] = [];
   filteredRankings: RankingEntry[] = [];
-  selectedRegion: string = 'all';
+  selectedRegion: string = 'north-america';
   isLoading: boolean = true;
   error: string | null = null;
   
@@ -63,14 +63,12 @@ export class RankingsComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
     
-    const region = this.selectedRegion === 'all' ? undefined : this.selectedRegion;
-    
-    this.apiService.getRankings(region)
+    this.apiService.getRankings(this.selectedRegion)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           console.log('[Rankings] Received data:', data);
-          console.log('[Rankings] Selected region:', region);
+          console.log('[Rankings] Selected region:', this.selectedRegion);
           
           // Handle both single region array and multi-region response
           if (Array.isArray(data) && data.length > 0 && data[0].region) {
