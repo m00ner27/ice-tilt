@@ -231,12 +231,19 @@
 
                   <!-- Series in this round -->
                   <div class="round-series-container">
-                    <div *ngFor="let series of getSeriesByRound(bracket.series || [], seriesRoundOrder)" 
+                    <div *ngFor="let series of getSeriesByRound(bracket.series || [], seriesRoundOrder); let i = index" 
                       (click)="navigateToSeries(series._id)"
                       class="series-card"
                       [class.border-green-500]="series.status === 'completed'"
                       [class.border-yellow-500]="series.status === 'in-progress'"
                       [class.border-gray-500]="series.status === 'pending' || series.status === 'bye'">
+                      
+                      <!-- Placement Match Label (for final placement round) -->
+                      <!-- Show label if placementMatch is set, or if it's round 3 of placement bracket (fallback to index) -->
+                      <div *ngIf="shouldShowPlacementLabel(bracket, seriesRoundOrder, series, i)" 
+                        class="placement-match-label">
+                        {{ getPlacementMatchLabel(series) || getPlacementMatchLabelByIndex(i) }}
+                      </div>
                       
                       <!-- Home Team -->
                       <div class="team-row"

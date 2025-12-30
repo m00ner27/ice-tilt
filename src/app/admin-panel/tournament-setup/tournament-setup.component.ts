@@ -755,6 +755,16 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
               clubName: this.getClubName(s.clubId?._id || s.clubId)
             }))
             .sort((a: any, b: any) => a.seed - b.seed);
+        } else if (isPlacementBracket && roundOrder === 3) {
+          // Round 3 of placement bracket: All 8 teams should be available for final placement
+          // Use all seedings to ensure all teams are available, even if there were forfeits
+          this.availableTeams = fullBracket.seedings
+            .map((s: any) => ({
+              clubId: s.clubId?._id || s.clubId,
+              seed: s.seed,
+              clubName: this.getClubName(s.clubId?._id || s.clubId)
+            }))
+            .sort((a: any, b: any) => a.seed - b.seed);
         } else {
           // Subsequent rounds - get teams from previous round
           const previousRound = roundOrder - 1;
@@ -806,6 +816,17 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
                 const loserId = winnerId?.toString() === homeId?.toString() ? awayId : homeId;
                 if (loserId) {
                   addTeamIfNotPresent(loserId);
+                }
+              } else if (isPlacementBracket) {
+                // Handle cases where one team might be missing (e.g., forfeit scenarios)
+                // Still try to include both teams if they exist
+                if (series.homeClubId) {
+                  const homeId = series.homeClubId?._id || series.homeClubId;
+                  addTeamIfNotPresent(homeId);
+                }
+                if (series.awayClubId) {
+                  const awayId = series.awayClubId?._id || series.awayClubId;
+                  addTeamIfNotPresent(awayId);
                 }
               }
             } else if (series.status === 'bye' && series.homeClubId) {
@@ -1337,6 +1358,14 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
         }
       }
     }
+  }
+
+  getPlacementMatchLabel(placementMatch: number): string {
+    if (placementMatch === undefined || placementMatch === null || placementMatch < 0 || placementMatch > 3) {
+      return '';
+    }
+    const labels = ['Championship', '3rd Place', '5th Place', '7th Place'];
+    return labels[placementMatch] || '';
   }
 }
 

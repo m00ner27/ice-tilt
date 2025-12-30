@@ -248,6 +248,64 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
     return round ? round.bestOf : 3;
   }
 
+  getPlacementMatchLabel(series: any): string {
+    // Check for placementMatch field (can be number or string)
+    const placementMatch = series.placementMatch;
+    if (placementMatch === undefined || placementMatch === null) {
+      return '';
+    }
+    
+    // Convert to number if it's a string
+    const matchIndex = typeof placementMatch === 'string' ? parseInt(placementMatch, 10) : placementMatch;
+    
+    if (isNaN(matchIndex) || matchIndex < 0 || matchIndex > 3) {
+      return '';
+    }
+    
+    const labels = ['Championship', '3rd Place', '5th Place', '7th Place'];
+    return labels[matchIndex] || '';
+  }
+
+  shouldShowPlacementLabel(bracket: any, seriesRoundOrder: number, series: any, index: number): boolean {
+    // Show label if:
+    // 1. Series has placementMatch field set, OR
+    // 2. It's round 3 of a placement bracket (fallback to index)
+    if (this.hasPlacementMatchLabel(series)) {
+      return true;
+    }
+    
+    // Fallback: check if it's round 3 of placement bracket
+    if (bracket && bracket.format === 'placement-bracket' && seriesRoundOrder === 3) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  hasPlacementMatchLabel(series: any): boolean {
+    // Check if series has placementMatch field and it's a valid value
+    const placementMatch = series.placementMatch;
+    if (placementMatch === undefined || placementMatch === null) {
+      return false;
+    }
+    
+    // Convert to number if it's a string
+    const matchIndex = typeof placementMatch === 'string' ? parseInt(placementMatch, 10) : placementMatch;
+    
+    // Valid range is 0-3
+    return !isNaN(matchIndex) && matchIndex >= 0 && matchIndex <= 3;
+  }
+
+  getPlacementMatchLabelByIndex(index: number): string {
+    // Fallback: use index if placementMatch is not set
+    // Only use this for round 3 of placement brackets
+    if (index < 0 || index > 3) {
+      return '';
+    }
+    const labels = ['Championship', '3rd Place', '5th Place', '7th Place'];
+    return labels[index] || '';
+  }
+
   getRoundNumbers(bracket: any): number[] {
     if (!bracket || !bracket.numRounds) return [];
     const rounds: number[] = [];
