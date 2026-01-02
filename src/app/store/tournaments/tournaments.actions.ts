@@ -21,6 +21,7 @@ export interface TournamentBracket {
   status: 'setup' | 'active' | 'completed';
   numTeams: number;
   numRounds: number;
+  order?: number; // Display order for brackets within a tournament
   rounds: Array<{
     name: string;
     bestOf: number;

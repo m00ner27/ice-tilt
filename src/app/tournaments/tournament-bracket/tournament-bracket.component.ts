@@ -508,7 +508,14 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
 
   getSortedBrackets(brackets: any[]): any[] {
     return [...brackets].sort((a, b) => {
-      // Priority: active > setup > completed
+      // First sort by order (lower numbers first)
+      const aOrder = a.order || 0;
+      const bOrder = b.order || 0;
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+      
+      // If same order, sort by status: active > setup > completed
       const statusPriority: { [key: string]: number } = {
         'active': 1,
         'setup': 2,
@@ -522,7 +529,7 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
         return aPriority - bPriority;
       }
       
-      // If same status, sort by creation date (newest first)
+      // If same status and order, sort by creation date (newest first)
       const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bDate - aDate;

@@ -64,10 +64,15 @@
                   class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
                   Delete
                 </button>
-                <button (click)="generateMatchups()" 
+                <button (click)="generateMatchupsForBracket(bracket)" 
                   *ngIf="bracket.status === 'setup'"
                   class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
                   Generate Matchups
+                </button>
+                <button (click)="activateBracket(bracket)" 
+                  *ngIf="bracket.status === 'setup' && bracket.series && bracket.series.length > 0"
+                  class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                  Activate
                 </button>
                 <button (click)="openMatchupEditor(bracket, 1)" 
                   *ngIf="canEditRound(bracket, 1)"
@@ -404,6 +409,17 @@
       </div>
 
       <div>
+        <label class="block text-admin-text mb-2 font-medium">Display Order *</label>
+        <input type="number" formControlName="order" 
+          min="0"
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+          placeholder="0">
+        <p class="text-sm text-admin-text mt-1">
+          Lower numbers appear first. Use 0, 1, 2, etc. to control bracket display order.
+        </p>
+      </div>
+
+      <div>
         <label class="block text-admin-text mb-2 font-medium">Number of Teams *</label>
         <input type="number" formControlName="numTeams" (change)="onNumTeamsChange()" 
           [min]="bracketForm.get('format')?.value === 'placement-bracket' ? 4 : 2"
@@ -442,6 +458,15 @@
         </div>
         <input formControlName="logoUrl" type="text" class="hidden">
       </div>
+      
+      <!-- Save button for Step 1 -->
+      <div class="mt-6 pt-4 border-t border-admin-accent">
+        <button type="button" (click)="saveCurrentStep()" 
+          *ngIf="viewMode === 'edit' && existingBracket?._id"
+          class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors font-semibold">
+          <i class="fas fa-save mr-2"></i>Save Basic Info
+        </button>
+      </div>
     </div>
 
     <!-- Step 2: Teams & Seeds -->
@@ -468,6 +493,15 @@
             </div>
           </div>
         </div>
+      </div>
+      
+      <!-- Save button for Step 2 -->
+      <div class="mt-6 pt-4 border-t border-admin-accent">
+        <button type="button" (click)="saveCurrentStep()" 
+          *ngIf="viewMode === 'edit' && existingBracket?._id"
+          class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors font-semibold">
+          <i class="fas fa-save mr-2"></i>Save Teams & Seeds
+        </button>
       </div>
     </div>
 
@@ -497,6 +531,15 @@
           </div>
           <input type="hidden" formControlName="order">
         </div>
+      </div>
+      
+      <!-- Save button for Step 3 -->
+      <div class="mt-6 pt-4 border-t border-admin-accent">
+        <button type="button" (click)="saveCurrentStep()" 
+          *ngIf="viewMode === 'edit' && existingBracket?._id"
+          class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors font-semibold">
+          <i class="fas fa-save mr-2"></i>Save Round Configuration
+        </button>
       </div>
     </div>
 

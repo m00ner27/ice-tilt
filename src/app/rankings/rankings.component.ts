@@ -79,7 +79,7 @@ export class RankingsComponent implements OnInit, OnDestroy {
           queryParams: { region: this.selectedRegion },
           queryParamsHandling: 'merge'
         });
-        this.loadRankings();
+    this.loadRankings();
       }
     });
   }

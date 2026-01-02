@@ -4,8 +4,8 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '../../store';
-import { forkJoin } from 'rxjs';
-import { map, take, filter } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { map, take, filter, timeout, catchError, skip } from 'rxjs/operators';
 import { ApiService } from '../../store/services/api.service';
 import { ImageUrlService } from '../../shared/services/image-url.service';
 import * as TournamentsActions from '../../store/tournaments/tournaments.actions';
@@ -90,6 +90,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       format: ['single-elimination', Validators.required],
       manualMatchups: [false],
       numTeams: [4, [Validators.required, Validators.min(2)]],
+      order: [0, [Validators.required, Validators.min(0)]],
       seedings: this.fb.array([]),
       rounds: this.fb.array([])
     });
@@ -221,6 +222,21 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     
     // Recalculate rounds
     this.initializeRounds();
+  }
+
+  // Helper function to parse order value from form
+  private parseOrderValue(): number {
+    const orderControl = this.bracketForm.get('order');
+    const orderValue = orderControl?.value;
+    console.log('parseOrderValue - raw value:', orderValue, 'type:', typeof orderValue);
+    if (orderValue === null || orderValue === undefined || orderValue === '') {
+      console.log('parseOrderValue - returning default 0');
+      return 0;
+    }
+    const parsedOrder = typeof orderValue === 'string' ? parseInt(orderValue, 10) : Number(orderValue);
+    const result = isNaN(parsedOrder) ? 0 : parsedOrder;
+    console.log('parseOrderValue - parsed result:', result);
+    return result;
   }
 
   initializeRounds() {
@@ -373,6 +389,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       manualMatchups: formValue.manualMatchups || false,
       numTeams: formValue.numTeams,
       numRounds: numRounds,
+      order: this.parseOrderValue(),
       seedings: formValue.seedings.map((s: Seeding) => ({
         clubId: s.clubId,
         seed: s.seed,
@@ -446,6 +463,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       manualMatchups: formValue.manualMatchups || false,
       numTeams: formValue.numTeams,
       numRounds: numRounds,
+      order: this.parseOrderValue(),
       seedings: formValue.seedings.map((s: Seeding) => ({
         clubId: s.clubId,
         seed: s.seed
@@ -552,6 +570,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       manualMatchups: formValue.manualMatchups || false,
       numTeams: formValue.numTeams,
       numRounds: numRounds,
+      order: this.parseOrderValue(),
       seedings: formValue.seedings.map((s: Seeding) => ({
         clubId: s.clubId,
         seed: s.seed
@@ -572,7 +591,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       }));
       
       // Wait for update, then generate matchups
-      const updateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+      // take(1) auto-completes, so no need to manually unsubscribe
+      this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
         filter(bracket => bracket !== null && bracket._id === this.existingBracket._id),
         take(1)
       ).subscribe(bracket => {
@@ -583,8 +603,12 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
           // Generate matchups after update
           this.store.dispatch(TournamentsActions.generateTournamentMatchups({ bracketId }));
           
+          // Handle errors after a delay - use timeout to check if matchups weren't generated
+          let errorCheckTimeout: any;
+          
           // Wait for matchups to be generated or handle error
-          const generateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+          // take(1) auto-completes, so no need to manually unsubscribe
+          this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
             filter(updatedBracket => 
               updatedBracket !== null && 
               updatedBracket._id === bracketId && 
@@ -593,14 +617,16 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
             ),
             take(1)
           ).subscribe(updatedBracket => {
+            if (errorCheckTimeout) {
+              clearTimeout(errorCheckTimeout);
+            }
             alert('Bracket updated and matchups generated successfully!');
             this.viewMode = 'list';
             this.loadBrackets();
-            generateSubscription.unsubscribe();
           });
           
-          // Handle errors after a delay - use timeout to check if matchups weren't generated
-          const errorCheckTimeout = setTimeout(() => {
+          // Set up error check timeout
+          errorCheckTimeout = setTimeout(() => {
             // Check if we still don't have series after 2 seconds
             this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(take(1)).subscribe(currentBracket => {
               if (currentBracket && currentBracket._id === bracket._id && (!currentBracket.series || currentBracket.series.length === 0)) {
@@ -621,18 +647,15 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
               }
             });
           }, 2000);
-          
-          // Clear timeout if matchups are generated successfully
-          generateSubscription.add(() => clearTimeout(errorCheckTimeout));
         }
-        updateSubscription.unsubscribe();
       });
     } else {
       // Create new bracket
       this.store.dispatch(TournamentsActions.createTournamentBracket({ bracketData }));
       
       // Wait for creation, then generate matchups
-      const createSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+      // take(1) auto-completes, so no need to manually unsubscribe
+      this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
         filter(bracket => bracket !== null && bracket._id !== undefined),
         take(1)
       ).subscribe(bracket => {
@@ -643,8 +666,12 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
           // Generate matchups after creation
           this.store.dispatch(TournamentsActions.generateTournamentMatchups({ bracketId }));
           
+          // Handle errors from generate matchups - use a timeout to check if matchups weren't generated
+          let errorCheckTimeout: any;
+          
           // Wait for matchups to be generated
-          const generateSubscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+          // take(1) auto-completes, so no need to manually unsubscribe
+          this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
             filter(updatedBracket => 
               updatedBracket !== null && 
               updatedBracket._id === bracketId && 
@@ -653,14 +680,16 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
             ),
             take(1)
           ).subscribe(updatedBracket => {
+            if (errorCheckTimeout) {
+              clearTimeout(errorCheckTimeout);
+            }
             alert('Bracket created and matchups generated successfully!');
             this.viewMode = 'list';
             this.loadBrackets();
-            generateSubscription.unsubscribe();
           });
           
-          // Handle errors from generate matchups - use a timeout to check if matchups weren't generated
-          const errorCheckTimeout = setTimeout(() => {
+          // Set up error check timeout
+          errorCheckTimeout = setTimeout(() => {
             // Check if we still don't have series after 2 seconds
             this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(take(1)).subscribe(currentBracket => {
               if (currentBracket && currentBracket._id === bracketId && (!currentBracket.series || currentBracket.series.length === 0)) {
@@ -682,11 +711,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
               }
             });
           }, 2000);
-          
-          // Clear timeout if matchups are generated successfully
-          generateSubscription.add(() => clearTimeout(errorCheckTimeout));
         }
-        createSubscription.unsubscribe();
       });
     }
   }
@@ -705,6 +730,147 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
         this.viewMode = 'list';
         this.loadBrackets();
         subscription.unsubscribe();
+      }
+    });
+  }
+
+  generateMatchupsForBracket(bracket: any) {
+    if (!bracket._id) {
+      alert('Invalid bracket');
+      return;
+    }
+
+    this.store.dispatch(TournamentsActions.generateTournamentMatchups({ bracketId: bracket._id }));
+    
+    const subscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+      filter(b => b !== null && b._id === bracket._id && b.series && b.series.length > 0),
+      take(1)
+    ).subscribe(updatedBracket => {
+      alert('Matchups generated successfully!');
+      this.loadBrackets();
+      subscription.unsubscribe();
+    });
+  }
+
+  activateBracket(bracket: any) {
+    if (!bracket._id) {
+      alert('Invalid bracket');
+      return;
+    }
+
+    if (!bracket.series || bracket.series.length === 0) {
+      alert('Cannot activate bracket without matchups. Please generate matchups first.');
+      return;
+    }
+
+    const bracketData: Partial<TournamentsActions.TournamentBracket> = {
+      status: 'active'
+    };
+
+    this.store.dispatch(TournamentsActions.updateTournamentBracket({ 
+      bracketId: bracket._id, 
+      bracketData 
+    }));
+    
+    const subscription = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+      filter(b => b !== null && b._id === bracket._id && b.status === 'active'),
+      take(1)
+    ).subscribe(updatedBracket => {
+      alert('Bracket activated successfully!');
+      this.loadBrackets();
+      subscription.unsubscribe();
+    });
+  }
+
+  saveCurrentStep() {
+    if (this.viewMode !== 'edit' || !this.existingBracket?._id) {
+      alert('Please edit an existing bracket to use step-by-step saving.');
+      return;
+    }
+
+    const formValue = this.bracketForm.value;
+    const bracketData: Partial<TournamentsActions.TournamentBracket> = {};
+
+    if (this.currentStep === 1) {
+      // Save only basic info fields
+      if (!this.bracketForm.get('name')?.valid || !this.bracketForm.get('tournamentId')?.valid) {
+        alert('Please fill in all required fields (Bracket Name and Tournament)');
+        return;
+      }
+
+      const format = formValue.format || 'single-elimination';
+      const numRounds = format === 'placement-bracket' 
+        ? (formValue.numTeams === 4 ? 2 : 3)
+        : Math.ceil(Math.log2(formValue.numTeams));
+
+      bracketData.name = formValue.name;
+      bracketData.tournamentId = formValue.tournamentId;
+      bracketData.logoUrl = formValue.logoUrl || undefined;
+      bracketData.format = format;
+      bracketData.manualMatchups = formValue.manualMatchups || false;
+      bracketData.numTeams = formValue.numTeams;
+      bracketData.numRounds = numRounds;
+      // Parse order as number, default to 0 if not provided
+      bracketData.order = this.parseOrderValue();
+      console.log('Order value parsed:', bracketData.order);
+
+    } else if (this.currentStep === 2) {
+      // Save only seedings
+      if (!this.validateSeedings()) {
+        return; // validateSeedings already shows error messages
+      }
+
+      bracketData.seedings = formValue.seedings.map((s: Seeding) => ({
+        clubId: s.clubId,
+        seed: s.seed
+      }));
+
+    } else if (this.currentStep === 3) {
+      // Save only rounds
+      const roundsArray = this.roundsArray;
+      const invalidRounds: number[] = [];
+      roundsArray.controls.forEach((control, index) => {
+        if (!control.valid) {
+          invalidRounds.push(index + 1);
+        }
+      });
+
+      if (invalidRounds.length > 0) {
+        alert(`Please fix invalid round configurations: ${invalidRounds.join(', ')}`);
+        return;
+      }
+
+      bracketData.rounds = formValue.rounds.map((r: RoundConfig) => ({
+        name: r.name,
+        bestOf: r.bestOf,
+        order: r.order
+      })).sort((a: RoundConfig, b: RoundConfig) => a.order - b.order);
+    } else {
+      alert('No data to save on this step.');
+      return;
+    }
+
+    // Debug: Log what we're saving
+    console.log('Saving bracket data:', bracketData);
+    console.log('Form order value:', formValue.order, 'Type:', typeof formValue.order);
+    
+    // Update the bracket with only the current step's data
+    this.store.dispatch(TournamentsActions.updateTournamentBracket({ 
+      bracketId: this.existingBracket._id, 
+      bracketData 
+    }));
+    
+    // Subscribe to the update success - take(1) will auto-complete, so no need to manually unsubscribe
+    this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+      filter(bracket => bracket !== null && bracket._id === this.existingBracket._id),
+      take(1)
+    ).subscribe(updatedBracket => {
+      if (updatedBracket) {
+        this.existingBracket = updatedBracket;
+        console.log('Updated bracket order:', updatedBracket.order);
+        alert('Changes saved successfully!');
+        // Reload brackets to refresh the list
+        this.loadBrackets();
       }
     });
   }
@@ -772,15 +938,40 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
 
   editBracket(bracket: any) {
     this.viewMode = 'edit';
-    this.existingBracket = bracket;
     this.currentStep = 1;
+    const bracketIdToLoad = bracket._id;
+    
+    // Clear existing bracket first to avoid stale data
+    this.existingBracket = null;
     
     // Load bracket details
-    this.store.dispatch(TournamentsActions.loadTournamentBracket({ bracketId: bracket._id }));
+    this.store.dispatch(TournamentsActions.loadTournamentBracket({ bracketId: bracketIdToLoad }));
     
-    // Subscribe to get full bracket details
-    this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(take(1)).subscribe(fullBracket => {
-      if (fullBracket) {
+    // Subscribe to get full bracket details - filter to wait for the correct bracket
+    // The filter will skip any brackets that don't match the ID we're loading
+    this.store.select(TournamentsSelectors.selectCurrentTournamentBracket).pipe(
+      // Filter for the bracket with matching ID (will skip stale/incorrect brackets)
+      filter(fullBracket => {
+        // If null, skip it
+        if (fullBracket === null) return false;
+        // Only accept if it matches the bracket we're trying to load
+        const matches = fullBracket._id === bracketIdToLoad;
+        if (!matches) {
+          console.log('Waiting for correct bracket - skipping. Expected:', bracketIdToLoad, 'Got:', fullBracket._id);
+        }
+        return matches;
+      }),
+      timeout(5000), // 5 second timeout
+      catchError(error => {
+        console.error('Error loading bracket:', error);
+        alert('Failed to load bracket. Please try again.');
+        this.viewMode = 'list';
+        return of(null);
+      }),
+      take(1)
+    ).subscribe(fullBracket => {
+      if (fullBracket && fullBracket._id === bracketIdToLoad) {
+        console.log('Loading bracket for edit:', fullBracket.name, 'ID:', fullBracket._id);
         this.existingBracket = fullBracket;
         
         // Handle tournamentId - could be string or populated object
@@ -794,7 +985,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
           logoUrl: fullBracket.logoUrl || '',
           format: fullBracket.format || 'single-elimination',
           manualMatchups: fullBracket.manualMatchups || false,
-          numTeams: fullBracket.numTeams
+          numTeams: fullBracket.numTeams,
+          order: fullBracket.order !== undefined && fullBracket.order !== null ? fullBracket.order : 0
         });
         
         // Set logo preview if logo exists
@@ -810,16 +1002,19 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
         // Populate seedings
         const seedingsArray = this.seedingsArray;
         seedingsArray.clear();
+        if (fullBracket.seedings && fullBracket.seedings.length > 0) {
         fullBracket.seedings.forEach((seeding: any) => {
           seedingsArray.push(this.fb.group({
             clubId: [seeding.clubId?._id || seeding.clubId, Validators.required],
             seed: [seeding.seed, [Validators.required, Validators.min(1)]]
           }));
         });
+        }
         
         // Populate rounds
         const roundsArray = this.roundsArray;
         roundsArray.clear();
+        if (fullBracket.rounds && fullBracket.rounds.length > 0) {
         fullBracket.rounds.forEach((round: any) => {
           roundsArray.push(this.fb.group({
             name: [round.name, Validators.required],
@@ -827,9 +1022,14 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
             order: [round.order, Validators.required]
           }));
         });
+        }
         
         // Generate preview for step 4
         this.generatePreview();
+      } else {
+        console.error('Bracket loaded but ID mismatch. Expected:', bracketIdToLoad, 'Got:', fullBracket?._id);
+        alert('Failed to load the correct bracket. Please try again.');
+        this.viewMode = 'list';
       }
     });
   }
