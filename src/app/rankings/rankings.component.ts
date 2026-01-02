@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { Subject } from 'rxjs';
@@ -37,6 +37,7 @@ export class RankingsComponent implements OnInit, OnDestroy {
   selectedRegion: string = 'north-america';
   isLoading: boolean = true;
   error: string | null = null;
+  dataLoaded: boolean = false;
   
   sortColumn: string = 'rank';
   sortDirection: 'asc' | 'desc' = 'asc';
@@ -47,11 +48,40 @@ export class RankingsComponent implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private imageUrlService: ImageUrlService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadRankings();
+    // Read selectedRegion from query parameters
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['region']) {
+        // Map URL-friendly values to component values
+        const regionMap: { [key: string]: string } = {
+          'north-america': 'north-america',
+          'europe': 'europe',
+          'na': 'north-america',
+          'eu': 'europe'
+        };
+        const mappedRegion = regionMap[params['region']] || params['region'];
+        if (mappedRegion !== this.selectedRegion) {
+          this.selectedRegion = mappedRegion;
+          this.loadRankings();
+        } else if (!this.dataLoaded) {
+          // If region matches but data not loaded yet, load it
+          this.loadRankings();
+        }
+      } else {
+        // If no query param, update URL with default region and load
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { region: this.selectedRegion },
+          queryParamsHandling: 'merge'
+        });
+        this.loadRankings();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -87,6 +117,7 @@ export class RankingsComponent implements OnInit, OnDestroy {
           this.filteredRankings = [...this.rankings];
           this.sortRankings();
           this.isLoading = false;
+          this.dataLoaded = true;
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -99,6 +130,13 @@ export class RankingsComponent implements OnInit, OnDestroy {
   }
 
   onRegionChange(): void {
+    // Update URL query parameters to preserve filter state
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { region: this.selectedRegion },
+      queryParamsHandling: 'merge'
+    });
+    
     this.loadRankings();
   }
 

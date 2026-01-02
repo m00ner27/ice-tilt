@@ -1,9 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatchService, EashlMatch } from '../store/services/match.service';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
-import { forkJoin, timeout, catchError, of } from 'rxjs';
+import { forkJoin, timeout, catchError, of, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
@@ -63,7 +64,8 @@ interface GroupedGoalieStats {
   templateUrl: './goalie-stats.component.html',
   styleUrl: './goalie-stats.component.css'
 })
-export class GoalieStatsComponent implements OnInit {
+export class GoalieStatsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   allMatches: EashlMatch[] = [];
   allClubs: Club[] = [];
   groupedStats: GroupedGoalieStats[] = [];
@@ -90,12 +92,33 @@ export class GoalieStatsComponent implements OnInit {
     private matchService: MatchService,
     private apiService: ApiService,
     private imageUrlService: ImageUrlService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router
   ) { }
   
   ngOnInit(): void {
     console.log('🔍 GOALIE STATS COMPONENT INITIALIZED');
+    
+    // Read filter state from query parameters
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['season']) {
+        this.selectedSeasonId = params['season'];
+      }
+      if (params['division']) {
+        this.selectedDivisionId = params['division'];
+      }
+      if (params['playoffs'] !== undefined) {
+        this.includePlayoffs = params['playoffs'] === 'true';
+      }
+    });
+    
     this.loadInitialData();
+  }
+  
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadInitialData(): void {
@@ -135,10 +158,33 @@ export class GoalieStatsComponent implements OnInit {
 
   onSeasonChange(): void {
     this.selectedDivisionId = 'all-divisions'; // Reset division filter when season changes
+    
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        season: this.selectedSeasonId, 
+        division: this.selectedDivisionId,
+        playoffs: this.includePlayoffs
+      },
+      queryParamsHandling: 'merge'
+    });
+    
     this.loadStatsForSeason();
   }
 
   onDivisionChange(): void {
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        season: this.selectedSeasonId, 
+        division: this.selectedDivisionId,
+        playoffs: this.includePlayoffs
+      },
+      queryParamsHandling: 'merge'
+    });
+    
     this.applyDivisionFilter();
   }
 
@@ -1196,6 +1242,17 @@ export class GoalieStatsComponent implements OnInit {
   }
 
   onPlayoffFilterChange(): void {
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        season: this.selectedSeasonId, 
+        division: this.selectedDivisionId,
+        playoffs: this.includePlayoffs
+      },
+      queryParamsHandling: 'merge'
+    });
+    
     // Reprocess stats with the new filter setting
     this.loadStatsForSeason();
   }

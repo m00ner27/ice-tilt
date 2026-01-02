@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '../../store';
@@ -13,7 +14,7 @@ import { AdSenseComponent, AdSenseConfig } from '../../components/adsense/adsens
 @Component({
   selector: 'app-tournament-bracket',
   standalone: true,
-  imports: [CommonModule, RouterModule, AdSenseComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent],
   templateUrl: './tournament-bracket.component.html',
   styleUrl: './tournament-bracket.component.css'
 })
@@ -60,7 +61,17 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
   ) {
     this.bracket$ = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket);
     this.allBrackets$ = this.store.select(TournamentsSelectors.selectAllTournamentBrackets);
-    this.tournaments$ = this.store.select(TournamentsSelectors.selectAllTournaments);
+    // Sort tournaments by startDate (latest first) for the dropdown
+    this.tournaments$ = this.store.select(TournamentsSelectors.selectAllTournaments).pipe(
+      map(tournaments => {
+        if (!tournaments || tournaments.length === 0) return tournaments;
+        return [...tournaments].sort((a, b) => {
+          const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+          const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+          return dateB - dateA; // Most recent first
+        });
+      })
+    );
     this.loading$ = this.store.select(TournamentsSelectors.selectTournamentsLoading);
     this.error$ = this.store.select(TournamentsSelectors.selectTournamentsError);
     this.playerStats$ = this.store.select(TournamentsSelectors.selectTournamentPlayerStats);
@@ -87,30 +98,42 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Read selected tournament from query parameters first
+    this.route.queryParams.pipe(take(1)).subscribe(params => {
+      if (params['tournament']) {
+        this.selectedTournamentId = params['tournament'];
+        this.selectedTournamentId$.next(params['tournament']);
+      }
+    });
+    
     // Load tournaments and brackets
     this.store.dispatch(TournamentsActions.loadTournaments());
     this.store.dispatch(TournamentsActions.loadTournamentBrackets({}));
     
-    // Auto-select most recent tournament immediately when tournaments load
+    // Auto-select most recent tournament (by startDate) if not set from query params
     this.subscriptions.add(
-      this.store.select(TournamentsSelectors.selectAllTournaments).pipe(
+      this.tournaments$.pipe(
         filter(tournaments => tournaments !== null && tournaments !== undefined && tournaments.length > 0),
         take(1)
       ).subscribe(tournaments => {
         if (tournaments && tournaments.length > 0 && !this.selectedTournamentId) {
-          // Sort tournaments by date (most recent first) and select the first one
-          const sortedTournaments = [...tournaments].sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA; // Most recent first
-          });
-          const mostRecentTournament = sortedTournaments[0];
+          // Tournaments are already sorted by startDate (latest first) in the observable
+          const mostRecentTournament = tournaments[0];
           if (mostRecentTournament && mostRecentTournament._id) {
             this.selectedTournamentId = mostRecentTournament._id;
             this.selectedTournamentId$.next(mostRecentTournament._id);
+            // Update URL query params
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { tournament: mostRecentTournament._id },
+              queryParamsHandling: 'merge'
+            });
             // Reload brackets for the selected tournament
             this.store.dispatch(TournamentsActions.loadTournamentBrackets({ tournamentId: mostRecentTournament._id }));
           }
+        } else if (this.selectedTournamentId) {
+          // If we have a selected tournament from query params, load its brackets
+          this.store.dispatch(TournamentsActions.loadTournamentBrackets({ tournamentId: this.selectedTournamentId }));
         }
       })
     );
@@ -345,12 +368,19 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
     return `${series.homeWins || 0}-${series.awayWins || 0}`;
   }
 
-  onTournamentChange(tournamentId: string) {
+  onTournamentChange(tournamentId: string | null) {
     const tournamentIdValue = tournamentId || null;
     this.selectedTournamentId = tournamentIdValue;
     this.selectedTournamentId$.next(tournamentIdValue);
     this.selectedBracketId = null;
     this.bracketId = null;
+    
+    // Update URL query parameters to preserve selection
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: tournamentIdValue ? { tournament: tournamentIdValue } : {},
+      queryParamsHandling: 'merge'
+    });
     
     // Reload brackets for the selected tournament to ensure fresh data with populated clubs
     if (tournamentIdValue) {

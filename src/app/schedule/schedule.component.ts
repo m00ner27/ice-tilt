@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable, Subject, combineLatest } from 'rxjs';
@@ -65,7 +65,9 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     // Initialize selectors
     this.matches$ = this.store.select(MatchesSelectors.selectAllMatches);
@@ -76,6 +78,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Read filter state from query parameters
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['team']) {
+        this.filterTeam = params['team'];
+      }
+      if (params['season']) {
+        this.filterSeason = params['season'];
+      }
+      if (params['sort']) {
+        this.sortCriteria = params['sort'] as 'date' | 'homeTeam' | 'awayTeam';
+      }
+      if (params['direction']) {
+        this.sortDirection = params['direction'] as 'asc' | 'desc';
+      }
+    });
+    
     // Load data using NgRx (only when this component is actually visited)
     this.ngrxApiService.loadMatches();
     this.ngrxApiService.loadClubs();
@@ -83,9 +101,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     
     // Subscribe to data changes
     this.setupDataSubscriptions();
-    
-    // Set default season to show all matches
-    this.filterSeason = '';
   }
 
   ngOnDestroy() {
@@ -290,11 +305,13 @@ export class ScheduleComponent implements OnInit, OnDestroy {
 
   onTeamFilterChange(team: string): void {
     this.filterTeam = team;
+    this.updateQueryParams();
     this.applyFiltersAndSort();
   }
 
   onSeasonFilterChange(seasonId: string): void {
     this.filterSeason = seasonId;
+    this.updateQueryParams();
     this.updateTeamOptions();
     this.applyFiltersAndSort();
   }
@@ -306,7 +323,22 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.sortCriteria = criteria;
       this.sortDirection = 'asc';
     }
+    this.updateQueryParams();
     this.applyFiltersAndSort();
+  }
+  
+  private updateQueryParams(): void {
+    const params: any = {};
+    if (this.filterTeam) params.team = this.filterTeam;
+    if (this.filterSeason) params.season = this.filterSeason;
+    if (this.sortCriteria) params.sort = this.sortCriteria;
+    if (this.sortDirection) params.direction = this.sortDirection;
+    
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: 'merge'
+    });
   }
 
   clearAllFilters(): void {

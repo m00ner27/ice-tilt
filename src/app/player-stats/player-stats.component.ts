@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subscription, combineLatest } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { Observable, Subscription, combineLatest, Subject } from 'rxjs';
+import { map, take, takeUntil } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
@@ -83,7 +84,7 @@ interface GroupedPlayerStats {
 @Component({
   selector: 'app-player-stats',
   standalone: true,
-  imports: [CommonModule, FormsModule, AdSenseComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent],
   templateUrl: './player-stats.component.html',
   styleUrl: './player-stats.component.css'
 })
@@ -124,13 +125,16 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   
   // Subscription management
   private dataSubscription?: Subscription;
+  private destroy$ = new Subject<void>();
   
   constructor(
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
     private imageUrlService: ImageUrlService,
     private apiService: ApiService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     // Initialize selectors
     this.allMatches$ = this.store.select(MatchesSelectors.selectAllMatches);
@@ -144,10 +148,25 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
   
   ngOnInit(): void {
+    // Read filter state from query parameters
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['season']) {
+        this.selectedSeasonId = params['season'];
+      }
+      if (params['division']) {
+        this.selectedDivisionId = params['division'];
+      }
+      if (params['playoffs'] !== undefined) {
+        this.includePlayoffs = params['playoffs'] === 'true';
+      }
+    });
+    
     this.loadInitialData();
   }
   
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }
@@ -241,10 +260,33 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   
   onSeasonChange(): void {
     this.selectedDivisionId = 'all-divisions';
+    
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        season: this.selectedSeasonId, 
+        division: this.selectedDivisionId,
+        playoffs: this.includePlayoffs
+      },
+      queryParamsHandling: 'merge'
+    });
+    
     this.processStatsForCurrentSeason();
   }
 
   onDivisionChange(): void {
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        season: this.selectedSeasonId, 
+        division: this.selectedDivisionId,
+        playoffs: this.includePlayoffs
+      },
+      queryParamsHandling: 'merge'
+    });
+    
     this.applyDivisionFilter();
   }
   
@@ -907,6 +949,17 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
 
   onPlayoffFilterChange(): void {
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        season: this.selectedSeasonId, 
+        division: this.selectedDivisionId,
+        playoffs: this.includePlayoffs
+      },
+      queryParamsHandling: 'merge'
+    });
+    
     // Reprocess stats with the new filter setting
     this.processStatsForCurrentSeason();
   }

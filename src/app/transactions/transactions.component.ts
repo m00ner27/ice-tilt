@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, combineLatest } from 'rxjs';
 import { TransactionsService } from '../store/services/transactions.service';
 import { ApiService } from '../store/services/api.service';
@@ -11,7 +12,7 @@ import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.c
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule, FormsModule, AdSenseComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent],
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.css']
 })
@@ -53,10 +54,22 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   constructor(
     private transactionsService: TransactionsService,
     private apiService: ApiService,
-    private rosterUpdateService: RosterUpdateService
+    private rosterUpdateService: RosterUpdateService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit() {
+    // Read filter state from query parameters
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['season']) {
+        this.selectedSeason = params['season'];
+      }
+      if (params['club']) {
+        this.selectedClub = params['club'];
+      }
+    });
+    
     this.loadInitialData();
     this.subscribeToRosterUpdates();
   }
@@ -158,6 +171,14 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.updateFilteredClubs();
     // Reset club selection when season changes
     this.selectedClub = 'All';
+    
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { season: this.selectedSeason, club: this.selectedClub },
+      queryParamsHandling: 'merge'
+    });
+    
     // Reload data with the new season filter
     this.loadPage(1);
   }
@@ -167,6 +188,14 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     if (this.selectedClub !== 'All' && !this.filteredClubs.some(club => club.name === this.selectedClub)) {
       this.selectedClub = 'All';
     }
+    
+    // Update URL query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { season: this.selectedSeason, club: this.selectedClub },
+      queryParamsHandling: 'merge'
+    });
+    
     // Reload data with the new club filter
     this.loadPage(1);
   }

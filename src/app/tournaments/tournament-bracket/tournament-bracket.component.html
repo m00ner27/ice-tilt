@@ -9,10 +9,10 @@
     <div *ngIf="tournaments$ | async as tournaments">
       <label class="block text-white text-sm font-medium mb-2">Select Tournament:</label>
       <select 
-        [value]="selectedTournamentId || ''"
-        (change)="onTournamentChange($any($event.target).value)"
+        [(ngModel)]="selectedTournamentId"
+        (ngModelChange)="onTournamentChange($event)"
         class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-        <option value="" disabled>Choose a tournament...</option>
+        <option [value]="null" disabled>Choose a tournament...</option>
         <option *ngFor="let tournament of tournaments" [value]="tournament._id">
           {{ tournament.name }}
         </option>

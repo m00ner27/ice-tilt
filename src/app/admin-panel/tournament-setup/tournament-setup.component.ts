@@ -83,13 +83,13 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     private store: Store<AppState>,
     private imageUrlService: ImageUrlService
   ) {
-    this.bracketForm = this.fb.group({
+      this.bracketForm = this.fb.group({
       name: ['', Validators.required],
       tournamentId: ['', Validators.required],
       logoUrl: [''],
       format: ['single-elimination', Validators.required],
       manualMatchups: [false],
-      numTeams: [8, [Validators.required, Validators.min(2)]],
+      numTeams: [4, [Validators.required, Validators.min(2)]],
       seedings: this.fb.array([]),
       rounds: this.fb.array([])
     });
@@ -176,8 +176,12 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   onFormatChange() {
     const format = this.bracketForm.get('format')?.value;
     if (format === 'placement-bracket') {
-      // Placement bracket requires exactly 8 teams
-      this.bracketForm.patchValue({ numTeams: 8 });
+      // Placement bracket supports 4 or 8 teams (or other even numbers)
+      const currentNumTeams = this.bracketForm.get('numTeams')?.value || 4;
+      // If current value is not valid for placement bracket, default to 4
+      if (currentNumTeams < 4 || currentNumTeams % 2 !== 0) {
+        this.bracketForm.patchValue({ numTeams: 4 });
+      }
       this.onNumTeamsChange();
     }
   }
@@ -186,11 +190,15 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     const numTeams = this.bracketForm.get('numTeams')?.value || 8;
     const format = this.bracketForm.get('format')?.value;
     
-    // Validate placement bracket requires 8 teams
-    if (format === 'placement-bracket' && numTeams !== 8) {
-      alert('Placement bracket format requires exactly 8 teams');
-      this.bracketForm.patchValue({ numTeams: 8 });
-      return;
+    // Validate placement bracket requires even number of teams (minimum 4)
+    if (format === 'placement-bracket') {
+      if (numTeams < 4 || numTeams % 2 !== 0) {
+        alert('Placement bracket format requires an even number of teams (minimum 4, e.g., 4 or 8 teams)');
+        // Set to closest valid value
+        const validValue = numTeams < 4 ? 4 : (numTeams % 2 === 0 ? numTeams : numTeams - 1);
+        this.bracketForm.patchValue({ numTeams: validValue });
+        return;
+      }
     }
     
     const seedingsArray = this.bracketForm.get('seedings') as FormArray;
@@ -216,7 +224,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   }
 
   initializeRounds() {
-    const numTeams = this.bracketForm.get('numTeams')?.value || 8;
+    const numTeams = this.bracketForm.get('numTeams')?.value || 4;
     const format = this.bracketForm.get('format')?.value;
     const roundsArray = this.bracketForm.get('rounds') as FormArray;
     
@@ -229,9 +237,14 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     let roundNames: string[];
     
     if (format === 'placement-bracket') {
-      // Placement bracket always has 3 rounds
-      numRounds = 3;
-      roundNames = ['Initial Matchups', 'Winners/Losers Bracket', 'Final Placement'];
+      // Placement bracket: 2 rounds for 4 teams, 3 rounds for 8+ teams
+      if (numTeams === 4) {
+        numRounds = 2;
+        roundNames = ['Initial Matchups', 'Final Placement'];
+      } else {
+        numRounds = 3;
+        roundNames = ['Initial Matchups', 'Winners/Losers Bracket', 'Final Placement'];
+      }
     } else {
       // Single elimination: log2 of teams
       numRounds = Math.ceil(Math.log2(numTeams));
@@ -274,6 +287,23 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
 
   validateSeedings(): boolean {
     const seedings = this.seedingsArray.value;
+    const numTeams = this.bracketForm.get('numTeams')?.value;
+    
+    // Check that all clubIds are filled in
+    const clubIds = seedings.map((s: Seeding) => s.clubId).filter((id: string) => id);
+    if (clubIds.length !== numTeams) {
+      alert(`Please select all ${numTeams} teams!`);
+      return false;
+    }
+    
+    // Check for duplicate clubs within this bracket
+    const uniqueClubIds = new Set(clubIds);
+    if (uniqueClubIds.size !== clubIds.length) {
+      alert('Each team can only appear once in the bracket!');
+      return false;
+    }
+    
+    // Check seeds
     const seeds = seedings.map((s: Seeding) => s.seed).filter((s: number) => s);
     const uniqueSeeds = new Set(seeds);
     
@@ -282,9 +312,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       return false;
     }
     
-    const numTeams = this.bracketForm.get('numTeams')?.value;
     if (seeds.length !== numTeams) {
-      alert(`Please assign all ${numTeams} teams!`);
+      alert(`Please assign all ${numTeams} seeds!`);
       return false;
     }
     
@@ -332,7 +361,9 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   generatePreview() {
     const formValue = this.bracketForm.value;
     const format = formValue.format || 'single-elimination';
-    const numRounds = format === 'placement-bracket' ? 3 : Math.ceil(Math.log2(formValue.numTeams));
+    const numRounds = format === 'placement-bracket' 
+      ? (formValue.numTeams === 4 ? 2 : 3)
+      : Math.ceil(Math.log2(formValue.numTeams));
     
     this.previewBracket = {
       name: formValue.name,
@@ -352,14 +383,60 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   }
 
   saveBracket() {
-    if (!this.bracketForm.valid || !this.validateSeedings()) {
-      alert('Please fix all errors before saving');
+    // Check form validity and provide specific error messages
+    if (!this.bracketForm.valid) {
+      // Check which fields are invalid
+      const invalidFields: string[] = [];
+      if (!this.bracketForm.get('name')?.valid) invalidFields.push('Bracket Name');
+      if (!this.bracketForm.get('tournamentId')?.valid) invalidFields.push('Tournament');
+      if (!this.bracketForm.get('format')?.valid) invalidFields.push('Format');
+      if (!this.bracketForm.get('numTeams')?.valid) invalidFields.push('Number of Teams');
+      
+      // Check seedings
+      const seedingsArray = this.seedingsArray;
+      const invalidSeedings: number[] = [];
+      seedingsArray.controls.forEach((control, index) => {
+        if (!control.get('clubId')?.valid) {
+          invalidSeedings.push(index + 1);
+        }
+        if (!control.get('seed')?.valid) {
+          invalidSeedings.push(index + 1);
+        }
+      });
+      
+      // Check rounds
+      const roundsArray = this.roundsArray;
+      const invalidRounds: number[] = [];
+      roundsArray.controls.forEach((control, index) => {
+        if (!control.valid) {
+          invalidRounds.push(index + 1);
+        }
+      });
+      
+      let errorMsg = 'Please fix the following errors:\n';
+      if (invalidFields.length > 0) {
+        errorMsg += `- Missing required fields: ${invalidFields.join(', ')}\n`;
+      }
+      if (invalidSeedings.length > 0) {
+        errorMsg += `- Missing team selections at positions: ${[...new Set(invalidSeedings)].join(', ')}\n`;
+      }
+      if (invalidRounds.length > 0) {
+        errorMsg += `- Invalid round configurations: ${invalidRounds.join(', ')}\n`;
+      }
+      
+      alert(errorMsg.trim());
       return;
+    }
+    
+    if (!this.validateSeedings()) {
+      return; // validateSeedings already shows specific error messages
     }
 
     const formValue = this.bracketForm.value;
     const format = formValue.format || 'single-elimination';
-    const numRounds = format === 'placement-bracket' ? 3 : Math.ceil(Math.log2(formValue.numTeams));
+    const numRounds = format === 'placement-bracket' 
+      ? (formValue.numTeams === 4 ? 2 : 3)
+      : Math.ceil(Math.log2(formValue.numTeams));
     
     const bracketData: Partial<TournamentsActions.TournamentBracket> = {
       name: formValue.name,
@@ -411,15 +488,61 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   }
 
   saveAndGenerateMatchups() {
-    if (!this.bracketForm.valid || !this.validateSeedings()) {
-      alert('Please fix all errors before saving');
+    // Check form validity and provide specific error messages
+    if (!this.bracketForm.valid) {
+      // Check which fields are invalid
+      const invalidFields: string[] = [];
+      if (!this.bracketForm.get('name')?.valid) invalidFields.push('Bracket Name');
+      if (!this.bracketForm.get('tournamentId')?.valid) invalidFields.push('Tournament');
+      if (!this.bracketForm.get('format')?.valid) invalidFields.push('Format');
+      if (!this.bracketForm.get('numTeams')?.valid) invalidFields.push('Number of Teams');
+      
+      // Check seedings
+      const seedingsArray = this.seedingsArray;
+      const invalidSeedings: number[] = [];
+      seedingsArray.controls.forEach((control, index) => {
+        if (!control.get('clubId')?.valid) {
+          invalidSeedings.push(index + 1);
+        }
+        if (!control.get('seed')?.valid) {
+          invalidSeedings.push(index + 1);
+        }
+      });
+      
+      // Check rounds
+      const roundsArray = this.roundsArray;
+      const invalidRounds: number[] = [];
+      roundsArray.controls.forEach((control, index) => {
+        if (!control.valid) {
+          invalidRounds.push(index + 1);
+        }
+      });
+      
+      let errorMsg = 'Please fix the following errors:\n';
+      if (invalidFields.length > 0) {
+        errorMsg += `- Missing required fields: ${invalidFields.join(', ')}\n`;
+      }
+      if (invalidSeedings.length > 0) {
+        errorMsg += `- Missing team selections at positions: ${[...new Set(invalidSeedings)].join(', ')}\n`;
+      }
+      if (invalidRounds.length > 0) {
+        errorMsg += `- Invalid round configurations: ${invalidRounds.join(', ')}\n`;
+      }
+      
+      alert(errorMsg.trim());
       return;
+    }
+    
+    if (!this.validateSeedings()) {
+      return; // validateSeedings already shows specific error messages
     }
 
     // First save the bracket
     const formValue = this.bracketForm.value;
     const format = formValue.format || 'single-elimination';
-    const numRounds = format === 'placement-bracket' ? 3 : Math.ceil(Math.log2(formValue.numTeams));
+    const numRounds = format === 'placement-bracket' 
+      ? (formValue.numTeams === 4 ? 2 : 3)
+      : Math.ceil(Math.log2(formValue.numTeams));
     
     const bracketData: Partial<TournamentsActions.TournamentBracket> = {
       name: formValue.name,
@@ -602,7 +725,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     this.viewMode = 'create';
     this.currentStep = 1;
     this.bracketForm.reset();
-    this.bracketForm.patchValue({ numTeams: 8 });
+    this.bracketForm.patchValue({ numTeams: 4 });
     this.onNumTeamsChange();
     this.existingBracket = null;
     this.previewBracket = null;
@@ -755,8 +878,11 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
               clubName: this.getClubName(s.clubId?._id || s.clubId)
             }))
             .sort((a: any, b: any) => a.seed - b.seed);
-        } else if (isPlacementBracket && roundOrder === 3) {
-          // Round 3 of placement bracket: All 8 teams should be available for final placement
+        } else if (isPlacementBracket && (
+          (fullBracket.numTeams === 4 && roundOrder === 2) || // Round 2 is final placement for 4 teams
+          (fullBracket.numTeams > 4 && roundOrder === 3)     // Round 3 is final placement for 8+ teams
+        )) {
+          // Final placement round of placement bracket: All teams should be available for final placement
           // Use all seedings to ensure all teams are available, even if there were forfeits
           this.availableTeams = fullBracket.seedings
             .map((s: any) => ({
@@ -847,8 +973,9 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
           // Sort by seed
           this.availableTeams.sort((a: any, b: any) => a.seed - b.seed);
           
-          // For placement bracket round 2, separate winners and losers
-          if (isPlacementBracket && roundOrder === 2) {
+          // For placement bracket round 2, separate winners and losers (only for 8+ teams)
+          // For 4 teams, round 2 is final placement, not winners/losers bracket
+          if (isPlacementBracket && roundOrder === 2 && fullBracket.numTeams > 4) {
             this.availableWinners = [];
             this.availableLosers = [];
             
@@ -936,8 +1063,9 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
         // Get current matchups for this round
         const roundSeries = fullBracket.series.filter((s: any) => s.roundOrder === roundOrder);
         
-        // For placement bracket round 2, separate winners and losers matchups
-        if (isPlacementBracket && roundOrder === 2) {
+        // For placement bracket round 2, separate winners and losers matchups (only for 8+ teams)
+        // For 4 teams, round 2 is final placement, not winners/losers bracket
+        if (isPlacementBracket && roundOrder === 2 && this.editingBracket?.numTeams > 4) {
           this.winnersMatchups = [];
           this.losersMatchups = [];
           
@@ -958,17 +1086,22 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
               this.losersMatchups.push(matchup);
             } else {
               // Only add to winners if it's explicitly winners or undefined (default to winners)
-              // But limit to 2 matchups for winners bracket
-              if (this.winnersMatchups.length < 2) {
+              // Limit based on number of teams
+              const numTeams = this.editingBracket?.numTeams || 8;
+              const maxWinnersMatchups = numTeams / 4;
+              if (this.winnersMatchups.length < maxWinnersMatchups) {
                 this.winnersMatchups.push(matchup);
               }
             }
           });
           
-          // Ensure we have exactly 2 matchups for winners and 2 for losers
-          // If we have more, trim; if less, add empty ones
-          const expectedWinnersMatchups = 2;
-          const expectedLosersMatchups = 2;
+          // Ensure we have the correct number of matchups for winners and losers
+          // For 4 teams: 1 winners, 1 losers
+          // For 8 teams: 2 winners, 2 losers
+          // Formula: numTeams / 4 for each bracket
+          const numTeams = this.editingBracket?.numTeams || 8;
+          const expectedWinnersMatchups = numTeams / 4;
+          const expectedLosersMatchups = numTeams / 4;
           
           // Trim winners if too many
           if (this.winnersMatchups.length > expectedWinnersMatchups) {
@@ -1361,11 +1494,42 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   }
 
   getPlacementMatchLabel(placementMatch: number): string {
-    if (placementMatch === undefined || placementMatch === null || placementMatch < 0 || placementMatch > 3) {
+    if (placementMatch === undefined || placementMatch === null || placementMatch < 0) {
       return '';
     }
-    const labels = ['Championship', '3rd Place', '5th Place', '7th Place'];
+    
+    // Get number of teams from editing bracket to determine labels
+    const numTeams = this.editingBracket?.numTeams || 8;
+    const numPlacementMatches = numTeams / 2;
+    
+    if (placementMatch >= numPlacementMatches) {
+      return '';
+    }
+    
+    // Generate labels dynamically based on number of teams
+    // For 4 teams: 0=1st/2nd, 1=3rd/4th
+    // For 8 teams: 0=1st/2nd, 1=3rd/4th, 2=5th/6th, 3=7th/8th
+    const labels: string[] = [];
+    for (let i = 0; i < numPlacementMatches; i++) {
+      if (i === 0) {
+        labels.push('Championship');
+      } else {
+        const lowerPlace = i * 2 + 1;
+        const upperPlace = (i + 1) * 2;
+        labels.push(`${lowerPlace}${this.getOrdinalSuffix(lowerPlace)}/${upperPlace}${this.getOrdinalSuffix(upperPlace)} Place`);
+      }
+    }
+    
     return labels[placementMatch] || '';
+  }
+  
+  private getOrdinalSuffix(n: number): string {
+    const j = n % 10;
+    const k = n % 100;
+    if (j === 1 && k !== 11) return 'st';
+    if (j === 2 && k !== 12) return 'nd';
+    if (j === 3 && k !== 13) return 'rd';
+    return 'th';
   }
 }
 

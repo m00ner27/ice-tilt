@@ -153,6 +153,13 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Read selectedSeasonId from query parameters
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['season']) {
+        this.selectedSeasonId = params['season'];
+      }
+    });
+    
     // Set up data subscriptions first
     this.setupDataSubscriptions();
     
@@ -181,6 +188,13 @@ export class StandingsComponent implements OnInit, OnDestroy {
     this.divisionStandings = []; // Clear existing standings
     this.cdr.markForCheck();
     
+    // Update URL query parameters to preserve filter state
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { season: seasonId },
+      queryParamsHandling: 'merge'
+    });
+    
     // Load season-specific data
     this.loadSeasonSpecificData();
   }
@@ -189,9 +203,22 @@ export class StandingsComponent implements OnInit, OnDestroy {
     // Subscribe to seasons for the dropdown
     this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
       if (seasons.length > 0 && !this.selectedSeasonId) {
+        // Only set default if no query param was provided
         this.selectedSeasonId = seasons[0]._id;
         this.loadSeasonSpecificData();
         this.cdr.markForCheck();
+      } else if (seasons.length > 0 && this.selectedSeasonId) {
+        // If we have a selectedSeasonId (from query params), verify it exists and load data
+        const seasonExists = seasons.some(s => s._id === this.selectedSeasonId);
+        if (seasonExists) {
+          this.loadSeasonSpecificData();
+          this.cdr.markForCheck();
+        } else {
+          // If the season from query params doesn't exist, fall back to first season
+          this.selectedSeasonId = seasons[0]._id;
+          this.loadSeasonSpecificData();
+          this.cdr.markForCheck();
+        }
       }
     });
   }

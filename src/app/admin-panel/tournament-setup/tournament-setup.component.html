@@ -113,8 +113,8 @@
           class="text-admin-text hover:text-white text-2xl">&times;</button>
       </div>
       
-      <!-- Show different UI for placement bracket round 2 -->
-      <div *ngIf="editingBracket?.format === 'placement-bracket' && editingRoundOrder === 2" class="mb-6">
+      <!-- Show different UI for placement bracket round 2 (winners/losers) - only for 8+ teams -->
+      <div *ngIf="editingBracket?.format === 'placement-bracket' && editingRoundOrder === 2 && editingBracket?.numTeams > 4" class="mb-6">
         <!-- Winners Bracket Section -->
         <div class="mb-6">
           <div class="flex justify-between items-center mb-3">
@@ -257,8 +257,10 @@
         <div class="space-y-4">
           <div *ngFor="let matchup of currentMatchups; let i = index" 
             class="bg-admin-hover p-4 rounded">
-            <!-- Placement Match Label (for round 3 of placement bracket) -->
-            <div *ngIf="editingBracket?.format === 'placement-bracket' && editingRoundOrder === 3" 
+            <!-- Placement Match Label (for final placement round: round 2 for 4 teams, round 3 for 8+ teams) -->
+            <div *ngIf="editingBracket?.format === 'placement-bracket' && 
+                        ((editingBracket?.numTeams === 4 && editingRoundOrder === 2) || 
+                         (editingBracket?.numTeams > 4 && editingRoundOrder === 3))" 
               class="mb-3 pb-2 border-b border-yellow-600">
               <span class="text-yellow-400 font-bold text-sm uppercase">
                 {{ getPlacementMatchLabel(matchup.placementMatch !== undefined && matchup.placementMatch !== null ? matchup.placementMatch : i) }}
@@ -382,13 +384,18 @@
         <select formControlName="format" (change)="onFormatChange()"
           class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
           <option value="single-elimination">Single Elimination</option>
-          <option value="placement-bracket">Placement Bracket (8 teams, all play 3 series)</option>
+          <option value="placement-bracket">Placement Bracket (4 or 8 teams)</option>
           <option value="double-elimination">Double Elimination (Coming Soon)</option>
           <option value="round-robin">Round Robin (Coming Soon)</option>
         </select>
         <p class="text-sm text-admin-text mt-1">
           <span *ngIf="bracketForm.get('format')?.value === 'placement-bracket'">
-            All teams play exactly 3 series to determine final seeding 1-8. Requires exactly 8 teams.
+            <span *ngIf="bracketForm.get('numTeams')?.value === 4">
+              All teams play 2 series to determine final seeding (1st/2nd, 3rd/4th). Requires exactly 4 teams.
+            </span>
+            <span *ngIf="bracketForm.get('numTeams')?.value !== 4">
+              All teams play 3 series to determine final seeding. Requires an even number of teams (minimum 4, e.g., 4 or 8 teams).
+            </span>
           </span>
           <span *ngIf="bracketForm.get('format')?.value === 'single-elimination'">
             Standard bracket format. Teams are eliminated after one loss.
@@ -399,13 +406,12 @@
       <div>
         <label class="block text-admin-text mb-2 font-medium">Number of Teams *</label>
         <input type="number" formControlName="numTeams" (change)="onNumTeamsChange()" 
-          [min]="bracketForm.get('format')?.value === 'placement-bracket' ? 8 : 2"
-          [max]="bracketForm.get('format')?.value === 'placement-bracket' ? 8 : 32"
-          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
-          [disabled]="bracketForm.get('format')?.value === 'placement-bracket'">
+          [min]="bracketForm.get('format')?.value === 'placement-bracket' ? 4 : 2"
+          [max]="32"
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
         <p class="text-sm text-admin-text mt-1">
           <span *ngIf="bracketForm.get('format')?.value === 'placement-bracket'">
-            Placement bracket requires exactly 8 teams.
+            Placement bracket requires an even number of teams (minimum 4, e.g., 4 or 8 teams).
           </span>
           <span *ngIf="bracketForm.get('format')?.value !== 'placement-bracket'">
             Enter any number (2-32). Byes will be automatically assigned to top seeds if needed.

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRe
 import { CommonModule } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable, Subject, combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -82,7 +82,9 @@ export class PlayersComponent implements OnInit, OnDestroy {
     private store: Store<AppState>,
     private ngrxApiService: NgRxApiService,
     private imageUrlService: ImageUrlService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     // Initialize selectors
     this.users$ = this.store.select(UsersSelectors.selectAllUsers);
@@ -94,6 +96,28 @@ export class PlayersComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Read filter state from query parameters
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['status']) {
+        this.statusFilter = params['status'] as 'All' | 'Free Agent' | 'Signed' | 'Pending';
+      }
+      if (params['position']) {
+        this.positionFilter = params['position'] as 'All' | 'Forward' | 'Defense' | 'Goalie';
+      }
+      if (params['secondaryPosition']) {
+        this.secondaryPositionFilter = params['secondaryPosition'] as 'All' | 'Forward' | 'Defense' | 'Goalie';
+      }
+      if (params['region']) {
+        this.regionFilter = params['region'] as 'All' | 'North America' | 'Europe';
+      }
+      if (params['season']) {
+        this.seasonFilter = params['season'];
+      }
+      if (params['search']) {
+        this.searchTerm = params['search'];
+      }
+    });
+    
     this.buildCountryEmojiMap();
     
     // Load data using NgRx (only load what's needed)
@@ -325,6 +349,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
 
   onStatusFilterChange(status: 'All' | 'Free Agent' | 'Signed' | 'Pending') {
     this.statusFilter = status;
+    this.updateQueryParams();
     this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
@@ -337,6 +362,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
 
   onPositionFilterChange(position: 'All' | 'Forward' | 'Defense' | 'Goalie') {
     this.positionFilter = position;
+    this.updateQueryParams();
     this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
@@ -349,6 +375,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
 
   onSecondaryPositionFilterChange(position: 'All' | 'Forward' | 'Defense' | 'Goalie') {
     this.secondaryPositionFilter = position;
+    this.updateQueryParams();
     this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
@@ -361,6 +388,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
 
   onRegionFilterChange(region: 'All' | 'North America' | 'Europe') {
     this.regionFilter = region;
+    this.updateQueryParams();
     this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
@@ -373,6 +401,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
 
   onSeasonFilterChange(season: string) {
     this.seasonFilter = season;
+    this.updateQueryParams();
     this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
@@ -386,6 +415,7 @@ export class PlayersComponent implements OnInit, OnDestroy {
   onSearchChange(event: Event) {
     const target = event.target as HTMLInputElement;
     this.searchTerm = target.value;
+    this.updateQueryParams();
     this.users$.pipe(takeUntil(this.destroy$)).subscribe(users => {
       this.clubs$.pipe(takeUntil(this.destroy$)).subscribe(clubs => {
         this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
@@ -393,6 +423,22 @@ export class PlayersComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         });
       });
+    });
+  }
+  
+  private updateQueryParams(): void {
+    const params: any = {};
+    if (this.statusFilter !== 'All') params.status = this.statusFilter;
+    if (this.positionFilter !== 'All') params.position = this.positionFilter;
+    if (this.secondaryPositionFilter !== 'All') params.secondaryPosition = this.secondaryPositionFilter;
+    if (this.regionFilter !== 'All') params.region = this.regionFilter;
+    if (this.seasonFilter) params.season = this.seasonFilter;
+    if (this.searchTerm) params.search = this.searchTerm;
+    
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: 'merge'
     });
   }
 
