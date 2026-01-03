@@ -1066,8 +1066,12 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.clubForm.updateValueAndValidity();
   }
 
-  viewClubDetails(club: Club): void {
+  viewClubDetails(club: Club, preserveActiveContext: boolean = false): void {
     this.selectedClub = club;
+    
+    // Store the current active context ID if we want to preserve it
+    const contextToPreserve = preserveActiveContext ? this.activeRosterContext : null;
+    
     this.seasonRosters = [];
     this.tournamentRosters = [];
     this.activeRosterContext = null;
@@ -1079,13 +1083,13 @@ export class ClubsComponent implements OnInit, OnDestroy {
     this.loadingRosters = true;
     
     // Load all season rosters
-    this.loadSeasonRosters(club);
+    this.loadSeasonRosters(club, contextToPreserve);
     
     // Load all tournament rosters
-    this.loadTournamentRosters(club);
+    this.loadTournamentRosters(club, contextToPreserve);
   }
   
-  private loadSeasonRosters(club: Club): void {
+  private loadSeasonRosters(club: Club, contextToPreserve: string | null = null): void {
     if (!club._id || !club.seasons || club.seasons.length === 0) {
       this.loadingRosters = false;
       return;
@@ -1132,8 +1136,23 @@ export class ClubsComponent implements OnInit, OnDestroy {
     Promise.all(seasonRosterPromises).then(results => {
       this.seasonRosters = results.filter((r): r is RosterContext => r !== null);
       
-      // Set first season roster as active if no active context
-      if (!this.activeRosterContext && this.seasonRosters.length > 0) {
+      // Restore preserved context if it exists, otherwise set first season roster as active
+      if (contextToPreserve) {
+        const contextExists = this.seasonRosters.some(ctx => ctx.id === contextToPreserve);
+        if (contextExists) {
+          this.activeRosterContext = contextToPreserve;
+          // Update free agents for the restored season
+          const restoredContext = this.seasonRosters.find(ctx => ctx.id === contextToPreserve);
+          if (restoredContext && restoredContext.type === 'season' && restoredContext.seasonId) {
+            this.selectedSeasonId = restoredContext.seasonId;
+            this.loadFreeAgentsForSeason(restoredContext.seasonId);
+            this.updateSeasonFreeAgents();
+          }
+        } else if (this.seasonRosters.length > 0) {
+          // Context doesn't exist anymore, fall back to first roster
+          this.activeRosterContext = this.seasonRosters[0].id;
+        }
+      } else if (!this.activeRosterContext && this.seasonRosters.length > 0) {
         this.activeRosterContext = this.seasonRosters[0].id;
       }
       
@@ -1141,7 +1160,7 @@ export class ClubsComponent implements OnInit, OnDestroy {
     });
   }
   
-  private loadTournamentRosters(club: Club): void {
+  private loadTournamentRosters(club: Club, contextToPreserve: string | null = null): void {
     if (!club._id) {
       return;
     }
@@ -1192,8 +1211,17 @@ export class ClubsComponent implements OnInit, OnDestroy {
     Promise.all(tournamentRosterPromises).then(results => {
       this.tournamentRosters = results.filter((r): r is RosterContext => r !== null);
       
-      // Set first tournament roster as active if no season rosters and no active context
-      if (!this.activeRosterContext && this.seasonRosters.length === 0 && this.tournamentRosters.length > 0) {
+      // Restore preserved context if it exists and no season rosters were loaded
+      if (contextToPreserve && this.seasonRosters.length === 0) {
+        const contextExists = this.tournamentRosters.some(ctx => ctx.id === contextToPreserve);
+        if (contextExists) {
+          this.activeRosterContext = contextToPreserve;
+        } else if (this.tournamentRosters.length > 0) {
+          // Context doesn't exist anymore, fall back to first roster
+          this.activeRosterContext = this.tournamentRosters[0].id;
+        }
+      } else if (!this.activeRosterContext && this.seasonRosters.length === 0 && this.tournamentRosters.length > 0) {
+        // Set first tournament roster as active if no season rosters and no active context
         this.activeRosterContext = this.tournamentRosters[0].id;
       }
     });
@@ -1248,7 +1276,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
         
           // Refresh the selected club rosters
         if (this.selectedClub && this.selectedClub._id === club._id) {
-          this.viewClubDetails(club);
+          // Preserve the active context when refreshing
+          this.viewClubDetails(club, true);
         }
         
         // Refresh free agents list for the current season
@@ -1271,7 +1300,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
         next: () => {
           // Refresh the selected club rosters
           if (this.selectedClub && this.selectedClub._id === club._id) {
-            this.viewClubDetails(club);
+            // Preserve the active context when refreshing
+            this.viewClubDetails(club, true);
         }
         
           // Trigger storage event
