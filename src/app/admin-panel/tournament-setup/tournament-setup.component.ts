@@ -90,6 +90,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       format: ['single-elimination', Validators.required],
       manualMatchups: [false],
       numTeams: [4, [Validators.required, Validators.min(2)]],
+      numRounds: [2, [Validators.required, Validators.min(1), Validators.max(10)]], // For custom-bracket format
       order: [0, [Validators.required, Validators.min(0)]],
       seedings: this.fb.array([]),
       rounds: this.fb.array([])
@@ -184,12 +185,65 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
         this.bracketForm.patchValue({ numTeams: 4 });
       }
       this.onNumTeamsChange();
+    } else if (format === 'custom-bracket') {
+      // Custom bracket requires even number of teams
+      const currentNumTeams = this.bracketForm.get('numTeams')?.value || 4;
+      if (currentNumTeams < 4 || currentNumTeams % 2 !== 0) {
+        // Set to closest valid even number (minimum 4)
+        const validValue = currentNumTeams < 4 ? 4 : (currentNumTeams % 2 === 0 ? currentNumTeams : currentNumTeams - 1);
+        this.bracketForm.patchValue({ numTeams: validValue });
+      }
+      // Enable manual matchups for custom bracket (always manual)
+      this.bracketForm.patchValue({ manualMatchups: true });
+      // Initialize rounds with default number
+      this.initializeRounds();
+    }
+  }
+  
+  onNumRoundsChange() {
+    // Reinitialize rounds when number of rounds changes for custom-bracket
+    const format = this.bracketForm.get('format')?.value;
+    if (format === 'custom-bracket') {
+      this.initializeRounds();
     }
   }
 
   onNumTeamsChange() {
     const numTeams = this.bracketForm.get('numTeams')?.value || 8;
     const format = this.bracketForm.get('format')?.value;
+    const seedingsArray = this.bracketForm.get('seedings') as FormArray;
+    const previousNumTeams = seedingsArray.length;
+    
+    // If editing an existing bracket, check if we can change numTeams
+    if (this.viewMode === 'edit' && this.existingBracket) {
+      // Prevent decreasing numTeams if there are filled seedings
+      if (numTeams < previousNumTeams) {
+        const filledSeedings = seedingsArray.controls.filter(control => {
+          const clubId = control.get('clubId')?.value;
+          return clubId && clubId !== '';
+        }).length;
+        
+        if (filledSeedings > numTeams) {
+          alert(`Cannot reduce number of teams below ${filledSeedings} because you have ${filledSeedings} teams already seeded. Please remove teams from seedings first.`);
+          this.bracketForm.patchValue({ numTeams: previousNumTeams });
+          return;
+        }
+      }
+      
+      // Prevent changing numTeams if bracket has matchups/series generated
+      if (this.existingBracket.series && this.existingBracket.series.length > 0) {
+        if (numTeams !== previousNumTeams) {
+          alert('Cannot change number of teams after matchups have been generated. Please delete existing matchups first or create a new bracket.');
+          this.bracketForm.patchValue({ numTeams: previousNumTeams });
+          return;
+        }
+      }
+      
+      // Warn if increasing teams (but allow it)
+      if (numTeams > previousNumTeams) {
+        console.log(`Increasing teams from ${previousNumTeams} to ${numTeams}. New seeding slots will be added.`);
+      }
+    }
     
     // Validate placement bracket requires even number of teams (minimum 4)
     if (format === 'placement-bracket') {
@@ -202,7 +256,16 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       }
     }
     
-    const seedingsArray = this.bracketForm.get('seedings') as FormArray;
+    // Validate custom bracket requires even number of teams (minimum 4)
+    if (format === 'custom-bracket') {
+      if (numTeams < 4 || numTeams % 2 !== 0) {
+        alert('Custom bracket format requires an even number of teams (minimum 4, e.g., 4, 6, 8, 10, etc.)');
+        // Set to closest valid value
+        const validValue = numTeams < 4 ? 4 : (numTeams % 2 === 0 ? numTeams : numTeams - 1);
+        this.bracketForm.patchValue({ numTeams: validValue });
+        return;
+      }
+    }
     
     // Adjust seedings array size
     while (seedingsArray.length < numTeams) {
@@ -211,8 +274,26 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
         seed: [seedingsArray.length + 1, [Validators.required, Validators.min(1)]]
       }));
     }
-    while (seedingsArray.length > numTeams) {
-      seedingsArray.removeAt(seedingsArray.length - 1);
+    
+    // Only remove seedings if decreasing and no teams are filled in those slots
+    if (numTeams < previousNumTeams) {
+      // Check if any of the seedings we're about to remove have teams assigned
+      const seedingsToRemove = seedingsArray.controls.slice(numTeams);
+      const hasFilledSeedings = seedingsToRemove.some(control => {
+        const clubId = control.get('clubId')?.value;
+        return clubId && clubId !== '';
+      });
+      
+      if (hasFilledSeedings) {
+        alert('Cannot remove teams that have already been assigned. Please remove teams from seedings first.');
+        this.bracketForm.patchValue({ numTeams: previousNumTeams });
+        return;
+      }
+      
+      // Safe to remove empty seedings
+      while (seedingsArray.length > numTeams) {
+        seedingsArray.removeAt(seedingsArray.length - 1);
+      }
     }
     
     // Update seed numbers
@@ -261,6 +342,14 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
         numRounds = 3;
         roundNames = ['Initial Matchups', 'Winners/Losers Bracket', 'Final Placement'];
       }
+    } else if (format === 'custom-bracket') {
+      // Custom bracket: use manually set number of rounds
+      numRounds = this.bracketForm.get('numRounds')?.value || 2;
+      roundNames = [];
+      // Generate generic round names
+      for (let i = 0; i < numRounds; i++) {
+        roundNames.push(`Round ${i + 1}`);
+      }
     } else {
       // Single elimination: log2 of teams
       numRounds = Math.ceil(Math.log2(numTeams));
@@ -269,10 +358,10 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     
     // Create rounds
     for (let i = 0; i < numRounds; i++) {
-      // For placement bracket, rounds are in order: 1, 2, 3 (not reversed)
+      // For placement bracket and custom bracket, rounds are in order: 1, 2, 3 (not reversed)
       // For single elimination, rounds are reversed: Final (1), Semifinal (2), etc.
-      const roundOrder = format === 'placement-bracket' ? (i + 1) : (numRounds - i);
-      const roundName = format === 'placement-bracket' 
+      const roundOrder = (format === 'placement-bracket' || format === 'custom-bracket') ? (i + 1) : (numRounds - i);
+      const roundName = (format === 'placement-bracket' || format === 'custom-bracket')
         ? roundNames[i] 
         : (roundNames[Math.min(i, roundNames.length - 1)] || `Round ${roundOrder}`);
       const defaultBestOf = roundOrder === 1 ? 7 : roundOrder === 2 ? 5 : 3;
@@ -344,7 +433,11 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
 
   nextStep() {
     if (this.currentStep === 1) {
-      if (!this.bracketForm.get('name')?.valid || !this.bracketForm.get('tournamentId')?.valid || !this.bracketForm.get('numTeams')?.valid) {
+      const format = this.bracketForm.get('format')?.value;
+      const isValid = !this.bracketForm.get('name')?.valid || !this.bracketForm.get('tournamentId')?.valid || !this.bracketForm.get('numTeams')?.valid;
+      const isCustomBracketInvalid = format === 'custom-bracket' && !this.bracketForm.get('numRounds')?.valid;
+      
+      if (isValid || isCustomBracketInvalid) {
         alert('Please fill in all required fields');
         return;
       }
@@ -379,6 +472,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     const format = formValue.format || 'single-elimination';
     const numRounds = format === 'placement-bracket' 
       ? (formValue.numTeams === 4 ? 2 : 3)
+      : format === 'custom-bracket'
+      ? (formValue.numRounds || 2)
       : Math.ceil(Math.log2(formValue.numTeams));
     
     this.previewBracket = {
@@ -453,6 +548,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     const format = formValue.format || 'single-elimination';
     const numRounds = format === 'placement-bracket' 
       ? (formValue.numTeams === 4 ? 2 : 3)
+      : format === 'custom-bracket'
+      ? (formValue.numRounds || 2)
       : Math.ceil(Math.log2(formValue.numTeams));
     
     const bracketData: Partial<TournamentsActions.TournamentBracket> = {
@@ -560,6 +657,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     const format = formValue.format || 'single-elimination';
     const numRounds = format === 'placement-bracket' 
       ? (formValue.numTeams === 4 ? 2 : 3)
+      : format === 'custom-bracket'
+      ? (formValue.numRounds || 2)
       : Math.ceil(Math.log2(formValue.numTeams));
     
     const bracketData: Partial<TournamentsActions.TournamentBracket> = {
@@ -801,6 +900,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       const format = formValue.format || 'single-elimination';
       const numRounds = format === 'placement-bracket' 
         ? (formValue.numTeams === 4 ? 2 : 3)
+        : format === 'custom-bracket'
+        ? (formValue.numRounds || 2)
         : Math.ceil(Math.log2(formValue.numTeams));
 
       bracketData.name = formValue.name;
@@ -986,6 +1087,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
           format: fullBracket.format || 'single-elimination',
           manualMatchups: fullBracket.manualMatchups || false,
           numTeams: fullBracket.numTeams,
+          numRounds: fullBracket.numRounds || (fullBracket.format === 'custom-bracket' ? 2 : undefined),
           order: fullBracket.order !== undefined && fullBracket.order !== null ? fullBracket.order : 0
         });
         
@@ -1067,10 +1169,21 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       if (fullBracket) {
         this.editingBracket = fullBracket;
         const isPlacementBracket = fullBracket.format === 'placement-bracket';
+        const isCustomBracket = fullBracket.format === 'custom-bracket';
         
         // Get available teams (winners from previous round or all seedings for round 1)
         if (roundOrder === 1) {
           // Round 1 - use seedings
+          this.availableTeams = fullBracket.seedings
+            .map((s: any) => ({
+              clubId: s.clubId?._id || s.clubId,
+              seed: s.seed,
+              clubName: this.getClubName(s.clubId?._id || s.clubId)
+            }))
+            .sort((a: any, b: any) => a.seed - b.seed);
+        } else if (isCustomBracket) {
+          // For custom bracket, after round 1, all teams from seedings are available
+          // (user can choose any teams regardless of win/loss)
           this.availableTeams = fullBracket.seedings
             .map((s: any) => ({
               clubId: s.clubId?._id || s.clubId,
@@ -1396,7 +1509,42 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     if (!this.editingBracket || this.editingRoundOrder === null) return;
     
     const isPlacementBracket = this.editingBracket.format === 'placement-bracket';
+    const isCustomBracket = this.editingBracket.format === 'custom-bracket';
     const isRound2 = this.editingRoundOrder === 2;
+    
+    if (isCustomBracket) {
+      // For custom bracket, generate matchups by pairing teams (by seed order)
+      const matchups: any[] = [];
+      const teamsCopy = [...this.availableTeams].sort((a: any, b: any) => a.seed - b.seed);
+      
+      while (teamsCopy.length > 0) {
+        if (teamsCopy.length === 1) {
+          // Bye
+          matchups.push({
+            homeClubId: teamsCopy[0].clubId,
+            homeSeed: teamsCopy[0].seed,
+            awayClubId: null,
+            awaySeed: null,
+            status: 'bye'
+          });
+          teamsCopy.shift();
+        } else {
+          // Pair first two teams
+          const team1 = teamsCopy.shift();
+          const team2 = teamsCopy.shift();
+          matchups.push({
+            homeClubId: team1.clubId,
+            homeSeed: team1.seed,
+            awayClubId: team2.clubId,
+            awaySeed: team2.seed,
+            status: 'pending'
+          });
+        }
+      }
+      
+      this.currentMatchups = matchups;
+      return;
+    }
     
     if (isPlacementBracket && isRound2) {
       // Generate winners and losers matchups separately

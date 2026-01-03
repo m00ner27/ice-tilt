@@ -390,10 +390,14 @@
           class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
           <option value="single-elimination">Single Elimination</option>
           <option value="placement-bracket">Placement Bracket (4 or 8 teams)</option>
+          <option value="custom-bracket">Custom Bracket (Any even number of teams, custom rounds)</option>
           <option value="double-elimination">Double Elimination (Coming Soon)</option>
           <option value="round-robin">Round Robin (Coming Soon)</option>
         </select>
         <p class="text-sm text-admin-text mt-1">
+          <span *ngIf="bracketForm.get('format')?.value === 'custom-bracket'">
+            Custom bracket allows any even number of teams with a custom number of rounds. After each round, you can manually choose matchups for the next round (regardless of win/loss).
+          </span>
           <span *ngIf="bracketForm.get('format')?.value === 'placement-bracket'">
             <span *ngIf="bracketForm.get('numTeams')?.value === 4">
               All teams play 2 series to determine final seeding (1st/2nd, 3rd/4th). Requires exactly 4 teams.
@@ -424,18 +428,32 @@
         <input type="number" formControlName="numTeams" (change)="onNumTeamsChange()" 
           [min]="bracketForm.get('format')?.value === 'placement-bracket' ? 4 : 2"
           [max]="32"
+          [readonly]="viewMode === 'edit' && existingBracket?.series && existingBracket?.series.length > 0"
+          [class.bg-gray-600]="viewMode === 'edit' && existingBracket?.series && existingBracket?.series.length > 0"
+          [class.cursor-not-allowed]="viewMode === 'edit' && existingBracket?.series && existingBracket?.series.length > 0"
           class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
         <p class="text-sm text-admin-text mt-1">
-          <span *ngIf="bracketForm.get('format')?.value === 'placement-bracket'">
-            Placement bracket requires an even number of teams (minimum 4, e.g., 4 or 8 teams).
+          <span *ngIf="viewMode === 'edit' && existingBracket?.series && existingBracket?.series.length > 0" class="text-yellow-400 block mb-1">
+            ⚠️ Cannot change number of teams after matchups have been generated. Delete matchups first or create a new bracket.
           </span>
-          <span *ngIf="bracketForm.get('format')?.value !== 'placement-bracket'">
-            Enter any number (2-32). Byes will be automatically assigned to top seeds if needed.
+          <span *ngIf="!(viewMode === 'edit' && existingBracket?.series && existingBracket?.series.length > 0)">
+            <span *ngIf="bracketForm.get('format')?.value === 'placement-bracket'">
+              Placement bracket requires an even number of teams (minimum 4, e.g., 4 or 8 teams).
+            </span>
+            <span *ngIf="bracketForm.get('format')?.value === 'custom-bracket'">
+              Custom bracket requires an even number of teams (4, 6, 8, 10, etc.). You can manually set matchups after each round.
+            </span>
+            <span *ngIf="bracketForm.get('format')?.value !== 'placement-bracket' && bracketForm.get('format')?.value !== 'custom-bracket'">
+              Enter any number (2-32). Byes will be automatically assigned to top seeds if needed.
+            </span>
+            <span *ngIf="viewMode === 'edit'" class="block mt-1 text-blue-400">
+              💡 You can increase the number of teams to add more seeding slots. Decreasing is only allowed if those slots are empty.
+            </span>
           </span>
         </p>
       </div>
 
-      <div>
+      <div *ngIf="bracketForm.get('format')?.value !== 'custom-bracket'">
         <label class="flex items-center gap-2 mb-2">
           <input type="checkbox" formControlName="manualMatchups" class="w-4 h-4">
           <span class="text-admin-text font-medium">Allow Manual Matchup Selection</span>
@@ -443,6 +461,16 @@
         <p class="text-sm text-admin-text mt-1 ml-6">
           When enabled, you can manually set matchups for each round (similar to playoffs). 
           Otherwise, matchups are automatically generated based on seeding.
+        </p>
+      </div>
+      
+      <div *ngIf="bracketForm.get('format')?.value === 'custom-bracket'">
+        <label class="block text-admin-text mb-2 font-medium">Number of Rounds *</label>
+        <input type="number" formControlName="numRounds" (change)="onNumRoundsChange()" 
+          min="1" max="10"
+          class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <p class="text-sm text-admin-text mt-1">
+          Set the number of rounds for this bracket. After each round, you can manually choose matchups for the next round (regardless of win/loss).
         </p>
       </div>
 

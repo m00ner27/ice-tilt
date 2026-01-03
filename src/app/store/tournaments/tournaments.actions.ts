@@ -16,7 +16,7 @@ export interface TournamentBracket {
   tournamentId: string;
   name: string;
   logoUrl?: string;
-  format?: 'single-elimination' | 'placement-bracket' | 'double-elimination' | 'round-robin';
+  format?: 'single-elimination' | 'placement-bracket' | 'double-elimination' | 'round-robin' | 'custom-bracket';
   manualMatchups?: boolean;
   status: 'setup' | 'active' | 'completed';
   numTeams: number;
