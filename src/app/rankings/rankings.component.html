@@ -1,0 +1,189 @@
+<div class="p-3 sm:p-5 max-w-full mx-auto text-white">
+  <!-- Content Container - Same width for all sections -->
+  <div class="w-full max-w-5xl mx-auto">
+    <!-- Championship Logo -->
+    <div class="mb-5">
+      <img src="assets/images/ithl-championship.png" alt="Ice Tilt Championship Logo" class="w-full h-auto object-contain">
+    </div>
+
+    <!-- Ranking Points System Description -->
+    <div class="mb-5 p-3 sm:p-4 bg-admin-card rounded-lg">
+    <h2 class="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-admin-primary">How Ranking Points Work</h2>
+    <p class="text-white mb-3 sm:mb-4 text-sm sm:text-base">
+      Clubs earn Ranking Points (RP) throughout the year based on performance across the Fall , Winter, and Spring seasons.
+    </p>
+    
+    <ul class="list-disc list-inside text-white space-y-1 mb-3 sm:mb-4 ml-4 text-sm sm:text-base">
+      <li>Fall : NA S22 / EU S10</li>
+      <li>Winter: NA S23 / EU S11</li>
+      <li>Spring: NA S24 / EU S12</li>
+    </ul>
+    
+    <div class="space-y-4">
+      <!-- Regular Season RP -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">Regular Season RP</h3>
+        <p class="text-white mb-2 text-sm sm:text-base">
+          After each season, clubs earn RP based on final overall placement:
+        </p>
+        <p class="text-white opacity-80 italic mb-2 text-sm sm:text-base">
+          Placement RP = (Total Clubs in Season + 1) – Final Placement
+        </p>
+        <p class="text-white text-xs sm:text-sm">
+          <strong>Example:</strong> 1st place in a 30-team season → 30 RP | 10th place → 21 RP
+        </p>
+      </div>
+
+      <!-- Playoff RP -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">Playoff RP</h3>
+        <p class="text-white mb-2 text-sm sm:text-base">
+          Additional RP is awarded for playoff performance:
+        </p>
+        <ul class="list-disc list-inside text-white space-y-1 ml-4 text-sm sm:text-base">
+          <li>🏆 Champion: +5 RP</li>
+          <li>🥈 Finalist: +3 RP</li>
+          <li>🥉 Semifinalist: +2 RP</li>
+        </ul>
+        <p class="text-white opacity-80 text-xs sm:text-sm mt-2 italic">
+          (Playoff RP is not cumulative — clubs receive only the highest applicable bonus.)
+        </p>
+      </div>
+
+      <!-- Yearly Rankings -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">Yearly Rankings</h3>
+        <ul class="list-disc list-inside text-white space-y-1 ml-4 text-sm sm:text-base">
+          <li>RP earned across all three seasons are combined into a yearly total</li>
+          <li>Clubs are ranked by total RP</li>
+          <li>The Top 16 clubs qualify for the ITHL Championship</li>
+        </ul>
+      </div>
+
+      <!-- ITHL Championship -->
+      <div>
+        <h3 class="text-base sm:text-lg font-semibold mb-2 text-admin-primary">ITHL Championship</h3>
+        <ul class="list-disc list-inside text-white space-y-1 ml-4 text-sm sm:text-base">
+          <li>Held after the Spring season (Estimate: July)</li>
+          <li>3-4 weeks long</li>
+          <li>Features the 16 top-ranked clubs of the year</li>
+          <li>Single elimination bracket, Best of 3 series</li>
+          <li>If clubs opt out, the next club in the rankings will be invited</li>
+          <li>Players must be rostered for 1 of the 3 seasons to be eligible</li>
+          <li>Tournaments for both North America and Europe</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+    <!-- Region Filter -->
+    <div class="flex items-center gap-2 mb-5 p-3 sm:p-4 bg-admin-card rounded-lg">
+      <label for="region-select" class="font-medium text-white text-sm sm:text-base">Filter by Region:</label>
+      <select
+        id="region-select"
+        [(ngModel)]="selectedRegion"
+        (change)="onRegionChange()"
+        class="px-2 sm:px-3 py-1 sm:py-2 bg-admin-hover text-white rounded text-xs sm:text-sm cursor-pointer focus:outline-none focus:border-admin-primary"
+      >
+        <option value="north-america">North America</option>
+        <option value="europe">Europe</option>
+      </select>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center text-white py-10 text-xl">
+      <p>Loading rankings...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="text-center text-red-500 py-8 bg-red-500/10 rounded-lg my-5">
+      <p>{{ error }}</p>
+    </div>
+
+    <!-- Rankings Table -->
+    <div *ngIf="!isLoading && !error && filteredRankings.length > 0" class="mb-8">
+      <div class="w-full overflow-x-auto">
+        <table class="w-full bg-admin-card text-white border-collapse mb-5 text-sm sm:text-base" style="border-collapse: separate; border-spacing: 0;">
+        <thead class="bg-admin-accent">
+          <tr>
+            <th
+              class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm"
+              (click)="onSort('rank')"
+            >
+              <div class="flex items-center justify-center gap-2">
+                RANK
+                <i class="fas" [ngClass]="getSortIcon('rank')"></i>
+              </div>
+            </th>
+            <th
+              class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm"
+              (click)="onSort('clubName')"
+            >
+              <div class="flex items-center justify-center gap-2">
+                CLUB
+                <i class="fas" [ngClass]="getSortIcon('clubName')"></i>
+              </div>
+            </th>
+            <th
+              class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center cursor-pointer transition-colors hover:bg-admin-hover whitespace-nowrap text-xs sm:text-sm"
+              (click)="onSort('totalRP')"
+            >
+              <div class="flex items-center justify-center gap-2">
+                TOTAL RP
+                <i class="fas" [ngClass]="getSortIcon('totalRP')"></i>
+              </div>
+            </th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">
+              SEASON BREAKDOWN
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of filteredRankings; let isLast = last" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+            <td class="text-center p-2 sm:p-3 font-bold text-sm sm:text-lg">{{ entry.rank }}</td>
+            <td class="text-left p-2 sm:p-3">
+              <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <img
+                  class="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded flex-shrink-0"
+                  [src]="getLogoUrl(entry.clubLogo)"
+                  [alt]="entry.clubName + ' logo'"
+                  onerror="this.src='assets/images/square-default.png'"
+                />
+                <span class="font-medium text-xs sm:text-sm truncate min-w-0">
+                  <a [routerLink]="['/clubs', entry.clubId]" class="text-white hover:text-admin-primary transition-colors">{{ entry.clubName }}</a>
+                </span>
+              </div>
+            </td>
+            <td class="text-center p-2 sm:p-3 font-semibold text-xs sm:text-sm text-admin-primary">{{ entry.totalRP }}</td>
+            <td class="text-left p-2 sm:p-3 text-xs sm:text-sm">
+              <div class="space-y-1">
+                <div
+                  *ngFor="let season of entry.seasons"
+                  class="flex items-center justify-between gap-2 sm:gap-4 py-1"
+                >
+                  <span class="text-white opacity-80">{{ season.seasonName }}:</span>
+                  <span class="font-medium text-white">
+                    {{ season.totalRP }} RP
+                    <span class="text-white opacity-60 text-xs ml-1">
+                      ({{ season.placementRP }} + {{ season.playoffRP }})
+                    </span>
+                  </span>
+                </div>
+                <div *ngIf="entry.seasons.length === 0" class="text-white opacity-60 text-xs">
+                  No season data available
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !error && filteredRankings.length === 0" class="text-center text-white py-10 text-lg">
+      <p>No rankings available for the selected region.</p>
+    </div>
+  </div>
+</div>
+

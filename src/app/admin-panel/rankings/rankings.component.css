@@ -1,0 +1,12 @@
+/* Rankings Admin Component Styles */
+/* Using Tailwind CSS for most styling, minimal custom CSS for specific overrides */
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+

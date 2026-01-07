@@ -1,0 +1,34 @@
+<div class="max-w-4xl mx-auto mt-4 p-5 text-white">
+  <h2 class="text-3xl font-bold mb-6 text-center">EASHL Match History</h2>
+  
+  <div class="bg-admin-card border border-admin-accent rounded-lg p-6 mb-6">
+    <h3 class="text-xl font-semibold mb-4 text-admin-primary">Fetch Club Matches</h3>
+    <div class="mb-4">
+      <label for="clubId" class="block text-sm font-medium text-gray-300 mb-2">Club ID</label>
+      <input 
+        type="text" 
+        class="w-full px-3 py-2 bg-admin-hover border border-admin-accent rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-admin-primary" 
+        id="clubId" 
+        [(ngModel)]="clubId" 
+        placeholder="Enter EA Club ID"
+      >
+    </div>
+    <button 
+      class="px-4 py-2 bg-admin-secondary text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
+      (click)="loadClubMatches()" 
+      [disabled]="isLoading"
+    >
+      <span *ngIf="isLoading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+      {{ isLoading ? 'Loading...' : 'Fetch Matches' }}
+    </button>
+
+    <div *ngIf="error" class="mt-4 p-3 bg-red-500/10 border border-red-500 rounded-md text-red-300">
+      {{ error }}
+    </div>
+
+    <div *ngIf="clubMatches" class="mt-6">
+      <h4 class="text-lg font-semibold mb-3 text-admin-primary">Recent Matches</h4>
+      <pre class="bg-gray-800 p-4 rounded-md text-sm overflow-auto max-h-96 border border-admin-accent">{{ clubMatches | json }}</pre>
+    </div>
+  </div>
+</div>

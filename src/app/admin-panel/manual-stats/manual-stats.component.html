@@ -1,0 +1,337 @@
+<div class="max-w-7xl mx-auto my-5 bg-admin-card rounded-xl p-6 shadow-lg text-white">
+  <h2 class="text-admin-primary mb-6 text-2xl font-bold">Manual Stats Entry</h2>
+  
+  <!-- Game Selection (only show if no game is pre-selected) -->
+  <div *ngIf="!selectedGameData" class="mb-6">
+    <label class="block text-admin-text mb-2 font-medium">Select Game:</label>
+      <select [(ngModel)]="selectedGame" (ngModelChange)="onGameChange()" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+        <option value="">Choose a game...</option>
+        <option *ngFor="let game of games$ | async" [ngValue]="game">
+          {{ game.homeTeam?.name || 'TBD' }} vs {{ game.awayTeam?.name || 'TBD' }} - {{ game.date | date:'short' }}
+        </option>
+      </select>
+  </div>
+
+  <div *ngIf="selectedGameData" class="space-y-6">
+    <div class="bg-admin-bg rounded-lg p-4">
+      <h3 class="text-admin-primary text-lg font-semibold mb-4">Game Details</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <span class="text-admin-text font-medium">Home Team:</span>
+          <span class="text-white ml-2">{{ selectedGameData.homeTeam?.name || 'TBD' }}</span>
+        </div>
+        <div>
+          <span class="text-admin-text font-medium">Away Team:</span>
+          <span class="text-white ml-2">{{ selectedGameData.awayTeam?.name || 'TBD' }}</span>
+        </div>
+        <div>
+          <span class="text-admin-text font-medium">Date:</span>
+          <span class="text-white ml-2">{{ selectedGameData.date | date:'full' }}</span>
+        </div>
+        <div>
+          <span class="text-admin-text font-medium">Division:</span>
+          <span class="text-white ml-2">{{ selectedGameData.division?.name || 'N/A' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form (ngSubmit)="submitStats()" class="space-y-6">
+      <!-- Player Stats Grid -->
+      <div class="bg-admin-bg rounded-lg p-6">
+        <h3 class="text-admin-primary text-xl font-semibold mb-6 text-center">Player Statistics</h3>
+        
+        <!-- Skaters Grid (6x6) -->
+        <div class="mb-8">
+          <h4 class="text-admin-text font-medium mb-4 text-center">Skaters (6 per team)</h4>
+          
+          <!-- Home Team Skaters -->
+          <div class="mb-6">
+            <h5 class="text-admin-primary font-semibold mb-3 text-center">{{ selectedGameData.homeTeam?.name || 'Home Team' }} Skaters</h5>
+            
+            <!-- Table Header -->
+            <div class="skater-grid gap-2 mb-3 text-xs font-medium text-admin-text">
+              <div class="text-center">Player</div>
+              <div class="text-center">Pos</div>
+              <div class="text-center">G</div>
+              <div class="text-center">A</div>
+              <div class="text-center">P</div>
+              <div class="text-center">+/-</div>
+              <div class="text-center">S</div>
+              <div class="text-center">H</div>
+              <div class="text-center">PIM</div>
+              <div class="text-center">BS</div>
+              <div class="text-center">TK</div>
+              <div class="text-center">GV</div>
+              <div class="text-center">FO</div>
+            </div>
+
+            <!-- Home Team Skater Rows (6 rows) -->
+            <div *ngFor="let row of [0,1,2,3,4,5]; let i = index" class="skater-grid gap-2 mb-2">
+              <div>
+                <input 
+                  [(ngModel)]="homeSkaters[i].gamertag" 
+                  name="homeSkater{{i}}_gamertag" 
+                  placeholder="Gamertag"
+                  class="w-full bg-admin-hover border border-admin-accent rounded px-2 py-1 text-white text-sm">
+              </div>
+              <div>
+                <select [(ngModel)]="homeSkaters[i].position" name="homeSkater{{i}}_position" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm">
+                  <option value="C">C</option>
+                  <option value="LW">LW</option>
+                  <option value="RW">RW</option>
+                  <option value="LD">LD</option>
+                  <option value="RD">RD</option>
+                </select>
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].goals" name="homeSkater{{i}}_goals" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].assists" name="homeSkater{{i}}_assists" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div class="text-center text-sm text-admin-text py-1 points-display">{{ (homeSkaters[i].goals || 0) + (homeSkaters[i].assists || 0) }}</div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].plusMinus" name="homeSkater{{i}}_plusMinus" type="number" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].shots" name="homeSkater{{i}}_shots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].hits" name="homeSkater{{i}}_hits" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].penaltyMinutes" name="homeSkater{{i}}_penaltyMinutes" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].blockedShots" name="homeSkater{{i}}_blockedShots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].takeaways" name="homeSkater{{i}}_takeaways" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].giveaways" name="homeSkater{{i}}_giveaways" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeSkaters[i].faceoffsWon" name="homeSkater{{i}}_faceoffsWon" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+            </div>
+          </div>
+
+          <!-- Away Team Skaters -->
+          <div class="mb-6">
+            <h5 class="text-admin-primary font-semibold mb-3 text-center">{{ selectedGameData.awayTeam?.name || 'Away Team' }} Skaters</h5>
+            
+            <!-- Table Header -->
+            <div class="skater-grid gap-2 mb-3 text-xs font-medium text-admin-text">
+              <div class="text-center">Player</div>
+              <div class="text-center">Pos</div>
+              <div class="text-center">G</div>
+              <div class="text-center">A</div>
+              <div class="text-center">P</div>
+              <div class="text-center">+/-</div>
+              <div class="text-center">S</div>
+              <div class="text-center">H</div>
+              <div class="text-center">PIM</div>
+              <div class="text-center">BS</div>
+              <div class="text-center">TK</div>
+              <div class="text-center">GV</div>
+              <div class="text-center">FO</div>
+            </div>
+
+            <!-- Away Team Skater Rows (6 rows) -->
+            <div *ngFor="let row of [0,1,2,3,4,5]; let i = index" class="skater-grid gap-2 mb-2">
+              <div>
+                <input 
+                  [(ngModel)]="awaySkaters[i].gamertag" 
+                  name="awaySkater{{i}}_gamertag" 
+                  placeholder="Gamertag"
+                  class="w-full bg-admin-hover border border-admin-accent rounded px-2 py-1 text-white text-sm">
+              </div>
+              <div>
+                <select [(ngModel)]="awaySkaters[i].position" name="awaySkater{{i}}_position" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm">
+                  <option value="C">C</option>
+                  <option value="LW">LW</option>
+                  <option value="RW">RW</option>
+                  <option value="LD">LD</option>
+                  <option value="RD">RD</option>
+                </select>
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].goals" name="awaySkater{{i}}_goals" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].assists" name="awaySkater{{i}}_assists" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div class="text-center text-sm text-admin-text py-1 points-display">{{ (awaySkaters[i].goals || 0) + (awaySkaters[i].assists || 0) }}</div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].plusMinus" name="awaySkater{{i}}_plusMinus" type="number" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].shots" name="awaySkater{{i}}_shots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].hits" name="awaySkater{{i}}_hits" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].penaltyMinutes" name="awaySkater{{i}}_penaltyMinutes" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].blockedShots" name="awaySkater{{i}}_blockedShots" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].takeaways" name="awaySkater{{i}}_takeaways" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].giveaways" name="awaySkater{{i}}_giveaways" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awaySkaters[i].faceoffsWon" name="awaySkater{{i}}_faceoffsWon" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Goalies Section -->
+        <div class="mb-6">
+          <h4 class="text-admin-text font-medium mb-4 text-center">Goalies</h4>
+          
+          <!-- Home Team Goalie -->
+          <div class="mb-4">
+            <h5 class="text-admin-primary font-semibold mb-3 text-center">{{ selectedGameData.homeTeam?.name || 'Home Team' }} Goalie</h5>
+            
+            <!-- Goalie Header -->
+            <div class="goalie-grid gap-2 mb-3 text-xs font-medium text-admin-text">
+              <div class="text-center">Player</div>
+              <div class="text-center">Saves</div>
+              <div class="text-center">SA</div>
+              <div class="text-center">GA</div>
+              <div class="text-center">SV%</div>
+              <div class="text-center">GAA</div>
+            </div>
+
+            <!-- Home Goalie Row -->
+            <div class="goalie-grid gap-2 mb-2">
+              <div>
+                <input 
+                  [(ngModel)]="homeGoalies[0].gamertag" 
+                  name="homeGoalie0_gamertag" 
+                  placeholder="Gamertag"
+                  class="w-full bg-admin-hover border border-admin-accent rounded px-2 py-1 text-white text-sm">
+              </div>
+              <div>
+                <input [(ngModel)]="homeGoalies[0].saves" name="homeGoalie0_saves" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeGoalies[0].shotsAgainst" name="homeGoalie0_shotsAgainst" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="homeGoalies[0].goalsAgainst" name="homeGoalie0_goalsAgainst" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div class="text-center text-sm text-admin-text py-1 stats-display">{{ calculateSavePercentage(homeGoalies[0]) }}%</div>
+              <div class="text-center text-sm text-admin-text py-1 stats-display">{{ calculateGAA(homeGoalies[0]) }}</div>
+            </div>
+          </div>
+
+          <!-- Away Team Goalie -->
+          <div class="mb-4">
+            <h5 class="text-admin-primary font-semibold mb-3 text-center">{{ selectedGameData.awayTeam?.name || 'Away Team' }} Goalie</h5>
+            
+            <!-- Goalie Header -->
+            <div class="goalie-grid gap-2 mb-3 text-xs font-medium text-admin-text">
+              <div class="text-center">Player</div>
+              <div class="text-center">Saves</div>
+              <div class="text-center">SA</div>
+              <div class="text-center">GA</div>
+              <div class="text-center">SV%</div>
+              <div class="text-center">GAA</div>
+            </div>
+
+            <!-- Away Goalie Row -->
+            <div class="goalie-grid gap-2 mb-2">
+              <div>
+                <input 
+                  [(ngModel)]="awayGoalies[0].gamertag" 
+                  name="awayGoalie0_gamertag" 
+                  placeholder="Gamertag"
+                  class="w-full bg-admin-hover border border-admin-accent rounded px-2 py-1 text-white text-sm">
+              </div>
+              <div>
+                <input [(ngModel)]="awayGoalies[0].saves" name="awayGoalie0_saves" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awayGoalies[0].shotsAgainst" name="awayGoalie0_shotsAgainst" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div>
+                <input [(ngModel)]="awayGoalies[0].goalsAgainst" name="awayGoalie0_goalsAgainst" type="number" min="0" class="w-full bg-admin-hover border border-admin-accent rounded px-1 py-1 text-white text-sm text-center">
+              </div>
+              <div class="text-center text-sm text-admin-text py-1 stats-display">{{ calculateSavePercentage(awayGoalies[0]) }}%</div>
+              <div class="text-center text-sm text-admin-text py-1 stats-display">{{ calculateGAA(awayGoalies[0]) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Game Summary -->
+        <div class="bg-admin-hover rounded-lg p-4 mt-6 game-summary">
+          <h4 class="text-admin-primary font-semibold mb-3 text-center">Game Summary</h4>
+          <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div class="text-admin-text text-sm team-label">{{ selectedGameData.homeTeam?.name || 'Home Team' }}</div>
+              <div class="text-2xl font-bold text-white">{{ getTotalGoals('home') }}</div>
+            </div>
+            <div class="text-admin-text text-sm py-2">vs</div>
+            <div>
+              <div class="text-admin-text text-sm team-label">{{ selectedGameData.awayTeam?.name || 'Away Team' }}</div>
+              <div class="text-2xl font-bold text-white">{{ getTotalGoals('away') }}</div>
+            </div>
+          </div>
+          <div class="text-center mt-3">
+            <div class="text-lg font-semibold winner-text" [ngClass]="getWinnerClass()">
+              {{ getWinner() }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Status -->
+      <div class="bg-admin-bg rounded-lg p-4">
+        <h3 class="text-admin-primary text-lg font-semibold mb-4">Game Status</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Status</label>
+            <select [(ngModel)]="statsForm.value.status" name="status" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <option value="scheduled">Scheduled</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="postponed">Postponed</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-admin-text text-sm font-medium mb-1">Overtime</label>
+            <select [(ngModel)]="statsForm.value.overtime" name="overtime" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <option value="none">No Overtime</option>
+              <option value="ot">Overtime</option>
+              <option value="so">Shootout</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Buttons -->
+      <div class="flex gap-4 justify-end">
+        <button type="submit" [disabled]="isSubmitting$ | async" class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50">
+          <span *ngIf="!(isSubmitting$ | async)">Submit Stats</span>
+          <span *ngIf="isSubmitting$ | async">Submitting...</span>
+        </button>
+        <button type="button" (click)="cancel()" class="bg-admin-accent text-white px-6 py-2 rounded hover:bg-admin-hover transition-colors">
+          Cancel
+        </button>
+      </div>
+      
+      <!-- Error Display -->
+      <div *ngIf="statsError$ | async as error" class="bg-red-600 text-white p-4 rounded-lg mt-4">
+        Error: {{ error.message || 'An error occurred while submitting stats' }}
+      </div>
+    </form>
+  </div>
+</div>

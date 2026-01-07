@@ -1,0 +1,68 @@
+<div class="p-6">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-admin-primary mb-2">Permanent Club Deletion</h2>
+    <p class="text-admin-text text-sm mb-4">
+      <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+      <strong>Warning:</strong> This will permanently delete clubs from the database. This action cannot be undone.
+      To remove a club from a season or tournament, use the Clubs management panel instead.
+    </p>
+  </div>
+
+  <!-- Search -->
+  <div class="mb-6">
+    <input 
+      type="text" 
+      [(ngModel)]="searchTerm" 
+      placeholder="Search clubs by name..."
+      class="w-full bg-admin-hover border border-admin-accent rounded px-4 py-2 text-white placeholder-gray-400"
+    >
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-8 text-admin-text">
+    <i class="fas fa-spinner fa-spin mr-2"></i>Loading clubs...
+  </div>
+
+  <!-- Clubs List -->
+  <div *ngIf="!loading" class="space-y-4">
+    <div *ngIf="filteredClubs.length === 0" class="text-center py-8 text-admin-text">
+      <p *ngIf="searchTerm">No clubs found matching "{{ searchTerm }}"</p>
+      <p *ngIf="!searchTerm">No clubs found</p>
+    </div>
+
+    <div 
+      *ngFor="let club of filteredClubs" 
+      class="bg-admin-card rounded-xl p-6 flex justify-between items-center hover:bg-admin-hover transition-colors"
+    >
+      <div class="flex items-center gap-4">
+        <img 
+          [src]="getImageUrl(club.logoUrl)" 
+          [alt]="club.name" 
+          class="w-16 h-16 object-contain rounded bg-admin-hover"
+          (error)="onImageError($event)"
+        >
+        <div>
+          <h3 class="text-xl font-semibold text-white mb-1">{{ club.name }}</h3>
+          <div class="text-sm text-admin-text">
+            <span *ngIf="club.seasons && club.seasons.length > 0">
+              <i class="fas fa-calendar-alt mr-1"></i>
+              {{ club.seasons.length }} Season{{ club.seasons.length !== 1 ? 's' : '' }}
+            </span>
+            <span *ngIf="club.tournaments && club.tournaments.length > 0" class="ml-4">
+              <i class="fas fa-trophy mr-1"></i>
+              {{ club.tournaments.length }} Tournament{{ club.tournaments.length !== 1 ? 's' : '' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <button 
+        (click)="deleteClub(club)"
+        class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+      >
+        <i class="fas fa-trash"></i>
+        Delete Permanently
+      </button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,501 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-admin-primary">Clubs Management</h2>
+    <div class="flex gap-2">
+      <button class="bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-yellow-700 transition-colors" (click)="clearAllCaches()">
+        <i class="fas fa-trash"></i>
+        Clear Cache
+      </button>
+      <button class="bg-admin-secondary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors" (click)="isAddingClub = true">
+        <i class="fas fa-plus"></i>
+        Add Club
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <!-- View Mode Selector -->
+    <div class="bg-admin-card rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">View Mode</h3>
+      
+      <!-- View Mode Toggle -->
+      <div class="mb-4">
+        <div class="flex gap-2 mb-4">
+          <button
+            (click)="onViewModeChange('season')"
+            [class]="'flex-1 px-4 py-2 rounded-lg transition-colors ' + 
+              (viewMode === 'season' ? 'bg-admin-secondary text-white' : 'bg-admin-hover text-admin-text hover:bg-admin-accent')"
+          >
+            <i class="fas fa-calendar-alt mr-2"></i>Seasons
+          </button>
+          <button
+            (click)="onViewModeChange('tournament')"
+            [class]="'flex-1 px-4 py-2 rounded-lg transition-colors ' + 
+              (viewMode === 'tournament' ? 'bg-purple-600 text-white' : 'bg-admin-hover text-admin-text hover:bg-purple-700')"
+          >
+            <i class="fas fa-trophy mr-2"></i>Tournaments
+          </button>
+        </div>
+      </div>
+      
+      <!-- Season Selector -->
+      <div *ngIf="viewMode === 'season'" class="mb-5 border-2 border-red-500 p-4 bg-slate-700 rounded-lg">
+        <label for="viewSeason" class="block mb-2 text-slate-100 font-medium">View Clubs for Season:</label>
+        <select id="viewSeason" [(ngModel)]="selectedSeasonId" (change)="onSeasonChange($event)" class="px-3 py-2 border border-slate-600 rounded bg-slate-700 text-slate-100 text-sm min-w-[200px]">
+          <option [value]="null" disabled selected>Select a season...</option>
+          <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
+        </select>
+        <span *ngIf="clubs.length > 0 && selectedSeasonId" class="ml-2 text-admin-primary">
+          Showing {{ clubs.length }} clubs in {{ getSelectedSeasonName() }}
+        </span>
+      </div>
+      
+      <!-- Tournament Selector -->
+      <div *ngIf="viewMode === 'tournament'" class="mb-5 border-2 border-purple-500 p-4 bg-slate-700 rounded-lg">
+        <label for="viewTournament" class="block mb-2 text-slate-100 font-medium">View Clubs for Tournament:</label>
+        <select id="viewTournament" [(ngModel)]="selectedTournamentId" (change)="onTournamentChange($event)" class="px-3 py-2 border border-slate-600 rounded bg-slate-700 text-slate-100 text-sm min-w-[200px]">
+          <option [value]="null" disabled selected>Select a tournament...</option>
+          <option *ngFor="let tournament of tournaments" [value]="tournament._id">{{ tournament.name }}</option>
+        </select>
+        <span *ngIf="clubs.length > 0 && selectedTournamentId" class="ml-2 text-purple-400">
+          Showing {{ clubs.length }} clubs in {{ getSelectedTournamentViewName() }}
+        </span>
+      </div>
+      
+      <!-- Debug Info -->
+      <div class="bg-slate-700 p-3 mb-4 rounded text-slate-100 text-xs">
+        <strong>View Mode:</strong> {{ viewMode }} | 
+        <span *ngIf="viewMode === 'season'">Season: {{ selectedSeasonId || 'None' }}</span>
+        <span *ngIf="viewMode === 'tournament'">Tournament: {{ selectedTournamentId || 'None' }}</span>
+      </div>
+    </div>
+    
+    <!-- Clubs List -->
+    <div class="bg-admin-card rounded-xl p-6">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">All Clubs</h3>
+      <div class="flex flex-col gap-3">
+        <div class="bg-admin-hover rounded-lg p-4 flex justify-between items-center hover:bg-admin-accent transition-colors" *ngFor="let club of clubs">
+          <div class="flex items-center gap-3">
+            <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="w-10 h-10 object-contain rounded bg-admin-card" (error)="onImageError($event)">
+            <div>
+              <h4 class="text-white font-medium mb-1">{{ club.name }}</h4>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="p-1 text-admin-primary hover:bg-admin-hover hover:text-white rounded transition-colors" (click)="viewClubDetails(club)">
+              <i class="fas fa-users"></i>
+            </button>
+            <button class="p-1 text-admin-primary hover:bg-admin-hover hover:text-white rounded transition-colors" (click)="editClub(club)">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="p-1 text-purple-500 hover:bg-purple-600 hover:text-white rounded transition-colors" (click)="openTournamentAssignment(club, 'existing')" title="Assign to Tournament">
+              <i class="fas fa-trophy"></i>
+            </button>
+            <button class="p-1 text-admin-primary hover:bg-red-600 hover:text-white rounded transition-colors" (click)="deleteClub(club)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Club Details -->
+    <div class="bg-admin-card rounded-xl p-6" *ngIf="selectedClub">
+      <h3 class="text-lg font-semibold text-admin-primary mb-4">{{ selectedClub.name }} - Rosters</h3>
+      
+      <!-- Loading State -->
+      <div *ngIf="loadingRosters" class="text-center py-4 text-admin-text">
+        <i class="fas fa-spinner fa-spin mr-2"></i>Loading rosters...
+      </div>
+      
+      <!-- Roster Tabs -->
+      <div *ngIf="!loadingRosters" class="space-y-6">
+        <!-- Season Rosters Section -->
+        <div *ngIf="seasonRosters.length > 0" class="mb-6">
+          <h4 class="text-admin-primary mb-3 font-semibold">
+            <i class="fas fa-calendar-alt mr-2"></i>Season Rosters
+          </h4>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button
+              *ngFor="let seasonRoster of seasonRosters"
+              (click)="setActiveRosterContext(seasonRoster.id)"
+              [class]="'px-4 py-2 rounded-lg transition-colors ' + 
+                (activeRosterContext === seasonRoster.id 
+                  ? 'bg-admin-secondary text-white' 
+                  : 'bg-admin-hover text-admin-text hover:bg-admin-accent')"
+            >
+              {{ seasonRoster.name }}
+              <span class="ml-2 text-xs">({{ seasonRoster.roster.length }})</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Tournament Rosters Section -->
+        <div *ngIf="tournamentRosters.length > 0" class="mb-6">
+          <h4 class="text-admin-primary mb-3 font-semibold">
+            <i class="fas fa-trophy mr-2"></i>Tournament Rosters
+          </h4>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button
+              *ngFor="let tournamentRoster of tournamentRosters"
+              (click)="setActiveRosterContext(tournamentRoster.id)"
+              [class]="'px-4 py-2 rounded-lg transition-colors ' + 
+                (activeRosterContext === tournamentRoster.id 
+                  ? 'bg-purple-600 text-white' 
+                  : 'bg-admin-hover text-admin-text hover:bg-purple-700')"
+            >
+              {{ tournamentRoster.name }}
+              <span class="ml-2 text-xs">({{ tournamentRoster.roster.length }})</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- No Rosters Message -->
+        <div *ngIf="seasonRosters.length === 0 && tournamentRosters.length === 0" class="text-center py-8 text-gray-400">
+          <i class="fas fa-users text-4xl mb-2"></i>
+          <p>No rosters found for this club</p>
+        </div>
+        
+        <!-- Active Roster Display -->
+        <div *ngIf="activeRosterContext && activeRosterContextData" class="mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-admin-primary font-semibold">
+              {{ activeRosterContextData.name }} Roster
+              <span class="text-sm text-gray-400 ml-2">({{ filteredRoster.length }} players)</span>
+            </h4>
+            <span [class]="'px-2 py-1 rounded text-xs ' + 
+              (activeRosterContextData.type === 'season' ? 'bg-blue-600' : 'bg-purple-600')">
+              {{ activeRosterContextData.type === 'season' ? 'Season' : 'Tournament' }}
+            </span>
+          </div>
+          
+        <div class="flex flex-col gap-2">
+          <div class="bg-admin-hover rounded-md p-3 flex items-center justify-between gap-3" *ngFor="let player of filteredRoster">
+            <div class="flex flex-col">
+              <span class="text-white font-medium">{{ player.gamertag }}</span>
+              <span class="text-gray-400 text-sm" *ngIf="player.discordUsername">
+                {{ player.discordUsername }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2 text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">
+              <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
+              <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+              <span>{{ player.platform === 'PS5' ? 'PlayStation' : 'Xbox' }}</span>
+            </div>
+            <button class="p-1 text-admin-primary hover:bg-red-600 hover:text-white rounded transition-colors" (click)="removePlayerFromRoster(selectedClub, player)">
+              <i class="fas fa-times"></i>
+            </button>
+            </div>
+            
+            <div *ngIf="filteredRoster.length === 0" class="text-center py-4 text-gray-400">
+              <p>No players in this roster</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="text-admin-primary">Free Agents ({{ availableFreeAgents.length }})</h4>
+          <button 
+            (click)="clearFreeAgentFilters()" 
+            class="text-sm text-gray-400 hover:text-white transition-colors"
+            *ngIf="freeAgentSearchTerm || freeAgentPlatformFilter !== 'all'"
+          >
+            Clear Filters
+          </button>
+        </div>
+        
+        <!-- Search and Filter Controls -->
+        <div class="mb-4 space-y-3">
+          <!-- Search Bar -->
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="freeAgentSearchTerm"
+              (input)="onFreeAgentSearchChange()"
+              placeholder="Search by gamertag or Discord username..."
+              class="w-full px-4 py-2 bg-admin-hover border border-admin-accent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            >
+            <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+          </div>
+          
+          <!-- Filter Controls -->
+          <div class="flex flex-wrap gap-3">
+            <!-- Platform Filter -->
+            <select
+              [(ngModel)]="freeAgentPlatformFilter"
+              (change)="onFreeAgentFilterChange()"
+              class="px-3 py-2 bg-admin-hover border border-admin-accent rounded-lg text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="all">All Platforms</option>
+              <option value="PS5">PlayStation</option>
+              <option value="Xbox">Xbox</option>
+            </select>
+            
+            
+            <!-- Sort Controls -->
+            <div class="flex gap-2">
+              <select
+                [(ngModel)]="freeAgentSortBy"
+                (change)="onFreeAgentSortChange()"
+                class="px-3 py-2 bg-admin-hover border border-admin-accent rounded-lg text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="gamertag">Sort by Name</option>
+                <option value="platform">Sort by Platform</option>
+              </select>
+              
+              <button
+                (click)="freeAgentSortOrder = freeAgentSortOrder === 'asc' ? 'desc' : 'asc'; onFreeAgentSortChange()"
+                class="px-3 py-2 bg-admin-accent hover:bg-blue-600 text-white rounded-lg transition-colors"
+                [title]="freeAgentSortOrder === 'asc' ? 'Sort Ascending' : 'Sort Descending'"
+              >
+                <i class="fas" [class.fa-sort-alpha-down]="freeAgentSortOrder === 'asc'" [class.fa-sort-alpha-up]="freeAgentSortOrder === 'desc'"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Free Agents List -->
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          <div 
+            class="bg-admin-hover rounded-md p-3 flex items-center justify-between gap-3 hover:bg-gray-700 transition-colors" 
+            *ngFor="let player of paginatedFreeAgents"
+          >
+            <div class="flex flex-col flex-1 min-w-0">
+              <span class="text-white font-medium truncate">{{ player.gamertag }}</span>
+              <span class="text-gray-400 text-sm truncate" *ngIf="player.discordUsername">
+                {{ player.discordUsername }}
+              </span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <!-- Platform Badge -->
+              <div class="flex items-center gap-1 text-admin-primary text-sm bg-admin-accent px-2 py-1 rounded">
+                <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4">
+              <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+                <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4">
+                <span class="text-xs">{{ player.platform === 'PS5' ? 'PS5' : 'Xbox' }}</span>
+              </div>
+              
+              <!-- Add Button -->
+              <button 
+                class="p-2 text-admin-primary hover:bg-green-600 hover:text-white rounded transition-colors"
+                (click)="addPlayer(selectedClub, player)"
+                title="Add to roster"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="mt-4 flex items-center justify-between" *ngIf="totalFreeAgentPages > 1">
+          <div class="text-sm text-gray-400">
+            Showing {{ (currentFreeAgentPage - 1) * freeAgentsPerPage + 1 }} to 
+            {{ Math.min(currentFreeAgentPage * freeAgentsPerPage, availableFreeAgents.length) }} 
+            of {{ availableFreeAgents.length }} free agents
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button
+              (click)="previousFreeAgentPage()"
+              [disabled]="currentFreeAgentPage === 1"
+              class="px-3 py-1 bg-admin-accent hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            
+            <div class="flex gap-1">
+              <button
+                *ngFor="let page of freeAgentPageNumbers.slice(Math.max(0, currentFreeAgentPage - 3), Math.min(totalFreeAgentPages, currentFreeAgentPage + 2))"
+                (click)="goToFreeAgentPage(page)"
+                [class]="page === currentFreeAgentPage ? 'bg-blue-600 text-white' : 'bg-admin-accent hover:bg-blue-600 text-white'"
+                class="px-3 py-1 rounded transition-colors"
+              >
+                {{ page }}
+              </button>
+            </div>
+            
+            <button
+              (click)="nextFreeAgentPage()"
+              [disabled]="currentFreeAgentPage === totalFreeAgentPages"
+              class="px-3 py-1 bg-admin-accent hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- No Results Message -->
+        <div *ngIf="availableFreeAgents.length === 0" class="text-center py-8 text-gray-400">
+          <i class="fas fa-search text-4xl mb-2"></i>
+          <p>No free agents found matching your criteria</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Club Form Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="isAddingClub">
+    <div class="bg-admin-card rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-admin-primary mb-6">{{ editingClub ? 'Edit Club' : 'Add Club' }}</h3>
+      <form [formGroup]="clubForm" (ngSubmit)="editingClub ? updateClub() : addClub()">
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Club Name</label>
+          <input formControlName="name" type="text" placeholder="Enter club name" class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white">
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Logo</label>
+          <div class="flex flex-col gap-2">
+            <input type="file" accept="image/*" (change)="onLogoFileChange($event)" class="text-white">
+            <div *ngIf="logoPreview" class="flex items-center gap-2">
+              <img [src]="getLogoPreviewUrl()" alt="Logo Preview" class="w-10 h-10 object-contain rounded bg-admin-card">
+              <span *ngIf="uploadingLogo" class="text-admin-primary text-sm">Uploading...</span>
+            </div>
+          </div>
+          <input formControlName="logo" type="text" class="hidden">
+        </div>
+
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Primary Color</label>
+          <input formControlName="color" type="color" class="w-full h-10 rounded">
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Seasons & Divisions <span class="text-xs text-gray-400">(Optional if tournament is assigned)</span></label>
+          <div class="max-h-72 overflow-y-auto border border-admin-accent rounded-md p-3 bg-admin-bg">
+            <div *ngFor="let season of seasons" class="mb-4 p-3 border border-admin-accent rounded-md bg-admin-card">
+              <div class="mb-2">
+                <label class="flex items-center cursor-pointer text-admin-primary font-medium">
+                  <input type="checkbox" 
+                         [checked]="isSeasonSelected(season._id)"
+                         (change)="onSeasonToggle(season._id, $event)"
+                         class="mr-2 accent-admin-secondary">
+                  <span class="text-base">{{ season.name }}</span>
+                </label>
+              </div>
+              <div *ngIf="isSeasonSelected(season._id)" class="ml-6">
+                <select [formControlName]="'division_' + season._id" 
+                        (change)="onDivisionChange(season._id, $event)"
+                        class="w-full px-2 py-1 border border-admin-accent rounded bg-admin-hover text-white text-sm focus:outline-none focus:border-admin-secondary">
+                  <option value="">Select Division</option>
+                  <option *ngFor="let division of getDivisionsForSeason(season._id)" 
+                          [value]="division._id">{{ division.name }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            <i class="fas fa-info-circle mr-1"></i>
+            You can create a club with only a tournament assignment (no seasons required).
+          </p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-admin-text mb-2">Region</label>
+          <select formControlName="region" class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white">
+            <option value="" disabled selected>Select region</option>
+            <option *ngFor="let reg of availableRegionOptions" [value]="reg">{{ reg | titlecase }}</option>
+          </select>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-admin-text mb-2">Eashl Club ID</label>
+          <input formControlName="eashlClubId" type="text" placeholder="Enter Eashl Club ID" class="w-full bg-admin-hover border border-admin-accent rounded-md px-3 py-2 text-white">
+        </div>
+
+        <!-- Tournament Assignment (for new clubs) -->
+        <div class="mb-4" *ngIf="!editingClub">
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-admin-text font-medium">Assign to Tournament (Optional)</label>
+            <button type="button" (click)="openTournamentAssignment(null, 'new')" 
+              class="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors">
+              <i class="fas fa-trophy mr-1"></i>Assign Tournament
+            </button>
+          </div>
+          <div *ngIf="selectedTournamentForAssignment" class="bg-admin-hover p-3 rounded text-sm text-admin-text">
+            Tournament: {{ getSelectedTournamentName() }}
+            <button type="button" (click)="removeTournamentAssignment()" class="ml-2 text-red-400 hover:text-red-300">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button type="submit" class="bg-admin-secondary text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50" [disabled]="!clubForm.valid">
+            {{ editingClub ? 'Update' : 'Add' }}
+          </button>
+          <button type="button" class="bg-admin-accent text-white px-4 py-2 rounded-md hover:bg-admin-hover transition-colors" (click)="cancelClubForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tournament Assignment Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="showTournamentAssignment">
+    <div class="bg-admin-card rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold text-admin-primary mb-6">
+        {{ tournamentAssignmentMode === 'new' ? 'Assign New Club to Tournament' : 'Assign Club to Tournament' }}
+      </h3>
+      
+      <div *ngIf="tournamentAssignmentMode === 'existing' && selectedClub" class="mb-4 p-3 bg-admin-hover rounded">
+        <p class="text-admin-text text-sm">Club: <span class="text-white font-medium">{{ selectedClub.name }}</span></p>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-admin-text mb-2 font-medium">Select Tournament *</label>
+          <select [(ngModel)]="selectedTournamentForAssignment" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+            <option [value]="null" disabled selected>Choose a tournament...</option>
+            <option *ngFor="let tournament of tournaments" [value]="tournament._id">
+              {{ tournament.name }}
+            </option>
+          </select>
+        </div>
+        
+        <div *ngIf="tournamentAssignmentMode === 'existing' && selectedClub">
+          <label class="block text-admin-text mb-2 font-medium">Clone Roster from Season (Optional)</label>
+          <select [(ngModel)]="selectedSourceSeasonForClone" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+            <option [value]="null">No roster (start empty)</option>
+            <option *ngFor="let season of getClubSeasons(selectedClub)" [value]="season._id">
+              {{ season.name }}
+            </option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Select a season to clone its roster to the tournament, or leave empty to start with no roster.</p>
+        </div>
+        
+        <div *ngIf="tournamentAssignmentMode === 'new'">
+          <label class="block text-admin-text mb-2 font-medium">Clone Roster from Season (Optional)</label>
+          <select [(ngModel)]="selectedSourceSeasonForClone" 
+            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+            <option [value]="null">No roster (start empty)</option>
+            <option *ngFor="let season of seasons" [value]="season._id">
+              {{ season.name }}
+            </option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Select a season to clone its roster to the tournament after club creation, or leave empty to start with no roster.</p>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 mt-6">
+        <button type="button" (click)="assignTournamentToNewClub()" 
+          class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+          [disabled]="!selectedTournamentForAssignment">
+          {{ tournamentAssignmentMode === 'new' ? 'Assign Tournament' : 'Assign & Clone' }}
+        </button>
+        <button type="button" (click)="closeTournamentAssignment()" 
+          class="bg-admin-accent text-white px-4 py-2 rounded hover:bg-admin-hover transition-colors">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

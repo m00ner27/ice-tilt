@@ -1,0 +1,21 @@
+/* Rich text editor styles */
+[contenteditable="true"] {
+  outline: none;
+}
+
+[contenteditable="true"]:focus {
+  outline: none;
+}
+
+[contenteditable="true"] p {
+  margin: 0.5em 0;
+}
+
+[contenteditable="true"] p:first-child {
+  margin-top: 0;
+}
+
+[contenteditable="true"] p:last-child {
+  margin-bottom: 0;
+}
+

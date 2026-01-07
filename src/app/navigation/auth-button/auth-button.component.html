@@ -1,0 +1,9 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <!-- Debug info -->
+  <div class="text-xs text-gray-400 mb-2">
+    Loading: {{ vm.loading }} | Auth: {{ vm.isAuth }} | Show Login: {{ vm.showLogin }}
+  </div>
+  
+  <button *ngIf="vm.showLogin" (click)="login()" class="login-btn">Log in</button>
+  <div *ngIf="vm.isAuth" class="text-green-400">✓ Authenticated</div>
+</ng-container>

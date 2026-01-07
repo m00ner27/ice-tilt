@@ -1,0 +1,187 @@
+<!-- AdSense Banner Ad at Top -->
+<app-adsense [config]="bannerAdConfig"></app-adsense>
+
+<!-- News Section -->
+<section class="mt-4 text-white">
+    <div class="container mx-auto px-4">
+      <!-- Loading State -->
+      <div *ngIf="articlesLoading" class="h-96 bg-cover bg-center rounded-lg relative flex items-center justify-center" style="background-image: url('assets/images/IMG_3840.jpg');">
+        <div class="text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-4"></div>
+          <p class="text-white text-xl">Loading articles...</p>
+        </div>
+      </div>
+      
+      <!-- Carousel with Articles -->
+      <div *ngIf="!articlesLoading && articles.length > 0" 
+           #newsCarousel
+           id="newsCarousel" 
+           class="carousel slide" 
+           data-bs-ride="false"
+           data-bs-interval="5000">
+        <div class="carousel-inner">
+          <div *ngFor="let article of articles; let i = index"
+               class="carousel-item"
+               [class.active]="i === 0">
+            <a [routerLink]="['/article', article.slug]" class="block transition-transform duration-200 hover:scale-105">
+              <div class="h-96 rounded-lg relative overflow-hidden">
+                <img [src]="getArticleImageUrl(article.imageUrl)" 
+                     [alt]="article.title"
+                     class="w-full h-full object-cover"
+                     (error)="onArticleImageError($event)"
+                     (load)="onArticleImageLoad($event, article)">
+                <div class="absolute bottom-0 left-0 right-0 p-6">
+                  <div class="bg-admin-primary bg-opacity-95 p-5 rounded-lg shadow-2xl">
+                    <h3 class="text-white text-2xl m-0 font-bold drop-shadow-lg mb-2 leading-tight">{{ article.title }}</h3>
+                    <p *ngIf="article.lead" class="text-white text-sm mt-2 line-clamp-2 drop-shadow-md leading-relaxed">{{ article.lead }}</p>
+          </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <!-- Carousel Controls (only show if we have multiple articles) -->
+        <button *ngIf="articles.length > 1" 
+                class="carousel-control-prev" 
+                type="button" 
+                data-bs-target="#newsCarousel" 
+                data-bs-slide="prev">
+          <span class="carousel-control-prev-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button *ngIf="articles.length > 1" 
+                class="carousel-control-next" 
+                type="button" 
+                data-bs-target="#newsCarousel" 
+                data-bs-slide="next">
+          <span class="carousel-control-next-icon bg-black bg-opacity-50 rounded-full" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+      
+      <!-- No Articles Message -->
+      <div *ngIf="!articlesLoading && articles.length === 0" class="h-96 bg-cover bg-center rounded-lg relative flex items-center justify-center" style="background-image: url('assets/images/IMG_3840.jpg');">
+        <div class="text-center">
+          <p class="text-white text-xl">No articles available at this time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+
+
+
+
+
+<!-- Stats Leaders Section -->
+<section class="mt-4 text-white p-3 sm:p-5">
+  <div class="container mx-auto px-2 sm:px-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+      <!-- Goals Top 5 -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Goals</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topGoals; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.goals }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Assists Top 5 -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Assists</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topAssists; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.assists }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Points Top 5 -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+        <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Points</div>
+        <div class="p-0 rounded-b-lg overflow-hidden">
+          <div *ngIf="isLoading" class="p-4 text-center text-white">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <p class="mt-2">Loading stats...</p>
+          </div>
+          <div *ngIf="hasError" class="p-4 text-center text-red-400">
+            <p>Failed to load player stats. Please try again later.</p>
+          </div>
+          <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+            <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topPoints; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.points }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Save % Top 5 (Goalies) -->
+      <div class="mb-3 w-full">
+        <div class="bg-admin-card rounded-lg">
+          <div class="bg-admin-accent text-white text-center py-3 rounded-t-lg font-semibold">Save %</div>
+          <div class="p-0 rounded-b-lg overflow-hidden">
+            <div *ngIf="isLoading" class="p-4 text-center text-white">
+              <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              <p class="mt-2">Loading stats...</p>
+            </div>
+            <div *ngIf="hasError" class="p-4 text-center text-red-400">
+              <p>Failed to load player stats. Please try again later.</p>
+            </div>
+            <ul class="divide-y divide-admin-accent" *ngIf="!isLoading && !hasError">
+              <li class="flex items-center p-3 bg-admin-card last:rounded-b-lg" *ngFor="let p of topSavePct; let i = index">
+                <span class="font-bold mr-2 text-sm sm:text-base">#{{ i + 1 }}</span>
+                <img [src]="p.teamLogo" alt="{{ p.team }} Logo" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover mr-2">
+                <span class="text-white flex-1 text-sm sm:text-base"><strong>{{ p.name }}</strong></span>
+                <span class="ml-auto text-xl sm:text-2xl font-bold">{{ p.savePercentage }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AdSense Banner Ad -->
+<app-adsense [config]="bannerAdConfig"></app-adsense>
+
+
+<!-- AdSense Rectangle Ad -->
+<div id="ads-section" class="min-h-32">
+  <div *ngIf="!showAds" class="p-8 text-center text-gray-400">
+    <div class="inline-block animate-pulse">Loading ads...</div>
+  </div>
+  <app-adsense [config]="rectangleAdConfig" *ngIf="showAds"></app-adsense>
+</div>
+

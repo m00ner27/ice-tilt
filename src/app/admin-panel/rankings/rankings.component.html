@@ -1,0 +1,220 @@
+<div class="p-6">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-admin-primary">Rankings Management</h2>
+    <p class="text-gray-400 mt-2">Manage Ranking Points (RP) and configure which seasons count towards rankings</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mb-6 border-b border-gray-700">
+    <div class="flex gap-4">
+      <button
+        class="px-4 py-2 font-medium transition-colors"
+        [class.text-admin-primary]="activeTab === 'rp'"
+        [class.border-b-2]="activeTab === 'rp'"
+        [class.border-admin-primary]="activeTab === 'rp'"
+        [class.text-gray-400]="activeTab !== 'rp'"
+        (click)="activeTab = 'rp'"
+      >
+        Ranking Points
+      </button>
+      <button
+        class="px-4 py-2 font-medium transition-colors"
+        [class.text-admin-primary]="activeTab === 'config'"
+        [class.border-b-2]="activeTab === 'config'"
+        [class.border-admin-primary]="activeTab === 'config'"
+        [class.text-gray-400]="activeTab !== 'config'"
+        (click)="activeTab = 'config'"
+      >
+        Ranking Configuration
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-6">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
+
+  <!-- Ranking Points Tab -->
+  <div *ngIf="activeTab === 'rp' && !isLoading">
+    <!-- Season Selection -->
+    <div class="mb-6">
+      <label for="season-select" class="block text-sm font-medium text-gray-300 mb-2">
+        Select Season
+      </label>
+      <select
+        id="season-select"
+        [(ngModel)]="selectedSeasonId"
+        (change)="onSeasonChange()"
+        class="bg-admin-hover border border-admin-accent rounded px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-admin-primary"
+      >
+        <option value="">-- Select Season --</option>
+        <option *ngFor="let season of seasons" [value]="season._id">
+          {{ season.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Club Search -->
+    <div *ngIf="selectedSeasonId" class="mb-6">
+      <label for="club-search" class="block text-sm font-medium text-gray-300 mb-2">
+        Search Clubs
+      </label>
+      <input
+        id="club-search"
+        type="text"
+        [(ngModel)]="clubSearchTerm"
+        (input)="filterClubs()"
+        placeholder="Search by club name..."
+        class="w-full bg-admin-hover border border-admin-accent rounded px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-admin-primary"
+      />
+    </div>
+
+    <!-- Ranking Points Table -->
+    <div *ngIf="selectedSeasonId && clubRPForms.length > 0" class="bg-admin-card rounded-xl p-6 shadow-lg">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-admin-primary">Ranking Points for Selected Season</h3>
+        <div class="flex gap-2">
+          <button
+            *ngIf="hasUnsavedChanges"
+            class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            (click)="cancelChanges()"
+          >
+            Cancel
+          </button>
+          <button
+            class="bg-admin-secondary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            [class.opacity-50]="!hasUnsavedChanges"
+            [class.cursor-not-allowed]="!hasUnsavedChanges"
+            (click)="saveRankingPoints()"
+            [disabled]="!hasUnsavedChanges || isLoading"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700">
+          <thead class="bg-gray-700">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Club</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Placement RP</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Playoff RP</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Total RP</th>
+            </tr>
+          </thead>
+          <tbody class="bg-gray-800 divide-y divide-gray-700">
+            <tr *ngFor="let form of clubRPForms" class="hover:bg-gray-700 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-3">
+                  <img
+                    [src]="getLogoUrl(form.clubLogo)"
+                    [alt]="form.clubName"
+                    class="h-10 w-10 rounded-full object-cover"
+                    onerror="this.src='assets/images/square-default.png'"
+                  />
+                  <span class="text-sm font-medium text-white">{{ form.clubName }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  [(ngModel)]="form.placementRP"
+                  (input)="onRPChange()"
+                  min="0"
+                  step="1"
+                  class="w-24 bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-admin-primary"
+                />
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  [(ngModel)]="form.playoffRP"
+                  (input)="onRPChange()"
+                  min="0"
+                  step="1"
+                  class="w-24 bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-admin-primary"
+                />
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-yellow-400">
+                {{ (form.placementRP || 0) + (form.playoffRP || 0) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="selectedSeasonId && clubRPForms.length === 0" class="text-center py-12 text-gray-400">
+      <p>No clubs found for this season.</p>
+    </div>
+  </div>
+
+  <!-- Ranking Configuration Tab -->
+  <div *ngIf="activeTab === 'config' && !isLoading">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- North America Configuration -->
+      <div class="bg-admin-card rounded-xl p-6 shadow-lg">
+        <h3 class="text-lg font-semibold text-admin-primary mb-4">North America Rankings</h3>
+        <p class="text-sm text-gray-400 mb-4">Select which seasons count towards the North America ranking:</p>
+        
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          <label
+            *ngFor="let season of seasons"
+            class="flex items-center gap-3 p-3 bg-admin-hover rounded-lg cursor-pointer hover:bg-admin-accent transition-colors"
+          >
+            <input
+              type="checkbox"
+              [checked]="isSeasonActive(season._id, 'north-america')"
+              (change)="toggleSeasonForRegion(season._id, 'north-america')"
+              class="w-4 h-4 text-admin-primary bg-admin-hover border-admin-accent rounded focus:ring-admin-primary"
+            />
+            <span class="text-white">{{ season.name }}</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Europe Configuration -->
+      <div class="bg-admin-card rounded-xl p-6 shadow-lg">
+        <h3 class="text-lg font-semibold text-admin-primary mb-4">Europe Rankings</h3>
+        <p class="text-sm text-gray-400 mb-4">Select which seasons count towards the Europe ranking:</p>
+        
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          <label
+            *ngFor="let season of seasons"
+            class="flex items-center gap-3 p-3 bg-admin-hover rounded-lg cursor-pointer hover:bg-admin-accent transition-colors"
+          >
+            <input
+              type="checkbox"
+              [checked]="isSeasonActive(season._id, 'europe')"
+              (change)="toggleSeasonForRegion(season._id, 'europe')"
+              class="w-4 h-4 text-admin-primary bg-admin-hover border-admin-accent rounded focus:ring-admin-primary"
+            />
+            <span class="text-white">{{ season.name }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="mt-6 flex justify-end">
+      <button
+        class="bg-admin-secondary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        [class.opacity-50]="!hasUnsavedChanges"
+        [class.cursor-not-allowed]="!hasUnsavedChanges"
+        (click)="saveRankingConfig()"
+        [disabled]="!hasUnsavedChanges || isLoading"
+      >
+        Save Configuration
+      </button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,159 @@
+<div class="series-page-container">
+  <button (click)="router.navigate(['/playoffs'])" 
+    class="back-button">
+    ← Back to Bracket
+  </button>
+
+  <div *ngIf="loading$ | async" class="loading-state">
+    <div class="text-gray-400">Loading series...</div>
+  </div>
+
+  <div *ngIf="error$ | async" class="error-state">
+    <div class="text-red-400">Error loading series: {{ error$ | async }}</div>
+  </div>
+
+  <div *ngIf="series$ | async as series" class="series-content">
+    <!-- Series Header Card -->
+    <div class="series-header-card"
+         [ngClass]="{
+           'status-completed': series.status === 'completed',
+           'status-in-progress': series.status === 'in-progress',
+           'status-pending': series.status === 'pending',
+           'status-bye': series.status === 'bye'
+         }">
+      <h1 class="series-header-title">Series Details</h1>
+      
+      <div class="teams-comparison">
+        <!-- Home Team -->
+        <div class="team-card"
+             [class.winner]="isWinner(series, series.homeClubId || series.homeClub)">
+          <div class="team-seed">Seed #{{ series.homeSeed }}</div>
+          <div class="team-logo-container">
+            <img *ngIf="(series.homeClubId?.logoUrl || series.homeClub?.logoUrl)" 
+                 [src]="getImageUrl(series.homeClubId?.logoUrl || series.homeClub?.logoUrl)" 
+                 [alt]="(series.homeClubId?.name || series.homeClub?.name || 'Team') + ' logo'" 
+                 class="team-logo-large">
+            <div *ngIf="!(series.homeClubId?.logoUrl || series.homeClub?.logoUrl)" 
+                 class="team-logo-placeholder">
+              <span>{{ (series.homeClubId?.name || series.homeClub?.name || 'TBD').charAt(0) }}</span>
+            </div>
+          </div>
+          <div class="team-name-large">
+            {{ series.homeClub?.name || series.homeClubId?.name || 'TBD' }}
+          </div>
+          <div class="team-score-large"
+               [class.winner-score]="isWinner(series, series.homeClubId || series.homeClub)">
+            {{ series.homeWins || 0 }}
+          </div>
+        </div>
+
+        <!-- VS Divider -->
+        <div *ngIf="series.status !== 'bye'" class="vs-divider">
+          <span class="vs-text">VS</span>
+        </div>
+
+        <!-- Away Team -->
+        <div *ngIf="series.status !== 'bye'" 
+             class="team-card"
+             [class.winner]="isWinner(series, series.awayClubId || series.awayClub)">
+          <div class="team-seed">Seed #{{ series.awaySeed }}</div>
+          <div class="team-logo-container">
+            <img *ngIf="(series.awayClubId?.logoUrl || series.awayClub?.logoUrl)" 
+                 [src]="getImageUrl(series.awayClubId?.logoUrl || series.awayClub?.logoUrl)" 
+                 [alt]="(series.awayClubId?.name || series.awayClub?.name || 'Team') + ' logo'" 
+                 class="team-logo-large">
+            <div *ngIf="!(series.awayClubId?.logoUrl || series.awayClub?.logoUrl)" 
+                 class="team-logo-placeholder">
+              <span>{{ (series.awayClubId?.name || series.awayClub?.name || 'TBD').charAt(0) }}</span>
+            </div>
+          </div>
+          <div class="team-name-large">
+            {{ series.awayClub?.name || series.awayClubId?.name || 'TBD' }}
+          </div>
+          <div class="team-score-large"
+               [class.winner-score]="isWinner(series, series.awayClubId || series.awayClub)">
+            {{ series.awayWins || 0 }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Series Status Badge -->
+      <div class="series-status-container">
+        <span *ngIf="series.status === 'completed'" 
+              class="series-status-badge status-completed-badge">
+          Series Complete
+        </span>
+        <span *ngIf="series.status === 'in-progress'" 
+              class="series-status-badge status-in-progress-badge">
+          Series In Progress
+        </span>
+        <span *ngIf="series.status === 'pending'" 
+              class="series-status-badge status-pending-badge">
+          Series Pending
+        </span>
+        <span *ngIf="series.status === 'bye'" 
+              class="series-status-badge status-bye-badge">
+          Bye
+        </span>
+      </div>
+
+      <!-- Winner Announcement -->
+      <div *ngIf="getWinner(series)" class="winner-announcement">
+        <div class="winner-icon">🏆</div>
+        <div class="winner-text">
+          Winner: <span class="winner-name">{{ getWinner(series) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Games List Card -->
+    <div class="games-card">
+      <h2 class="games-card-title">Games</h2>
+      
+      <div *ngIf="series.gameDetails && series.gameDetails.length > 0" class="games-list">
+        <div *ngFor="let game of series.gameDetails" 
+          (click)="navigateToGame(game._id || game.id)"
+          class="game-card">
+          <div class="game-teams">
+            <div class="game-team-row">
+              <div class="game-team-info">
+                <img *ngIf="game.homeClubId?.logoUrl" 
+                     [src]="getImageUrl(game.homeClubId.logoUrl)" 
+                     [alt]="(game.homeClubId?.name || 'Team') + ' logo'" 
+                     class="game-team-logo">
+                <span class="game-team-name">{{ game.homeClubId?.name || 'TBD' }}</span>
+              </div>
+              <span class="game-team-score">{{ game.homeTeamScore || game.score?.home || 0 }}</span>
+            </div>
+            <div class="game-team-row">
+              <div class="game-team-info">
+                <img *ngIf="game.awayClubId?.logoUrl" 
+                     [src]="getImageUrl(game.awayClubId.logoUrl)" 
+                     [alt]="(game.awayClubId?.name || 'Team') + ' logo'" 
+                     class="game-team-logo">
+                <span class="game-team-name">{{ game.awayClubId?.name || 'TBD' }}</span>
+              </div>
+              <span class="game-team-score">{{ game.awayTeamScore || game.score?.away || 0 }}</span>
+            </div>
+              </div>
+          <div class="game-meta">
+            <div class="game-date">{{ game.date | date:'short' }}</div>
+            <div class="game-status" 
+                 [ngClass]="{
+                   'status-completed': game.status === 'completed',
+                   'status-scheduled': game.status === 'scheduled' || game.status === 'pending'
+                 }">
+                {{ game.status }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!series.gameDetails || series.gameDetails.length === 0" class="no-games-message">
+        <div class="no-games-icon">📅</div>
+        <p>No games scheduled yet</p>
+      </div>
+    </div>
+  </div>
+</div>
+

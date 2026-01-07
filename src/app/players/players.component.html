@@ -1,0 +1,127 @@
+<section class="mt-4 text-white">
+  <div class="container mx-auto px-4">
+    <h2 class="text-center mb-4 text-4xl font-bold">Players Directory</h2>
+    
+    <!-- Error message -->
+    <div *ngIf="usersError$ | async as error" class="bg-red-600 text-white p-4 rounded-lg mb-4">
+      {{ error }}
+    </div>
+
+    <div class="p-5 max-w-7xl mx-auto">
+      <!-- Filters -->
+      <div class="mb-5">
+        <div class="mb-4">
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange($event)"
+            placeholder="Search by name or gamertag..."
+            class="px-3 py-2 rounded bg-admin-card text-white w-full max-w-md placeholder-gray-400 focus:outline-none focus:border-admin-primary"
+          >
+        </div>
+
+        <div class="flex flex-wrap gap-5">
+          <!-- Position Filters -->
+          <div class="flex gap-2 flex-wrap">
+            <button 
+              [class]="positionFilter === 'All' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              (click)="onPositionFilterChange('All')"
+            >All Positions</button>
+            <button 
+              [class]="positionFilter === 'Forward' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              (click)="onPositionFilterChange('Forward')"
+            >Forwards</button>
+            <button 
+              [class]="positionFilter === 'Defense' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              (click)="onPositionFilterChange('Defense')"
+            >Defense</button>
+            <button 
+              [class]="positionFilter === 'Goalie' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              (click)="onPositionFilterChange('Goalie')"
+            >Goalies</button>
+          </div>
+
+          <!-- Region Filters -->
+          <div class="flex gap-2 flex-wrap">
+            <button 
+              [class]="regionFilter === 'All' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              (click)="onRegionFilterChange('All')"
+            >All Regions</button>
+            <button 
+              [class]="regionFilter === 'North America' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              (click)="onRegionFilterChange('North America')"
+            >North America</button>
+            <button 
+              [class]="regionFilter === 'Europe' ? 'px-4 py-2 rounded border border-admin-primary bg-admin-primary text-white' : 'px-4 py-2 rounded bg-admin-card text-gray-300 hover:bg-admin-hover transition-colors'"
+              (click)="onRegionFilterChange('Europe')"
+            >Europe</button>
+          </div>
+
+          <!-- Season Filter -->
+          <div class="flex items-center gap-2">
+            <label for="seasonSelect" class="text-gray-300 font-medium">Season:</label>
+            <select 
+              id="seasonSelect" 
+              [(ngModel)]="seasonFilter" 
+              (change)="onSeasonFilterChange(seasonFilter)"
+              class="px-3 py-2 rounded bg-admin-card text-white cursor-pointer focus:outline-none focus:border-admin-primary"
+            >
+              <option *ngFor="let season of (seasons$ | async)" [value]="season.name">{{ season.name }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Players List -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="bg-admin-card rounded-lg p-4 flex flex-col gap-2" *ngFor="let player of filteredPlayers">
+          <div class="flex-1">
+            <h3 class="text-white m-0 mb-1 text-xl font-semibold flex items-center">
+              <img *ngIf="player.clubLogo" [src]="player.clubLogo" [alt]="player.currentClubName" class="w-6 h-6 object-contain mr-2">
+              {{player.discordUsername}}<span *ngIf="player.number"> {{player.number}}</span>
+            </h3>
+            <div class="my-3">
+              <h4 class="text-gray-300 m-0 mb-2 text-sm font-medium uppercase tracking-wide">Position:</h4>
+              <div class="mb-3 pb-2 border-b border-admin-accent/50">
+                <app-position-pill [position]="player.position"></app-position-pill>
+              </div>
+              <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-admin-accent/30 bg-admin-accent/20 p-3 rounded" *ngIf="player.secondaryPositions && player.secondaryPositions.length > 0">
+                <div class="text-gray-300 font-medium text-xs text-center mb-2 uppercase bg-admin-accent/40 px-2 py-1 rounded tracking-wide">SECONDARY POSITIONS</div>
+                <div class="flex gap-2 flex-wrap">
+                  <app-position-pill *ngFor="let pos of player.secondaryPositions" [position]="pos"></app-position-pill>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-gray-300 my-1 text-sm">
+              <span *ngIf="player.country">{{ countryEmojiMap[player.country] }} {{player.country}} • </span>
+              <span>{{player.handedness}} Shot</span>
+            </p>
+            <p class="text-gray-300 my-1 text-sm flex flex-col gap-1">
+              <span *ngIf="player.psnId" class="flex items-center gap-1">
+                <img *ngIf="player.platform === 'PS5'" src="assets/images/playstation-logo.svg" alt="PlayStation" class="w-4 h-4 flex-shrink-0">
+                <img *ngIf="player.platform === 'Xbox'" src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4 flex-shrink-0">
+                PSN: {{player.psnId}}
+              </span>
+              <span *ngIf="player.xboxGamertag" class="flex items-center gap-1">
+                <img src="assets/images/xbox-logo.svg" alt="Xbox" class="w-4 h-4 flex-shrink-0">
+                Xbox: {{player.xboxGamertag}}
+              </span>
+              <span *ngIf="player.gamertag && !player.psnId && !player.xboxGamertag">
+                Gamertag: {{player.gamertag}}
+              </span>
+            </p>
+          </div>
+          <div class="mt-auto">
+            <a [routerLink]="['/players', player.id]" class="inline-block px-4 py-2 rounded border border-admin-primary bg-transparent text-admin-primary hover:bg-admin-primary hover:text-white transition-colors text-center w-full">View Profile</a>
+          </div>
+        </div>
+
+        <!-- No results message -->
+        <div class="col-span-full text-center text-gray-300 py-10 italic" *ngIf="filteredPlayers.length === 0">
+          No players found matching your criteria
+        </div>
+      </div>
+    </div>
+  </div>
+</section> 

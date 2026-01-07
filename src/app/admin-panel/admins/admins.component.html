@@ -1,0 +1,84 @@
+<div class="container p-3">
+  <h2 class="mb-3">Admin Management</h2>
+
+  <div class="card mb-3 p-3">
+    <h5 class="mb-2">Add Admin</h5>
+    <div class="row g-2 align-items-end">
+      <div class="col-md-6" style="position: relative;">
+        <label class="form-label">Username</label>
+        <input 
+          [formControl]="usernameControl"
+          class="form-control" 
+          placeholder="Start typing a username..."
+          (focus)="onUsernameFocus()"
+          (blur)="onUsernameBlur()"
+          (keydown.arrowDown)="moveHighlight(1)"
+          (keydown.arrowUp)="moveHighlight(-1)"
+          (keydown.enter)="onUsernameEnter()"
+        />
+        <div *ngIf="usernameControl.touched && usernameControl.errors?.['userNotFound']" class="text-danger mt-1">
+          User not found with that username.
+        </div>
+        <ul *ngIf="showSuggestions" class="suggestions">
+          <li 
+            *ngFor="let user of userSuggestions; let i = index"
+            (mousedown)="selectUser(user)"
+            [class.highlighted]="i === highlightedIndex"
+            class="suggestion-item"
+          >
+            <span>{{ user.discordUsername }}</span>
+            <span *ngIf="user.playerProfile?.position" class="position-badge">{{ user.playerProfile?.position }}</span>
+          </li>
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Note</label>
+        <input [(ngModel)]="newNote" class="form-control" placeholder="optional" />
+      </div>
+      <div class="col-md-2 form-check mt-4">
+        <input id="superAdmin" type="checkbox" class="form-check-input" [(ngModel)]="newSuper" />
+        <label class="form-check-label" for="superAdmin">Super admin</label>
+      </div>
+      <div class="col-12 mt-2">
+        <button class="btn btn-primary" (click)="createAdmin()" [disabled]="isBusy || !usernameControl.value">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Admins</h5>
+      <button class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="isBusy">Refresh</button>
+    </div>
+    <div *ngIf="isBusy">Loading…</div>
+    <table class="table table-sm table-striped" *ngIf="!isBusy">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Discord Username</th>
+          <th>Super Admin</th>
+          <th>Note</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of admins">
+          <td class="text-break">{{ a.username || 'Unknown' }}</td>
+          <td>{{ a.discordUsername || 'Unknown' }}</td>
+          <td>
+            <span class="badge" [ngClass]="a.superAdmin ? 'bg-success' : 'bg-secondary'">{{ a.superAdmin ? 'Yes' : 'No' }}</span>
+          </td>
+          <td>{{ a.note || '-' }}</td>
+          <td>{{ a.createdAt | date:'short' }}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary me-2" (click)="toggleSuper(a)" [disabled]="isBusy">
+              {{ a.superAdmin ? 'Demote' : 'Promote' }}
+            </button>
+            <button class="btn btn-sm btn-outline-danger" (click)="remove(a)" [disabled]="isBusy">Remove</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

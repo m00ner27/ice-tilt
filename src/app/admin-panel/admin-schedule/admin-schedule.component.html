@@ -1,0 +1,182 @@
+<div class="max-w-6xl mx-auto my-10 bg-admin-card rounded-xl p-8 shadow-lg">
+  <h2 class="text-admin-primary mb-6 text-center text-2xl font-bold">Admin: Game Schedule</h2>
+  
+  <!-- Status Filter Buttons -->
+  <div class="flex justify-center gap-3 mb-6 flex-wrap">
+    <button 
+      (click)="setFilter('unlinked')" 
+      [class]="currentFilter === 'unlinked' ? 'bg-admin-secondary text-white border-admin-secondary' : 'bg-admin-hover text-white border-admin-accent'"
+      class="border rounded-lg px-4 py-2 font-medium transition-colors">
+      Needs Linking 
+      <span *ngIf="unlinkedGamesCount > 0" class="bg-red-500 text-white rounded-full px-2 py-1 ml-2 text-sm font-semibold">
+        {{ unlinkedGamesCount }}
+      </span>
+    </button>
+    <button 
+      (click)="setFilter('linked')" 
+      [class]="currentFilter === 'linked' ? 'bg-admin-secondary text-white border-admin-secondary' : 'bg-admin-hover text-white border-admin-accent'"
+      class="border rounded-lg px-4 py-2 font-medium transition-colors">
+      Completed
+    </button>
+    <button 
+      (click)="setFilter('all')" 
+      [class]="currentFilter === 'all' ? 'bg-admin-secondary text-white border-admin-secondary' : 'bg-admin-hover text-white border-admin-accent'"
+      class="border rounded-lg px-4 py-2 font-medium transition-colors">
+      All Games
+    </button>
+  </div>
+
+  <!-- Club Filtering and Sorting Controls -->
+  <div class="mb-6 space-y-4">
+    <div class="flex flex-wrap gap-4 items-center justify-center">
+      <!-- Club Filter -->
+      <div class="flex items-center gap-2">
+        <label class="text-admin-text font-medium">Filter by Club:</label>
+        <select 
+          [(ngModel)]="selectedClub" 
+          (change)="onClubFilterChange()"
+          class="bg-admin-hover text-white border border-admin-accent rounded px-3 py-2 min-w-[200px]">
+          <option value="all">All Clubs</option>
+          <option *ngFor="let club of sortedClubs" [value]="club.name">{{ club.name }}</option>
+        </select>
+      </div>
+
+
+      <!-- Sort Controls -->
+      <div class="flex items-center gap-2">
+        <label class="text-admin-text font-medium">Sort by:</label>
+        <select 
+          [(ngModel)]="sortBy" 
+          (change)="onSortChange()"
+          class="bg-admin-hover text-white border border-admin-accent rounded px-3 py-2">
+          <option value="date">Date</option>
+          <option value="homeTeam">Home Team</option>
+          <option value="awayTeam">Away Team</option>
+        </select>
+        <button 
+          (click)="toggleSortOrder()"
+          class="bg-admin-accent hover:bg-blue-600 text-white rounded px-3 py-2 transition-colors"
+          [title]="sortOrder === 'asc' ? 'Sort Ascending' : 'Sort Descending'">
+          <i class="fas" [class.fa-sort-alpha-down]="sortOrder === 'asc'" [class.fa-sort-alpha-up]="sortOrder === 'desc'"></i>
+        </button>
+      </div>
+
+      <!-- Clear Filters -->
+      <button 
+        (click)="clearFilters()" 
+        class="bg-gray-600 hover:bg-gray-700 text-white rounded px-4 py-2 transition-colors"
+        *ngIf="selectedClub !== 'all' || sortBy !== 'date'">
+        Clear Filters
+      </button>
+    </div>
+
+    <!-- Results Count -->
+    <div class="text-center text-admin-text text-sm">
+      Showing {{ filteredGames.length }} of {{ games.length }} games
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full bg-admin-bg text-white border-collapse rounded-lg overflow-hidden">
+      <thead>
+        <tr class="bg-admin-accent">
+          <th class="px-4 py-3 text-left text-admin-text font-semibold">Date/Time</th>
+          <th class="px-4 py-3 text-left text-admin-text font-semibold">Home Team</th>
+          <th class="px-4 py-3 text-left text-admin-text font-semibold">Away Team</th>
+          <th class="px-4 py-3 text-left text-admin-text font-semibold">Link / Status</th>
+          <th class="px-4 py-3 text-left text-admin-text font-semibold">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let game of filteredGames" (click)="loadEashlGames(game)" class="hover:bg-admin-hover transition-colors cursor-pointer">
+          <td class="px-4 py-3 border-t border-admin-accent">{{ formatDateTime(game.date) }}</td>
+          <td class="px-4 py-3 border-t border-admin-accent">
+            <div class="flex items-center gap-2">
+              <img [src]="getImageUrl(game.homeLogo)" alt="Home Logo" class="w-7 h-7 object-contain rounded bg-admin-card" (error)="onImageError($event)" />
+              {{ game.homeTeam }}
+            </div>
+          </td>
+          <td class="px-4 py-3 border-t border-admin-accent">
+            <div class="flex items-center gap-2">
+              <img [src]="getImageUrl(game.awayLogo)" alt="Away Logo" class="w-7 h-7 object-contain rounded bg-admin-card" (error)="onImageError($event)" />
+              {{ game.awayTeam }}
+            </div>
+          </td>
+          <td class="px-4 py-3 border-t border-admin-accent">
+            <div class="space-y-2">
+              <select 
+                [(ngModel)]="game.selectedFileOrAction" 
+                (focus)="loadEashlGames(game)" 
+                (click)="$event.stopPropagation()"
+                class="w-full bg-admin-hover text-white border border-admin-accent rounded px-3 py-2 text-sm">
+                <option value="" disabled>{{ game.eashlMatchId ? 'Change Linked File' : 'Link Stats / Forfeit' }}</option>
+                
+                <!-- Forfeit Options -->
+                <option value="forfeit-home">Forfeit Win: {{ game.homeTeam }}</option>
+                <option value="forfeit-away">Forfeit Win: {{ game.awayTeam }}</option>
+                <option value="forfeit-draw">Forfeit DRAW</option>
+                
+                <!-- File Options -->
+                <ng-container *ngIf="game.eashlGames?.length > 0">
+                  <option disabled>──────────</option>
+                  <option *ngFor="let file of game.eashlGames" [value]="file.matchId">{{ file.label }}</option>
+                </ng-container>
+              </select>
+              
+              <!-- Overtime Checkbox -->
+              <div *ngIf="game.selectedFileOrAction && !game.selectedFileOrAction.startsWith('forfeit-')" class="flex items-center justify-center">
+                <label class="flex items-center cursor-pointer text-admin-primary text-sm">
+                  <input type="checkbox" [(ngModel)]="game.isOvertime" (click)="$event.stopPropagation()" class="mr-2 accent-admin-secondary">
+                  <span class="font-medium">Overtime Game</span>
+                </label>
+              </div>
+              
+              <div *ngIf="game.eashlMatchId && !isForfeit(game.status)" class="flex items-center gap-2">
+                <span class="bg-admin-accent text-white rounded px-2 py-1 text-sm">Linked: {{ getLinkedFileName(game) }}</span>
+                <span *ngIf="game.isOvertime" class="bg-orange-500 text-white rounded px-2 py-1 text-sm font-semibold">⚡ OT</span>
+              </div>
+
+              <div *ngIf="isForfeit(game.status)" class="text-yellow-400 text-sm font-semibold">
+                {{ getForfeitDisplay(game) }}
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 border-t border-admin-accent">
+            <div class="space-y-1">
+              <button 
+                (click)="$event.stopPropagation(); manualStats(game)" 
+                class="w-full bg-admin-secondary text-white rounded px-3 py-2 text-sm hover:bg-blue-700 transition-colors">
+                Manually Enter Stats
+              </button>
+              <button 
+                (click)="$event.stopPropagation(); mergeStats(game)" 
+                class="w-full bg-red-600 text-white rounded px-3 py-2 text-sm hover:bg-red-700 transition-colors">
+                Merge Stats
+              </button>
+              <button 
+                *ngIf="game.eashlMatchId" 
+                (click)="$event.stopPropagation(); unlinkStats(game)" 
+                class="w-full bg-orange-500 text-white rounded px-3 py-2 text-sm hover:bg-orange-600 transition-colors">
+                Unlink Stats
+              </button>
+              <button 
+                *ngIf="!game.eashlMatchId" 
+                (click)="$event.stopPropagation(); deleteGame(game)" 
+                class="w-full bg-red-700 text-white rounded px-3 py-2 text-sm hover:bg-red-800 transition-colors">
+                Delete Game
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-6 flex justify-center">
+    <button 
+      (click)="submitChanges()" 
+      class="bg-green-600 text-white rounded-lg px-8 py-3 text-lg font-semibold hover:bg-green-700 transition-colors">
+      Submit Changes
+    </button>
+  </div>
+</div>

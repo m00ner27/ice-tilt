@@ -1,0 +1,115 @@
+.club-detail-container {
+  padding: 10px;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: white;
+}
+
+.loading {
+  text-align: center;
+  color: white;
+  padding: 20px;
+  font-size: 1.2em;
+}
+
+.error {
+  text-align: center;
+  color: #e74c3c;
+  padding: 20px;
+  font-size: 1.1em;
+  background-color: rgba(231, 76, 60, 0.1);
+  border: 1px solid #e74c3c;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.back-button {
+  background: none;
+  border: 2px solid #34495e;
+  color: #90caf9;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.back-button:hover {
+  background: #34495e;
+  color: #fff;
+}
+
+/* Season Selector Styling */
+.season-selector {
+  background: #2c3446;
+  border: 1px solid #394867;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.season-selector label {
+  color: #90caf9;
+  font-weight: 500;
+  font-size: 14px;
+  margin: 0;
+}
+
+.season-selector select {
+  background: #1a1f2e;
+  border: 1px solid #394867;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 14px;
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.season-selector select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.season-selector select option {
+  background: #1a1f2e;
+  color: #fff;
+}
+
+/* Match History Component */
+app-match-history {
+  display: block;
+  margin-top: 2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .club-detail-container {
+    padding: 5px;
+    max-width: 100%;
+    display: block !important;
+    visibility: visible !important;
+    overflow-x: auto;
+  }
+  
+  app-club-roster-tables {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  app-club-stats-grid {
+    display: block !important;
+    visibility: visible !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .club-detail-container {
+    padding: 2px;
+  }
+}

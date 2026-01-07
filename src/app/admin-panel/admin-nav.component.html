@@ -1,0 +1,25 @@
+<nav class="flex gap-6 bg-gray-800 p-4 rounded-lg mb-8 justify-center">
+  <a 
+    routerLink="/admin" 
+    routerLinkActive="bg-blue-600 text-white" 
+    [routerLinkActiveOptions]="{ exact: true }"
+    class="text-white no-underline font-medium text-lg px-6 py-2 rounded transition-colors hover:bg-gray-700"
+  >
+    Dashboard
+  </a>
+  <a 
+    routerLink="/admin/seasons" 
+    routerLinkActive="bg-blue-600 text-white"
+    class="text-white no-underline font-medium text-lg px-6 py-2 rounded transition-colors hover:bg-gray-700"
+  >
+    Seasons
+  </a>
+  <a 
+    routerLink="/admin/clubs" 
+    routerLinkActive="bg-blue-600 text-white"
+    class="text-white no-underline font-medium text-lg px-6 py-2 rounded transition-colors hover:bg-gray-700"
+  >
+    Clubs
+  </a>
+  <!-- Add more links as you add more admin features -->
+</nav>

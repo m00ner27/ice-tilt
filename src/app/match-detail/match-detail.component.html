@@ -1,0 +1,308 @@
+<div class="match-detail-container" *ngIf="match">
+  <button class="back-button" (click)="goBack()">← Back</button>
+  
+  <div class="match-header">
+    <div class="match-date">{{ formatDate(match.date) }}</div>
+    <div class="match-clubs">
+      <div class="club home-club" [class.winner]="isTeamWinner(match.homeTeam)">
+        <div class="club-name-logo">
+          <img [src]="getImageUrl(match.homeClub?.logoUrl)" [alt]="match.homeTeam + ' logo'" class="club-logo" (error)="onImageError($event)">
+          <span class="club-name">{{ match.homeTeam }}</span>
+        </div>
+      </div>
+      <div class="scores-section">
+        <span class="club-score home-score">{{ getHomeScore() }}</span>
+        <span class="vs-label">VS</span>
+        <span class="club-score away-score">{{ getAwayScore() }}</span>
+      </div>
+      <div class="club away-club" [class.winner]="isTeamWinner(match.awayTeam)">
+        <div class="club-name-logo">
+          <span class="club-name">{{ match.awayTeam }}</span>
+          <img [src]="getImageUrl(match.awayClub?.logoUrl)" [alt]="match.awayTeam + ' logo'" class="club-logo" (error)="onImageError($event)">
+        </div>
+      </div>
+    </div>
+    <div class="overtime-indicator" *ngIf="match.isOvertime">OT</div>
+  </div>
+  
+  <!-- No Stats Message (only shown when truly no stats available) -->
+  <div class="no-stats-message" *ngIf="noStatsMessage">
+    <div class="message-content">
+      <h3>📊 Statistics Information</h3>
+      <p>{{ noStatsMessage }}</p>
+      <div class="merged-game-info" *ngIf="isMergedGame">
+        <p><strong>Processing Merged Game Statistics</strong></p>
+        <p>This game was created by merging multiple EA Sports NHL 25 matches. Player statistics are being combined and should be available shortly. The final score reflects the accurate combined results from all merged games.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="match-content" *ngIf="!noStatsMessage">
+    <!-- Home Club Statistics -->
+    <div class="club-stats">
+      <h3><img [src]="getImageUrl(match.homeClub?.logoUrl)" alt="{{ match.homeTeam }} Logo" class="club-logo-sm" (error)="onImageError($event)"> {{ match.homeTeam }} Stats</h3>
+      
+      <!-- Club Summary Stats -->
+      <div class="club-summary-stats" *ngIf="homeTeamPlayers.length > 0 || homeTeamGoalies.length > 0">
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL GOALS:</span>
+          <span class="stat-value">{{ getTeamTotalGoals('home') }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL ASSISTS:</span>
+          <span class="stat-value">{{ getTeamTotalAssists('home') }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL SHOTS:</span>
+          <span class="stat-value">{{ getTeamTotalShots('home') }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL HITS:</span>
+          <span class="stat-value">{{ getTeamTotalHits('home') }}</span>
+        </div>
+      </div>
+      
+      <!-- Skaters -->
+      <h4 *ngIf="homeTeamPlayers.length > 0">Skaters</h4>
+      <div class="table-container" *ngIf="homeTeamPlayers.length > 0">
+        <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Pos</th>
+            <th>GP</th>
+            <th>G</th>
+            <th>A</th>
+            <th>PTS</th>
+            <th>+/-</th>
+            <th>S</th>
+            <th>S%</th>
+            <th>H</th>
+            <th>BS</th>
+            <th>PIM</th>
+            <th>PPG</th>
+            <th>SHG</th>
+            <th>INT</th>
+            <th>TK</th>
+            <th>GV</th>
+            <th>PA</th>
+            <th>P</th>
+            <th>P%</th>
+            <th>FOW</th>
+            <th>FOL</th>
+            <th>FO%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let player of homeTeamPlayers">
+            <td>{{ player.name }}</td>
+            <td>{{ player.position }}</td>
+            <td>{{ player.gamesPlayed || 1 }}</td>
+            <td>{{ player.goals }}</td>
+            <td>{{ player.assists }}</td>
+            <td>{{ player.points }}</td>
+            <td [class.positive]="player.plusMinus! > 0" [class.negative]="player.plusMinus! < 0">
+              {{ player.plusMinus! > 0 ? '+' + player.plusMinus : player.plusMinus }}
+            </td>
+            <td>{{ player.shots || 0 }}</td>
+            <td>{{ player.shotPercentage ? (player.shotPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+            <td>{{ player.hits || 0 }}</td>
+            <td>{{ player.blockedShots || 0 }}</td>
+            <td>{{ player.pim || 0 }}</td>
+            <td>{{ player.powerPlayGoals || 0 }}</td>
+            <td>{{ player.shortHandedGoals || 0 }}</td>
+            <td>{{ player.interceptions || 0 }}</td>
+            <td>{{ player.takeaways || 0 }}</td>
+            <td>{{ player.giveaways || 0 }}</td>
+            <td>{{ player.penaltyAssists || 0 }}</td>
+            <td>{{ player.passes || 0 }}</td>
+            <td>{{ player.passPercentage ? (player.passPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+            <td>{{ player.faceoffsWon || 0 }}</td>
+            <td>{{ player.faceoffsLost || 0 }}</td>
+            <td>{{ player.faceoffPercentage ? (player.faceoffPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+      
+      <!-- Goalies -->
+      <h4 *ngIf="homeTeamGoalies.length > 0">Goalies</h4>
+      <div class="table-container" *ngIf="homeTeamGoalies.length > 0">
+        <table class="stats-table goalie-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>SA</th>
+            <th>SV</th>
+            <th>SV%</th>
+            <th>GA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let goalie of homeTeamGoalies">
+            <td>{{ goalie.name }}</td>
+            <td>{{ goalie.shotsAgainst }}</td>
+            <td>{{ goalie.saves }}</td>
+            <td>{{ calculateSavePercentage(goalie.saves, goalie.shotsAgainst) }}</td>
+            <td>{{ goalie.goalsAgainst }}</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Away Club Statistics -->
+    <div class="club-stats">
+      <h3><img [src]="getImageUrl(match.awayClub?.logoUrl)" alt="{{ match.awayTeam }} Logo" class="club-logo-sm" (error)="onImageError($event)"> {{ match.awayTeam }} Stats</h3>
+      
+      <!-- Club Summary Stats -->
+      <div class="club-summary-stats" *ngIf="awayTeamPlayers.length > 0 || awayTeamGoalies.length > 0">
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL GOALS:</span>
+          <span class="stat-value">{{ getTeamTotalGoals('away') }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL ASSISTS:</span>
+          <span class="stat-value">{{ getTeamTotalAssists('away') }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL SHOTS:</span>
+          <span class="stat-value">{{ getTeamTotalShots('away') }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-label">TOTAL HITS:</span>
+          <span class="stat-value">{{ getTeamTotalHits('away') }}</span>
+        </div>
+      </div>
+      
+      <!-- Skaters -->
+      <h4 *ngIf="awayTeamPlayers.length > 0">Skaters</h4>
+      <div class="table-container" *ngIf="awayTeamPlayers.length > 0">
+        <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Pos</th>
+            <th>GP</th>
+            <th>G</th>
+            <th>A</th>
+            <th>PTS</th>
+            <th>+/-</th>
+            <th>S</th>
+            <th>S%</th>
+            <th>H</th>
+            <th>BS</th>
+            <th>PIM</th>
+            <th>PPG</th>
+            <th>SHG</th>
+            <th>INT</th>
+            <th>TK</th>
+            <th>GV</th>
+            <th>PA</th>
+            <th>P</th>
+            <th>P%</th>
+            <th>FOW</th>
+            <th>FOL</th>
+            <th>FO%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let player of awayTeamPlayers">
+            <td>{{ player.name }}</td>
+            <td>{{ player.position }}</td>
+            <td>{{ player.gamesPlayed || 1 }}</td>
+            <td>{{ player.goals }}</td>
+            <td>{{ player.assists }}</td>
+            <td>{{ player.points }}</td>
+            <td [class.positive]="player.plusMinus! > 0" [class.negative]="player.plusMinus! < 0">
+              {{ player.plusMinus! > 0 ? '+' + player.plusMinus : player.plusMinus }}
+            </td>
+            <td>{{ player.shots || 0 }}</td>
+            <td>{{ player.shotPercentage ? (player.shotPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+            <td>{{ player.hits || 0 }}</td>
+            <td>{{ player.blockedShots || 0 }}</td>
+            <td>{{ player.pim || 0 }}</td>
+            <td>{{ player.powerPlayGoals || 0 }}</td>
+            <td>{{ player.shortHandedGoals || 0 }}</td>
+            <td>{{ player.interceptions || 0 }}</td>
+            <td>{{ player.takeaways || 0 }}</td>
+            <td>{{ player.giveaways || 0 }}</td>
+            <td>{{ player.penaltyAssists || 0 }}</td>
+            <td>{{ player.passes || 0 }}</td>
+            <td>{{ player.passPercentage ? (player.passPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+            <td>{{ player.faceoffsWon || 0 }}</td>
+            <td>{{ player.faceoffsLost || 0 }}</td>
+            <td>{{ player.faceoffPercentage ? (player.faceoffPercentage | number:'1.1-1') + '%' : '0%' }}</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+      
+      <!-- Goalies -->
+      <h4 *ngIf="awayTeamGoalies.length > 0">Goalies</h4>
+      <div class="table-container" *ngIf="awayTeamGoalies.length > 0">
+        <table class="stats-table goalie-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>SA</th>
+            <th>SV</th>
+            <th>SV%</th>
+            <th>GA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let goalie of awayTeamGoalies">
+            <td>{{ goalie.name }}</td>
+            <td>{{ goalie.shotsAgainst }}</td>
+            <td>{{ goalie.saves }}</td>
+            <td>{{ calculateSavePercentage(goalie.saves, goalie.shotsAgainst) }}</td>
+            <td>{{ goalie.goalsAgainst }}</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Stats Legend -->
+  <div class="schedule-legend" *ngIf="match">
+    <div class="legend-item">
+      <span class="legend-abbr">Pos</span> - Position
+      <span class="legend-abbr">GP</span> - Games Played
+      <span class="legend-abbr">G</span> - Goals
+      <span class="legend-abbr">A</span> - Assists
+      <span class="legend-abbr">PTS</span> - Points
+      <span class="legend-abbr">+/-</span> - Plus/Minus
+      <span class="legend-abbr">S</span> - Shots
+      <span class="legend-abbr">S%</span> - Shot Percentage
+    </div>
+    <div class="legend-item">
+      <span class="legend-abbr">H</span> - Hits
+      <span class="legend-abbr">BS</span> - Blocked Shots
+      <span class="legend-abbr">PIM</span> - Penalty Minutes
+      <span class="legend-abbr">PPG</span> - Power Play Goals
+      <span class="legend-abbr">SHG</span> - Short Handed Goals
+      <span class="legend-abbr">GWG</span> - Game Winning Goals
+      <span class="legend-abbr">TK</span> - Takeaways
+      <span class="legend-abbr">GV</span> - Giveaways
+      <span class="legend-abbr">PA</span> - Penalty Assists
+    </div>
+    <div class="legend-item">
+      <span class="legend-abbr">P</span> - Passes
+      <span class="legend-abbr">P%</span> - Pass Percentage
+      <span class="legend-abbr">FOW</span> - Faceoffs Won
+      <span class="legend-abbr">FOL</span> - Faceoffs Lost
+      <span class="legend-abbr">FO%</span> - Faceoff Percentage
+      <span class="legend-abbr">INT</span> - Interceptions
+      <span class="legend-abbr">SA</span> - Shots Against
+      <span class="legend-abbr">SV</span> - Saves
+      <span class="legend-abbr">SV%</span> - Save Percentage
+      <span class="legend-abbr">GA</span> - Goals Against
+    </div>
+  </div>
+</div>
+
+<div class="loading" *ngIf="!match">
+  Loading match details...
+</div> 

@@ -1,0 +1,102 @@
+.schedule-bar-container {
+  width: 100%;
+  overflow-x: auto;
+  background: #fff;
+  padding: 6px 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.schedule-bar-scroll {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0 8px;
+  min-width: max-content;
+}
+
+.schedule-bar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.game-card-link {
+  text-decoration: none;
+}
+
+.game-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
+.game-card-link:hover .game-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #ced4da;
+}
+
+.game-date {
+  color: #333;
+  font-size: 0.8em;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.clubs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.club-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.club:first-child .club-logo {
+  margin-right: -2px;
+}
+
+.club:last-child .club-logo {
+  margin-left: -2px;
+}
+
+.score {
+  color: #212529;
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.vs-text {
+  color: #6c757d;
+  font-size: 0.8em;
+  font-weight: normal;
+  margin: 0 2px;
+  transform: translateY(-2px);
+}
+
+.game-status {
+  margin-top: 6px;
+  color: #198754;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.overtime-indicator {
+  color: #fd7e14;
+  font-weight: 700;
+  margin-left: 4px;
+  font-size: 0.9em;
+}

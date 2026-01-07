@@ -1,0 +1,123 @@
+<!-- navigation.component.html -->
+<nav class="bg-gray-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center flex-shrink-0">
+                <a class="flex items-center font-bold" routerLink="/home">
+                    <img src="assets/images/1ithlwords.png" alt="League Logo" class="h-8 w-auto mr-2 min-w-0">
+                </a>
+                <!-- Social Media Links -->
+                <div class="hidden md:flex items-center space-x-3 ml-4">
+                    <a href="https://discord.gg/2JyJ4MQCHG" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Discord">
+                        <i class="fab fa-discord text-xl"></i>
+                    </a>
+                    <a href="https://x.com/IceTiltHL" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Twitter/X">
+                        <i class="fab fa-x-twitter text-xl"></i>
+                    </a>
+                    <a href="https://www.instagram.com/icetilthl/" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Instagram">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="https://www.youtube.com/@icetilthl" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="YouTube">
+                        <i class="fab fa-youtube text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <div class="hidden xl:flex items-center space-x-6">
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/schedule">Schedule</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/standings">Standings</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/rankings">Rankings</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/playoffs">Playoffs</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/tournaments">Tournaments</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/player-stats">Player Stats</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/clubs">Clubs</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/transactions">Transactions</a>
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/articles">Articles</a>
+                <!-- TODO: Manager feature temporarily disabled -->
+                <!-- <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
+                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
+            </div>
+
+            <!-- Right Aligned Auth Section -->
+            <div class="flex items-center">
+                <ng-container *ngIf="!(auth.isLoading$ | async); else authLoading">
+                    <app-user-profile *ngIf="(auth.isAuthenticated$ | async) && (isInAdminPanel$ | async) && (adminPasswordService.isAdminPasswordVerified$ | async)"></app-user-profile>
+                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async) && (shouldShowLoginButton$ | async)" class="hidden"></app-auth-button>
+                </ng-container>
+                <ng-template #authLoading>
+                    <!-- Optional: placeholder/spinner -->
+                </ng-template>
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="xl:hidden flex items-center ml-2">
+                <button type="button" (click)="toggleMenu()" class="text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white p-2 rounded-md" [attr.aria-expanded]="!isMenuCollapsed" aria-label="Toggle navigation">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div class="xl:hidden" [class.hidden]="isMenuCollapsed">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-800">
+                <!-- Mobile Navigation Links -->
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/schedule">Schedule</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/standings">Standings</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/rankings">Rankings</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/playoffs">Playoffs</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/tournaments">Tournaments</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/player-stats">Player Stats</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/clubs">Clubs</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/transactions">Transactions</a>
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/articles">Articles</a>
+                <!-- TODO: Manager feature temporarily disabled -->
+                <!-- <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
+                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="isAdmin$ | async" routerLink="/admin">Admin Panel</a>
+                
+                <!-- Mobile Social Media Links -->
+                <div class="pt-2 border-t border-gray-700 flex items-center justify-center space-x-4 py-3">
+                    <a href="https://discord.gg/2JyJ4MQCHG" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Discord">
+                        <i class="fab fa-discord text-2xl"></i>
+                    </a>
+                    <a href="https://x.com/IceTiltHL" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Twitter/X">
+                        <i class="fab fa-x-twitter text-2xl"></i>
+                    </a>
+                    <a href="https://www.instagram.com/icetilthl/" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="Instagram">
+                        <i class="fab fa-instagram text-2xl"></i>
+                    </a>
+                    <a href="https://www.youtube.com/@icetilthl" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-400 hover:text-white transition-colors" 
+                       aria-label="YouTube">
+                        <i class="fab fa-youtube text-2xl"></i>
+                    </a>
+                </div>
+                
+                <!-- Mobile Auth Section -->
+                <div class="pt-2 border-t border-gray-700">
+                    <app-user-profile *ngIf="(auth.isAuthenticated$ | async) && (isInAdminPanel$ | async) && (adminPasswordService.isAdminPasswordVerified$ | async)"></app-user-profile>
+                    <app-auth-button *ngIf="!(auth.isAuthenticated$ | async) && (shouldShowLoginButton$ | async)" class="hidden"></app-auth-button>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+

@@ -1,0 +1,210 @@
+<section class="manager-view mt-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-12">
+        <div class="card shadow-sm">
+          <!-- Club Management Header -->
+          <div class="card-header text-center text-white">
+            <h3>Club Management</h3>
+          </div>
+          
+          <!-- Notification -->
+          <div *ngIf="notification" class="notification" [ngClass]="notification.type">
+            {{ notification.message }}
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="loading$ | async" class="loading">
+            <p>Loading manager data...</p>
+          </div>
+
+          <!-- Error State -->
+          <div *ngIf="error$ | async as error" class="error">
+            <p>{{ error }}</p>
+          </div>
+
+          <div class="card-body" *ngIf="!(loading$ | async) && !(error$ | async)">
+            <!-- Season and Club Selection -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="seasonSelect" class="form-label">Season:</label>
+                <select 
+                  id="seasonSelect" 
+                  class="form-select" 
+                  [(ngModel)]="selectedSeason"
+                  (change)="onSeasonChange()"
+                >
+                  <option *ngFor="let season of seasons$ | async" [value]="season.name">
+                    {{ season.name }}
+                  </option>
+                </select>
+                <small class="text-muted">
+                  Selected: {{ selectedSeason }} 
+                  ({{ (seasons$ | async)?.length || 0 }} seasons available)
+                </small>
+              </div>
+              <div class="col-md-6">
+                <label for="clubSelect" class="form-label">Club:</label>
+                <select 
+                  id="clubSelect" 
+                  class="form-select" 
+                  [(ngModel)]="selectedClubId"
+                  (change)="onClubChange()"
+                >
+                  <option value="">Select a club</option>
+                  <option *ngFor="let club of clubs$ | async" [value]="club._id">
+                    {{ club.name }}
+                  </option>
+                </select>
+                <small class="text-muted">
+                  Available clubs: {{ (clubs$ | async)?.length || 0 }}
+                </small>
+              </div>
+            </div>
+
+            <!-- Refresh Button -->
+            <div class="row mb-3">
+              <div class="col-12 text-center">
+                <button 
+                  class="btn btn-secondary" 
+                  (click)="refreshData()"
+                  [disabled]="loading$ | async"
+                >
+                  <i class="fas fa-sync-alt me-2"></i>
+                  Refresh Data
+                </button>
+              </div>
+            </div>
+
+            <!-- Debug Section -->
+            <div class="row mb-3">
+              <div class="col-12">
+                <div class="alert alert-info">
+                  <strong>Debug Info:</strong><br>
+                  Selected Season: <strong>{{ selectedSeason }}</strong><br>
+                  Available Clubs: <strong>{{ (clubs$ | async)?.length || 0 }}</strong><br>
+                  Selected Club: <strong>{{ selectedClub?.name || 'None' }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Roster Management Section -->
+            <div *ngIf="selectedClub$ | async as selectedClub" class="roster-section">
+              <h4 class="text-center mb-4">
+                <img [src]="getImageUrl(selectedClub.logoUrl)" [alt]="selectedClub.name" class="club-logo me-2" style="width: 30px; height: 30px;">
+                {{ selectedClub.name }} Roster
+              </h4>
+              
+              <table class="table table-bordered manager-view-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Position</th>
+                    <th>Secondary Positions</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let player of rosterPlayers$ | async; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ player.discordUsername }}</td>
+                    <td>
+                      <span *ngIf="player.playerProfile?.position" class="badge bg-primary">
+                        {{ player.playerProfile?.position }}
+                      </span>
+                    </td>
+                    <td>
+                      <span *ngFor="let pos of player.playerProfile?.secondaryPositions" class="badge bg-secondary me-1">
+                        {{ pos }}
+                      </span>
+                    </td>
+                    <td>
+                      <button 
+                        class="btn btn-danger btn-sm" 
+                        (click)="releasePlayer(player._id)"
+                      >
+                        Release
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="(rosterPlayers$ | async)?.length === 0">
+                    <td colspan="5" class="text-center">No players on roster</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Free Agents Section -->
+            <div class="free-agents-section mt-5">
+              <h4 class="text-center mb-4">Free Agents</h4>
+              
+              <div class="mb-3">
+                <input 
+                  type="text" 
+                  class="form-control search-input" 
+                  [(ngModel)]="searchTerm"
+                  placeholder="Search Free Agents"
+                >
+              </div>
+              
+              <table class="table table-bordered manager-view-table">
+                <thead>
+                  <tr>
+                    <th>Select</th>
+                    <th>Username</th>
+                    <th>Preferred Position</th>
+                    <th>Secondary Positions</th>
+                    <th>Current Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let agent of freeAgents$ | async">
+                    <td>
+                      <input 
+                        type="checkbox" 
+                        [checked]="selectedFreeAgents.includes(agent._id)"
+                        (change)="toggleFreeAgentSelection(agent._id)"
+                      >
+                    </td>
+                    <td>{{ agent.discordUsername }}</td>
+                    <td>
+                      <span *ngIf="agent.playerProfile?.position" class="badge bg-primary">
+                        {{ agent.playerProfile?.position }}
+                      </span>
+                    </td>
+                    <td>
+                      <span *ngFor="let pos of agent.playerProfile?.secondaryPositions" class="badge bg-secondary me-1">
+                        {{ pos }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge bg-success">Free Agent</span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="(freeAgents$ | async)?.length === 0">
+                    <td colspan="5" class="text-center">
+                      <span>No free agents available for this season</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <div class="text-center mb-4">
+                <button 
+                  class="btn btn-success" 
+                  (click)="sendSigningRequests()"
+                  [disabled]="selectedFreeAgents.length === 0 || !selectedClub"
+                >
+                  Send Signing Request{{ selectedFreeAgents.length > 1 ? 's' : '' }} 
+                  ({{ selectedFreeAgents.length }})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+  

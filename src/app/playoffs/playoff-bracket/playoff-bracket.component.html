@@ -1,0 +1,286 @@
+<div class="max-w-7xl mx-auto my-10 px-4">
+  <!-- AdSense Banner Ad at Top -->
+  <app-adsense [config]="bannerAdConfig"></app-adsense>
+  
+  <h1 class="text-3xl font-bold text-white mb-6 text-center">Playoff Bracket</h1>
+
+  <!-- Bracket Selector -->
+  <div *ngIf="allBrackets$ | async as allBrackets" class="mb-6">
+    <div *ngIf="allBrackets.length > 1" class="max-w-md mx-auto">
+      <label class="block text-white text-sm font-medium mb-2">Select Bracket:</label>
+      <select 
+        [value]="selectedBracketId || ''"
+        (change)="onBracketChange($any($event.target).value)"
+        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="" disabled>Choose a bracket...</option>
+        <option *ngFor="let bracket of getSortedBrackets(allBrackets)" [value]="bracket._id">
+          {{ getBracketDisplayName(bracket) }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading$ | async" class="text-center py-8">
+    <div class="text-gray-400">Loading bracket...</div>
+  </div>
+
+  <div *ngIf="error$ | async" class="text-center py-8">
+    <div class="text-red-400">Error loading bracket: {{ error$ | async }}</div>
+  </div>
+
+  <div *ngIf="bracket$ | async as bracket" class="space-y-8">
+    <div class="bracket-header-card">
+      <div class="flex items-center gap-4 mb-2">
+        <img *ngIf="bracket.logoUrl" [src]="getImageUrl(bracket.logoUrl)" 
+          alt="Bracket Logo" class="bracket-header-logo">
+        <h2 class="bracket-header-title">{{ bracket.name }}</h2>
+      </div>
+      <p class="bracket-header-meta">{{ bracket.numTeams }} teams • {{ bracket.numRounds }} rounds</p>
+    </div>
+
+    <!-- Bracket Visualization -->
+    <div class="bracket-scroll-container">
+      <div class="bracket-rounds-container">
+        <!-- Render each round -->
+        <ng-container *ngFor="let roundOrder of getRoundNumbers(bracket)">
+          <div class="round-column">
+            
+            <!-- Round Header -->
+            <div class="round-header">
+              <h3 class="round-title">
+                {{ getRoundName(bracket.rounds, roundOrder) }}
+              </h3>
+              <div class="best-of-badge">
+                Best of {{ getRoundBestOf(bracket.rounds, roundOrder) }}
+              </div>
+            </div>
+
+          <!-- Series in this round -->
+          <div class="round-series-container">
+            <div *ngFor="let series of getSeriesByRound(bracket.series || [], roundOrder)" 
+              (click)="navigateToSeries(series._id)"
+              class="series-card"
+              [class.border-green-500]="series.status === 'completed'"
+              [class.border-yellow-500]="series.status === 'in-progress'"
+              [class.border-gray-500]="series.status === 'pending' || series.status === 'bye'">
+              
+              <!-- Home Team -->
+              <div class="team-row"
+                   [class.winner]="series.status === 'completed' && series.winnerClubId === series.homeClubId?._id">
+                <div class="flex items-center justify-between">
+                  <div class="team-info">
+                    <span class="seed-badge">#{{ series.homeSeed }}</span>
+                    <img *ngIf="series.homeClubId?.logoUrl" 
+                      [src]="getImageUrl(series.homeClubId.logoUrl)" 
+                      [alt]="(series.homeClubId?.name || 'Team') + ' logo'" 
+                      class="team-logo-bracket">
+                    <span class="team-name-bracket">
+                      {{ series.homeClubId?.name || 'TBD' }}
+                    </span>
+                  </div>
+                  <span *ngIf="series.status !== 'bye'" 
+                    class="team-score"
+                    [class.winner-score]="series.winnerClubId === series.homeClubId?._id">
+                    {{ series.homeWins || 0 }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Away Team -->
+              <div *ngIf="series.status !== 'bye'" 
+                   class="team-row"
+                   [class.winner]="series.status === 'completed' && series.winnerClubId === series.awayClubId?._id">
+                <div class="flex items-center justify-between">
+                  <div class="team-info">
+                    <span class="seed-badge">#{{ series.awaySeed }}</span>
+                    <img *ngIf="series.awayClubId?.logoUrl" 
+                      [src]="getImageUrl(series.awayClubId.logoUrl)" 
+                      [alt]="(series.awayClubId?.name || 'Team') + ' logo'" 
+                      class="team-logo-bracket">
+                    <span class="team-name-bracket">
+                      {{ series.awayClubId?.name || 'TBD' }}
+                    </span>
+                  </div>
+                  <span class="team-score"
+                    [class.winner-score]="series.winnerClubId === series.awayClubId?._id">
+                    {{ series.awayWins || 0 }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Bye indicator -->
+              <div *ngIf="series.status === 'bye'" class="bye-indicator">
+                Bye
+              </div>
+
+              <!-- Series Status -->
+              <div class="series-status"
+                   [ngClass]="{
+                     'completed': series.status === 'completed',
+                     'in-progress': series.status === 'in-progress',
+                     'pending': series.status === 'pending'
+                   }">
+                <span *ngIf="series.status === 'completed'">Completed</span>
+                <span *ngIf="series.status === 'in-progress'">In Progress</span>
+                <span *ngIf="series.status === 'pending'">Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        </ng-container>
+      </div>
+    </div>
+    
+    <!-- AdSense Banner Ad -->
+    <app-adsense [config]="bannerAdConfig"></app-adsense>
+    
+    <!-- Player Statistics -->
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold text-white mb-4">Player Statistics</h2>
+      
+      <div *ngIf="statsLoading$ | async" class="text-center py-8">
+        <div class="text-gray-400">Loading player stats...</div>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedPlayerStats.length === 0" class="text-center py-8">
+        <p class="text-gray-400">No player statistics available for this bracket.</p>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedPlayerStats.length > 0" class="playoff-stats-table-container">
+        <table class="playoff-stats-table">
+          <thead>
+            <tr>
+              <th class="sticky-column rank-column">#</th>
+              <th class="sticky-column player-name" [ngClass]="getPlayerSortClass('name')" (click)="onSortPlayerColumn('name')">Player</th>
+              <th [ngClass]="getPlayerSortClass('team')" (click)="onSortPlayerColumn('team')">Team</th>
+              <th>Pos</th>
+              <th [ngClass]="getPlayerSortClass('gamesPlayed')" (click)="onSortPlayerColumn('gamesPlayed')">GP</th>
+              <th [ngClass]="getPlayerSortClass('goals')" (click)="onSortPlayerColumn('goals')">G</th>
+              <th [ngClass]="getPlayerSortClass('assists')" (click)="onSortPlayerColumn('assists')">A</th>
+              <th [ngClass]="getPlayerSortClass('points')" (click)="onSortPlayerColumn('points')">PTS</th>
+              <th [ngClass]="getPlayerSortClass('plusMinus')" (click)="onSortPlayerColumn('plusMinus')">+/-</th>
+              <th [ngClass]="getPlayerSortClass('shots')" (click)="onSortPlayerColumn('shots')">S</th>
+              <th [ngClass]="getPlayerSortClass('shotPercentage')" (click)="onSortPlayerColumn('shotPercentage')">S%</th>
+              <th [ngClass]="getPlayerSortClass('hits')" (click)="onSortPlayerColumn('hits')">H</th>
+              <th [ngClass]="getPlayerSortClass('blockedShots')" (click)="onSortPlayerColumn('blockedShots')">BS</th>
+              <th [ngClass]="getPlayerSortClass('penaltyMinutes')" (click)="onSortPlayerColumn('penaltyMinutes')">PIM</th>
+              <th [ngClass]="getPlayerSortClass('powerPlayGoals')" (click)="onSortPlayerColumn('powerPlayGoals')">PPG</th>
+              <th [ngClass]="getPlayerSortClass('shortHandedGoals')" (click)="onSortPlayerColumn('shortHandedGoals')">SHG</th>
+              <th [ngClass]="getPlayerSortClass('gameWinningGoals')" (click)="onSortPlayerColumn('gameWinningGoals')">GWG</th>
+              <th [ngClass]="getPlayerSortClass('takeaways')" (click)="onSortPlayerColumn('takeaways')">TK</th>
+              <th [ngClass]="getPlayerSortClass('giveaways')" (click)="onSortPlayerColumn('giveaways')">GV</th>
+              <th [ngClass]="getPlayerSortClass('passAttempts')" (click)="onSortPlayerColumn('passAttempts')">PA</th>
+              <th [ngClass]="getPlayerSortClass('passes')" (click)="onSortPlayerColumn('passes')">P</th>
+              <th [ngClass]="getPlayerSortClass('passPercentage')" (click)="onSortPlayerColumn('passPercentage')">P%</th>
+              <th [ngClass]="getPlayerSortClass('faceoffsWon')" (click)="onSortPlayerColumn('faceoffsWon')">FOW</th>
+              <th [ngClass]="getPlayerSortClass('faceoffPercentage')" (click)="onSortPlayerColumn('faceoffPercentage')">FO%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let player of sortedPlayerStats; let i = index">
+              <td class="sticky-column rank-column">{{ i + 1 }}</td>
+              <td class="sticky-column player-name">
+                <div class="player-name-container">
+                  <img [src]="getImageUrl(player.teamLogo)" [alt]="player.team + ' logo'" class="player-logo">
+                  <span class="player-name-text">{{ player.name }}</span>
+                </div>
+              </td>
+              <td class="team-cell">
+                <span class="team-name">{{ player.team }}</span>
+              </td>
+              <td>{{ formatPosition(player.position) }}</td>
+              <td>{{ player.gamesPlayed }}</td>
+              <td>{{ player.goals }}</td>
+              <td>{{ player.assists }}</td>
+              <td class="points-column">{{ player.points }}</td>
+              <td [ngClass]="{'positive': player.plusMinus > 0, 'negative': player.plusMinus < 0}">
+                {{ player.plusMinus > 0 ? '+' : '' }}{{ player.plusMinus }}
+              </td>
+              <td>{{ player.shots }}</td>
+              <td>{{ player.shotPercentage | number:'1.1-1' }}%</td>
+              <td>{{ player.hits }}</td>
+              <td>{{ player.blockedShots }}</td>
+              <td>{{ player.penaltyMinutes }}</td>
+              <td>{{ player.powerPlayGoals }}</td>
+              <td>{{ player.shortHandedGoals }}</td>
+              <td>{{ player.gameWinningGoals }}</td>
+              <td>{{ player.takeaways }}</td>
+              <td>{{ player.giveaways }}</td>
+              <td>{{ player.passAttempts }}</td>
+              <td>{{ player.passes }}</td>
+              <td>{{ player.passPercentage | number:'1.1-1' }}%</td>
+              <td>{{ player.faceoffsWon }}</td>
+              <td>{{ player.faceoffPercentage | number:'1.1-1' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- AdSense Banner Ad -->
+    <app-adsense [config]="bannerAdConfig"></app-adsense>
+    
+    <!-- Goalie Statistics -->
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold text-white mb-4">Goalie Statistics</h2>
+      
+      <div *ngIf="statsLoading$ | async" class="text-center py-8">
+        <div class="text-gray-400">Loading goalie stats...</div>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedGoalieStats.length === 0" class="text-center py-8">
+        <p class="text-gray-400">No goalie statistics available for this bracket.</p>
+      </div>
+      
+      <div *ngIf="!(statsLoading$ | async) && sortedGoalieStats.length > 0" class="playoff-stats-table-container">
+        <table class="playoff-stats-table">
+          <thead>
+            <tr>
+              <th class="sticky-column rank-column">#</th>
+              <th class="sticky-column goalie-name" [ngClass]="getGoalieSortClass('name')" (click)="onSortGoalieColumn('name')">Player</th>
+              <th [ngClass]="getGoalieSortClass('team')" (click)="onSortGoalieColumn('team')">Team</th>
+              <th [ngClass]="getGoalieSortClass('gamesPlayed')" (click)="onSortGoalieColumn('gamesPlayed')">GP</th>
+              <th [ngClass]="getGoalieSortClass('saves')" (click)="onSortGoalieColumn('saves')">SV</th>
+              <th [ngClass]="getGoalieSortClass('shotsAgainst')" (click)="onSortGoalieColumn('shotsAgainst')">SA</th>
+              <th [ngClass]="getGoalieSortClass('savePercentage')" (click)="onSortGoalieColumn('savePercentage')">SV%</th>
+              <th [ngClass]="getGoalieSortClass('goalsAgainstAverage')" (click)="onSortGoalieColumn('goalsAgainstAverage')">GAA</th>
+              <th [ngClass]="getGoalieSortClass('shutouts')" (click)="onSortGoalieColumn('shutouts')">SO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let goalie of sortedGoalieStats; let i = index">
+              <td class="sticky-column rank-column">{{ i + 1 }}</td>
+              <td class="sticky-column goalie-name">
+                <div class="goalie-name-container">
+                  <img [src]="getImageUrl(goalie.teamLogo)" [alt]="goalie.team + ' logo'" class="goalie-logo">
+                  <span class="goalie-name-text">{{ goalie.name }}</span>
+                </div>
+              </td>
+              <td class="team-cell">
+                <span class="team-name">{{ goalie.team }}</span>
+              </td>
+              <td>{{ goalie.gamesPlayed }}</td>
+              <td>{{ goalie.saves }}</td>
+              <td>{{ goalie.shotsAgainst }}</td>
+              <td class="points-column">{{ goalie.savePercentage | number:'1.3-3' }}</td>
+              <td class="points-column">{{ goalie.goalsAgainstAverage | number:'1.2-2' }}</td>
+              <td>{{ goalie.shutouts }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!(bracket$ | async) && !(loading$ | async)" class="text-center py-8">
+    <ng-container *ngIf="allBrackets$ | async as allBrackets">
+      <div *ngIf="allBrackets.length === 0">
+        <p class="text-gray-400 mb-4">No brackets found. Please create a bracket in the admin panel.</p>
+      </div>
+      <div *ngIf="allBrackets.length > 0 && !selectedBracketId">
+        <p class="text-gray-400">Please select a bracket from the dropdown above.</p>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
