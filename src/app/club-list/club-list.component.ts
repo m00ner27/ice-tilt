@@ -21,6 +21,7 @@ interface Club {
   logoUrl?: string;
   primaryColour?: string;
   seasons?: any[];
+  tournaments?: any[];
   roster?: any[];
 }
 
@@ -85,8 +86,15 @@ export class ClubListComponent implements OnInit, OnDestroy {
   }
 
   sortAndFilterClubs(clubs: Club[]) {
+    // Filter out clubs that have no seasons and no tournaments
+    const activeClubs = clubs.filter(club => {
+      const hasSeasons = club.seasons && club.seasons.length > 0;
+      const hasTournaments = club.tournaments && club.tournaments.length > 0;
+      return hasSeasons || hasTournaments;
+    });
+    
     // Sort clubs alphabetically
-    const sortedClubs = [...clubs].sort((a, b) => 
+    const sortedClubs = [...activeClubs].sort((a, b) => 
       a.name.toLowerCase().localeCompare(b.name.toLowerCase())
     );
     
