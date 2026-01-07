@@ -41,9 +41,9 @@ export class CreatePlayerComponent implements OnDestroy {
       });
   }
 
-  // Custom validator to check for duplicate gamertags
+  // Custom validator to check for duplicate gamertags (case-insensitive)
   duplicateNameValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) {
+    if (!control.value || !control.value.trim()) {
       return null; // Don't validate empty values
     }
     
@@ -56,12 +56,15 @@ export class CreatePlayerComponent implements OnDestroy {
       });
     
     // Check if gamertag already exists (case-insensitive)
-    const existingPlayer = freeAgents.find(player => 
-      player.gamertag && player.gamertag.toLowerCase() === control.value.toLowerCase()
-    );
+    const normalizedValue = control.value.trim().toLowerCase();
+    const existingPlayer = freeAgents.find(player => {
+      if (!player.gamertag) return false;
+      const normalizedGamertag = player.gamertag.trim().toLowerCase();
+      return normalizedGamertag === normalizedValue;
+    });
     
     if (existingPlayer) {
-      return { duplicateName: true };
+      return { duplicateName: { message: 'A player with this name already exists (case-insensitive)' } };
     }
     
     return null;
