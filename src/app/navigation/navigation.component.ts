@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, ElementRef } from '@angular/core';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UserProfileComponent } from './user-profile/user-profile.component';
@@ -20,6 +20,7 @@ import { selectIsUserAnyManager } from '../store/managers.selectors';
 })
 export class NavigationComponent {
   isMenuCollapsed = true;
+  isLeagueDropdownOpen = false;
   isAdmin$: Observable<boolean>;
   isManager$: Observable<boolean>;
   shouldShowLoginButton$: Observable<boolean>;
@@ -30,7 +31,8 @@ export class NavigationComponent {
     private api: ApiService, 
     private store: Store<AppState>,
     public adminPasswordService: AdminPasswordService,
-    private router: Router
+    private router: Router,
+    private elementRef: ElementRef
   ) {
     // Debug authentication state
     this.auth.isAuthenticated$.subscribe(isAuth => {
@@ -78,6 +80,21 @@ export class NavigationComponent {
     this.isMenuCollapsed = !this.isMenuCollapsed;
   }
 
+  toggleLeagueDropdown() {
+    this.isLeagueDropdownOpen = !this.isLeagueDropdownOpen;
+  }
+
+  closeLeagueDropdown() {
+    this.isLeagueDropdownOpen = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // Check if click is outside the dropdown
+    if (this.isLeagueDropdownOpen && !this.elementRef.nativeElement.contains(event.target)) {
+      this.isLeagueDropdownOpen = false;
+    }
+  }
 }
 
 

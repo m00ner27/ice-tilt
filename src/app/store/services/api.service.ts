@@ -1057,6 +1057,57 @@ export class ApiService {
     );
   }
 
+  // Champion methods
+  getChampions(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/champions`);
+  }
+
+  getChampionById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/api/champions/${id}`);
+  }
+
+  createChampion(championData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.post<any>(`${this.apiUrl}/api/champions`, championData, { headers });
+      })
+    );
+  }
+
+  updateChampion(id: string, championData: any): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.put<any>(`${this.apiUrl}/api/champions/${id}`, championData, { headers });
+      })
+    );
+  }
+
+  deleteChampion(id: string): Observable<any> {
+    return this.auth.getAccessTokenSilently({
+      authorizationParams: { audience: environment.apiAudience }
+    }).pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+        return this.http.delete(`${this.apiUrl}/api/champions/${id}`, { headers });
+      })
+    );
+  }
+
   updateRoundMatchups(bracketId: string, roundOrder: number, matchups: any[]): Observable<any> {
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }

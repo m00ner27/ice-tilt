@@ -89,12 +89,6 @@ export const routes: Routes = [
     loadComponent: () => import('./playoffs/playoff-bracket/playoff-bracket.component').then(m => m.PlayoffBracketComponent)
   },
   
-  // Lazy loaded routes - Champions
-  { 
-    path: 'champions', 
-    loadComponent: () => import('./champions/champions.component').then(m => m.ChampionsComponent)
-  },
-  
   // Lazy loaded routes - Tournaments
   // More specific routes must come first
   { 

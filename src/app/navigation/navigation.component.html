@@ -33,16 +33,27 @@
             
             <!-- Desktop Navigation -->
             <div class="hidden xl:flex items-center space-x-6">
-                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/schedule">Schedule</a>
-                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/standings">Standings</a>
+                <!-- League Dropdown -->
+                <div class="relative">
+                    <button (click)="toggleLeagueDropdown()" class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                        League
+                        <svg class="ml-1 h-4 w-4 transition-transform" [class.rotate-180]="isLeagueDropdownOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div *ngIf="isLeagueDropdownOpen" class="absolute left-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700" (click)="$event.stopPropagation()">
+                        <a class="text-gray-300 hover:bg-gray-700 hover:text-white block px-4 py-2 text-sm transition-colors" routerLink="/schedule" (click)="closeLeagueDropdown()">Schedule</a>
+                        <a class="text-gray-300 hover:bg-gray-700 hover:text-white block px-4 py-2 text-sm transition-colors" routerLink="/standings" (click)="closeLeagueDropdown()">Standings</a>
+                        <a class="text-gray-300 hover:bg-gray-700 hover:text-white block px-4 py-2 text-sm transition-colors" routerLink="/player-stats" (click)="closeLeagueDropdown()">Player Stats</a>
+                        <a class="text-gray-300 hover:bg-gray-700 hover:text-white block px-4 py-2 text-sm transition-colors" routerLink="/goalie-stats" (click)="closeLeagueDropdown()">Goalie Stats</a>
+                        <a class="text-gray-300 hover:bg-gray-700 hover:text-white block px-4 py-2 text-sm transition-colors" routerLink="/transactions" (click)="closeLeagueDropdown()">Transactions</a>
+                    </div>
+                </div>
+                
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/rankings">Rankings</a>
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/playoffs">Playoffs</a>
-                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/champions">Champions</a>
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/tournaments">Tournaments</a>
-                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/player-stats">Player Stats</a>
-                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/clubs">Clubs</a>
-                <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/transactions">Transactions</a>
                 <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/articles">Articles</a>
                 <!-- TODO: Manager feature temporarily disabled -->
                 <!-- <a class="text-gray-300 hover:text-white px-2 py-2 rounded-md text-sm font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
@@ -74,16 +85,27 @@
         <div class="xl:hidden" [class.hidden]="isMenuCollapsed">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-800">
                 <!-- Mobile Navigation Links -->
-                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/schedule">Schedule</a>
-                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/standings">Standings</a>
+                <!-- League Section -->
+                <div class="border-b border-gray-700 pb-2 mb-2">
+                    <button (click)="toggleLeagueDropdown()" class="text-gray-300 hover:text-white w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors flex items-center justify-between">
+                        <span>League</span>
+                        <svg class="h-4 w-4" [class.rotate-180]="isLeagueDropdownOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div *ngIf="isLeagueDropdownOpen" class="pl-4 mt-1 space-y-1">
+                        <a class="text-gray-400 hover:text-white block px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/schedule" (click)="closeLeagueDropdown(); isMenuCollapsed = true">Schedule</a>
+                        <a class="text-gray-400 hover:text-white block px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/standings" (click)="closeLeagueDropdown(); isMenuCollapsed = true">Standings</a>
+                        <a class="text-gray-400 hover:text-white block px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/player-stats" (click)="closeLeagueDropdown(); isMenuCollapsed = true">Player Stats</a>
+                        <a class="text-gray-400 hover:text-white block px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/goalie-stats" (click)="closeLeagueDropdown(); isMenuCollapsed = true">Goalie Stats</a>
+                        <a class="text-gray-400 hover:text-white block px-3 py-2 rounded-md text-sm font-medium transition-colors" routerLink="/transactions" (click)="closeLeagueDropdown(); isMenuCollapsed = true">Transactions</a>
+                    </div>
+                </div>
+                
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/rankings">Rankings</a>
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/playoffs">Playoffs</a>
-                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/champions">Champions</a>
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/tournaments">Tournaments</a>
-                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/player-stats">Player Stats</a>
-                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/goalie-stats">Goalie Stats</a>
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/clubs">Clubs</a>
-                <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/transactions">Transactions</a>
                 <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" routerLink="/articles">Articles</a>
                 <!-- TODO: Manager feature temporarily disabled -->
                 <!-- <a class="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors" *ngIf="(isManager$ | async) || (isAdmin$ | async)" routerLink="/manager-view">Manager View</a> -->
