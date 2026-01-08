@@ -190,15 +190,17 @@
 .series-card {
   background: #1a252f;
   border-radius: 12px;
-  padding: 1.25rem;
+  padding: 1rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border: 2px solid;
+  box-sizing: border-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
               0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   margin-bottom: 1rem;
+  width: 100%;
 }
 
 .series-card::before {
@@ -319,8 +321,9 @@
 .team-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex: 1;
+  min-width: 0;
 }
 
 .seed-badge {
@@ -357,14 +360,17 @@
 }
 
 .team-name-bracket {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #ffffff;
   flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  word-wrap: break-word;
+  line-height: 1.3;
 }
 
 .team-row.winner .team-name-bracket {
@@ -373,9 +379,10 @@
 }
 
 .team-score {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
-  min-width: 2rem;
+  min-width: 1.75rem;
+  flex-shrink: 0;
   text-align: right;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease;
@@ -452,9 +459,12 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-width: 240px;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
 }
 
 .round-series-container {
@@ -482,8 +492,11 @@
     gap: 2rem;
   }
   
+  /* Keep columns at full width - use horizontal scroll instead */
   .round-column {
-    min-width: 220px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
   }
   
   .series-card {
@@ -496,7 +509,7 @@
   }
   
   .team-name-bracket {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
   }
   
   .bracket-header-title {
@@ -509,8 +522,11 @@
     gap: 1.5rem;
   }
   
+  /* Keep columns at full width - use horizontal scroll instead */
   .round-column {
-    min-width: 200px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
   }
   
   .round-title {
@@ -591,8 +607,11 @@
     gap: 1rem;
   }
   
+  /* Keep columns at full width - use horizontal scroll instead */
   .round-column {
-    min-width: 180px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
   }
   
   .round-title {
@@ -623,7 +642,7 @@
   }
   
   .team-name-bracket {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
   }
   
   .team-score {
@@ -676,8 +695,11 @@
     padding: 0.5rem 0 2rem 0;
   }
   
+  /* Keep columns at full width - use horizontal scroll instead */
   .round-column {
-    min-width: 160px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
   }
   
   .round-header {
