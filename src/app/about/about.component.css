@@ -1,0 +1,16 @@
+/* About component styles - using Tailwind classes primarily */
+
+/* Clubs banner image - show entire image */
+.clubs-banner {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  background-color: #1f2937; /* Fallback background */
+}
+
+.clubs-banner img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
