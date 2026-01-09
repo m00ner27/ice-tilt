@@ -114,6 +114,12 @@ export const routes: Routes = [
     loadComponent: () => import('./article/article.component').then(m => m.ArticleComponent)
   },
   
+  // Lazy loaded routes - About
+  { 
+    path: 'about', 
+    loadComponent: () => import('./about/about.component').then(m => m.AboutComponent)
+  },
+  
   // Lazy loaded routes - Transactions
   { 
     path: 'transactions', 
