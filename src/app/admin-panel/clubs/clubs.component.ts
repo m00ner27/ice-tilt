@@ -316,8 +316,8 @@ export class ClubsComponent implements OnInit, OnDestroy {
           this.seasons = [];
           return;
         }
-        // Sort seasons by endDate in descending order (newest first) - matching player-stats component
-        this.seasons = [...seasons].sort((a, b) => {
+        // Sort seasons by endDate in descending order (newest first) - matching player-stats component exactly
+        this.seasons = (seasons || []).sort((a, b) => {
           const dateA = a.endDate ? (a.endDate instanceof Date ? a.endDate.getTime() : new Date(a.endDate).getTime()) : 0;
           const dateB = b.endDate ? (b.endDate instanceof Date ? b.endDate.getTime() : new Date(b.endDate).getTime()) : 0;
           return dateB - dateA;

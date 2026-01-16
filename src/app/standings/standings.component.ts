@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject, combineLatest, forkJoin } from 'rxjs';
-import { takeUntil, map } from 'rxjs/operators';
+import { Observable, Subject, combineLatest, forkJoin, of } from 'rxjs';
+import { takeUntil, map, tap, filter, startWith, shareReplay } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
@@ -144,7 +144,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private cdr: ChangeDetectorRef
   ) {
-    // Initialize selectors
+    // Initialize selectors - exactly like player-stats component
     this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
     this.clubs$ = this.store.select(ClubsSelectors.selectAllClubs);
     this.matches$ = this.store.select(MatchesSelectors.selectAllMatches);
@@ -154,6 +154,9 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Force a visible log to verify code is running
+    window.console.error('🚀🚀🚀 STANDINGS COMPONENT INIT 🚀🚀🚀');
+    console.log('🚀 Standings component ngOnInit called');
     // Read selectedSeasonId from query parameters
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['season']) {
@@ -161,11 +164,11 @@ export class StandingsComponent implements OnInit, OnDestroy {
       }
     });
     
-    // Set up data subscriptions first
-    this.setupDataSubscriptions();
-    
-    // Load seasons first, then load data directly
+    // Load seasons first, then set up subscriptions
     this.loadSeasons();
+    
+    // Set up data subscriptions after loading seasons
+    this.setupDataSubscriptions();
     
     // Listen for storage events (when admin panel makes changes)
     window.addEventListener('storage', (event) => {
@@ -201,24 +204,53 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   private setupDataSubscriptions() {
+    // Force a visible log to verify code is running
+    window.console.error('🔧🔧🔧 SETUP DATA SUBSCRIPTIONS CALLED 🔧🔧🔧');
+    console.log('🔧 Standings setupDataSubscriptions called');
     // Use combineLatest like player-stats component to sort seasons
     combineLatest([
       this.seasons$,
       this.seasonsLoading$
     ]).pipe(
       takeUntil(this.destroy$),
-      map(([seasons, loading]) => ({
-        seasons: [...seasons].sort((a, b) => {
+      map(([seasons, loading]) => {
+        console.log('📊 Standings - combineLatest fired, seasons:', seasons?.length || 0, 'loading:', loading);
+        // Sort seasons - seasons should already be sorted from reducer, but sort again as backup
+        const sorted = [...(seasons || [])].sort((a, b) => {
           // Exact same sorting logic as player-stats component
-          const dateA = a.endDate ? (a.endDate instanceof Date ? a.endDate.getTime() : new Date(a.endDate).getTime()) : 0;
-          const dateB = b.endDate ? (b.endDate instanceof Date ? b.endDate.getTime() : new Date(b.endDate).getTime()) : 0;
-          return dateB - dateA;
-        }),
-        loading
-      }))
+          let dateA = 0;
+          let dateB = 0;
+          
+          if (a.endDate) {
+            if (a.endDate instanceof Date) {
+              dateA = a.endDate.getTime();
+            } else if (typeof a.endDate === 'string') {
+              dateA = new Date(a.endDate).getTime();
+            }
+          }
+          
+          if (b.endDate) {
+            if (b.endDate instanceof Date) {
+              dateB = b.endDate.getTime();
+            } else if (typeof b.endDate === 'string') {
+              dateB = new Date(b.endDate).getTime();
+            }
+          }
+          
+          // Handle invalid dates
+          if (isNaN(dateA)) dateA = 0;
+          if (isNaN(dateB)) dateB = 0;
+          
+          return dateB - dateA; // Descending order (newest first)
+        });
+        console.log('✅ Standings - Sorted order:', sorted.map(s => s.name));
+        return { seasons: sorted, loading };
+      })
     ).subscribe(({ seasons, loading }) => {
+      console.log('📥 Standings - Subscription received, seasons:', seasons.map(s => s.name));
       if (!loading && seasons.length > 0) {
         this.seasons = seasons;
+        console.log('💾 Standings - this.seasons set to:', this.seasons.map(s => s.name));
         
         if (!this.selectedSeasonId) {
           // Only set default if no query param was provided

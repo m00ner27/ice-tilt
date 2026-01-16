@@ -140,17 +140,5 @@ export class PlayersComponent implements OnInit, OnDestroy {
     if (!platform) return 'N/A';
     return platform;
   }
-
-  getStatusClasses(status: string | undefined): { [key: string]: boolean } {
-    const statusValue = status || '';
-    return {
-      'bg-green-500/20': statusValue === 'Signed',
-      'text-green-400': statusValue === 'Signed',
-      'bg-yellow-500/20': statusValue === 'Free Agent',
-      'text-yellow-400': statusValue === 'Free Agent',
-      'bg-blue-500/20': statusValue === 'Pending',
-      'text-blue-400': statusValue === 'Pending'
-    };
-  }
 }
 
