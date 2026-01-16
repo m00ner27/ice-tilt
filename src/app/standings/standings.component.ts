@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable, Subject, combineLatest, forkJoin } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, map } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
@@ -119,6 +119,7 @@ export class StandingsComponent implements OnInit, OnDestroy {
   clubs: any[] = [];
   games: any[] = [];
   divisionStandings: any[] = [];
+  seasons: any[] = []; // Local array for sorted seasons (like player-stats)
   sortColumn: string = 'points';
   sortDirection: 'asc' | 'desc' = 'desc';
   isLoading: boolean = true; // Start with loading true
@@ -200,24 +201,42 @@ export class StandingsComponent implements OnInit, OnDestroy {
   }
 
   private setupDataSubscriptions() {
-    // Subscribe to seasons for the dropdown
-    this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
-      if (seasons.length > 0 && !this.selectedSeasonId) {
-        // Only set default if no query param was provided
-        this.selectedSeasonId = seasons[0]._id;
-        this.loadSeasonSpecificData();
-        this.cdr.markForCheck();
-      } else if (seasons.length > 0 && this.selectedSeasonId) {
-        // If we have a selectedSeasonId (from query params), verify it exists and load data
-        const seasonExists = seasons.some(s => s._id === this.selectedSeasonId);
-        if (seasonExists) {
-          this.loadSeasonSpecificData();
-          this.cdr.markForCheck();
-        } else {
-          // If the season from query params doesn't exist, fall back to first season
+    // Use combineLatest like player-stats component to sort seasons
+    combineLatest([
+      this.seasons$,
+      this.seasonsLoading$
+    ]).pipe(
+      takeUntil(this.destroy$),
+      map(([seasons, loading]) => ({
+        seasons: [...seasons].sort((a, b) => {
+          // Exact same sorting logic as player-stats component
+          const dateA = a.endDate ? (a.endDate instanceof Date ? a.endDate.getTime() : new Date(a.endDate).getTime()) : 0;
+          const dateB = b.endDate ? (b.endDate instanceof Date ? b.endDate.getTime() : new Date(b.endDate).getTime()) : 0;
+          return dateB - dateA;
+        }),
+        loading
+      }))
+    ).subscribe(({ seasons, loading }) => {
+      if (!loading && seasons.length > 0) {
+        this.seasons = seasons;
+        
+        if (!this.selectedSeasonId) {
+          // Only set default if no query param was provided
           this.selectedSeasonId = seasons[0]._id;
           this.loadSeasonSpecificData();
           this.cdr.markForCheck();
+        } else if (this.selectedSeasonId) {
+          // If we have a selectedSeasonId (from query params), verify it exists and load data
+          const seasonExists = seasons.some(s => s._id === this.selectedSeasonId);
+          if (seasonExists) {
+            this.loadSeasonSpecificData();
+            this.cdr.markForCheck();
+          } else {
+            // If the season from query params doesn't exist, fall back to first season
+            this.selectedSeasonId = seasons[0]._id;
+            this.loadSeasonSpecificData();
+            this.cdr.markForCheck();
+          }
         }
       }
     });
