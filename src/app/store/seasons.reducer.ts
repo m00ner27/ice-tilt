@@ -21,13 +21,44 @@ export const seasonsReducer = createReducer(
 
   // Load Seasons
   on(SeasonsActions.loadSeasons, (state) => ({ ...state, loading: true, error: null })),
-  on(SeasonsActions.loadSeasonsSuccess, (state, { seasons }) => ({ 
-    ...state, 
-    seasons: seasons || [], 
-    activeSeason: (seasons || []).find(s => s.isActive) || null,
-    loading: false, 
-    error: null 
-  })),
+  on(SeasonsActions.loadSeasonsSuccess, (state, { seasons }) => {
+    // Sort seasons by endDate in descending order (newest first) - matching player-stats component
+    // Handle both Date objects and string dates from API
+    const sortedSeasons = (seasons || []).sort((a, b) => {
+      let dateA = 0;
+      let dateB = 0;
+      
+      if (a.endDate) {
+        if (a.endDate instanceof Date) {
+          dateA = a.endDate.getTime();
+        } else if (typeof a.endDate === 'string') {
+          dateA = new Date(a.endDate).getTime();
+        }
+      }
+      
+      if (b.endDate) {
+        if (b.endDate instanceof Date) {
+          dateB = b.endDate.getTime();
+        } else if (typeof b.endDate === 'string') {
+          dateB = new Date(b.endDate).getTime();
+        }
+      }
+      
+      // Handle invalid dates
+      if (isNaN(dateA)) dateA = 0;
+      if (isNaN(dateB)) dateB = 0;
+      
+      return dateB - dateA; // Descending order (newest first)
+    });
+    
+    return { 
+      ...state, 
+      seasons: sortedSeasons, 
+      activeSeason: sortedSeasons.find(s => s.isActive) || null,
+      loading: false, 
+      error: null 
+    };
+  }),
   on(SeasonsActions.loadSeasonsFailure, (state, { error }) => ({ 
     ...state, 
     loading: false, 
