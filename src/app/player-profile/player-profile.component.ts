@@ -8,6 +8,7 @@ import { PositionPillComponent } from '../components/position-pill/position-pill
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { PlayerStatsService } from '../store/services/player-stats.service';
 import { MatchService, EashlMatch } from '../store/services/match.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-player-profile',
@@ -23,10 +24,12 @@ export class PlayerProfileComponent implements OnInit {
   loading: boolean = true;
   careerStats: any[] = [];
   careerTotals: any = {};
-  loadingCareerStats: boolean = false;
+  loadingCareerStats: boolean = true; // Start as true to show loading initially
   gameByGameStats: any[] = [];
-  loadingGameStats: boolean = false;
+  loadingGameStats: boolean = true; // Start as true to show loading initially
   allClubs: any[] = [];
+  seasonsMap: Map<string, string> = new Map(); // Map seasonId to season name
+  tournamentsMap: Map<string, string> = new Map(); // Map tournamentId to tournament name
 
   constructor(
     private route: ActivatedRoute,
@@ -62,10 +65,6 @@ export class PlayerProfileComponent implements OnInit {
 
   // Method to get all clubs the player has played for
   getCareerClubs(): any[] {
-    if (!this.allClubs || this.allClubs.length === 0) {
-      return [];
-    }
-    
     // Get unique club names from career stats
     const careerClubNames = new Set<string>();
     this.careerStats.forEach(stat => {
@@ -74,13 +73,41 @@ export class PlayerProfileComponent implements OnInit {
       }
     });
     
-    // Filter allClubs to only include clubs the player has played for
+    // Also get clubs from game-by-game stats if available
+    if (this.gameByGameStats && this.gameByGameStats.length > 0) {
+      this.gameByGameStats.forEach(game => {
+        if (game.team) {
+          careerClubNames.add(game.team);
+        }
+      });
+    }
+    
+    if (careerClubNames.size === 0) {
+      return [];
+    }
+    
+    // If we have clubs loaded, filter to match
+    if (this.allClubs && this.allClubs.length > 0) {
     const careerClubs = this.allClubs.filter(club => 
       careerClubNames.has(club.name)
     );
-    
     console.log('Career clubs found:', careerClubs);
     return careerClubs;
+    }
+    
+    // If clubs aren't loaded yet, return a basic structure with just names and logos from games
+    const clubs: any[] = [];
+    careerClubNames.forEach(clubName => {
+      // Find logo from game data
+      const gameWithClub = this.gameByGameStats?.find(g => g.team === clubName);
+      clubs.push({
+        name: clubName,
+        _id: '', // Will be set when clubs are loaded
+        logoUrl: gameWithClub?.teamLogoUrl || ''
+      });
+    });
+    
+    return clubs;
   }
 
   // Method to navigate to club detail page
@@ -89,6 +116,22 @@ export class PlayerProfileComponent implements OnInit {
       console.log('Navigating to club:', clubId);
       this.router.navigate(['/clubs', clubId]);
     }
+  }
+
+  private sortSeasonsByDate(seasons: any[]): any[] {
+    return seasons.sort((a, b) => {
+      // Extract season number from season name (e.g., "S2024" -> 2024)
+      const getSeasonNumber = (seasonName: string): number => {
+        const match = seasonName.match(/S(\d+)/);
+        return match ? parseInt(match[1]) : 0;
+      };
+      
+      const seasonA = getSeasonNumber(a.seasonName);
+      const seasonB = getSeasonNumber(b.seasonName);
+      
+      // Sort newest to oldest (descending order)
+      return seasonB - seasonA;
+    });
   }
 
   ngOnInit(): void {
@@ -127,8 +170,12 @@ export class PlayerProfileComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.apiService.getUser(id).subscribe({
-      next: (user: any) => {
+    // Use getAllPlayers() instead of getUser() since the profile endpoint doesn't work
+    this.apiService.getAllPlayers().subscribe({
+      next: (players: any[]) => {
+        // Find the player with the matching ID
+        const user = players.find((p: any) => p._id === id);
+        
         if (!user) {
           this.error = 'Player not found.';
           this.loading = false;
@@ -223,9 +270,12 @@ export class PlayerProfileComponent implements OnInit {
   loadCareerStats(user: any) {
     this.loadingCareerStats = true;
     
-    // Get all clubs to check which ones the user has played for
-    this.apiService.getClubs().subscribe({
-      next: (clubs) => {
+    // Load clubs and player stats in parallel for better performance
+    forkJoin({
+      clubs: this.apiService.getClubs(),
+      playerStats: this.playerStatsService.getPlayerStats(user._id, user.gamertag)
+    }).subscribe(
+      ({ clubs, playerStats }) => {
         // Store all clubs for logo lookup
         this.allClubs = clubs;
         
@@ -348,9 +398,7 @@ export class PlayerProfileComponent implements OnInit {
           }
         });
 
-        // Now fetch the actual player stats and update the career data
-        this.playerStatsService.getPlayerStats(user._id, user.gamertag).subscribe({
-          next: (playerStats) => {
+        // Use the player stats we already loaded
             console.log('Career stats loaded:', playerStats);
             
             // Update career totals with real stats
@@ -441,28 +489,50 @@ export class PlayerProfileComponent implements OnInit {
             // Now that career stats are loaded, load game-by-game stats
             this.loadGameByGameStats(user);
           },
-          error: (err) => {
-            console.error('Error loading player stats for career:', err);
-            // Use the basic career data without real stats
-            this.careerStats = this.sortSeasonsByDate(userCareerStats);
-            this.careerTotals = totals;
-            this.loadingCareerStats = false;
-            
-            // Still try to load game-by-game stats even if career stats fail
-            this.loadGameByGameStats(user);
-          }
-        });
-      },
-      error: (err) => {
+      (err) => {
         console.error('Error loading career stats:', err);
         this.loadingCareerStats = false;
+        // Still try to load game-by-game stats even if career stats fail
+        this.loadGameByGameStats(user);
       }
-    });
+    );
   }
 
   loadGameByGameStats(user: any) {
     this.loadingGameStats = true;
     
+    // Load seasons and tournaments in parallel for better performance
+    forkJoin({
+      seasons: this.apiService.getSeasons(),
+      tournaments: this.apiService.getTournaments()
+    }).subscribe(
+      ({ seasons, tournaments }) => {
+        // Create a map of seasonId to season name
+        seasons.forEach((season: any) => {
+          if (season._id && season.name) {
+            this.seasonsMap.set(season._id.toString(), season.name);
+          }
+        });
+        
+        // Create a map of tournamentId to tournament name
+        tournaments.forEach((tournament: any) => {
+          if (tournament._id && tournament.name) {
+            this.tournamentsMap.set(tournament._id.toString(), tournament.name);
+          }
+        });
+        
+        // Now load matches
+        this.loadMatchesForPlayer(user);
+      },
+      (err) => {
+        console.error('Error loading seasons/tournaments:', err);
+        // Continue without season/tournament names - will use fallback
+        this.loadMatchesForPlayer(user);
+      }
+    );
+  }
+
+  loadMatchesForPlayer(user: any) {
     this.matchService.getMatches().subscribe({
       next: (matches) => {
         const playerGames: any[] = [];
@@ -484,6 +554,8 @@ export class PlayerProfileComponent implements OnInit {
                 
                 const gameStats = {
                   date: match.date,
+                  seasonId: match.seasonId,
+                  tournamentId: match.tournamentId, // Add tournamentId if available
                   homeTeam: match.homeTeam,
                   awayTeam: match.awayTeam,
                   homeScore: match.homeScore,
@@ -541,6 +613,8 @@ export class PlayerProfileComponent implements OnInit {
                     
                     const gameStats = {
                       date: match.date,
+                      seasonId: match.seasonId,
+                      tournamentId: match.tournamentId, // Add tournamentId if available
                       homeTeam: match.homeTeam,
                       awayTeam: match.awayTeam,
                       homeScore: match.homeScore,
@@ -586,6 +660,10 @@ export class PlayerProfileComponent implements OnInit {
         
         // Sort games by date (most recent first)
         this.gameByGameStats = playerGames.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        // Build season-by-season stats from game data
+        this.buildSeasonStatsFromGames(playerGames);
+        
         this.loadingGameStats = false;
       },
       error: (err) => {
@@ -639,19 +717,248 @@ export class PlayerProfileComponent implements OnInit {
     return 'assets/images/square-' + key + '.png';
   }
 
-  private sortSeasonsByDate(seasons: any[]): any[] {
-    return seasons.sort((a, b) => {
-      // Extract season number from season name (e.g., "S2024" -> 2024)
-      const getSeasonNumber = (seasonName: string): number => {
-        const match = seasonName.match(/S(\d+)/);
-        return match ? parseInt(match[1]) : 0;
-      };
+  buildSeasonStatsFromGames(games: any[]) {
+    if (!games || games.length === 0) {
+      return;
+    }
+
+    // Group games by season and club
+    const seasonMap = new Map<string, Map<string, any[]>>();
+    
+    games.forEach(game => {
+      // Get season/tournament name - check tournamentId first, then seasonId
+      let seasonName = 'Unknown Season';
       
-      const seasonA = getSeasonNumber(a.seasonName);
-      const seasonB = getSeasonNumber(b.seasonName);
+      // Check if this is a tournament game
+      if (game.tournamentId) {
+        const tournamentIdStr = typeof game.tournamentId === 'object' ? game.tournamentId._id?.toString() || game.tournamentId.toString() : game.tournamentId.toString();
+        seasonName = this.tournamentsMap.get(tournamentIdStr) || seasonName;
+        
+        // If not found in map, try to get from the tournamentId object directly
+        if (seasonName === 'Unknown Season' && typeof game.tournamentId === 'object' && game.tournamentId.name) {
+          seasonName = game.tournamentId.name;
+        }
+      }
       
-      // Sort newest to oldest (descending order)
-      return seasonB - seasonA;
+      // If not a tournament, check seasonId
+      if (seasonName === 'Unknown Season' && game.seasonId) {
+        const seasonIdStr = typeof game.seasonId === 'object' ? game.seasonId._id?.toString() || game.seasonId.toString() : game.seasonId.toString();
+        seasonName = this.seasonsMap.get(seasonIdStr) || seasonName;
+        
+        // If not found in map, try to get from the seasonId object directly
+        if (seasonName === 'Unknown Season' && typeof game.seasonId === 'object' && game.seasonId.name) {
+          seasonName = game.seasonId.name;
+        }
+      }
+      
+      // Fallback to date-based calculation if no seasonId/tournamentId or name found
+      if (seasonName === 'Unknown Season') {
+        const gameDate = new Date(game.date);
+        const year = gameDate.getFullYear();
+        const month = gameDate.getMonth() + 1; // 1-12
+        
+        // If month is Oct-Dec, season starts in that year. If Jan-Sep, season started in previous year
+        let seasonYear = year;
+        if (month >= 1 && month <= 9) {
+          seasonYear = year - 1;
+        }
+        
+        seasonName = `S${seasonYear}`;
+      }
+      
+      const clubName = game.team || 'Unknown';
+      
+      if (!seasonMap.has(seasonName)) {
+        seasonMap.set(seasonName, new Map());
+      }
+      
+      const clubMap = seasonMap.get(seasonName)!;
+      if (!clubMap.has(clubName)) {
+        clubMap.set(clubName, []);
+      }
+      
+      clubMap.get(clubName)!.push(game);
+    });
+
+    // Build season stats array
+    const seasonStatsArray: any[] = [];
+    let careerTotals = {
+      gamesPlayed: 0,
+      wins: 0,
+      losses: 0,
+      overtimeLosses: 0,
+      goals: 0,
+      assists: 0,
+      points: 0,
+      plusMinus: 0,
+      pim: 0,
+      shots: 0,
+      hits: 0,
+      ppg: 0,
+      shg: 0,
+      gwg: 0,
+      faceoffsWon: 0,
+      faceoffsLost: 0,
+      blockedShots: 0,
+      interceptions: 0,
+      takeaways: 0,
+      giveaways: 0,
+      deflections: 0,
+      penaltiesDrawn: 0,
+      shotAttempts: 0,
+      shotPct: 0,
+      passAttempts: 0,
+      passesCompleted: 0
+    };
+
+    seasonMap.forEach((clubMap, seasonName) => {
+      clubMap.forEach((clubGames, clubName) => {
+        // Calculate stats for this season/club combination
+        const seasonStats = {
+          gamesPlayed: clubGames.length,
+          wins: 0,
+          losses: 0,
+          overtimeLosses: 0,
+          goals: 0,
+          assists: 0,
+          points: 0,
+          plusMinus: 0,
+          pim: 0,
+          shots: 0,
+          hits: 0,
+          ppg: 0,
+          shg: 0,
+          gwg: 0,
+          faceoffsWon: 0,
+          faceoffsLost: 0,
+          blockedShots: 0,
+          interceptions: 0,
+          takeaways: 0,
+          giveaways: 0,
+          deflections: 0,
+          penaltiesDrawn: 0,
+          shotAttempts: 0,
+          shotPct: 0,
+          passAttempts: 0,
+          passesCompleted: 0
+        };
+
+        clubGames.forEach(game => {
+          // Count wins/losses
+          if (game.result === 'W') {
+            seasonStats.wins++;
+          } else if (game.result === 'L') {
+            seasonStats.losses++;
+          } else {
+            seasonStats.overtimeLosses++;
+          }
+
+          // Sum stats
+          seasonStats.goals += game.goals || 0;
+          seasonStats.assists += game.assists || 0;
+          seasonStats.points += game.points || 0;
+          seasonStats.plusMinus += game.plusMinus || 0;
+          seasonStats.pim += game.pim || 0;
+          seasonStats.shots += game.shots || 0;
+          seasonStats.hits += game.hits || 0;
+          seasonStats.ppg += game.ppg || 0;
+          seasonStats.shg += game.shg || 0;
+          seasonStats.gwg += game.gwg || 0;
+          seasonStats.faceoffsWon += game.faceoffsWon || 0;
+          seasonStats.faceoffsLost += game.faceoffsLost || 0;
+          seasonStats.blockedShots += game.blockedShots || 0;
+          seasonStats.interceptions += game.interceptions || 0;
+          seasonStats.takeaways += game.takeaways || 0;
+          seasonStats.giveaways += game.giveaways || 0;
+          seasonStats.deflections += game.deflections || 0;
+          seasonStats.penaltiesDrawn += game.penaltiesDrawn || 0;
+          seasonStats.shotAttempts += game.shotAttempts || 0;
+          seasonStats.passAttempts += game.passAttempts || 0;
+          seasonStats.passesCompleted += game.passes || 0;
+        });
+
+        // Calculate shot percentage
+        if (seasonStats.shots > 0) {
+          seasonStats.shotPct = (seasonStats.goals / seasonStats.shots) * 100;
+        }
+
+        // Add to career totals
+        careerTotals.gamesPlayed += seasonStats.gamesPlayed;
+        careerTotals.wins += seasonStats.wins;
+        careerTotals.losses += seasonStats.losses;
+        careerTotals.overtimeLosses += seasonStats.overtimeLosses;
+        careerTotals.goals += seasonStats.goals;
+        careerTotals.assists += seasonStats.assists;
+        careerTotals.points += seasonStats.points;
+        careerTotals.plusMinus += seasonStats.plusMinus;
+        careerTotals.pim += seasonStats.pim;
+        careerTotals.shots += seasonStats.shots;
+        careerTotals.hits += seasonStats.hits;
+        careerTotals.ppg += seasonStats.ppg;
+        careerTotals.shg += seasonStats.shg;
+        careerTotals.gwg += seasonStats.gwg;
+        careerTotals.faceoffsWon += seasonStats.faceoffsWon;
+        careerTotals.faceoffsLost += seasonStats.faceoffsLost;
+        careerTotals.blockedShots += seasonStats.blockedShots;
+        careerTotals.interceptions += seasonStats.interceptions;
+        careerTotals.takeaways += seasonStats.takeaways;
+        careerTotals.giveaways += seasonStats.giveaways;
+        careerTotals.deflections += seasonStats.deflections;
+        careerTotals.penaltiesDrawn += seasonStats.penaltiesDrawn;
+        careerTotals.shotAttempts += seasonStats.shotAttempts;
+        careerTotals.passAttempts += seasonStats.passAttempts;
+        careerTotals.passesCompleted += seasonStats.passesCompleted;
+
+        // Get club logo from first game in the clubGames array
+        const firstGame = clubGames.length > 0 ? clubGames[0] : null;
+        const clubLogo = firstGame?.teamLogoUrl || this.getClubLogoUrl(clubName);
+
+        seasonStatsArray.push({
+          seasonName: seasonName,
+          clubName: clubName,
+          clubLogo: clubLogo,
+          stats: seasonStats
+        });
+      });
+    });
+
+    // Update career stats and totals
+    this.careerStats = this.sortSeasonsByDate(seasonStatsArray);
+    
+    // Calculate career shot percentage
+    if (careerTotals.shots > 0) {
+      careerTotals.shotPct = (careerTotals.goals / careerTotals.shots) * 100;
+    }
+    
+    this.careerTotals = careerTotals;
+    
+    // Update career clubs from the games
+    this.updateCareerClubsFromGames(games);
+  }
+
+  updateCareerClubsFromGames(games: any[]) {
+    // Extract unique clubs from games
+    const uniqueClubs = new Set<string>();
+    games.forEach(game => {
+      if (game.team) {
+        uniqueClubs.add(game.team);
+      }
+    });
+
+    // If we have clubs loaded, match them up
+    if (this.allClubs.length > 0) {
+      // Clubs are already loaded, getCareerClubs() will work
+      return;
+    }
+
+    // If clubs aren't loaded yet, try to load them
+    this.apiService.getClubs().subscribe({
+      next: (clubs) => {
+        this.allClubs = clubs;
+      },
+      error: (err) => {
+        console.error('Error loading clubs for career clubs:', err);
+      }
     });
   }
 }

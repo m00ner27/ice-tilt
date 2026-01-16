@@ -37,30 +37,6 @@
         
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0">
-            <span class="text-base text-admin-primary min-w-5">🏒</span>
-            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Position:</span>
-            <app-position-pill [position]="player.position"></app-position-pill>
-            <ng-container *ngIf="player.secondaryPositions && player.secondaryPositions.length">
-              <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Secondary:</span>
-              <ng-container *ngFor="let pos of player.secondaryPositions">
-                <app-position-pill [position]="pos"></app-position-pill>
-              </ng-container>
-            </ng-container>
-          </div>
-          
-          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0">
-            <span class="text-base text-admin-primary min-w-5">✋</span>
-            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Handedness:</span>
-            <span class="text-white font-medium text-sm">{{ player.handedness }}</span>
-          </div>
-          
-          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0" *ngIf="player.country">
-            <span class="text-base text-admin-primary min-w-5">🌍</span>
-            <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Country:</span>
-            <span class="text-white font-medium text-sm">{{ countryEmojiMap[player.country] }} {{ player.country }}</span>
-          </div>
-          
-          <div class="flex items-center gap-3 py-2 border-b border-white/10 last:border-b-0">
             <span class="text-base text-admin-primary min-w-5">📊</span>
             <span class="text-admin-primary text-xs font-semibold mb-1 uppercase tracking-wide text-center px-1.5 py-0.5 bg-admin-accent/10 rounded border border-admin-primary/30">Stats:</span>
             <span class="text-white font-medium text-sm">{{ careerTotals?.gamesPlayed || 0 }} Games • {{ careerTotals?.points || 0 }} Points • {{ careerTotals?.goals || 0 }} Goals</span>
@@ -75,12 +51,12 @@
       </div>
       
       <!-- Career Clubs Section -->
-      <div class="mt-4 text-left bg-gradient-to-br from-slate-600/60 to-slate-700/70 rounded-lg p-4" *ngIf="allClubs.length > 0">
+      <div class="mt-4 text-left bg-gradient-to-br from-slate-600/60 to-slate-700/70 rounded-lg p-4" *ngIf="getCareerClubs().length > 0">
         <div class="flex items-center justify-start gap-4">
           <span class="self-center m-0 text-admin-primary font-semibold text-sm uppercase tracking-wide">Career Clubs:</span>
           <div class="flex flex-wrap gap-3 mt-2 justify-start items-center">
             <div *ngFor="let club of getCareerClubs()" class="flex items-center">
-              <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="w-10 h-10 object-contain rounded-full border-2 border-admin-accent transition-all duration-200 cursor-pointer hover:border-admin-primary hover:scale-110" 
+              <img [src]="getImageUrl(club.logoUrl)" [alt]="club.name" class="w-12 h-12 object-contain rounded-full border-2 border-admin-accent transition-all duration-200 cursor-pointer hover:border-admin-primary hover:scale-110" 
                    [title]="club.name" onerror="this.style.display='none'"
                    (click)="navigateToClub(club._id)">
             </div>
@@ -157,7 +133,14 @@
       <!-- Season-by-Season Breakdown -->
       <div class="mb-8">
         <h2 class="text-white mb-4 text-2xl">Season Breakdown</h2>
-        <div class="mt-4 overflow-x-auto rounded-lg bg-admin-card" style="border: 1px solid #34495e;">
+        
+        <!-- Loading State for Season Stats -->
+        <div *ngIf="loadingCareerStats" class="text-center p-8">
+          <div class="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full mx-auto mb-4 animate-spin"></div>
+          <p>Loading season statistics...</p>
+        </div>
+        
+        <div *ngIf="!loadingCareerStats" class="mt-4 overflow-x-auto rounded-lg bg-admin-card" style="border: 1px solid #34495e;">
           <table class="w-full border-collapse bg-admin-card text-sm rounded-lg overflow-hidden min-w-max">
             <thead>
               <tr class="bg-admin-accent text-white">

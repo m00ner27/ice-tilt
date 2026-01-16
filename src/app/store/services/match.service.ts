@@ -64,6 +64,7 @@ export interface EashlMatch {
   // Keep a reference to the raw eashlData if needed elsewhere
   eashlData?: any; 
   seasonId?: string; // Add seasonId
+  tournamentId?: string; // Add tournamentId for tournament games
   eashlMatchId?: string; // Add eashlMatchId for merged games
   // Playoff game flags
   isPlayoff?: boolean;
@@ -422,6 +423,7 @@ export class MatchService {
       playerStats: playerStats,
       eashlData: game.eashlData,
       seasonId: game.seasonId, // Populate seasonId
+      tournamentId: game.tournamentId, // Populate tournamentId
       eashlMatchId: game.eashlMatchId, // Add eashlMatchId for merged games
       // Preserve playoff flags for filtering
       isPlayoff: game.isPlayoff,

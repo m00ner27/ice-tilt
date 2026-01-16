@@ -19,6 +19,7 @@ export class PlayersEffects {
   loadFreeAgents$: any;
   loadFreeAgentsForSeason$: any;
   deletePlayer$: any;
+  loadAllPlayers$: any;
 
   constructor(
     private actions$: Actions,
@@ -175,6 +176,31 @@ export class PlayersEffects {
             })
           );
         })
+      );
+    });
+
+    this.loadAllPlayers$ = createEffect(() => {
+      return this.actions$.pipe(
+        ofType(PlayersActions.loadAllPlayers),
+        mergeMap(() =>
+          this.apiService.getAllPlayers().pipe(
+            map((players: any[]) => {
+              // Map API response to Player objects
+              const mappedPlayers = players.map((player: any): PlayersActions.Player => ({
+                _id: player._id,
+                gamertag: player.gamertag || 'Unknown',
+                discordId: player.discordId,
+                discordUsername: player.discordUsername,
+                platform: player.platform || 'PS5',
+                position: player.playerProfile?.position || 'C',
+                status: player.playerProfile?.status || 'Free Agent',
+                playerProfile: player.playerProfile
+              }));
+              return PlayersActions.loadAllPlayersSuccess({ players: mappedPlayers });
+            }),
+            catchError(error => of(PlayersActions.loadAllPlayersFailure({ error })))
+          )
+        )
       );
     });
   }

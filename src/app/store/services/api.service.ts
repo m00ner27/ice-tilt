@@ -812,9 +812,10 @@ export class ApiService {
     );
   }
 
-  // Get all players (for admin management)
+  // Get all players (public - no auth required)
   getAllPlayers(): Observable<any> {
     this.logger.log('ApiService: getAllPlayers called');
+    // Try to get token, but if user is not logged in, make call without auth
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }
     }).pipe(
@@ -824,6 +825,23 @@ export class ApiService {
           'Content-Type': 'application/json'
         });
         return this.http.get(`${this.apiUrl}/api/players`, { headers });
+      }),
+      catchError((authError) => {
+        // If auth fails (user not logged in), make call without auth token
+        this.logger.log('Auth failed, making public request for players');
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json'
+        });
+        return this.http.get(`${this.apiUrl}/api/players`, { headers }).pipe(
+          catchError((httpError) => {
+            // If the backend still requires auth, return a more user-friendly error
+            if (httpError.status === 401 || httpError.status === 403) {
+              // Backend requires auth, but we'll let the error propagate so the UI can handle it
+              return throwError(() => new Error('Unable to load players. Please try again later.'));
+            }
+            return throwError(() => httpError);
+          })
+        );
       })
     );
   }

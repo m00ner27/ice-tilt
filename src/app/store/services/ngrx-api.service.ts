@@ -261,6 +261,23 @@ export class NgRxApiService {
     this.store.dispatch(PlayersActions.upsertPlayerProfile({ profile }));
   }
 
+  // Admin Player Management
+  createPlayer(playerData: any): void {
+    this.store.dispatch(PlayersActions.createPlayer({ playerData }));
+  }
+
+  loadAllPlayers(): void {
+    this.store.dispatch(PlayersActions.loadAllPlayers());
+  }
+
+  loadFreeAgentsForSeason(seasonId: string): void {
+    this.store.dispatch(PlayersActions.loadFreeAgentsForSeason({ seasonId }));
+  }
+
+  deletePlayer(playerId: string): void {
+    this.store.dispatch(PlayersActions.deletePlayer({ playerId }));
+  }
+
   // ===== DIVISIONS =====
 
   loadDivisions(): void {

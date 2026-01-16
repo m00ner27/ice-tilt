@@ -1,5 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
-import { loadPlayersSuccess, upsertPlayerProfileSuccess, loadPlayerProfile, playerProfileFailure, loadPlayerStats, loadPlayerStatsSuccess, loadPlayerStatsFailure, createPlayer, createPlayerSuccess, createPlayerFailure, loadFreeAgents, loadFreeAgentsSuccess, loadFreeAgentsFailure, loadFreeAgentsForSeason, loadFreeAgentsForSeasonSuccess, loadFreeAgentsForSeasonFailure, deletePlayer, deletePlayerSuccess, deletePlayerFailure, Player } from './players.actions';
+import { loadPlayersSuccess, upsertPlayerProfileSuccess, loadPlayerProfile, playerProfileFailure, loadPlayerStats, loadPlayerStatsSuccess, loadPlayerStatsFailure, createPlayer, createPlayerSuccess, createPlayerFailure, loadFreeAgents, loadFreeAgentsSuccess, loadFreeAgentsFailure, loadFreeAgentsForSeason, loadFreeAgentsForSeasonSuccess, loadFreeAgentsForSeasonFailure, deletePlayer, deletePlayerSuccess, deletePlayerFailure, loadAllPlayers, loadAllPlayersSuccess, loadAllPlayersFailure, Player } from './players.actions';
 import { PlayerProfile } from './models/models/player-profile.model';
 
 export interface PlayersState {
@@ -13,6 +13,9 @@ export interface PlayersState {
   // Admin Player Management
   freeAgents: Player[];
   freeAgentsBySeason: { [seasonId: string]: Player[] };
+  allPlayers: Player[]; // All admin-created players
+  allPlayersLoading: boolean;
+  allPlayersError: any;
   adminLoading: boolean;
   adminError: any;
 }
@@ -28,6 +31,9 @@ export const initialState: PlayersState = {
   // Admin Player Management
   freeAgents: [],
   freeAgentsBySeason: {},
+  allPlayers: [],
+  allPlayersLoading: false,
+  allPlayersError: null,
   adminLoading: false,
   adminError: null,
 };
@@ -121,6 +127,26 @@ export const playersReducer = createReducer(
       ...state, 
       adminLoading: false, 
       adminError: error 
+    };
+  }),
+
+  // Load All Players
+  on(loadAllPlayers, (state) => {
+    return { ...state, allPlayersLoading: true, allPlayersError: null };
+  }),
+  on(loadAllPlayersSuccess, (state, { players }) => {
+    return { 
+      ...state, 
+      allPlayersLoading: false, 
+      allPlayers: players,
+      allPlayersError: null 
+    };
+  }),
+  on(loadAllPlayersFailure, (state, { error }) => {
+    return { 
+      ...state, 
+      allPlayersLoading: false, 
+      allPlayersError: error 
     };
   })
 );

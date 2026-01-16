@@ -53,3 +53,8 @@ export const loadFreeAgentsForSeasonFailure = createAction('[Players] Load Free 
 export const deletePlayer = createAction('[Players] Delete Player', props<{ playerId: string }>());
 export const deletePlayerSuccess = createAction('[Players] Delete Player Success', props<{ playerId: string }>());
 export const deletePlayerFailure = createAction('[Players] Delete Player Failure', props<{ error: any }>());
+
+// Load all players (admin-created players)
+export const loadAllPlayers = createAction('[Players] Load All Players');
+export const loadAllPlayersSuccess = createAction('[Players] Load All Players Success', props<{ players: Player[] }>());
+export const loadAllPlayersFailure = createAction('[Players] Load All Players Failure', props<{ error: any }>());

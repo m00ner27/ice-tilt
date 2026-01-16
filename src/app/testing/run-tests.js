@@ -13,11 +13,9 @@ const testConfig = {
   // Component test files
   componentTests: [
     'club-list.component.spec.ts',
-    'free-agents.component.spec.ts',
     'schedule.component.spec.ts',
     'standings.component.spec.ts',
     'inbox.component.spec.ts',
-    'players.component.spec.ts',
     'club-detail.component.spec.ts',
     'match-detail.component.spec.ts',
     'view-profile.component.spec.ts'

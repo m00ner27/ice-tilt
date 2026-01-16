@@ -14,13 +14,6 @@ export const routes: Routes = [
     loadComponent: () => import('./schedule/schedule.component').then(m => m.ScheduleComponent)
   },
   
-  // Lazy loaded routes - Free Agents
-  { 
-    path: 'free-agents', 
-    loadComponent: () => import('./free-agents/free-agents.component').then(m => m.FreeAgentsComponent),
-    canActivate: [authGuard]
-  },
-  
   // Lazy loaded routes - Players
   { 
     path: 'players', 
