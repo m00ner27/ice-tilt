@@ -1070,7 +1070,7 @@ export class ApiService {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         });
-        return this.http.delete<any>(`${this.apiUrl}/api/playoffs/brackets/${bracketId}`, { headers });
+        return this.http.delete(`${this.apiUrl}/api/playoffs/brackets/${bracketId}`, { headers });
       })
     );
   }
