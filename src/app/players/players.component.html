@@ -61,9 +61,7 @@
         <thead class="bg-admin-hover">
           <tr>
             <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Player</th>
-            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Position</th>
             <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Platform</th>
-            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300">Status</th>
             <th class="px-6 py-4 text-center text-sm font-semibold text-gray-300">View Stats</th>
           </tr>
         </thead>
@@ -78,25 +76,8 @@
                 <span *ngIf="player.discordUsername" class="text-gray-400 text-sm">{{ player.discordUsername }}</span>
               </div>
             </td>
-            <td class="px-6 py-4">
-              <app-position-pill 
-                [position]="getPositionDisplay(player.position || player.playerProfile?.position)"
-              ></app-position-pill>
-            </td>
             <td class="px-6 py-4 text-gray-300">
               {{ getPlatformDisplay(player.platform) }}
-            </td>
-            <td class="px-6 py-4">
-              <span 
-                class="px-3 py-1 rounded-full text-xs font-medium"
-                [class.bg-green-500/20]="player.status === 'Signed'"
-                [class.text-green-400]="player.status === 'Signed'"
-                [class.bg-yellow-500/20]="player.status === 'Free Agent'"
-                [class.text-yellow-400]="player.status === 'Free Agent'"
-                [class.bg-blue-500/20]="player.status === 'Pending'"
-                [class.text-blue-400]="player.status === 'Pending'">
-                {{ player.status || player.playerProfile?.status || 'N/A' }}
-              </span>
             </td>
             <td class="px-6 py-4 text-center">
               <a 
