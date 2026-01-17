@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable, Subject, combineLatest } from 'rxjs';
@@ -46,7 +47,7 @@ interface Season {
 @Component({
   selector: 'app-club-detail-simple',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatchHistoryComponent, ClubHeaderComponent, ClubStatsGridComponent, ClubRosterTablesComponent, ClubStatLegendComponent, AdSenseComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MatchHistoryComponent, ClubHeaderComponent, ClubStatsGridComponent, ClubRosterTablesComponent, ClubStatLegendComponent, AdSenseComponent],
   templateUrl: './club-detail.component.html',
   styleUrls: ['./club-detail.component.css']
 })
@@ -69,6 +70,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   allClubs: BackendClub[] = [];
   seasons: any[] = [];
   selectedSeasonId: string = '';
+  cachedClubSeasons: any[] = []; // Cache sorted seasons to avoid re-sorting on every change detection
   loading: boolean = false;
   error: string | null = null;
   currentClubId: string = '';
@@ -201,6 +203,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         this.backendClub = club as any;
         this.club = this.mapBackendClubToFrontend(club);
         
+        // Update cached club seasons when club changes
+        this.updateCachedClubSeasons();
+        
         // Update club roster selector for the new club
         this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(club._id));
         
@@ -226,6 +231,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Subscribe to seasons
     this.seasons$.pipe(takeUntil(this.destroy$)).subscribe(seasons => {
       this.seasons = seasons;
+      
+      // Update cached club seasons when seasons change
+      this.updateCachedClubSeasons();
       
       // Only try to select a season if we don't have one selected yet
       if (!this.selectedSeasonId) {
@@ -275,18 +283,24 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Get the filtered seasons for this club
-    const clubSeasons = this.getClubSeasons(this.backendClub);
+    // Update cached seasons first
+    this.updateCachedClubSeasons();
+    
+    // Get the filtered seasons for this club (from cache)
+    const clubSeasons = this.cachedClubSeasons;
     
     if (clubSeasons.length > 0) {
-      // Select the first season the club participates in
+      // Select the first season the club participates in (newest first)
       const firstClubSeason = clubSeasons[0];
       this.selectedSeasonId = firstClubSeason._id;
+      console.log('Auto-selected season:', firstClubSeason.name, firstClubSeason._id);
       if (this.backendClub) {
         this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
         // Load optimized data for auto-selected season
         this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
       }
+      // Force change detection to update dropdown
+      this.cdr.detectChanges();
     } else if (this.seasons && this.seasons.length > 0) {
       // Fallback to first available season if club has no seasons
       const firstSeason = this.seasons[0];
@@ -296,17 +310,23 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Load optimized data for auto-selected season
         this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
       }
+      // Force change detection to update dropdown
+      this.cdr.detectChanges();
     }
   }
 
   onSeasonChange(seasonId: string) {
-    // Only load roster if the season actually changed
-    if (this.selectedSeasonId === seasonId) {
+    // Validate seasonId
+    if (!seasonId || seasonId === '') {
+      console.log('Season change: Invalid season ID');
       return;
     }
     
-    this.selectedSeasonId = seasonId;
-    if (this.backendClub) {
+    // Note: selectedSeasonId is already updated by ngModel binding before this method is called
+    console.log('Season change triggered, loading data for season:', seasonId);
+    
+    // Load data for the selected season
+    if (this.backendClub && seasonId) {
       this.ngrxApiService.loadClubRoster(this.backendClub._id, seasonId);
       // Load optimized stats and matches for this season
       this.loadOptimizedClubData(this.backendClub._id, seasonId);
@@ -557,11 +577,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     // Set up roster subscription for the new club
     this.setupRosterSubscription();
     
-    // Reset season selection for the new club
-    this.selectedSeasonId = '';
-    
-    // Trigger season selection now that we have the club data
-    this.selectSeasonForClub();
+        // Reset season selection for the new club
+        this.selectedSeasonId = '';
+        this.cachedClubSeasons = [];
+        
+        // Trigger season selection now that we have the club data
+        this.selectSeasonForClub();
   }
 
   private processAdditionalData(matches: any[], roster: any[]) {
@@ -689,6 +710,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.playoffSkaterStats = [];
     this.playoffGoalieStats = [];
     this.selectedSeasonId = '';
+    this.cachedClubSeasons = [];
     this.currentClubId = '';
     this.loading = false;
     
@@ -949,14 +971,15 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     event.target.src = '/assets/images/square-default.png';
   }
 
-  getClubSeasons(club: any): any[] {
-    if (!club || !club.seasons || !this.seasons) {
-      console.log('ClubDetail: No club, club seasons, or all seasons available');
-      return [];
+  // Update cached club seasons when club or seasons change
+  private updateCachedClubSeasons() {
+    if (!this.backendClub || !this.backendClub.seasons || !this.seasons || this.seasons.length === 0) {
+      this.cachedClubSeasons = [];
+      return;
     }
     
     // Extract season IDs from club seasons, handling both object and string formats
-    const clubSeasonIds = club.seasons.map((clubSeason: any) => {
+    const clubSeasonIds = this.backendClub.seasons.map((clubSeason: any) => {
       // Handle both object and string seasonId formats
       return typeof clubSeason.seasonId === 'object' && clubSeason.seasonId._id 
         ? clubSeason.seasonId._id 
@@ -971,9 +994,42 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       clubSeasonIds.includes(season._id)
     );
     
-    console.log('ClubDetail: Filtered seasons for club:', filteredSeasons.map(s => ({ id: s._id, name: s.name })));
+    // Sort seasons by endDate in descending order (newest first) - matching other components
+    const sortedSeasons = [...filteredSeasons].sort((a, b) => {
+      let dateA = 0;
+      let dateB = 0;
+      
+      if (a.endDate) {
+        if (a.endDate instanceof Date) {
+          dateA = a.endDate.getTime();
+        } else if (typeof a.endDate === 'string') {
+          dateA = new Date(a.endDate).getTime();
+        }
+      }
+      
+      if (b.endDate) {
+        if (b.endDate instanceof Date) {
+          dateB = b.endDate.getTime();
+        } else if (typeof b.endDate === 'string') {
+          dateB = new Date(b.endDate).getTime();
+        }
+      }
+      
+      // Handle invalid dates
+      if (isNaN(dateA)) dateA = 0;
+      if (isNaN(dateB)) dateB = 0;
+      
+      return dateB - dateA; // Descending order (newest first)
+    });
     
-    return filteredSeasons;
+    console.log('ClubDetail: Filtered and sorted seasons for club:', sortedSeasons.map(s => ({ id: s._id, name: s.name })));
+    
+    this.cachedClubSeasons = sortedSeasons;
+  }
+
+  getClubSeasons(club: any): any[] {
+    // Return cached seasons instead of recalculating on every change detection
+    return this.cachedClubSeasons;
   }
 
   getSelectedSeasonDivision(): any {
