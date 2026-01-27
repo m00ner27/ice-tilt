@@ -12,6 +12,7 @@ import { MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { LoggerService } from '../shared/services/logger.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FullPageAdComponent } from '../components/adsense/fullpage-ad.component';
 
 // Import selectors
 import * as SeasonsSelectors from '../store/seasons.selectors';
@@ -98,7 +99,7 @@ interface DivisionStandings {
 @Component({
   selector: 'app-standings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent, FullPageAdComponent],
   templateUrl: './standings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -131,6 +132,18 @@ export class StandingsComponent implements OnInit, OnDestroy {
     adFormat: 'auto',
     responsive: true,
     className: 'banner-ad'
+  };
+  
+  rectangleAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'rectangle',
+    adStyle: {
+      display: 'block',
+      width: '300px',
+      height: '250px'
+    },
+    responsive: true,
+    className: 'rectangle-ad'
   };
 
   constructor(

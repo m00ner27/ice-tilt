@@ -37,8 +37,13 @@
       </div>
     </div>
 
+    <!-- Rectangle Ad between filters and stats tables -->
+    <div class="flex justify-center my-5">
+      <app-adsense [config]="rectangleAdConfig"></app-adsense>
+    </div>
+
     <!-- Stats Tables per Division -->
-    <div *ngFor="let group of filteredGroupedStats" class="division-group">
+    <div *ngFor="let group of filteredGroupedStats; let divIndex = index" class="division-group">
       <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
         <img *ngIf="group.divisionData?.logoUrl" [src]="getImageUrl(group.divisionData?.logoUrl)" [alt]="group.division + ' logo'" class="division-logo" (error)="onImageError($event)">
         {{ group.division }}
@@ -80,6 +85,11 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      
+      <!-- Banner Ad after first division -->
+      <div *ngIf="divIndex === 0" class="my-5">
+        <app-adsense [config]="bannerAdConfig"></app-adsense>
       </div>
     </div>
 

@@ -123,6 +123,18 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     className: 'banner-ad'
   };
   
+  rectangleAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'rectangle',
+    adStyle: {
+      display: 'block',
+      width: '300px',
+      height: '250px'
+    },
+    responsive: true,
+    className: 'rectangle-ad'
+  };
+  
   // Subscription management
   private dataSubscription?: Subscription;
   private destroy$ = new Subject<void>();

@@ -1,6 +1,9 @@
 <div class="match-detail-container" *ngIf="match">
   <button class="back-button" (click)="goBack()">← Back</button>
   
+  <!-- Banner Ad at Top -->
+  <app-adsense [config]="bannerAdConfig"></app-adsense>
+  
   <div class="match-header">
     <div class="match-date">{{ formatDate(match.date) }}</div>
     <div class="match-clubs">
@@ -149,6 +152,11 @@
         </tbody>
         </table>
       </div>
+    </div>
+    
+    <!-- Rectangle Ad between home and away team stats -->
+    <div class="flex justify-center my-5">
+      <app-adsense [config]="rectangleAdConfig"></app-adsense>
     </div>
     
     <!-- Away Club Statistics -->

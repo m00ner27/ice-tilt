@@ -24,7 +24,8 @@ export const seasonsReducer = createReducer(
   on(SeasonsActions.loadSeasonsSuccess, (state, { seasons }) => {
     // Sort seasons by endDate in descending order (newest first) - matching player-stats component
     // Handle both Date objects and string dates from API
-    const sortedSeasons = (seasons || []).sort((a, b) => {
+    // Create a new array before sorting to avoid mutating read-only state
+    const sortedSeasons = [...(seasons || [])].sort((a, b) => {
       let dateA = 0;
       let dateB = 0;
       

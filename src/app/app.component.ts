@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService, User } from '@auth0/auth0-angular';
-import { RouterModule, RouterOutlet, Router } from '@angular/router';
+import { RouterModule, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NavigationComponent } from './navigation/navigation.component';
 import { ScheduleBarComponent } from './schedule-bar/schedule-bar.component';
+import { HeaderAdComponent } from './components/adsense/header-ad.component';
+import { FooterAdComponent } from './components/adsense/footer-ad.component';
 import { Store } from '@ngrx/store';
 import * as UsersActions from './store/users.actions';
 import { combineLatest, filter } from 'rxjs';
@@ -16,13 +18,16 @@ import { PerformanceService } from './shared/services/performance.service';
     RouterModule,
     RouterOutlet,
     NavigationComponent,
-    ScheduleBarComponent
+    ScheduleBarComponent,
+    HeaderAdComponent,
+    FooterAdComponent
   ],
 })
 export class AppComponent implements OnInit {
   isLoading = true;
   isLoggedIn = false;
   userProfile: User | undefined | null = null;
+  showAds = true; // Control ad visibility based on route
 
   constructor(
     private auth: AuthService,
@@ -38,6 +43,14 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.performanceService.mark('app-init-end');
     this.performanceService.measure('app-initialization', 'app-init-start', 'app-init-end');
+    
+    // Check route to determine if ads should be shown
+    this.checkRouteForAds();
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.checkRouteForAds();
+      }
+    });
     
     // Wait for a stable authenticated state, then perform a single sync
     this.performanceService.mark('auth-check-start');
@@ -78,5 +91,15 @@ export class AppComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  private checkRouteForAds(): void {
+    const url = this.router.url;
+    // Hide ads on admin pages, profile pages, inbox, and test pages
+    this.showAds = !url.startsWith('/admin') && 
+                   !url.startsWith('/profile') && 
+                   !url.startsWith('/edit-profile') &&
+                   !url.startsWith('/inbox') &&
+                   !url.startsWith('/test');
   }
 }

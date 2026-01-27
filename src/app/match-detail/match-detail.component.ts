@@ -8,6 +8,7 @@ import { take } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
@@ -61,7 +62,7 @@ interface PlayerStatDisplay {
 @Component({
   selector: 'app-match-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AdSenseComponent],
   templateUrl: './match-detail.component.html',
   styleUrls: ['./match-detail.component.css']
 })
@@ -81,6 +82,26 @@ export class MatchDetailComponent implements OnInit, OnDestroy {
   awayTeamGoalies: PlayerStatDisplay[] = [];
   isMergedGame: boolean = false;
   noStatsMessage: string = '';
+  
+  // AdSense configuration
+  bannerAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad'
+  };
+  
+  rectangleAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'rectangle',
+    adStyle: {
+      display: 'block',
+      width: '300px',
+      height: '250px'
+    },
+    responsive: true,
+    className: 'rectangle-ad'
+  };
   
   // Subscription management
   private routeParamsSubscription?: Subscription;

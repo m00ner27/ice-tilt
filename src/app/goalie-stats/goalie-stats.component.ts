@@ -88,6 +88,18 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
     className: 'banner-ad'
   };
   
+  rectangleAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'rectangle',
+    adStyle: {
+      display: 'block',
+      width: '300px',
+      height: '250px'
+    },
+    responsive: true,
+    className: 'rectangle-ad'
+  };
+  
   constructor(
     private matchService: MatchService,
     private apiService: ApiService,

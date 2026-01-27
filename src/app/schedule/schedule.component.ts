@@ -9,6 +9,7 @@ import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FullPageAdComponent } from '../components/adsense/fullpage-ad.component';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
@@ -21,7 +22,7 @@ import { EashlMatch } from '../store/services/match.service';
 @Component({
   selector: 'app-schedule',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, AdSenseComponent],
+  imports: [CommonModule, RouterModule, FormsModule, AdSenseComponent, FullPageAdComponent],
   templateUrl: './schedule.component.html'
 })
 export class ScheduleComponent implements OnInit, OnDestroy {

@@ -1,4 +1,7 @@
 <div class="text-white" [class.p-3]="!isPreview" [class.sm:p-5]="!isPreview" [class.max-w-7xl]="!isPreview" [class.mx-auto]="!isPreview" [class.transactions-section]="isPreview">
+  <!-- Full-Page Ad (only on schedule page, not in preview) -->
+  <app-fullpage-ad *ngIf="!isPreview" pageType="schedule" [delaySeconds]="3"></app-fullpage-ad>
+  
   <div [class.container]="isPreview">
     <!-- AdSense Banner Ad at Top -->
     <app-adsense *ngIf="!isPreview" [config]="bannerAdConfig"></app-adsense>
