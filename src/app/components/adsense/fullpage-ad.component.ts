@@ -54,12 +54,17 @@ import { AdSenseService } from '../../services/adsense.service';
     
     .fullpage-ad-content {
       position: relative;
-      max-width: 90%;
+      width: 90%;
+      max-width: 1200px;
+      min-width: 300px;
+      min-height: 400px;
       max-height: 90vh;
       background-color: #fff;
       border-radius: 8px;
       padding: 1rem;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
     }
     
     .close-button {
@@ -88,21 +93,25 @@ import { AdSenseService } from '../../services/adsense.service';
     
     .fullpage-ad-wrapper {
       width: 100%;
-      min-height: 250px;
+      flex: 1;
+      min-height: 400px;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
     
     .fullpage-ad {
       display: block;
       width: 100%;
-      min-height: 250px;
+      min-height: 400px;
+      max-width: 100%;
     }
     
     .ad-placeholder {
       width: 100%;
-      min-height: 250px;
+      flex: 1;
+      min-height: 400px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -114,8 +123,22 @@ import { AdSenseService } from '../../services/adsense.service';
     /* Mobile responsive */
     @media (max-width: 768px) {
       .fullpage-ad-content {
-        max-width: 95%;
+        width: 95%;
+        min-width: 280px;
+        min-height: 300px;
         padding: 0.5rem;
+      }
+      
+      .fullpage-ad-wrapper {
+        min-height: 300px;
+      }
+      
+      .fullpage-ad {
+        min-height: 300px;
+      }
+      
+      .ad-placeholder {
+        min-height: 300px;
       }
       
       .close-button {

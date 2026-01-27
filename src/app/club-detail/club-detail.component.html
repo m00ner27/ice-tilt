@@ -28,8 +28,13 @@
 
   <app-club-stats-grid [club]="club"></app-club-stats-grid>
 
-  <!-- AdSense Rectangle Ad -->
-  <app-adsense [config]="rectangleAdConfig"></app-adsense>
+  <!-- Banner Ads (side-by-side on desktop) -->
+  <div class="my-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <app-adsense [config]="bannerAdConfig2"></app-adsense>
+      <app-adsense [config]="bannerAdConfig2"></app-adsense>
+    </div>
+  </div>
 
   <!-- Add a loading state -->
   <div class="loading-stats" *ngIf="isProcessingStats">
@@ -56,6 +61,9 @@
       [selectedSeasonId]="selectedSeasonId">
     </app-club-roster-tables>
   </div>
+  
+  <!-- Footer Ad -->
+  <app-footer-ad></app-footer-ad>
   
   <!-- Match History Component -->
   <app-match-history [matches]="clubMatches" [teamName]="club.clubName"></app-match-history>

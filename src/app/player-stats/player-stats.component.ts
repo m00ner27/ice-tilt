@@ -10,6 +10,7 @@ import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
@@ -84,7 +85,7 @@ interface GroupedPlayerStats {
 @Component({
   selector: 'app-player-stats',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AdSenseComponent, FooterAdComponent],
   templateUrl: './player-stats.component.html',
   styleUrl: './player-stats.component.css'
 })
@@ -123,16 +124,12 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     className: 'banner-ad'
   };
   
-  rectangleAdConfig: AdSenseConfig = {
+  // Banner ads for better space utilization
+  bannerAdConfig2: AdSenseConfig = {
     adSlot: '8840984486',
-    adFormat: 'rectangle',
-    adStyle: {
-      display: 'block',
-      width: '300px',
-      height: '250px'
-    },
+    adFormat: 'auto',
     responsive: true,
-    className: 'rectangle-ad'
+    className: 'banner-ad'
   };
   
   // Subscription management

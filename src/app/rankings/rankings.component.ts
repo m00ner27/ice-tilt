@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
+import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -25,7 +26,7 @@ interface RankingEntry {
 @Component({
   selector: 'app-rankings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FooterAdComponent],
   templateUrl: './rankings.component.html',
   styleUrls: ['./rankings.component.css']
 })

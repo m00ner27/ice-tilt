@@ -22,9 +22,12 @@
     </select>
   </div>
 
-  <!-- Rectangle Ad between filter and standings -->
-  <div class="flex justify-center my-5">
-    <app-adsense [config]="rectangleAdConfig"></app-adsense>
+  <!-- Banner Ads between filter and standings (side-by-side on desktop) -->
+  <div class="my-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <app-adsense [config]="bannerAdConfig"></app-adsense>
+      <app-adsense [config]="bannerAdConfig2"></app-adsense>
+    </div>
   </div>
 
   <!-- Loading state -->
@@ -127,4 +130,7 @@
       <p>* 2 points for a win, 1 point for an overtime loss, 0 for a regulation loss</p>
     </div>
   </div>
+  
+  <!-- Footer Ad -->
+  <app-footer-ad></app-footer-ad>
 </div>

@@ -17,6 +17,7 @@ import { ClubRosterTablesComponent } from './club-roster-tables/club-roster-tabl
 import { ClubStatLegendComponent } from './club-stat-legend/club-stat-legend.component';
 import { Club } from '../store/models/models/club.interface';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 
 // Import selectors and actions
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -47,7 +48,7 @@ interface Season {
 @Component({
   selector: 'app-club-detail-simple',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatchHistoryComponent, ClubHeaderComponent, ClubStatsGridComponent, ClubRosterTablesComponent, ClubStatLegendComponent, AdSenseComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MatchHistoryComponent, ClubHeaderComponent, ClubStatsGridComponent, ClubRosterTablesComponent, ClubStatLegendComponent, AdSenseComponent, FooterAdComponent],
   templateUrl: './club-detail.component.html',
   styleUrls: ['./club-detail.component.css']
 })
@@ -98,16 +99,12 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   private isSwitchingClubs: boolean = false;
 
   // AdSense configuration
-  rectangleAdConfig: AdSenseConfig = {
-    adSlot: '8840984486', // Your actual ad unit ID
-    adFormat: 'rectangle',
-    adStyle: {
-      display: 'block',
-      width: '300px',
-      height: '250px'
-    },
+  // Banner ads for better space utilization
+  bannerAdConfig2: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
     responsive: true,
-    className: 'rectangle-ad'
+    className: 'banner-ad'
   };
 
   constructor(

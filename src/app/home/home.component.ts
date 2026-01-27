@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { EashlMatch, MatchService } from '../store/services/match.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 import { ApiService } from '../store/services/api.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -30,7 +31,7 @@ interface AggregatedPlayer {
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  imports: [CommonModule, RouterModule, AdSenseComponent]
+  imports: [CommonModule, RouterModule, AdSenseComponent, FooterAdComponent]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
@@ -60,16 +61,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     className: 'banner-ad'
   };
 
-  rectangleAdConfig: AdSenseConfig = {
-    adSlot: '8840984486', // Using same ad unit for now - you can create another later
-    adFormat: 'rectangle',
-    adStyle: {
-      display: 'block',
-      width: '300px',
-      height: '250px'
-    },
+  // Banner ads for better space utilization
+  bannerAdConfig2: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
     responsive: true,
-    className: 'rectangle-ad'
+    className: 'banner-ad'
   };
 
   constructor(

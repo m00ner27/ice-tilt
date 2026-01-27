@@ -37,9 +37,12 @@
       </div>
     </div>
 
-    <!-- Rectangle Ad between filters and stats tables -->
-    <div class="flex justify-center my-5">
-      <app-adsense [config]="rectangleAdConfig"></app-adsense>
+    <!-- Banner Ads between filters and stats tables (side-by-side on desktop) -->
+    <div class="my-5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <app-adsense [config]="bannerAdConfig"></app-adsense>
+        <app-adsense [config]="bannerAdConfig2"></app-adsense>
+      </div>
     </div>
 
     <!-- Stats Tables per Division -->
@@ -98,5 +101,8 @@
       <p>No goalie statistics available for the selected season.</p>
     </div>
   </div>
+  
+  <!-- Footer Ad -->
+  <app-footer-ad></app-footer-ad>
 </div>
   

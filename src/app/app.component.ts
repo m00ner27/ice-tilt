@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { AuthService, User } from '@auth0/auth0-angular';
 import { RouterModule, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NavigationComponent } from './navigation/navigation.component';
@@ -15,6 +16,7 @@ import { PerformanceService } from './shared/services/performance.service';
   selector: 'app-root',
   templateUrl: './app.component.html',
   imports: [
+    CommonModule,
     RouterModule,
     RouterOutlet,
     NavigationComponent,

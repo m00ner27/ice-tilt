@@ -10,6 +10,7 @@ import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { LoggerService } from '../shared/services/logger.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 
 // Import selectors
 import * as ClubsSelectors from '../store/clubs.selectors';
@@ -28,7 +29,7 @@ interface Club {
 @Component({
   selector: 'app-club-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, AdSenseComponent],
+  imports: [CommonModule, RouterModule, FormsModule, AdSenseComponent, FooterAdComponent],
   templateUrl: './club-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

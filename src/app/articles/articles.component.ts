@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 
 interface Article {
   _id: string;
@@ -20,7 +21,7 @@ interface Article {
 @Component({
   selector: 'app-articles',
   standalone: true,
-  imports: [CommonModule, RouterModule, AdSenseComponent],
+  imports: [CommonModule, RouterModule, AdSenseComponent, FooterAdComponent],
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.css'
 })

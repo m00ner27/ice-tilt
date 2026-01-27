@@ -5,11 +5,12 @@ import { Location } from '@angular/common';
 import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 
 @Component({
   selector: 'app-article',
   standalone: true,
-  imports: [CommonModule, RouterModule, AdSenseComponent],
+  imports: [CommonModule, RouterModule, AdSenseComponent, FooterAdComponent],
   templateUrl: './article.component.html'
 })
 export class ArticleComponent implements OnInit {
@@ -30,16 +31,12 @@ export class ArticleComponent implements OnInit {
     className: 'banner-ad'
   };
   
-  rectangleAdConfig: AdSenseConfig = {
+  // Banner ads for better space utilization
+  bannerAdConfig2: AdSenseConfig = {
     adSlot: '8840984486',
-    adFormat: 'rectangle',
-    adStyle: {
-      display: 'block',
-      width: '300px',
-      height: '250px'
-    },
+    adFormat: 'auto',
     responsive: true,
-    className: 'rectangle-ad'
+    className: 'banner-ad'
   };
 
   constructor(
