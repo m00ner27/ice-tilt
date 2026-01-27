@@ -1,11 +1,6 @@
 <div class="max-w-7xl mx-auto my-10 px-4">
   <h1 class="text-3xl font-bold text-white mb-8 text-center">Articles</h1>
 
-  <!-- AdSense Banner Ad -->
-  <div class="mb-8">
-    <app-adsense [config]="bannerAdConfig"></app-adsense>
-  </div>
-
   <div *ngIf="loading" class="text-center text-white py-10">
     <p>Loading articles...</p>
   </div>

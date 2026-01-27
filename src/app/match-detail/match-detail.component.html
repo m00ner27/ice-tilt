@@ -1,9 +1,6 @@
 <div class="match-detail-container" *ngIf="match">
   <button class="back-button" (click)="goBack()">← Back</button>
   
-  <!-- Banner Ad at Top -->
-  <app-adsense [config]="bannerAdConfig"></app-adsense>
-  
   <div class="match-header">
     <div class="match-date">{{ formatDate(match.date) }}</div>
     <div class="match-clubs">

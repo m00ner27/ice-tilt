@@ -3,9 +3,6 @@
   <app-fullpage-ad *ngIf="!isPreview" pageType="schedule" [delaySeconds]="3"></app-fullpage-ad>
   
   <div [class.container]="isPreview">
-    <!-- AdSense Banner Ad at Top -->
-    <app-adsense *ngIf="!isPreview" [config]="bannerAdConfig"></app-adsense>
-    
     <h1 *ngIf="!isPreview" class="text-center mb-5 text-4xl font-bold">Game Schedule</h1>
   
   <!-- Filter options -->
