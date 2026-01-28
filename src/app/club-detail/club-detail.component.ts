@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject, combineLatest } from 'rxjs';
-import { takeUntil, filter, debounceTime, take } from 'rxjs/operators';
+import { Observable, Subject, combineLatest, of } from 'rxjs';
+import { takeUntil, filter, debounceTime, take, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
@@ -71,6 +71,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   allClubs: BackendClub[] = [];
   seasons: any[] = [];
   selectedSeasonId: string = '';
+  selectedSeasonId$ = new Subject<string>(); // Reactive subject for season changes
   cachedClubSeasons: any[] = []; // Cache sorted seasons to avoid re-sorting on every change detection
   loading: boolean = false;
   error: string | null = null;
@@ -165,6 +166,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.selectedSeasonId$.complete();
   }
 
   goBack(): void {
@@ -290,6 +292,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       // Select the first season the club participates in (newest first)
       const firstClubSeason = clubSeasons[0];
       this.selectedSeasonId = firstClubSeason._id;
+      this.selectedSeasonId$.next(this.selectedSeasonId); // Emit season change
       console.log('Auto-selected season:', firstClubSeason.name, firstClubSeason._id);
       if (this.backendClub) {
         // Ensure selector points at the correct club+season key
@@ -304,6 +307,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       // Fallback to first available season if club has no seasons
       const firstSeason = this.seasons[0];
       this.selectedSeasonId = firstSeason._id;
+      this.selectedSeasonId$.next(this.selectedSeasonId); // Emit season change
       if (this.backendClub) {
         // Ensure selector points at the correct club+season key
         this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(this.backendClub._id, this.selectedSeasonId));
@@ -325,6 +329,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     
     // Note: selectedSeasonId is already updated by ngModel binding before this method is called
     console.log('Season change triggered, loading data for season:', seasonId);
+    
+    // Emit season change to reactive stream
+    this.selectedSeasonId$.next(seasonId);
     
     // Load data for the selected season
     if (this.backendClub && seasonId) {
@@ -374,20 +381,56 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Load roster and then trigger optimized data loading
-    this.clubRoster$.pipe(
+    // Create a reactive observable that combines club and season changes
+    // This ensures the roster selector updates whenever season changes
+    combineLatest([
+      this.selectedClub$,
+      this.selectedSeasonId$.pipe(startWith(this.selectedSeasonId || ''))
+    ]).pipe(
       takeUntil(this.destroy$),
-      filter(roster => roster !== null && roster !== undefined && !this.isSwitchingClubs)
+      filter(([club, seasonId]) => club !== null && seasonId !== '' && !this.isSwitchingClubs),
+      distinctUntilChanged((prev, curr) => 
+        prev[0]?._id === curr[0]?._id && prev[1] === curr[1]
+      ),
+      switchMap(([club, seasonId]) => {
+        if (!club || !seasonId) {
+          return of([]);
+        }
+        // Create a fresh selector for the current club+season combination
+        return this.store.select(ClubsSelectors.selectClubRoster(club._id, seasonId));
+      })
     ).subscribe(roster => {
       if (this.backendClub && this.selectedSeasonId) {
         console.log('Roster loaded for club:', this.backendClub.name, 'season:', this.selectedSeasonId);
         console.log('Roster array length:', roster.length);
         console.log('Roster contents:', roster);
+        
+        // Filter for players with gamertag
         this.signedPlayers = roster.filter(player => player && player.gamertag);
         console.log('Filtered signed players:', this.signedPlayers.length, 'players:', this.signedPlayers.map(p => p.gamertag || p.name || 'Unknown'));
+        
+        // Fallback: If roster is empty but we have stats with signed players, use stats to populate roster
+        if (this.signedPlayers.length === 0 && this.skaterStats.length > 0) {
+          console.log('Roster empty but stats available, extracting signed players from stats');
+          const signedFromStats = [
+            ...this.skaterStats.filter(s => s.isSigned === true),
+            ...this.goalieStats.filter(g => g.isSigned === true)
+          ];
+          // Convert stats to player-like objects for display
+          this.signedPlayers = signedFromStats.map(stat => ({
+            _id: stat.playerId,
+            gamertag: stat.name,
+            platform: 'PS5', // Default, could be enhanced
+            name: stat.name
+          }));
+          console.log('Extracted signed players from stats:', this.signedPlayers.length);
+        }
+        
         this.rosterLoaded = true;
-        // Load optimized stats and matches
-        this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
+        // Load optimized stats and matches (only if not already loaded)
+        if (!this.matchesLoaded) {
+          this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
+        }
       }
     });
 
