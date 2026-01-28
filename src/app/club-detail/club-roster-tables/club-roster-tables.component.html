@@ -21,7 +21,10 @@
             </span>
           </td>
         </tr>
-        <tr *ngIf="signedPlayers.length === 0" class="border-t border-admin-accent">
+        <tr *ngIf="rosterLoading" class="border-t border-admin-accent">
+          <td colspan="2" class="px-4 py-8 text-center text-gray-400 italic">Loading roster...</td>
+        </tr>
+        <tr *ngIf="!rosterLoading && signedPlayers.length === 0" class="border-t border-admin-accent">
           <td colspan="2" class="px-4 py-8 text-center text-gray-400 italic">No signed players</td>
         </tr>
       </tbody>

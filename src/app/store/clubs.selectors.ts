@@ -41,12 +41,26 @@ export const selectClubRosters = createSelector(
   (state: ClubsState) => state?.clubRosters || {}
 );
 
+export const selectClubRosterLoadingMap = createSelector(
+  selectClubsState,
+  (state: ClubsState) => state?.clubRosterLoading || {}
+);
+
 export const selectClubRoster = (clubId: string, seasonId?: string) => createSelector(
   selectClubRosters,
   (rosters) => {
     if (!clubId || !seasonId) return [];
     const key = `${clubId}:${seasonId}`;
     return rosters?.[key] || [];
+  }
+);
+
+export const selectClubRosterLoading = (clubId: string, seasonId?: string) => createSelector(
+  selectClubRosterLoadingMap,
+  (loadingMap) => {
+    if (!clubId || !seasonId) return false;
+    const key = `${clubId}:${seasonId}`;
+    return loadingMap?.[key] === true;
   }
 );
 

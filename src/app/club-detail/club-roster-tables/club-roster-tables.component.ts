@@ -69,6 +69,7 @@ export class ClubRosterTablesComponent {
   @Input() skaterStats: SkaterStats[] = [];
   @Input() goalieStats: GoalieStats[] = [];
   @Input() selectedSeasonId: string | null = null;
+  @Input() rosterLoading: boolean = false;
 
   getPrimaryUsername(player: Player): string {
     if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {

@@ -83,6 +83,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   clubLoaded: boolean = false;
   matchesLoaded: boolean = false;
   rosterLoaded: boolean = false;
+  rosterLoading: boolean = false;
   
   // Additional properties for template
   signedPlayers: any[] = [];
@@ -369,6 +370,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           this.currentRosterKey = `${club._id}:${seasonId}`;
           this.rosterLoaded = false;
           this.matchesLoaded = false;
+          this.rosterLoading = true;
           this.signedPlayers = [];
 
           // Kick off fetches for this club+season.
@@ -376,23 +378,28 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           this.loadOptimizedClubData(club._id, seasonId);
         }),
         switchMap(([club, seasonId]) =>
-          this.store.select(ClubsSelectors.selectClubRoster(club._id, seasonId)).pipe(
-            map((roster) => ({
+          combineLatest([
+            this.store.select(ClubsSelectors.selectClubRoster(club._id, seasonId)),
+            this.store.select(ClubsSelectors.selectClubRosterLoading(club._id, seasonId))
+          ]).pipe(
+            map(([roster, loading]) => ({
               clubId: club._id,
               seasonId,
-              roster
+              roster,
+              loading
             }))
           )
         )
       )
-      .subscribe(({ clubId, seasonId, roster }) => {
+      .subscribe(({ clubId, seasonId, roster, loading }) => {
         const key = `${clubId}:${seasonId}`;
         if (key !== this.currentRosterKey) {
           // Ignore late emissions from a previous club/season.
           return;
         }
 
-        console.log('Roster loaded for key:', key, 'len:', roster.length);
+        this.rosterLoading = loading === true;
+        console.log('Roster loaded for key:', key, 'len:', roster.length, 'loading:', this.rosterLoading);
 
         // Filter for players with gamertag
         this.signedPlayers = (roster || []).filter((player) => player && player.gamertag);
@@ -411,7 +418,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
           }));
         }
 
-        this.rosterLoaded = true;
+        // Mark loaded only once the request has completed (loading=false). This prevents
+        // the initial empty selector emission from being treated as a real "no players" state.
+        this.rosterLoaded = this.rosterLoading === false;
         this.cdr.detectChanges();
       });
 

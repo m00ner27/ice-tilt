@@ -7,6 +7,8 @@ export interface ClubsState {
   selectedClub: Club | null;
   // Keyed by `${clubId}:${seasonId}` so roster data can't bleed across seasons
   clubRosters: { [clubSeasonKey: string]: any[] };
+  // Keyed by `${clubId}:${seasonId}` so loading state can't bleed across seasons
+  clubRosterLoading: { [clubSeasonKey: string]: boolean };
   globalRosters: { [clubId: string]: any[] };
   loading: boolean;
   error: any;
@@ -18,6 +20,7 @@ export const initialState: ClubsState = {
   clubs: [],
   selectedClub: null,
   clubRosters: {},
+  clubRosterLoading: {},
   globalRosters: {},
   loading: false,
   error: null,
@@ -115,16 +118,20 @@ export const clubsReducer = createReducer(
   })),
 
   // Club Roster
-  on(ClubsActions.loadClubRoster, (state) => ({ ...state, loading: true, error: null })),
+  on(ClubsActions.loadClubRoster, (state, { clubId, seasonId }) => ({
+    ...state,
+    clubRosterLoading: { ...state.clubRosterLoading, [`${clubId}:${seasonId}`]: true },
+    error: null
+  })),
   on(ClubsActions.loadClubRosterSuccess, (state, { clubId, seasonId, roster }) => ({ 
     ...state, 
     clubRosters: { ...state.clubRosters, [`${clubId}:${seasonId}`]: roster },
-    loading: false, 
+    clubRosterLoading: { ...state.clubRosterLoading, [`${clubId}:${seasonId}`]: false },
     error: null 
   })),
   on(ClubsActions.loadClubRosterFailure, (state, { error }) => ({ 
     ...state, 
-    loading: false, 
+    // We don't have clubId/seasonId in the failure action, so we can only clear global error state.
     error 
   })),
 
@@ -187,12 +194,18 @@ export const clubsReducer = createReducer(
   on(ClubsActions.clearClubRoster, (state, { clubId }) => {
     // Clear all season rosters for a club (keys are `${clubId}:${seasonId}`)
     const newClubRosters = { ...state.clubRosters };
+    const newClubRosterLoading = { ...state.clubRosterLoading };
     Object.keys(newClubRosters).forEach((key) => {
       if (key.startsWith(`${clubId}:`)) {
         delete newClubRosters[key];
       }
     });
-    return { ...state, clubRosters: newClubRosters };
+    Object.keys(newClubRosterLoading).forEach((key) => {
+      if (key.startsWith(`${clubId}:`)) {
+        delete newClubRosterLoading[key];
+      }
+    });
+    return { ...state, clubRosters: newClubRosters, clubRosterLoading: newClubRosterLoading };
   }),
-  on(ClubsActions.clearAllRosters, (state) => ({ ...state, clubRosters: {}, globalRosters: {} }))
+  on(ClubsActions.clearAllRosters, (state) => ({ ...state, clubRosters: {}, clubRosterLoading: {}, globalRosters: {} }))
 );
