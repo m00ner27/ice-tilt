@@ -33,7 +33,7 @@ export const deleteClubFailure = createAction('[Clubs] Delete Club Failure', pro
 
 // Club Roster Actions
 export const loadClubRoster = createAction('[Clubs] Load Club Roster', props<{ clubId: string; seasonId: string }>());
-export const loadClubRosterSuccess = createAction('[Clubs] Load Club Roster Success', props<{ clubId: string; roster: any[] }>());
+export const loadClubRosterSuccess = createAction('[Clubs] Load Club Roster Success', props<{ clubId: string; seasonId: string; roster: any[] }>());
 export const loadClubRosterFailure = createAction('[Clubs] Load Club Roster Failure', props<{ error: any }>());
 
 export const loadClubGlobalRoster = createAction('[Clubs] Load Club Global Roster', props<{ clubId: string }>());

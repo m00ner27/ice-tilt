@@ -41,9 +41,13 @@ export const selectClubRosters = createSelector(
   (state: ClubsState) => state?.clubRosters || {}
 );
 
-export const selectClubRoster = (clubId: string) => createSelector(
+export const selectClubRoster = (clubId: string, seasonId?: string) => createSelector(
   selectClubRosters,
-  (rosters) => rosters?.[clubId] || []
+  (rosters) => {
+    if (!clubId || !seasonId) return [];
+    const key = `${clubId}:${seasonId}`;
+    return rosters?.[key] || [];
+  }
 );
 
 export const selectGlobalRosters = createSelector(
@@ -78,8 +82,8 @@ export const selectClubByName = (clubName: string) => createSelector(
 );
 
 // Roster-related computed selectors
-export const selectClubRosterCount = (clubId: string) => createSelector(
-  selectClubRoster(clubId),
+export const selectClubRosterCount = (clubId: string, seasonId: string) => createSelector(
+  selectClubRoster(clubId, seasonId),
   (roster) => roster.length
 );
 

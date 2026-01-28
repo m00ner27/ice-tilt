@@ -258,7 +258,7 @@ export class ClubDetailComponent implements OnInit, OnDestroy {
   ) {
     // Initialize selectors
     this.selectedClub$ = this.store.select(ClubsSelectors.selectSelectedClub);
-    this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(''));
+    this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster('', ''));
     this.allClubs$ = this.store.select(ClubsSelectors.selectAllClubs);
     this.matches$ = this.store.select(MatchesSelectors.selectAllMatches);
     this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);

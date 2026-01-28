@@ -24,18 +24,22 @@ export class MatchHistoryComponent {
     private imageUrlService: ImageUrlService
   ) { }
   
-  // Get reversed matches (most recent first)
-  get reversedMatches(): EashlMatch[] {
-    // Create a copy and reverse it to show most recent matches first
-    return [...this.matches].reverse();
+  // Get sorted matches (most recent first)
+  get sortedMatches(): EashlMatch[] {
+    // Create a copy and sort by date (newest first)
+    return [...this.matches].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA; // Descending order (newest first)
+    });
   }
   
   // Get paginated matches
   get paginatedMatches(): EashlMatch[] {
-    const reversed = this.reversedMatches;
+    const sorted = this.sortedMatches;
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    return reversed.slice(startIndex, endIndex);
+    return sorted.slice(startIndex, endIndex);
   }
   
   // Get total number of pages

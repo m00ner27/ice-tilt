@@ -81,7 +81,7 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
     this.selectedClub$ = this.store.select(selectSelectedClub);
     this.loading$ = this.store.select(selectUsersLoading);
     this.error$ = this.store.select(selectUsersError);
-    this.rosterPlayers$ = this.store.select(selectClubRoster(''));
+    this.rosterPlayers$ = this.store.select(selectClubRoster('', ''));
   }
 
   ngOnInit(): void {
@@ -152,6 +152,8 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
     
     this.managerState.selectedClub = null;
     this.managerState.selectedClubId = '';
+    // Clear roster view when switching seasons
+    this.rosterPlayers$ = this.store.select(selectClubRoster('', ''));
     
     if (this.managerState.selectedSeason) {
       this.store.dispatch(ClubsActions.loadClubsBySeason({ seasonId: this.managerState.selectedSeason }));
@@ -167,12 +169,18 @@ export class ManagerViewComponent implements OnInit, OnDestroy {
     
     if (this.managerState.selectedClubId) {
       this.store.dispatch(ClubsActions.loadClub({ clubId: this.managerState.selectedClubId }));
-      // Update roster observable for the selected club
-      this.rosterPlayers$ = this.store.select(selectClubRoster(this.managerState.selectedClubId));
+      if (this.managerState.selectedSeason) {
+        // Load and select roster for the selected season to avoid cross-season bleed
+        this.store.dispatch(ClubsActions.loadClubRoster({ clubId: this.managerState.selectedClubId, seasonId: this.managerState.selectedSeason }));
+        this.rosterPlayers$ = this.store.select(selectClubRoster(this.managerState.selectedClubId, this.managerState.selectedSeason));
+      } else {
+        // No season selected yet; show empty roster
+        this.rosterPlayers$ = this.store.select(selectClubRoster('', ''));
+      }
     } else {
       this.managerState.selectedClub = null;
       // Reset roster observable
-      this.rosterPlayers$ = this.store.select(selectClubRoster(''));
+      this.rosterPlayers$ = this.store.select(selectClubRoster('', ''));
     }
   }
 

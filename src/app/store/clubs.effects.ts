@@ -107,7 +107,7 @@ export class ClubsEffects {
         ofType(ClubsActions.loadClubRoster),
         mergeMap(({ clubId, seasonId }) =>
           this.apiService.getClubRoster(clubId, seasonId).pipe(
-            map(roster => ClubsActions.loadClubRosterSuccess({ clubId, roster })),
+            map(roster => ClubsActions.loadClubRosterSuccess({ clubId, seasonId, roster })),
             catchError(error => of(ClubsActions.loadClubRosterFailure({ error })))
           )
         )

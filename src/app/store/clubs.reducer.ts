@@ -5,7 +5,8 @@ import * as ClubsActions from './clubs.actions';
 export interface ClubsState {
   clubs: Club[];
   selectedClub: Club | null;
-  clubRosters: { [clubId: string]: any[] };
+  // Keyed by `${clubId}:${seasonId}` so roster data can't bleed across seasons
+  clubRosters: { [clubSeasonKey: string]: any[] };
   globalRosters: { [clubId: string]: any[] };
   loading: boolean;
   error: any;
@@ -115,9 +116,9 @@ export const clubsReducer = createReducer(
 
   // Club Roster
   on(ClubsActions.loadClubRoster, (state) => ({ ...state, loading: true, error: null })),
-  on(ClubsActions.loadClubRosterSuccess, (state, { clubId, roster }) => ({ 
+  on(ClubsActions.loadClubRosterSuccess, (state, { clubId, seasonId, roster }) => ({ 
     ...state, 
-    clubRosters: { ...state.clubRosters, [clubId]: roster },
+    clubRosters: { ...state.clubRosters, [`${clubId}:${seasonId}`]: roster },
     loading: false, 
     error: null 
   })),
@@ -184,8 +185,13 @@ export const clubsReducer = createReducer(
   on(ClubsActions.clearClubs, (state) => ({ ...state, clubs: [], selectedClub: null })),
   on(ClubsActions.clearSelectedClub, (state) => ({ ...state, selectedClub: null })),
   on(ClubsActions.clearClubRoster, (state, { clubId }) => {
+    // Clear all season rosters for a club (keys are `${clubId}:${seasonId}`)
     const newClubRosters = { ...state.clubRosters };
-    delete newClubRosters[clubId];
+    Object.keys(newClubRosters).forEach((key) => {
+      if (key.startsWith(`${clubId}:`)) {
+        delete newClubRosters[key];
+      }
+    });
     return { ...state, clubRosters: newClubRosters };
   }),
   on(ClubsActions.clearAllRosters, (state) => ({ ...state, clubRosters: {}, globalRosters: {} }))

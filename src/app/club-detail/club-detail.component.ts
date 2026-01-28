@@ -124,7 +124,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.seasons$ = this.store.select(SeasonsSelectors.selectAllSeasons);
     this.clubsLoading$ = this.store.select(ClubsSelectors.selectClubsLoading);
     this.clubsError$ = this.store.select(ClubsSelectors.selectClubsError);
-    this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(''));
+    this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster('', ''));
   }
 
   ngOnInit(): void {
@@ -203,8 +203,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Update cached club seasons when club changes
         this.updateCachedClubSeasons();
         
-        // Update club roster selector for the new club
-        this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(club._id));
+        // Update club roster selector for the new club (season will be set shortly)
+        this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(club._id, this.selectedSeasonId));
         
         // Set up roster subscription for the new club
         this.setupRosterSubscription();
@@ -258,8 +258,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.error = null;
     this.currentClubId = clubId;
     
-    // Update the club roster selector with the current club ID
-    this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(clubId));
+    // Update the club roster selector with the current club ID (season will be selected next)
+    this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(clubId, this.selectedSeasonId));
     
     // Load only essential data first - just the specific club
     this.ngrxApiService.loadClub(clubId);
@@ -292,6 +292,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       this.selectedSeasonId = firstClubSeason._id;
       console.log('Auto-selected season:', firstClubSeason.name, firstClubSeason._id);
       if (this.backendClub) {
+        // Ensure selector points at the correct club+season key
+        this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(this.backendClub._id, this.selectedSeasonId));
         this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
         // Load optimized data for auto-selected season
         this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
@@ -303,6 +305,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       const firstSeason = this.seasons[0];
       this.selectedSeasonId = firstSeason._id;
       if (this.backendClub) {
+        // Ensure selector points at the correct club+season key
+        this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(this.backendClub._id, this.selectedSeasonId));
         this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
         // Load optimized data for auto-selected season
         this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
@@ -324,6 +328,8 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     
     // Load data for the selected season
     if (this.backendClub && seasonId) {
+      // Point selector at the correct roster for this season
+      this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(this.backendClub._id, seasonId));
       this.ngrxApiService.loadClubRoster(this.backendClub._id, seasonId);
       // Load optimized stats and matches for this season
       this.loadOptimizedClubData(this.backendClub._id, seasonId);
