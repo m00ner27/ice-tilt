@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject, combineLatest, of } from 'rxjs';
-import { takeUntil, filter, debounceTime, take, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
+import { Observable, Subject, BehaviorSubject, combineLatest, of } from 'rxjs';
+import { takeUntil, filter, debounceTime, take, distinctUntilChanged, switchMap, tap, map } from 'rxjs/operators';
 import { AppState } from '../store';
 import { NgRxApiService } from '../store/services/ngrx-api.service';
 import { ApiService } from '../store/services/api.service';
@@ -71,11 +71,13 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
   allClubs: BackendClub[] = [];
   seasons: any[] = [];
   selectedSeasonId: string = '';
-  selectedSeasonId$ = new Subject<string>(); // Reactive subject for season changes
+  // Keep the latest seasonId available to new subscribers and avoid missing the initial value.
+  private selectedSeasonId$ = new BehaviorSubject<string>(''); // Reactive subject for season changes
   cachedClubSeasons: any[] = []; // Cache sorted seasons to avoid re-sorting on every change detection
   loading: boolean = false;
   error: string | null = null;
   currentClubId: string = '';
+  private currentRosterKey: string = '';
   
   // Progressive loading states
   clubLoaded: boolean = false;
@@ -153,6 +155,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     });
     
     this.setupDataSubscriptions();
+    this.setupCombinedDataSubscription();
     
     // Listen for storage events (when players are added/removed from other components)
     window.addEventListener('storage', (event) => {
@@ -205,17 +208,9 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
         // Update cached club seasons when club changes
         this.updateCachedClubSeasons();
         
-        // Update club roster selector for the new club (season will be set shortly)
-        this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(club._id, this.selectedSeasonId));
-        
-        // Set up roster subscription for the new club
-        this.setupRosterSubscription();
-        
         // Reset season selection for the new club
         this.selectedSeasonId = '';
-        
-        // Set up combined observable to wait for roster data
-        this.setupCombinedDataSubscription();
+        this.selectedSeasonId$.next('');
         
         // Trigger season selection now that we have the club data
         this.selectSeasonForClub();
@@ -251,8 +246,7 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       this.error = error;
     });
 
-    // Subscribe to club roster data - this will be updated when club changes
-    this.setupRosterSubscription();
+    // Subscribe to club roster data - handled by combined subscription (clubId + seasonId keyed)
   }
 
   private loadClubData(clubId: string) {
@@ -294,13 +288,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       this.selectedSeasonId = firstClubSeason._id;
       this.selectedSeasonId$.next(this.selectedSeasonId); // Emit season change
       console.log('Auto-selected season:', firstClubSeason.name, firstClubSeason._id);
-      if (this.backendClub) {
-        // Ensure selector points at the correct club+season key
-        this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(this.backendClub._id, this.selectedSeasonId));
-        this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
-        // Load optimized data for auto-selected season
-        this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
-      }
       // Force change detection to update dropdown
       this.cdr.detectChanges();
     } else if (this.seasons && this.seasons.length > 0) {
@@ -308,13 +295,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       const firstSeason = this.seasons[0];
       this.selectedSeasonId = firstSeason._id;
       this.selectedSeasonId$.next(this.selectedSeasonId); // Emit season change
-      if (this.backendClub) {
-        // Ensure selector points at the correct club+season key
-        this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(this.backendClub._id, this.selectedSeasonId));
-        this.ngrxApiService.loadClubRoster(this.backendClub._id, this.selectedSeasonId);
-        // Load optimized data for auto-selected season
-        this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
-      }
       // Force change detection to update dropdown
       this.cdr.detectChanges();
     }
@@ -332,15 +312,6 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     
     // Emit season change to reactive stream
     this.selectedSeasonId$.next(seasonId);
-    
-    // Load data for the selected season
-    if (this.backendClub && seasonId) {
-      // Point selector at the correct roster for this season
-      this.clubRoster$ = this.store.select(ClubsSelectors.selectClubRoster(this.backendClub._id, seasonId));
-      this.ngrxApiService.loadClubRoster(this.backendClub._id, seasonId);
-      // Load optimized stats and matches for this season
-      this.loadOptimizedClubData(this.backendClub._id, seasonId);
-    }
   }
 
   // Method to refresh roster data (can be called when players are added/removed)
@@ -370,69 +341,79 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
 
   private setupCombinedDataSubscription() {
     // Show club immediately when it loads
-    this.selectedClub$.pipe(
-      takeUntil(this.destroy$),
-      filter(club => club !== null && !this.isSwitchingClubs)
-    ).subscribe(club => {
-      if (club) {
+    this.selectedClub$
+      .pipe(
+        takeUntil(this.destroy$),
+        filter((club): club is Club => club !== null && !this.isSwitchingClubs)
+      )
+      .subscribe((club) => {
         console.log('Club loaded immediately:', club.name);
         this.loading = false; // Show club header immediately
         this.processClubData(club);
-      }
-    });
+      });
 
-    // Create a reactive observable that combines club and season changes
-    // This ensures the roster selector updates whenever season changes
+    // Single subscription for club+season roster + optimized data.
+    // Important: do NOT recreate this subscription on every club change (causes duplicate writers).
     combineLatest([
-      this.selectedClub$,
-      this.selectedSeasonId$.pipe(startWith(this.selectedSeasonId || ''))
-    ]).pipe(
-      takeUntil(this.destroy$),
-      filter(([club, seasonId]) => club !== null && seasonId !== '' && !this.isSwitchingClubs),
-      distinctUntilChanged((prev, curr) => 
-        prev[0]?._id === curr[0]?._id && prev[1] === curr[1]
-      ),
-      switchMap(([club, seasonId]) => {
-        if (!club || !seasonId) {
-          return of([]);
+      this.selectedClub$.pipe(filter((club): club is Club => club !== null)),
+      this.selectedSeasonId$.pipe(filter((seasonId) => !!seasonId))
+    ])
+      .pipe(
+        takeUntil(this.destroy$),
+        filter(([_, seasonId]) => seasonId !== '' && !this.isSwitchingClubs),
+        distinctUntilChanged(
+          (prev, curr) => prev[0]?._id === curr[0]?._id && prev[1] === curr[1]
+        ),
+        tap(([club, seasonId]) => {
+          // Mark we're loading a *new* key before any selector emissions land.
+          this.currentRosterKey = `${club._id}:${seasonId}`;
+          this.rosterLoaded = false;
+          this.matchesLoaded = false;
+          this.signedPlayers = [];
+
+          // Kick off fetches for this club+season.
+          this.ngrxApiService.loadClubRoster(club._id, seasonId);
+          this.loadOptimizedClubData(club._id, seasonId);
+        }),
+        switchMap(([club, seasonId]) =>
+          this.store.select(ClubsSelectors.selectClubRoster(club._id, seasonId)).pipe(
+            map((roster) => ({
+              clubId: club._id,
+              seasonId,
+              roster
+            }))
+          )
+        )
+      )
+      .subscribe(({ clubId, seasonId, roster }) => {
+        const key = `${clubId}:${seasonId}`;
+        if (key !== this.currentRosterKey) {
+          // Ignore late emissions from a previous club/season.
+          return;
         }
-        // Create a fresh selector for the current club+season combination
-        return this.store.select(ClubsSelectors.selectClubRoster(club._id, seasonId));
-      })
-    ).subscribe(roster => {
-      if (this.backendClub && this.selectedSeasonId) {
-        console.log('Roster loaded for club:', this.backendClub.name, 'season:', this.selectedSeasonId);
-        console.log('Roster array length:', roster.length);
-        console.log('Roster contents:', roster);
-        
+
+        console.log('Roster loaded for key:', key, 'len:', roster.length);
+
         // Filter for players with gamertag
-        this.signedPlayers = roster.filter(player => player && player.gamertag);
-        console.log('Filtered signed players:', this.signedPlayers.length, 'players:', this.signedPlayers.map(p => p.gamertag || p.name || 'Unknown'));
-        
-        // Fallback: If roster is empty but we have stats with signed players, use stats to populate roster
-        if (this.signedPlayers.length === 0 && this.skaterStats.length > 0) {
-          console.log('Roster empty but stats available, extracting signed players from stats');
+        this.signedPlayers = (roster || []).filter((player) => player && player.gamertag);
+
+        // Fallback: If roster is empty but we have stats with signed players, use stats.
+        if (this.signedPlayers.length === 0 && (this.skaterStats.length > 0 || this.goalieStats.length > 0)) {
           const signedFromStats = [
-            ...this.skaterStats.filter(s => s.isSigned === true),
-            ...this.goalieStats.filter(g => g.isSigned === true)
+            ...this.skaterStats.filter((s) => s.isSigned === true),
+            ...this.goalieStats.filter((g) => g.isSigned === true)
           ];
-          // Convert stats to player-like objects for display
-          this.signedPlayers = signedFromStats.map(stat => ({
+          this.signedPlayers = signedFromStats.map((stat) => ({
             _id: stat.playerId,
             gamertag: stat.name,
-            platform: 'PS5', // Default, could be enhanced
+            platform: 'PS5',
             name: stat.name
           }));
-          console.log('Extracted signed players from stats:', this.signedPlayers.length);
         }
-        
+
         this.rosterLoaded = true;
-        // Load optimized stats and matches (only if not already loaded)
-        if (!this.matchesLoaded) {
-          this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
-        }
-      }
-    });
+        this.cdr.detectChanges();
+      });
 
     // Keep old subscription as fallback for when optimized endpoint doesn't work
     // This will trigger if matches are loaded but stats are still empty
@@ -759,8 +740,10 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
     this.playoffSkaterStats = [];
     this.playoffGoalieStats = [];
     this.selectedSeasonId = '';
+    this.selectedSeasonId$.next('');
     this.cachedClubSeasons = [];
     this.currentClubId = '';
+    this.currentRosterKey = '';
     this.loading = false;
     
     // Reset loading states

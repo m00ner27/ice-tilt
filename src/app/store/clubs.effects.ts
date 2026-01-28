@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ApiService } from './services/api.service';
 import * as ClubsActions from './clubs.actions';
 
@@ -105,7 +105,9 @@ export class ClubsEffects {
     this.loadClubRoster$ = createEffect(() =>
       this.actions$.pipe(
         ofType(ClubsActions.loadClubRoster),
-        mergeMap(({ clubId, seasonId }) =>
+        // Use switchMap so rapid club/season changes cancel in-flight requests,
+        // preventing stale responses from landing after a newer navigation.
+        switchMap(({ clubId, seasonId }) =>
           this.apiService.getClubRoster(clubId, seasonId).pipe(
             map(roster => ClubsActions.loadClubRosterSuccess({ clubId, seasonId, roster })),
             catchError(error => of(ClubsActions.loadClubRosterFailure({ error })))
