@@ -380,8 +380,11 @@ export class ClubDetailSimpleComponent implements OnInit, OnDestroy {
       filter(roster => roster !== null && roster !== undefined && !this.isSwitchingClubs)
     ).subscribe(roster => {
       if (this.backendClub && this.selectedSeasonId) {
-        console.log('Roster loaded, loading optimized club data');
+        console.log('Roster loaded for club:', this.backendClub.name, 'season:', this.selectedSeasonId);
+        console.log('Roster array length:', roster.length);
+        console.log('Roster contents:', roster);
         this.signedPlayers = roster.filter(player => player && player.gamertag);
+        console.log('Filtered signed players:', this.signedPlayers.length, 'players:', this.signedPlayers.map(p => p.gamertag || p.name || 'Unknown'));
         this.rosterLoaded = true;
         // Load optimized stats and matches
         this.loadOptimizedClubData(this.backendClub._id, this.selectedSeasonId);
