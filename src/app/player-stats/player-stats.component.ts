@@ -341,7 +341,8 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
             .flatMap((g: any) => g?.stats || [])
             .map((stat: any) => ({
               ...stat,
-              position: this.formatPosition(stat.position || 'Unknown')
+              position: this.formatPosition(stat.position || 'Unknown'),
+              teamLogo: this.getImageUrl(stat.teamLogo)
             }));
 
           this.sortPlayerStats(combined, this.sortColumn, this.sortDirection);
@@ -367,7 +368,8 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
           const divisionData = this.divisions.find(d => d.name === g.division);
           const stats = (g.stats || []).map((stat: any) => ({
             ...stat,
-            position: this.formatPosition(stat.position || 'Unknown')
+            position: this.formatPosition(stat.position || 'Unknown'),
+            teamLogo: this.getImageUrl(stat.teamLogo)
           }));
           return { division: g.division, divisionData, stats };
         }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));

@@ -224,7 +224,12 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (grouped: any[]) => {
-            const combined: GoalieStats[] = (grouped || []).flatMap((g: any) => g?.stats || []);
+            const combined: GoalieStats[] = (grouped || [])
+              .flatMap((g: any) => g?.stats || [])
+              .map((stat: any) => ({
+                ...stat,
+                teamLogo: this.getImageUrl(stat.teamLogo)
+              }));
             this.sortGoalieStats(combined, this.sortColumn, this.sortDirection);
             this.groupedStats = [{ division: 'All-Time', divisionData: undefined, stats: combined }];
             this.applyDivisionFilter();
@@ -259,7 +264,11 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
               // Map server response to component expected shape
               this.groupedStats = (grouped || []).map((g: any) => {
                 const divisionData = this.divisions.find(d => d.name === g.division);
-                return { division: g.division, divisionData, stats: g.stats || [] };
+                const stats = (g.stats || []).map((stat: any) => ({
+                  ...stat,
+                  teamLogo: this.getImageUrl(stat.teamLogo)
+                }));
+                return { division: g.division, divisionData, stats };
               }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
 
               this.applyDivisionFilter();
