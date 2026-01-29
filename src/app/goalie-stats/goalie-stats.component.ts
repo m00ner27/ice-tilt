@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms'; // Import FormsModule
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 import { FooterAdComponent } from '../components/adsense/footer-ad.component';
+import { debugLog } from '../shared/utils/debug-log';
 
 interface Season {
   _id: string;
@@ -67,7 +68,7 @@ interface GroupedGoalieStats {
 })
 export class GoalieStatsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  allMatches: EashlMatch[] = [];
+  allMatches: EashlMatch[] = []; // retained for "all-seasons" legacy mode only
   allClubs: Club[] = [];
   groupedStats: GroupedGoalieStats[] = [];
   filteredGroupedStats: GroupedGoalieStats[] = [];
@@ -105,9 +106,17 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router
   ) { }
+
+  // Cached username mapping is no longer needed for server-side stats (kept for compatibility if we fall back)
+  private usernameToPlayerId = new Map<string, string>();
+  private playerIdToPrimaryUsername = new Map<string, string>();
+
+  private debug(...args: any[]) {
+    debugLog(...args);
+  }
   
   ngOnInit(): void {
-    console.log('🔍 GOALIE STATS COMPONENT INITIALIZED');
+    this.debug('🔍 GOALIE STATS COMPONENT INITIALIZED');
     
     // Read filter state from query parameters
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -133,26 +142,21 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
   loadInitialData(): void {
     this.isLoading = true;
     forkJoin({
-      matches: this.matchService.getMatches(),
       seasons: this.apiService.getSeasons(),
       clubs: this.apiService.getClubs()
     }).subscribe({
-      next: ({ matches, seasons, clubs }) => {
-        this.allMatches = matches;
+      next: ({ seasons, clubs }) => {
         this.allClubs = clubs;
         this.seasons = [...seasons].sort((a, b) => {
           const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
           const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
           return dateB - dateA;
         });
-        
-        console.log('Loaded seasons:', this.seasons.map(s => ({ id: s._id, name: s.name, start: s.startDate, end: s.endDate })));
-        console.log('Loaded matches:', this.allMatches.length);
-        console.log('Sample match dates:', this.allMatches.slice(0, 5).map(m => ({ id: m.id, date: m.date, home: m.homeTeam, away: m.awayTeam })));
+        this.debug('Loaded seasons:', this.seasons.map(s => ({ id: s._id, name: s.name, start: s.startDate, end: s.endDate })));
         
         if (this.seasons.length > 0) {
-          this.selectedSeasonId = 'all-seasons'; // Default to "All Seasons"
-          console.log('Auto-selected season: All Seasons');
+          // Default to first season unless query param already set
+          this.selectedSeasonId = this.selectedSeasonId || this.seasons[0]._id;
           this.loadStatsForSeason();
         } else {
           this.isLoading = false;
@@ -163,6 +167,8 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+
+    // No need to preload players for mapping in server-side stats mode
   }
 
   onSeasonChange(): void {
@@ -197,6 +203,10 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
     this.applyDivisionFilter();
   }
 
+  getTotalGoalies(): number {
+    return this.filteredGroupedStats.reduce((sum, group) => sum + (group.stats?.length || 0), 0);
+  }
+
   loadStatsForSeason(): void {
     if (!this.selectedSeasonId) {
       this.groupedStats = [];
@@ -204,50 +214,77 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
     }
     
     this.isLoading = true;
-    
-    // If "All Seasons" is selected, load all divisions and process all matches
+
+    // All-Time: show one combined table (not per-division), and don't load season divisions.
     if (this.selectedSeasonId === 'all-seasons') {
-      this.apiService.getDivisions().subscribe({
-        next: (divisions) => {
-          // Deduplicate divisions by _id to prevent duplicate dropdown entries
-          const deduplicatedDivisions = divisions.filter((division, index, self) => 
-            index === self.findIndex(d => d._id === division._id)
-          );
-          
-          // Sort divisions by their order field (ascending)
-          this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
-          this.filterAndAggregateStats();
-          // Don't set isLoading = false here - let aggregateGoalieStats handle it
-        },
-        error: (err) => {
-          console.error('Failed to load all divisions', err);
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }
-      });
-    } else {
-      // Load divisions for specific season
-      this.apiService.getDivisionsBySeason(this.selectedSeasonId).subscribe({
-        next: (divisions) => {
-          // Deduplicate divisions by _id to prevent duplicate dropdown entries
-          const deduplicatedDivisions = divisions.filter((division, index, self) => 
-            index === self.findIndex(d => d._id === division._id)
-          );
-          
-          // Sort divisions by their order field (ascending)
-          this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
-          this.filterAndAggregateStats();
-          // Don't set isLoading = false here - let aggregateGoalieStats handle it
-        },
-        error: (err) => {
-          console.error(`Failed to load divisions for season ${this.selectedSeasonId}`, err);
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }
-      });
+      this.divisions = [];
+      this.selectedDivisionId = 'all-divisions';
+
+      this.apiService.getGoalieStats('all-seasons', undefined, this.includePlayoffs)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (grouped: any[]) => {
+            const combined: GoalieStats[] = (grouped || []).flatMap((g: any) => g?.stats || []);
+            this.sortGoalieStats(combined, this.sortColumn, this.sortDirection);
+            this.groupedStats = [{ division: 'All-Time', divisionData: undefined, stats: combined }];
+            this.applyDivisionFilter();
+            this.isLoading = false;
+            this.cdr.markForCheck();
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            console.error('Failed to load goalie stats', err);
+            this.groupedStats = [];
+            this.filteredGroupedStats = [];
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      return;
     }
+
+    // Specific season: load divisions for dropdown + filtering
+    this.apiService.getDivisionsBySeason(this.selectedSeasonId).subscribe({
+      next: (divisions) => {
+        const deduplicatedDivisions = divisions.filter((division, index, self) =>
+          index === self.findIndex(d => d._id === division._id)
+        );
+        this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        // Server-side aggregated stats
+        this.apiService.getGoalieStats(this.selectedSeasonId as string, undefined, this.includePlayoffs)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (grouped: any[]) => {
+              // Map server response to component expected shape
+              this.groupedStats = (grouped || []).map((g: any) => {
+                const divisionData = this.divisions.find(d => d.name === g.division);
+                return { division: g.division, divisionData, stats: g.stats || [] };
+              }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
+
+              this.applyDivisionFilter();
+              this.isLoading = false;
+              this.cdr.markForCheck();
+              this.cdr.detectChanges();
+            },
+            error: (err) => {
+              console.error('Failed to load goalie stats', err);
+              this.groupedStats = [];
+              this.filteredGroupedStats = [];
+              this.isLoading = false;
+              this.cdr.detectChanges();
+            }
+          });
+      },
+      error: (err) => {
+        console.error(`Failed to load divisions for season ${this.selectedSeasonId}`, err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
+  // Legacy client-side aggregation (kept for reference; no longer used)
   filterAndAggregateStats(): void {
     if (this.selectedSeasonId === 'all-seasons') {
       console.log('Filtering goalie stats for ALL SEASONS');
@@ -375,65 +412,14 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
     this.aggregateGoalieStats(filteredMatches, teamDivisionMap);
   }
   
+  // Legacy client-side aggregation (kept for reference; no longer used)
   aggregateGoalieStats(matches: EashlMatch[], teamDivisionMap: Map<string, string>): void {
     console.log('🔍 AGGREGATE GOALIE STATS CALLED with', matches.length, 'matches');
     
-    // Fetch all players to build username-to-playerId map
-    // Add timeout to prevent hanging on mobile (15 seconds)
-    this.apiService.getAllPlayers().pipe(
-      timeout(15000),
-      catchError((error) => {
-        console.error('Error or timeout fetching players for username mapping:', error);
-        console.error('Error details:', {
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
-        console.warn('WARNING: Continuing without username mapping - stats may not be aggregated across usernames');
-        // Return empty array as fallback
-        return of([]);
-      })
-    ).subscribe({
-      next: (allPlayers) => {
-        if (!allPlayers || allPlayers.length === 0) {
-          console.warn('WARNING: getAllPlayers returned empty array, continuing with empty username map');
-          allPlayers = [];
-        }
-        // Build username-to-playerId map from all players' usernames arrays
-        const usernameToPlayerId = new Map<string, string>();
-        const playerIdToPrimaryUsername = new Map<string, string>();
-        
-        allPlayers.forEach((player: any) => {
-          const playerId = (player._id || player.id)?.toString();
-          if (!playerId) return;
-          
-          let usernames: string[] = [];
-          let primaryUsername = '';
-          
-          if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
-            usernames = player.usernames.map((u: any) => {
-              const username = typeof u === 'string' ? u : (u?.username || '');
-              return username;
-            }).filter(Boolean);
-            primaryUsername = player.usernames.find((u: any) => u?.isPrimary)?.username || 
-                             (typeof player.usernames[0] === 'string' ? player.usernames[0] : player.usernames[0]?.username) || 
-                             '';
-          } else if (player.gamertag) {
-            usernames = [player.gamertag];
-            primaryUsername = player.gamertag;
-          }
-          
-          usernames.forEach(username => {
-            if (username) {
-              usernameToPlayerId.set(username.toLowerCase().trim(), playerId);
-            }
-          });
-          
-          if (primaryUsername) {
-            playerIdToPrimaryUsername.set(playerId, primaryUsername);
-          }
-        });
-        
-        const statsMap = new Map<string, GoalieStats>(); // Key by playerId string
+    const usernameToPlayerId = this.usernameToPlayerId;
+    const playerIdToPrimaryUsername = this.playerIdToPrimaryUsername;
+
+    const statsMap = new Map<string, GoalieStats>(); // Key by playerId string
     const teamLogoMap = new Map<string, string | undefined>();
 
     console.log('Processing matches for goalie stats:', matches.length);
@@ -1117,16 +1103,44 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
         this.cdr.detectChanges();
       }, 500);
-    },
-    error: (error) => {
-      // This should rarely be called now since we're using catchError in the pipe
-      // But keep it as a safety net
-      console.error('Unexpected error in goalie stats subscription:', error);
-      this.isLoading = false;
-      this.cdr.markForCheck();
-      this.cdr.detectChanges();
-    }
-  });
+    // Note: errors are handled inline; keep a safety catch
+  }
+
+  // Legacy client-side aggregation helper (kept for reference; no longer used)
+  private buildPlayerMapping(allPlayers: any[]) {
+    this.usernameToPlayerId.clear();
+    this.playerIdToPrimaryUsername.clear();
+
+    allPlayers.forEach((player: any) => {
+      const playerId = (player._id || player.id)?.toString();
+      if (!playerId) return;
+
+      let usernames: string[] = [];
+      let primaryUsername = '';
+
+      if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+        usernames = player.usernames
+          .map((u: any) => (typeof u === 'string' ? u : (u?.username || '')))
+          .filter(Boolean);
+        primaryUsername =
+          player.usernames.find((u: any) => u?.isPrimary)?.username ||
+          (typeof player.usernames[0] === 'string' ? player.usernames[0] : player.usernames[0]?.username) ||
+          '';
+      } else if (player.gamertag) {
+        usernames = [player.gamertag];
+        primaryUsername = player.gamertag;
+      }
+
+      usernames.forEach(username => {
+        if (username) {
+          this.usernameToPlayerId.set(username.toLowerCase().trim(), playerId);
+        }
+      });
+
+      if (primaryUsername) {
+        this.playerIdToPrimaryUsername.set(playerId, primaryUsername);
+      }
+    });
   }
 
   applyDivisionFilter(): void {
@@ -1228,11 +1242,11 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
 
   // Handle image loading errors
   onImageError(event: any): void {
-    console.log('Image failed to load, URL:', event.target.src);
+    this.debug('Image failed to load, URL:', event.target.src);
     
     // Prevent infinite error loops - if we're already showing the default image, don't change it
     if (event.target.src.includes('square-default.png')) {
-      console.log('Default image also failed to load, stopping error handling');
+      this.debug('Default image also failed to load, stopping error handling');
       return;
     }
     

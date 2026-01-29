@@ -41,13 +41,18 @@ export class ScheduleBarComponent implements OnInit, OnDestroy {
   loadMatches() {
     this.isLoading = true;
     
-    // Load only matches from yesterday and today directly from API
-    this.apiService.getGames()
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - (1 * 24 * 60 * 60 * 1000));
+    const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    // Load only matches from yesterday and today (server-side filtered)
+    this.apiService.getRecentGames(yesterdayStart, todayEnd)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (games) => {
-          // Transform games to EashlMatch format and filter for yesterday/today
-          this.matches = this.transformAndFilterGames(games || []);
+          // Transform games to EashlMatch format (already date-filtered)
+          this.matches = (games || []).map(game => this.transformGameData(game));
           this.filterUpcomingMatches();
           this.isLoading = false;
         },
@@ -56,22 +61,6 @@ export class ScheduleBarComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
-  }
-
-  transformAndFilterGames(games: any[]): EashlMatch[] {
-    const now = new Date();
-    const yesterday = new Date(now.getTime() - (1 * 24 * 60 * 60 * 1000));
-    
-    // Set time boundaries for yesterday and today only
-    const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    
-    const filteredGames = games.filter(game => {
-      const gameDate = new Date(game.date);
-      return gameDate >= yesterdayStart && gameDate <= todayEnd;
-    });
-    
-    return filteredGames.map(game => this.transformGameData(game));
   }
 
   private transformGameData(game: any): EashlMatch {

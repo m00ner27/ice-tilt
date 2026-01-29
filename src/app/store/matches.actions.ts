@@ -12,7 +12,10 @@ export const loadMatchSuccess = createAction('[Matches] Load Match Success', pro
 export const loadMatchFailure = createAction('[Matches] Load Match Failure', props<{ error: any }>());
 
 // Load Matches by Season Actions
-export const loadMatchesBySeason = createAction('[Matches] Load Matches By Season', props<{ seasonId: string }>());
+export const loadMatchesBySeason = createAction(
+  '[Matches] Load Matches By Season',
+  props<{ seasonId: string; includePlayoffs?: boolean; fields?: 'schedule' | 'stats' }>()
+);
 export const loadMatchesBySeasonSuccess = createAction('[Matches] Load Matches By Season Success', props<{ matches: EashlMatch[] }>());
 export const loadMatchesBySeasonFailure = createAction('[Matches] Load Matches By Season Failure', props<{ error: any }>());
 

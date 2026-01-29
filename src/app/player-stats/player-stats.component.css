@@ -334,6 +334,16 @@
 }
 
 @media (max-width: 768px) {
+  /* On mobile, let the page handle vertical scrolling to reduce accidental horizontal drift.
+     Keep only horizontal scrolling for the wide table. */
+  .player-stats-table-container {
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
   .filters-container {
     flex-direction: column;
     align-items: stretch;

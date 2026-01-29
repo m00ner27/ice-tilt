@@ -55,8 +55,8 @@ export class MatchesEffects {
     this.loadMatchesBySeason$ = createEffect(() =>
       this.actions$.pipe(
         ofType(MatchesActions.loadMatchesBySeason),
-        mergeMap(({ seasonId }) =>
-          this.apiService.getGamesBySeason(seasonId).pipe(
+        mergeMap(({ seasonId, includePlayoffs, fields }) =>
+          this.matchService.getMatchesBySeason(seasonId, { includePlayoffs, fields }).pipe(
             map(matches => MatchesActions.loadMatchesBySeasonSuccess({ matches })),
             catchError(error => of(MatchesActions.loadMatchesBySeasonFailure({ error })))
           )

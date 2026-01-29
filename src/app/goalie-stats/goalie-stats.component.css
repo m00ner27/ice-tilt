@@ -333,6 +333,16 @@ th.goalie-name.sticky-column {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  /* On mobile, let the page handle vertical scrolling to reduce accidental horizontal drift.
+     Keep only horizontal scrolling for the wide table. */
+  .goalie-stats-table-container {
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
   .goalie-stats-table-container {
     display: block !important;
     visibility: visible !important;
@@ -372,6 +382,11 @@ th.goalie-name.sticky-column {
   .legend-item {
     flex-direction: column;
     gap: 5px;
+  }
+
+  .stats-summary {
+    margin-left: 0;
+    text-align: center;
   }
 }
 
@@ -431,6 +446,13 @@ th.goalie-name.sticky-column {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.stats-summary {
+  margin-left: auto;
+  font-weight: 600;
+  color: #3498db;
+  font-size: 1.1rem;
 }
 
 .filters-container label {

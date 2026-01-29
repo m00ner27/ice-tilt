@@ -11,6 +11,7 @@ import { ApiService } from '../store/services/api.service';
 import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 import { FooterAdComponent } from '../components/adsense/footer-ad.component';
+import { debugLog } from '../shared/utils/debug-log';
 
 // Import selectors
 import * as MatchesSelectors from '../store/matches.selectors';
@@ -135,6 +136,10 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   // Subscription management
   private dataSubscription?: Subscription;
   private destroy$ = new Subject<void>();
+
+  // Cached username mapping (avoid re-fetching all players during every aggregation)
+  private usernameToPlayerId = new Map<string, string>();
+  private playerIdToPrimaryUsername = new Map<string, string>();
   
   constructor(
     private store: Store<AppState>,
@@ -184,8 +189,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   loadInitialData(): void {
     this.isLoading = true;
     
-    // Load data using NgRx store
-    this.ngrxApiService.loadMatches();
+    // Load reference data first.
     this.ngrxApiService.loadClubs();
     this.ngrxApiService.loadSeasons();
     this.ngrxApiService.loadDivisions();
@@ -200,6 +204,8 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
         this.tournaments = [];
       }
     });
+
+    // No need to preload players mapping; stats are server-side aggregated now.
     
     // Subscribe to data changes
     this.dataSubscription = combineLatest([
@@ -226,24 +232,27 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: ({ matches, clubs, seasons, divisions, loading }) => {
         if (!loading && clubs.length > 0 && seasons.length > 0) {
-          this.isLoading = false;
-          
           if (this.seasons.length === 0) {
             this.seasons = seasons;
-            this.selectedSeasonId = seasons.length > 0 ? seasons[0]._id : null;
+            this.selectedSeasonId = this.selectedSeasonId || (seasons.length > 0 ? seasons[0]._id : null);
+
+            // Now that we know the selected season, load only that season's matches (include playoffs so the toggle can work).
+            if (this.selectedSeasonId) {
+              this.ngrxApiService.loadMatchesBySeason(this.selectedSeasonId, { includePlayoffs: true, fields: 'stats' });
+            }
             
             // Debug logging to see what divisions data we're getting
-            console.log('Raw divisions data from store:', divisions);
-            console.log('Divisions count:', divisions.length);
-            console.log('Selected season ID:', this.selectedSeasonId);
+            debugLog('Raw divisions data from store:', divisions);
+            debugLog('Divisions count:', divisions.length);
+            debugLog('Selected season ID:', this.selectedSeasonId);
             
             // Filter divisions to only show those for the selected season, then deduplicate
             const seasonDivisions = this.selectedSeasonId 
               ? divisions.filter(d => d.seasonId === this.selectedSeasonId)
               : divisions;
             
-            console.log('After season filter - Divisions count:', seasonDivisions.length);
-            console.log('After season filter - Division names:', seasonDivisions.map(d => d.name));
+            debugLog('After season filter - Divisions count:', seasonDivisions.length);
+            debugLog('After season filter - Division names:', seasonDivisions.map(d => d.name));
             
             // Deduplicate divisions by _id to prevent duplicate dropdown entries
             const deduplicatedDivisions = seasonDivisions.filter((division, index, self) => 
@@ -253,10 +262,23 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
             // Sort divisions by their order field (ascending)
             this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
             
-            console.log('After deduplication - Divisions count:', this.divisions.length);
-            console.log('After deduplication - Division names:', this.divisions.map(d => d.name));
+            debugLog('After deduplication - Divisions count:', this.divisions.length);
+            debugLog('After deduplication - Division names:', this.divisions.map(d => d.name));
             
-            this.processStats(matches, clubs, divisions);
+            // If matches aren't loaded yet, wait; stats will be fetched server-side after we finish setting up divisions.
+          }
+
+          // Initialize divisions for current season and fetch server-side stats once
+          if (this.selectedSeasonId) {
+            const seasonDivisions = divisions.filter(d => d.seasonId === this.selectedSeasonId);
+            const deduplicatedDivisions = seasonDivisions.filter((division, index, self) =>
+              index === self.findIndex(d => d._id === division._id)
+            );
+            this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            if (this.groupedStats.length === 0) {
+              this.loadStatsFromServer();
+            }
           }
         }
       },
@@ -281,7 +303,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       queryParamsHandling: 'merge'
     });
     
-    this.processStatsForCurrentSeason();
+    this.loadStatsFromServer();
   }
 
   onDivisionChange(): void {
@@ -303,38 +325,73 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     return this.filteredGroupedStats.reduce((sum, group) => sum + group.stats.length, 0);
   }
   
-  private processStatsForCurrentSeason(): void {
+  private loadStatsFromServer(): void {
     if (!this.selectedSeasonId) return;
-    
-    combineLatest([
-      this.allMatches$,
-      this.allClubs$,
-      this.divisions$
-    ]).pipe(take(1)).subscribe(([matches, clubs, divisions]) => {
-      // Filter divisions to only show those for the selected season, then deduplicate
-      const seasonDivisions = this.selectedSeasonId 
-        ? divisions.filter(d => d.seasonId === this.selectedSeasonId)
-        : divisions;
-      
-      // Deduplicate divisions by _id to prevent duplicate dropdown entries
-      const deduplicatedDivisions = seasonDivisions.filter((division, index, self) => 
-        index === self.findIndex(d => d._id === division._id)
-      );
-      
-      // Sort divisions by their order field (ascending)
-      this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
-      
-      this.processStats(matches, clubs, divisions);
+
+    this.isLoading = true;
+
+    // All-Time: flatten all division groups into one combined table
+    if (this.selectedSeasonId === 'all-seasons') {
+      this.divisions = [];
+      this.selectedDivisionId = 'all-divisions';
+
+      this.apiService.getSkaterStats('all-seasons', undefined, this.includePlayoffs).subscribe({
+        next: (grouped: any[]) => {
+          const combined: PlayerStats[] = (grouped || [])
+            .flatMap((g: any) => g?.stats || [])
+            .map((stat: any) => ({
+              ...stat,
+              position: this.formatPosition(stat.position || 'Unknown')
+            }));
+
+          this.sortPlayerStats(combined, this.sortColumn, this.sortDirection);
+          this.groupedStats = [{ division: 'All-Time', divisionData: undefined, stats: combined }];
+          this.applyDivisionFilter();
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading all-time skater stats:', error);
+          this.groupedStats = [];
+          this.filteredGroupedStats = [];
+          this.isLoading = false;
+        }
+      });
+      return;
+    }
+
+    this.apiService.getSkaterStats(this.selectedSeasonId, undefined, this.includePlayoffs).subscribe({
+      next: (grouped: any[]) => {
+        // Map server response to component expected shape and format positions
+        this.groupedStats = (grouped || []).map((g: any) => {
+          const divisionData = this.divisions.find(d => d.name === g.division);
+          const stats = (g.stats || []).map((stat: any) => ({
+            ...stat,
+            position: this.formatPosition(stat.position || 'Unknown')
+          }));
+          return { division: g.division, divisionData, stats };
+        }).sort((a, b) => (a.divisionData?.order || 0) - (b.divisionData?.order || 0));
+
+        this.applyDivisionFilter();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading skater stats:', error);
+        this.groupedStats = [];
+        this.filteredGroupedStats = [];
+        this.isLoading = false;
+      }
     });
   }
   
+  // Legacy client-side processing (kept for reference; no longer used)
   private processStats(matches: any[], clubs: Club[], divisions: Division[]): void {
     if (this.statsMode === 'tournament' && this.selectedTournamentId) {
       this.processTournamentStats(matches, clubs);
     } else if (this.selectedSeasonId) {
       this.processSpecificSeasonStats(matches, clubs, divisions);
     }
-    
     this.applyDivisionFilter();
   }
   
@@ -438,45 +495,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   private aggregatePlayerStats(matches: any[], teamDivisionMap: Map<string, string>): void {
     console.log('Aggregating player stats for', matches.length, 'matches');
     
-    // Fetch all players to build username-to-playerId map
-    this.apiService.getAllPlayers().subscribe({
-      next: (allPlayers) => {
-        // Build username-to-playerId map from all players' usernames arrays
-        const usernameToPlayerId = new Map<string, string>();
-        const playerIdToPrimaryUsername = new Map<string, string>();
-        
-        allPlayers.forEach((player: any) => {
-          const playerId = (player._id || player.id)?.toString();
-          if (!playerId) return;
-          
-          let usernames: string[] = [];
-          let primaryUsername = '';
-          
-          if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
-            usernames = player.usernames.map((u: any) => {
-              const username = typeof u === 'string' ? u : (u?.username || '');
-              return username;
-            }).filter(Boolean);
-            primaryUsername = player.usernames.find((u: any) => u?.isPrimary)?.username || 
-                             (typeof player.usernames[0] === 'string' ? player.usernames[0] : player.usernames[0]?.username) || 
-                             '';
-          } else if (player.gamertag) {
-            usernames = [player.gamertag];
-            primaryUsername = player.gamertag;
-          }
-          
-          usernames.forEach(username => {
-            if (username) {
-              usernameToPlayerId.set(username.toLowerCase().trim(), playerId);
-            }
-          });
-          
-          if (primaryUsername) {
-            playerIdToPrimaryUsername.set(playerId, primaryUsername);
-          }
-        });
-        
-        const statsMap = new Map<string, PlayerStats>(); // Key by playerId string
+    const statsMap = new Map<string, PlayerStats>(); // Key by playerId string
     const teamLogoMap = new Map<string, string | undefined>();
 
     // Create a map of team names to their logos from all matches
@@ -486,24 +505,51 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
     });
     
     matches.forEach(match => {
-          this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap, usernameToPlayerId, playerIdToPrimaryUsername);
+      this.processMatchForPlayerStats(
+        match,
+        statsMap,
+        teamLogoMap,
+        teamDivisionMap,
+        this.usernameToPlayerId,
+        this.playerIdToPrimaryUsername
+      );
     });
     
     this.finalizePlayerStats(statsMap, teamDivisionMap);
-      },
-      error: (error) => {
-        console.error('Error fetching players for username mapping:', error);
-        // Fallback to old behavior if player fetch fails
-        const statsMap = new Map<string, PlayerStats>();
-        const teamLogoMap = new Map<string, string | undefined>();
-        matches.forEach(match => {
-          if (match.homeTeam) teamLogoMap.set(match.homeTeam, this.getImageUrl(match.homeClub?.logoUrl));
-          if (match.awayTeam) teamLogoMap.set(match.awayTeam, this.getImageUrl(match.awayClub?.logoUrl));
-        });
-        matches.forEach(match => {
-          this.processMatchForPlayerStats(match, statsMap, teamLogoMap, teamDivisionMap, new Map(), new Map());
-        });
-        this.finalizePlayerStats(statsMap, teamDivisionMap);
+  }
+
+  private buildPlayerMapping(allPlayers: any[]) {
+    this.usernameToPlayerId.clear();
+    this.playerIdToPrimaryUsername.clear();
+
+    allPlayers.forEach((player: any) => {
+      const playerId = (player._id || player.id)?.toString();
+      if (!playerId) return;
+
+      let usernames: string[] = [];
+      let primaryUsername = '';
+
+      if (player.usernames && Array.isArray(player.usernames) && player.usernames.length > 0) {
+        usernames = player.usernames
+          .map((u: any) => (typeof u === 'string' ? u : (u?.username || '')))
+          .filter(Boolean);
+        primaryUsername =
+          player.usernames.find((u: any) => u?.isPrimary)?.username ||
+          (typeof player.usernames[0] === 'string' ? player.usernames[0] : player.usernames[0]?.username) ||
+          '';
+      } else if (player.gamertag) {
+        usernames = [player.gamertag];
+        primaryUsername = player.gamertag;
+      }
+
+      usernames.forEach(username => {
+        if (username) {
+          this.usernameToPlayerId.set(username.toLowerCase().trim(), playerId);
+        }
+      });
+
+      if (primaryUsername) {
+        this.playerIdToPrimaryUsername.set(playerId, primaryUsername);
       }
     });
   }
@@ -888,6 +934,9 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
         case 'faceoffsWon':
           comparison = a.faceoffsWon - b.faceoffsWon;
           break;
+        case 'faceoffsLost':
+          comparison = a.faceoffsLost - b.faceoffsLost;
+          break;
         case 'faceoffPercentage':
           comparison = a.faceoffPercentage - b.faceoffPercentage;
           break;
@@ -919,17 +968,25 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
 
   formatPosition(position: string): string {
+    if (!position) return 'Unknown';
     const positionMap: { [key: string]: string } = {
       'center': 'C',
       'leftwing': 'LW',
+      'leftw': 'LW',
       'rightwing': 'RW',
+      'rightw': 'RW',
       'defenseman': 'D',
       'defensemen': 'D',
+      'defensem': 'D',
+      'defense': 'D',
       'goaltender': 'G',
       'goalie': 'G'
     };
-    const key = position.toLowerCase().replace(/\s/g, '');
-    return positionMap[key] || position;
+    // Normalize: lowercase, remove spaces, handle camelCase (e.g., "rightWing" -> "rightwing")
+    const normalized = position
+      .toLowerCase()
+      .replace(/\s/g, '');
+    return positionMap[normalized] || position;
   }
 
   getImageUrl(logoUrl: string | undefined): string {
@@ -969,7 +1026,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       queryParamsHandling: 'merge'
     });
     
-    // Reprocess stats with the new filter setting
-    this.processStatsForCurrentSeason();
+    // Reload stats from server with the new filter setting
+    this.loadStatsFromServer();
   }
 }

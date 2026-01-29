@@ -90,8 +90,8 @@ export class NgRxApiService {
     this.store.dispatch(MatchesActions.loadMatch({ matchId }));
   }
 
-  loadMatchesBySeason(seasonId: string): void {
-    this.store.dispatch(MatchesActions.loadMatchesBySeason({ seasonId }));
+  loadMatchesBySeason(seasonId: string, opts?: { includePlayoffs?: boolean; fields?: 'schedule' | 'stats' }): void {
+    this.store.dispatch(MatchesActions.loadMatchesBySeason({ seasonId, ...opts }));
   }
 
   createMatch(matchData: any): void {

@@ -13,11 +13,12 @@
       <div class="filter-group">
         <label for="season-select">Season:</label>
         <select id="season-select" [(ngModel)]="selectedSeasonId" (ngModelChange)="onSeasonChange()">
+          <option value="all-seasons">All-Time</option>
           <option *ngFor="let season of seasons" [value]="season._id">{{ season.name }}</option>
         </select>
       </div>
       
-      <div class="filter-group">
+      <div class="filter-group" *ngIf="selectedSeasonId !== 'all-seasons'">
         <label for="division-select">Division:</label>
         <select id="division-select" [(ngModel)]="selectedDivisionId" (ngModelChange)="onDivisionChange()">
           <option value="all-divisions">All Divisions</option>
@@ -84,6 +85,7 @@
               <th [ngClass]="getColumnSortClass('passes')" (click)="onSortColumn('passes')">P</th>
               <th [ngClass]="getColumnSortClass('passPercentage')" (click)="onSortColumn('passPercentage')">P%</th>
               <th [ngClass]="getColumnSortClass('faceoffsWon')" (click)="onSortColumn('faceoffsWon')">FOW</th>
+              <th [ngClass]="getColumnSortClass('faceoffsLost')" (click)="onSortColumn('faceoffsLost')">FOL</th>
               <th [ngClass]="getColumnSortClass('faceoffPercentage')" (click)="onSortColumn('faceoffPercentage')">FO%</th>
             </tr>
           </thead>
@@ -122,6 +124,7 @@
               <td>{{ player.passes }}</td>
               <td>{{ player.passPercentage }}%</td>
               <td>{{ player.faceoffsWon }}</td>
+              <td>{{ player.faceoffsLost }}</td>
               <td>{{ player.faceoffPercentage }}%</td>
             </tr>
           </tbody>
@@ -170,6 +173,7 @@
           <span class="legend-abbr">P</span> - Passes
           <span class="legend-abbr">P%</span> - Pass Percentage
           <span class="legend-abbr">FOW</span> - Faceoffs Won
+          <span class="legend-abbr">FOL</span> - Faceoffs Lost
           <span class="legend-abbr">FO%</span> - Faceoff Percentage
         </div>
       </div>

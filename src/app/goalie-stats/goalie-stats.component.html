@@ -32,6 +32,10 @@
           Include Playoff Games
         </label>
       </div>
+
+      <div class="stats-summary">
+        <span>Total Goalies: {{ getTotalGoalies() }}</span>
+      </div>
     </div>
 
     <!-- Banner Ads between filters and stats tables (side-by-side on desktop) -->
@@ -44,7 +48,7 @@
 
     <!-- Stats Tables per Division -->
     <div *ngFor="let group of filteredGroupedStats; let divIndex = index" class="division-group">
-      <h2 *ngIf="selectedSeasonId !== 'all-seasons'" class="division-header">
+      <h2 class="division-header">
         <img *ngIf="group.divisionData?.logoUrl" [src]="getImageUrl(group.divisionData?.logoUrl)" [alt]="group.division + ' logo'" class="division-logo" (error)="onImageError($event)">
         {{ group.division }}
       </h2>

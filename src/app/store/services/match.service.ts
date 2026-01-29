@@ -451,7 +451,8 @@ export class MatchService {
       return of(this.cacheService.get(cacheKey));
     }
 
-    return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
+    // Default to a lightweight payload; stats pages should use getMatchesBySeason(..., { fields: 'stats' })
+    return this.http.get<any[]>(`${this.apiUrl}/api/games?fields=schedule`).pipe(
       map(games => {
         const transformedGames = games.map(this.transformGameData);
         // Cache for 5 minutes
@@ -461,9 +462,54 @@ export class MatchService {
     );
   }
 
+  // Fetch all matches with a specific projection mode (use sparingly; prefer getMatchesBySeason)
+  getAllMatches(opts?: { fields?: 'schedule' | 'stats' }): Observable<EashlMatch[]> {
+    const fields = opts?.fields ?? 'stats';
+    const cacheKey = `matches-all-${fields}`;
+    if (this.cacheService.has(cacheKey)) {
+      return of(this.cacheService.get(cacheKey));
+    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/api/games?fields=${encodeURIComponent(fields)}`).pipe(
+      map(games => {
+        const transformedGames = (games || []).map(this.transformGameData);
+        this.cacheService.set(cacheKey, transformedGames, 5);
+        return transformedGames;
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  getMatchesBySeason(
+    seasonId: string,
+    opts?: { includePlayoffs?: boolean; fields?: 'schedule' | 'stats' }
+  ): Observable<EashlMatch[]> {
+    const includePlayoffs = opts?.includePlayoffs === true;
+    const fields = opts?.fields ?? 'stats';
+
+    const cacheKey = `matches-season-${seasonId}-${includePlayoffs}-${fields}`;
+    if (this.cacheService.has(cacheKey)) {
+      return of(this.cacheService.get(cacheKey));
+    }
+
+    let url = `${this.apiUrl}/api/games/season/${seasonId}?fields=${encodeURIComponent(fields)}`;
+    if (includePlayoffs) {
+      url += `&includePlayoffs=true`;
+    }
+
+    return this.http.get<any[]>(url).pipe(
+      map(games => {
+        const transformedGames = (games || []).map(this.transformGameData);
+        this.cacheService.set(cacheKey, transformedGames, 5);
+        return transformedGames;
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   // Method to force refresh matches (useful after data changes)
   refreshMatches(): Observable<EashlMatch[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/api/games?fields=schedule`).pipe(
       map(games => games.map(this.transformGameData))
     );
   }

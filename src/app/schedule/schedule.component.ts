@@ -40,6 +40,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   
   // Local state for filtering/sorting
   filteredMatches: any[] = [];
+  private latestMatches: any[] = [];
   filterTeam: string = '';
   filterSeason: string = '';
   sortCriteria: 'date' | 'homeTeam' | 'awayTeam' = 'date';
@@ -97,7 +98,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     });
     
     // Load data using NgRx (only when this component is actually visited)
-    this.ngrxApiService.loadMatches();
+    // If a season filter is present, load only that season's matches; otherwise load all matches (lightweight payload).
+    if (this.filterSeason) {
+      this.ngrxApiService.loadMatchesBySeason(this.filterSeason, { includePlayoffs: true, fields: 'schedule' });
+    } else {
+      this.ngrxApiService.loadMatches();
+    }
     this.ngrxApiService.loadClubs();
     this.ngrxApiService.loadSeasons();
     
@@ -119,6 +125,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     ]).pipe(
       takeUntil(this.destroy$)
     ).subscribe(([matches, clubs, seasons]) => {
+      this.latestMatches = matches || [];
       this.allClubs = clubs;
       this.seasons = [...seasons].sort((a: any, b: any) => {
         const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
@@ -127,7 +134,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       });
       
       this.updateTeamOptions();
-      this.applyFiltersAndSort();
+      this.applyFiltersAndSort(matches);
     });
   }
 
@@ -166,8 +173,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.teamOptions = clubsInSeason.map(club => club.name).sort();
   }
 
-  applyFiltersAndSort(): void {
-    this.matches$.pipe(takeUntil(this.destroy$)).subscribe((matches: any[]) => {
+  applyFiltersAndSort(matches: any[] = this.latestMatches): void {
       console.log('=== SCHEDULE COMPONENT DEBUG ===');
       console.log('Raw matches received:', matches.length);
       console.log('Filter season:', this.filterSeason);
@@ -210,7 +216,6 @@ export class ScheduleComponent implements OnInit, OnDestroy {
       this.groupMatchesByDay();
       console.log('Final filtered matches:', this.filteredMatches.length);
       console.log('=== END SCHEDULE COMPONENT DEBUG ===');
-    });
   }
 
   groupMatchesByDay(): void {
@@ -315,7 +320,12 @@ export class ScheduleComponent implements OnInit, OnDestroy {
     this.filterSeason = seasonId;
     this.updateQueryParams();
     this.updateTeamOptions();
-    this.applyFiltersAndSort();
+
+    if (this.filterSeason) {
+      this.ngrxApiService.loadMatchesBySeason(this.filterSeason, { includePlayoffs: true, fields: 'schedule' });
+    } else {
+      this.ngrxApiService.loadMatches();
+    }
   }
 
   onSortChange(criteria: 'date' | 'homeTeam' | 'awayTeam'): void {
@@ -346,7 +356,7 @@ export class ScheduleComponent implements OnInit, OnDestroy {
   clearAllFilters(): void {
     this.filterTeam = '';
     this.filterSeason = '';
-    this.applyFiltersAndSort();
+    this.ngrxApiService.loadMatches();
   }
 
   formatDate(date: string): string {

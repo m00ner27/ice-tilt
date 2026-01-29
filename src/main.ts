@@ -64,11 +64,15 @@ bootstrapApplication(AppComponent, {
       TournamentsEffects
     ]),
     
-    // Set up NgRx DevTools
-    provideStoreDevtools({
-      maxAge: 25, // Retain last 25 states
-      logOnly: environment.production, // Only log in development
-    }),
+    // Set up NgRx DevTools (dev only)
+    ...(environment.production
+      ? []
+      : [
+          provideStoreDevtools({
+            maxAge: 25, // Retain last 25 states
+            logOnly: false,
+          }),
+        ]),
   ],
 });
 
