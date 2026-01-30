@@ -246,7 +246,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoading = true;
     this.hasError = false;
     
-    this.matchService.getMatches()
+    // Use getAllMatches with stats so eashlData.players is present for stat leaders
+    this.matchService.getAllMatches({ fields: 'stats' })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (matches) => {
