@@ -8,6 +8,7 @@ import { ApiService } from '../store/services/api.service';
 import { RosterUpdateService } from '../store/services/roster-update.service';
 import { Transaction } from '../store/models/models/transaction.interface';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-transactions',
@@ -334,11 +335,12 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       if (club.logoUrl.startsWith('assets/')) {
         return club.logoUrl; // Local asset
       }
+      const apiUrl = environment.apiUrl || 'https://ice-tilt-backend.onrender.com';
       if (club.logoUrl.startsWith('/uploads/')) {
-        return `https://ice-tilt-backend.onrender.com${club.logoUrl}`;
+        return `${apiUrl}${club.logoUrl}`;
       }
       if (club.logoUrl.match(/^\d{13}-\d+-.+\.(png|jpg|jpeg|gif)$/)) {
-        return `https://ice-tilt-backend.onrender.com/uploads/${club.logoUrl}`;
+        return `${apiUrl}/uploads/${club.logoUrl}`;
       }
       return club.logoUrl;
     }
