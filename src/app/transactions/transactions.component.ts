@@ -8,7 +8,7 @@ import { ApiService } from '../store/services/api.service';
 import { RosterUpdateService } from '../store/services/roster-update.service';
 import { Transaction } from '../store/models/models/transaction.interface';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
-import { environment } from '../../environments/environment';
+import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-transactions',
