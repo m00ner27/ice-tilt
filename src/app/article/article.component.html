@@ -40,15 +40,7 @@
           </div>
         </div>
         
-        <!-- Article body with in-content ads between every 2 paragraphs -->
-        <div class="prose prose-invert max-w-none prose-headings:text-admin-primary prose-p:text-white prose-p:mb-5 prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-ul:my-4 prose-ul:pl-6 prose-li:mb-2">
-          <ng-container *ngFor="let block of articleBodyWithAds">
-            <div *ngIf="block.type === 'content'" [innerHTML]="block.html"></div>
-            <div *ngIf="block.type === 'ad'" class="my-6">
-              <app-adsense [config]="inContentAdConfig"></app-adsense>
-            </div>
-          </ng-container>
-        </div>
+        <div [innerHTML]="articleBody" class="prose prose-invert max-w-none prose-headings:text-admin-primary prose-p:text-white prose-p:mb-5 prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-ul:my-4 prose-ul:pl-6 prose-li:mb-2"></div>
       </div>
     </div>
   </div>
