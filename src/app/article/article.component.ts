@@ -7,6 +7,8 @@ import { ImageUrlService } from '../shared/services/image-url.service';
 import { AdSenseComponent, AdSenseConfig } from '../components/adsense/adsense.component';
 import { FooterAdComponent } from '../components/adsense/footer-ad.component';
 
+export type ArticleBodyBlock = { type: 'content'; html: string } | { type: 'ad' };
+
 @Component({
   selector: 'app-article',
   standalone: true,
@@ -23,6 +25,41 @@ export class ArticleComponent implements OnInit {
   loading = true;
   error: string | null = null;
 
+  /** Body split into content blocks with ad slots between every 2 paragraphs. */
+  get articleBodyWithAds(): ArticleBodyBlock[] {
+    if (!this.articleBody?.trim()) return [];
+    const blockClosingRegex = /<\/(p|h[1-6])>/gi;
+    const parts = this.articleBody.split(blockClosingRegex);
+    const blocks: string[] = [];
+    let i = 0;
+    while (i < parts.length) {
+      const part = parts[i];
+      if (/^<\/(p|h[1-6])>$/i.test(part) || /^(p|h[1-6])$/i.test(part)) {
+        i++;
+        continue;
+      }
+      const closing = parts[i + 1];
+      if (closing && /^<\/(p|h[1-6])>$/i.test(closing)) {
+        blocks.push((part || '').trim() + closing);
+        i += 2;
+      } else {
+        if (part?.trim()) blocks.push(part.trim());
+        i++;
+      }
+    }
+    if (blocks.length === 0) {
+      return [{ type: 'content', html: this.articleBody }];
+    }
+    const result: ArticleBodyBlock[] = [];
+    blocks.forEach((html, j) => {
+      result.push({ type: 'content', html });
+      if ((j + 1) % 2 === 0 && j < blocks.length - 1) {
+        result.push({ type: 'ad' });
+      }
+    });
+    return result;
+  }
+
   // AdSense configuration
   bannerAdConfig: AdSenseConfig = {
     adSlot: '8840984486',
@@ -37,6 +74,14 @@ export class ArticleComponent implements OnInit {
     adFormat: 'auto',
     responsive: true,
     className: 'banner-ad'
+  };
+
+  // In-content ad (between paragraphs)
+  inContentAdConfig: AdSenseConfig = {
+    adSlot: '8840984486',
+    adFormat: 'auto',
+    responsive: true,
+    className: 'banner-ad in-content-ad'
   };
 
   constructor(
