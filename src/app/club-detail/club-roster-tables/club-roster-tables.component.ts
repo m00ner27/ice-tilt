@@ -53,6 +53,7 @@ interface GoalieStats {
   otLosses?: number;
   saves?: number;
   shotsAgainst?: number;
+  goalsAgainst?: number;
   savePercentage: number;
   goalsAgainstAverage: number;
   shutouts: number;

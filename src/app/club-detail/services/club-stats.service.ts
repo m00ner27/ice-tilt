@@ -1210,13 +1210,16 @@ playerStats.shutouts += (goalsAgainst === 0 && shotsAgainst > 0) ? 1 : 0;
               }
               
               if (isGoalie) {
-                const saves = playerData.saves || playerData.glsaves || 0;
-                const goalsAgainst = playerData.goalsAgainst || playerData.glga || 0;
-                // In hockey, shots against = saves + goals against (a goal is a shot on goal)
-                // Use glshots from EASHL if available, otherwise calculate from saves + goals
-                const shotsAgainst = (playerData.glshots !== undefined && playerData.glshots !== null)
-                  ? (parseInt(playerData.glshots) || 0)
-                  : ((parseInt(playerData.glsaves) || 0) + (parseInt(playerData.glga) || 0));
+                const saves = Number(playerData.saves || playerData.glsaves || 0);
+                const rawShotsAgainst = (playerData.glshots !== undefined && playerData.glshots !== null)
+                  ? (Number(playerData.glshots) || 0)
+                  : 0;
+                let goalsAgainst = Number(playerData.goalsAgainst || playerData.glga || 0);
+                if (rawShotsAgainst > 0) {
+                  const derivedGA = Math.max(0, rawShotsAgainst - saves);
+                  if (derivedGA > goalsAgainst) goalsAgainst = derivedGA;
+                }
+                const shotsAgainst = Math.max(rawShotsAgainst, saves + goalsAgainst);
                 
                 playerStats.saves += saves;
                 playerStats.shotsAgainst += shotsAgainst;
