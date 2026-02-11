@@ -268,16 +268,24 @@ export class ApiService {
     );
   }
 
-  getGames(): Observable<any[]> {
-    const cacheKey = 'games';
-    const observable = this.http.get<any[]>(`${this.apiUrl}/api/games`).pipe(
+  getGames(options?: { limit?: number; page?: number; order?: 'asc' | 'desc' }): Observable<any[]> {
+    const limit = options?.limit;
+    const page = options?.page ?? 1;
+    const order = options?.order;
+    const params = new URLSearchParams();
+    if (limit != null) params.set('limit', String(limit));
+    if (page > 1) params.set('page', String(page));
+    if (order) params.set('order', order);
+    const query = params.toString();
+    const url = `${this.apiUrl}/api/games${query ? '?' + query : ''}`;
+    const cacheKey = limit != null || order ? `games-limit-${limit ?? 200}-page-${page}-${order ?? 'asc'}` : 'games';
+    const observable = this.http.get<any[]>(url).pipe(
       catchError(error => {
         this.logger.error('=== API SERVICE: getGames Error ===', error, error.status, error.message);
         throw error;
       })
     );
-    
-    return this.cacheService.getOrFetch(cacheKey, observable, 5 * 60 * 1000); // Cache for 5 minutes (games change more frequently)
+    return this.cacheService.getOrFetch(cacheKey, observable, 5 * 60 * 1000); // Cache for 5 minutes
   }
 
   // Lightweight recent games fetch (used by ScheduleBar)
@@ -304,6 +312,7 @@ export class ApiService {
   // Cache invalidation methods
   invalidateGamesCache(): void {
     this.cacheService.invalidate('games');
+    this.cacheService.invalidatePattern('^games-');
   }
 
   invalidateClubsCache(): void {
@@ -393,12 +402,14 @@ export class ApiService {
   }
 
   // ===== Stats endpoints (server-side aggregation) =====
-  getGoalieStats(seasonId: string, divisionId?: string, includePlayoffs: boolean = false): Observable<any[]> {
-    const cacheKey = `goalie-stats-${seasonId}-${divisionId || 'all'}-${includePlayoffs}`;
+  getGoalieStats(seasonId: string, divisionId?: string, includePlayoffs: boolean = false, startDate?: string | null, endDate?: string | null): Observable<any[]> {
+    const cacheKey = `goalie-stats-${seasonId}-${divisionId || 'all'}-${includePlayoffs}-${startDate || ''}-${endDate || ''}`;
     let url = `${this.apiUrl}/api/stats/goalies?seasonId=${encodeURIComponent(seasonId)}&includePlayoffs=${includePlayoffs ? 'true' : 'false'}`;
     if (divisionId) {
       url += `&divisionId=${encodeURIComponent(divisionId)}`;
     }
+    if (startDate) url += `&startDate=${encodeURIComponent(startDate)}`;
+    if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`;
 
     const observable = this.http.get<any[]>(url).pipe(
       catchError(error => {
@@ -410,12 +421,14 @@ export class ApiService {
     return this.cacheService.getOrFetch(cacheKey, observable, 60 * 1000);
   }
 
-  getSkaterStats(seasonId: string, divisionId?: string, includePlayoffs: boolean = false): Observable<any[]> {
-    const cacheKey = `skater-stats-${seasonId}-${divisionId || 'all'}-${includePlayoffs}`;
+  getSkaterStats(seasonId: string, divisionId?: string, includePlayoffs: boolean = false, startDate?: string | null, endDate?: string | null): Observable<any[]> {
+    const cacheKey = `skater-stats-${seasonId}-${divisionId || 'all'}-${includePlayoffs}-${startDate || ''}-${endDate || ''}`;
     let url = `${this.apiUrl}/api/stats/skaters?seasonId=${encodeURIComponent(seasonId)}&includePlayoffs=${includePlayoffs ? 'true' : 'false'}`;
     if (divisionId) {
       url += `&divisionId=${encodeURIComponent(divisionId)}`;
     }
+    if (startDate) url += `&startDate=${encodeURIComponent(startDate)}`;
+    if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`;
 
     const observable = this.http.get<any[]>(url).pipe(
       catchError(error => {

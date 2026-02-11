@@ -112,6 +112,8 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   divisions: Division[] = [];
   includePlayoffs: boolean = false;
   statsMode: 'season' | 'tournament' = 'season';
+  dateRangeStart: string | null = null;
+  dateRangeEnd: string | null = null;
   
   isLoading: boolean = true;
   sortColumn: string = 'points';
@@ -172,6 +174,12 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       }
       if (params['playoffs'] !== undefined) {
         this.includePlayoffs = params['playoffs'] === 'true';
+      }
+      if (params['startDate'] !== undefined) {
+        this.dateRangeStart = params['startDate'] || null;
+      }
+      if (params['endDate'] !== undefined) {
+        this.dateRangeEnd = params['endDate'] || null;
       }
     });
     
@@ -291,33 +299,42 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   
   onSeasonChange(): void {
     this.selectedDivisionId = 'all-divisions';
-    
-    // Update URL query parameters
+    this.updateQueryParamsAndLoad();
+  }
+
+  onDateRangeChange(): void {
+    this.updateQueryParamsAndLoad();
+  }
+
+  private updateQueryParamsAndLoad(): void {
+    const queryParams: any = {
+      season: this.selectedSeasonId,
+      division: this.selectedDivisionId,
+      playoffs: this.includePlayoffs
+    };
+    if (this.dateRangeStart) queryParams.startDate = this.dateRangeStart;
+    if (this.dateRangeEnd) queryParams.endDate = this.dateRangeEnd;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { 
-        season: this.selectedSeasonId, 
-        division: this.selectedDivisionId,
-        playoffs: this.includePlayoffs
-      },
+      queryParams,
       queryParamsHandling: 'merge'
     });
-    
     this.loadStatsFromServer();
   }
 
   onDivisionChange(): void {
-    // Update URL query parameters
+    const queryParams: any = {
+      season: this.selectedSeasonId,
+      division: this.selectedDivisionId,
+      playoffs: this.includePlayoffs
+    };
+    if (this.dateRangeStart) queryParams.startDate = this.dateRangeStart;
+    if (this.dateRangeEnd) queryParams.endDate = this.dateRangeEnd;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { 
-        season: this.selectedSeasonId, 
-        division: this.selectedDivisionId,
-        playoffs: this.includePlayoffs
-      },
+      queryParams,
       queryParamsHandling: 'merge'
     });
-    
     this.applyDivisionFilter();
   }
   
@@ -335,7 +352,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       this.divisions = [];
       this.selectedDivisionId = 'all-divisions';
 
-      this.apiService.getSkaterStats('all-seasons', undefined, this.includePlayoffs).subscribe({
+      this.apiService.getSkaterStats('all-seasons', undefined, this.includePlayoffs, this.dateRangeStart, this.dateRangeEnd).subscribe({
         next: (grouped: any[]) => {
           const combined: PlayerStats[] = (grouped || [])
             .flatMap((g: any) => g?.stats || [])
@@ -361,7 +378,7 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.apiService.getSkaterStats(this.selectedSeasonId, undefined, this.includePlayoffs).subscribe({
+    this.apiService.getSkaterStats(this.selectedSeasonId, undefined, this.includePlayoffs, this.dateRangeStart, this.dateRangeEnd).subscribe({
       next: (grouped: any[]) => {
         // Map server response to component expected shape and format positions
         this.groupedStats = (grouped || []).map((g: any) => {
@@ -1017,18 +1034,6 @@ export class PlayerStatsComponent implements OnInit, OnDestroy {
   }
 
   onPlayoffFilterChange(): void {
-    // Update URL query parameters
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { 
-        season: this.selectedSeasonId, 
-        division: this.selectedDivisionId,
-        playoffs: this.includePlayoffs
-      },
-      queryParamsHandling: 'merge'
-    });
-    
-    // Reload stats from server with the new filter setting
-    this.loadStatsFromServer();
+    this.updateQueryParamsAndLoad();
   }
 }

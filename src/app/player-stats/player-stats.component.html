@@ -32,6 +32,17 @@
           Include Playoff Games
         </label>
       </div>
+
+      <div class="filter-group date-range-group">
+        <label>Date range:</label>
+        <div class="date-range-inputs">
+          <input type="date" id="date-start" [(ngModel)]="dateRangeStart" (ngModelChange)="onDateRangeChange()" placeholder="From">
+          <span class="date-range-sep">–</span>
+          <input type="date" id="date-end" [(ngModel)]="dateRangeEnd" (ngModelChange)="onDateRangeChange()" placeholder="To">
+          <button type="button" class="date-range-clear" *ngIf="dateRangeStart || dateRangeEnd" (click)="dateRangeStart = null; dateRangeEnd = null; onDateRangeChange()">Clear</button>
+        </div>
+        <span class="date-range-hint">Stats for games within this period (leave empty for full season)</span>
+      </div>
       
       <div class="stats-summary">
         <span>Total Players: {{ getTotalPlayers() }}</span>

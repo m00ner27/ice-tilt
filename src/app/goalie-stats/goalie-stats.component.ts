@@ -77,6 +77,8 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
   selectedSeasonId: string | null = null;
   selectedDivisionId: string = 'all-divisions';
   includePlayoffs: boolean = false;
+  dateRangeStart: string | null = null;
+  dateRangeEnd: string | null = null;
   
   isLoading: boolean = true;
   sortColumn: string = 'savePercentage'; // Default sort by save percentage
@@ -129,6 +131,12 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
       if (params['playoffs'] !== undefined) {
         this.includePlayoffs = params['playoffs'] === 'true';
       }
+      if (params['startDate'] !== undefined) {
+        this.dateRangeStart = params['startDate'] || null;
+      }
+      if (params['endDate'] !== undefined) {
+        this.dateRangeEnd = params['endDate'] || null;
+      }
     });
     
     this.loadInitialData();
@@ -172,34 +180,43 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
   }
 
   onSeasonChange(): void {
-    this.selectedDivisionId = 'all-divisions'; // Reset division filter when season changes
-    
-    // Update URL query parameters
+    this.selectedDivisionId = 'all-divisions';
+    this.updateQueryParamsAndLoad();
+  }
+
+  onDateRangeChange(): void {
+    this.updateQueryParamsAndLoad();
+  }
+
+  private updateQueryParamsAndLoad(): void {
+    const queryParams: any = {
+      season: this.selectedSeasonId,
+      division: this.selectedDivisionId,
+      playoffs: this.includePlayoffs
+    };
+    if (this.dateRangeStart) queryParams.startDate = this.dateRangeStart;
+    if (this.dateRangeEnd) queryParams.endDate = this.dateRangeEnd;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { 
-        season: this.selectedSeasonId, 
-        division: this.selectedDivisionId,
-        playoffs: this.includePlayoffs
-      },
+      queryParams,
       queryParamsHandling: 'merge'
     });
-    
     this.loadStatsForSeason();
   }
 
   onDivisionChange(): void {
-    // Update URL query parameters
+    const queryParams: any = {
+      season: this.selectedSeasonId,
+      division: this.selectedDivisionId,
+      playoffs: this.includePlayoffs
+    };
+    if (this.dateRangeStart) queryParams.startDate = this.dateRangeStart;
+    if (this.dateRangeEnd) queryParams.endDate = this.dateRangeEnd;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { 
-        season: this.selectedSeasonId, 
-        division: this.selectedDivisionId,
-        playoffs: this.includePlayoffs
-      },
+      queryParams,
       queryParamsHandling: 'merge'
     });
-    
     this.applyDivisionFilter();
   }
 
@@ -220,7 +237,7 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
       this.divisions = [];
       this.selectedDivisionId = 'all-divisions';
 
-      this.apiService.getGoalieStats('all-seasons', undefined, this.includePlayoffs)
+      this.apiService.getGoalieStats('all-seasons', undefined, this.includePlayoffs, this.dateRangeStart, this.dateRangeEnd)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (grouped: any[]) => {
@@ -257,7 +274,7 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
         this.divisions = deduplicatedDivisions.sort((a, b) => (a.order || 0) - (b.order || 0));
 
         // Server-side aggregated stats
-        this.apiService.getGoalieStats(this.selectedSeasonId as string, undefined, this.includePlayoffs)
+        this.apiService.getGoalieStats(this.selectedSeasonId as string, undefined, this.includePlayoffs, this.dateRangeStart, this.dateRangeEnd)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: (grouped: any[]) => {
@@ -1274,18 +1291,6 @@ export class GoalieStatsComponent implements OnInit, OnDestroy {
   }
 
   onPlayoffFilterChange(): void {
-    // Update URL query parameters
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { 
-        season: this.selectedSeasonId, 
-        division: this.selectedDivisionId,
-        playoffs: this.includePlayoffs
-      },
-      queryParamsHandling: 'merge'
-    });
-    
-    // Reprocess stats with the new filter setting
-    this.loadStatsForSeason();
+    this.updateQueryParamsAndLoad();
   }
 }

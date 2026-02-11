@@ -46,6 +46,50 @@
   font-size: 1rem;
 }
 
+.date-range-group {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.date-range-group .date-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.date-range-group input[type="date"] {
+  padding: 8px 12px;
+  background-color: #2c3e50;
+  color: white;
+  border: 1px solid #34495e;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.date-range-group input[type="date"]:focus {
+  outline: none;
+  border-color: #3498db;
+}
+.date-range-sep {
+  color: #95a5a6;
+}
+.date-range-clear {
+  padding: 6px 12px;
+  background-color: #34495e;
+  color: white;
+  border: 1px solid #34495e;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.date-range-clear:hover {
+  background-color: #2c3e50;
+}
+.date-range-hint {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #95a5a6;
+}
+
 #season-select,
 #division-select {
   padding: 10px 15px;
