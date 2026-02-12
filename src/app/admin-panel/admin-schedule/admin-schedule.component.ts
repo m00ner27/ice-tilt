@@ -22,7 +22,7 @@ export class AdminScheduleComponent implements OnInit {
   games: any[] = [];
   filteredGames: any[] = [];
   clubs: any[] = [];
-  currentFilter: 'all' | 'linked' | 'unlinked' = 'unlinked';
+  currentFilter: 'all' | 'linked' | 'unlinked' = 'all';
   unlinkedGamesCount: number = 0;
   
   // Club filtering and sorting
@@ -150,7 +150,7 @@ export class AdminScheduleComponent implements OnInit {
     this.api.getClubs().subscribe({
       next: (clubs) => {
         this.clubs = clubs || [];
-        this.api.getGames().subscribe({
+        this.api.getGames({ limit: 500, order: 'desc' }).subscribe({
           next: (games) => {
             this.games = (games || []).map(game => {
               // Ensure that homeClubId and awayClubId are objects before accessing their properties
