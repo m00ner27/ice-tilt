@@ -22,7 +22,7 @@ export class AdminScheduleComponent implements OnInit {
   games: any[] = [];
   filteredGames: any[] = [];
   clubs: any[] = [];
-  currentFilter: 'all' | 'linked' | 'unlinked' = 'all';
+  currentFilter: 'all' | 'linked' | 'unlinked' = 'unlinked';
   unlinkedGamesCount: number = 0;
   
   // Club filtering and sorting
