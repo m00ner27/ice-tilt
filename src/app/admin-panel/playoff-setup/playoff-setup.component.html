@@ -24,9 +24,11 @@
     </div>
     
     <div *ngIf="!bracketsLoading && brackets.length > 0" class="overflow-x-auto">
+      <p class="text-sm text-admin-text mb-2">Order is per season. Set the number and click Save to change how brackets appear in the public Playoff Bracket dropdown (lower numbers first within each season).</p>
       <table class="w-full border-collapse">
         <thead>
           <tr class="bg-admin-hover">
+            <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold w-24">Order</th>
             <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Name</th>
             <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Season</th>
             <th class="border border-admin-accent px-4 py-2 text-left text-admin-text font-semibold">Division</th>
@@ -37,7 +39,21 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let bracket of brackets" class="hover:bg-admin-hover">
+          <tr *ngFor="let bracket of sortedBrackets; let i = index" class="hover:bg-admin-hover">
+            <td class="border border-admin-accent px-4 py-2 text-admin-text">
+              <div class="flex items-center gap-2">
+                <input type="number" min="1" step="1"
+                  [ngModel]="getOrderValue(bracket, i)"
+                  (ngModelChange)="setOrderEdit(bracket._id, $event)"
+                  class="w-14 bg-admin-hover border border-admin-accent rounded px-2 py-1 text-white text-center"
+                  [disabled]="orderSaving[bracket._id]">
+                <button type="button" (click)="saveOrder(bracket, i); $event.stopPropagation()"
+                  [disabled]="orderSaving[bracket._id]"
+                  class="bg-admin-secondary text-white px-2 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+                  {{ orderSaving[bracket._id] ? '...' : 'Save' }}
+                </button>
+              </div>
+            </td>
             <td class="border border-admin-accent px-4 py-2 text-white">{{ bracket.name }}</td>
             <td class="border border-admin-accent px-4 py-2 text-admin-text">
               {{ getSeasonName(bracket.seasonId?._id || bracket.seasonId) }}
@@ -59,6 +75,11 @@
                 <button (click)="viewBracket(bracket._id)" 
                   class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
                   View
+                </button>
+                <button (click)="openLogoModal(bracket)" 
+                  class="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700 transition-colors"
+                  [title]="bracket.logoUrl ? 'Change division logo' : 'Add division logo'">
+                  {{ bracket.logoUrl ? 'Logo' : 'Add logo' }}
                 </button>
                 <button (click)="editBracket(bracket)" 
                   class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
@@ -389,6 +410,35 @@
         <button (click)="saveMatchups()" 
           class="bg-admin-secondary text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
           Save Matchups
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logo-only modal: add or change division logo without editing bracket -->
+  <div *ngIf="logoModalBracket" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" (click)="closeLogoModal()">
+    <div class="bg-admin-card rounded-xl shadow-xl max-w-md w-full mx-4 p-6" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-bold text-admin-primary mb-2">Division logo</h3>
+      <p class="text-admin-text text-sm mb-4">{{ logoModalBracket.name }}</p>
+      <div class="mb-4 flex justify-center">
+        <img *ngIf="logoModalPreview" [src]="logoModalPreview" alt="Logo preview" class="max-h-24 object-contain">
+        <span *ngIf="!logoModalPreview" class="text-admin-text text-sm">No logo</span>
+      </div>
+      <div class="mb-4">
+        <label class="block text-admin-text text-sm mb-2">Choose image</label>
+        <input type="file" accept="image/*" (change)="onLogoModalFileChange($event)"
+          class="w-full text-admin-text text-sm file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-admin-secondary file:text-white">
+      </div>
+      <div class="flex gap-2 justify-end">
+        <button type="button" (click)="closeLogoModal()"
+          class="bg-admin-hover text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</button>
+        <button *ngIf="logoModalBracket.logoUrl" type="button" (click)="saveLogoOnly(); $event.stopPropagation()"
+          [disabled]="logoModalUploading"
+          class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50">Remove logo</button>
+        <button type="button" (click)="saveLogoOnly(); $event.stopPropagation()"
+          [disabled]="logoModalUploading || !logoModalFile"
+          class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+          {{ logoModalUploading ? 'Saving...' : (logoModalFile ? 'Upload & save' : 'Choose file to save') }}
         </button>
       </div>
     </div>
