@@ -65,6 +65,8 @@ export class PlayoffSetupComponent implements OnInit {
   viewMode: 'list' | 'create' | 'edit' = 'list';
   brackets: any[] = [];
   bracketsLoading = false;
+  orderSaving: Record<string, boolean> = {};
+  orderEdits: Record<string, number> = {};
   
   // Matchup editor
   editingBracket: any = null;
@@ -76,6 +78,12 @@ export class PlayoffSetupComponent implements OnInit {
   // Logo upload
   logoPreview: string | null = null;
   uploadingLogo: boolean = false;
+
+  // Logo-only modal (add/change logo without editing bracket)
+  logoModalBracket: any = null;
+  logoModalPreview: string | null = null;
+  logoModalFile: File | null = null;
+  logoModalUploading = false;
 
   constructor(
     private fb: FormBuilder,
@@ -528,6 +536,86 @@ export class PlayoffSetupComponent implements OnInit {
     return this.imageUrlService.getImageUrl(logoUrl);
   }
 
+  openLogoModal(bracket: any): void {
+    this.logoModalBracket = bracket;
+    this.logoModalFile = null;
+    this.logoModalPreview = bracket.logoUrl
+      ? this.imageUrlService.getImageUrl(bracket.logoUrl)
+      : null;
+    this.logoModalUploading = false;
+  }
+
+  closeLogoModal(): void {
+    this.logoModalBracket = null;
+    this.logoModalPreview = null;
+    this.logoModalFile = null;
+    this.logoModalUploading = false;
+  }
+
+  onLogoModalFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files?.[0];
+    if (file) {
+      this.logoModalFile = file;
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.logoModalPreview = e?.target?.result ?? null;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.logoModalFile = null;
+      this.logoModalPreview = this.logoModalBracket?.logoUrl
+        ? this.imageUrlService.getImageUrl(this.logoModalBracket.logoUrl)
+        : null;
+    }
+  }
+
+  saveLogoOnly(): void {
+    const bracket = this.logoModalBracket;
+    if (!bracket?._id) return;
+    if (!this.logoModalFile && !bracket.logoUrl) {
+      alert('Please choose an image file to upload.');
+      return;
+    }
+    if (this.logoModalUploading) return;
+
+    if (this.logoModalFile) {
+      this.logoModalUploading = true;
+      this.api.uploadFile(this.logoModalFile).subscribe({
+        next: (response: any) => {
+          const logoUrl = response?.url ?? response?.data?.url ?? response;
+          this.api.updatePlayoffBracket(bracket._id, { logoUrl }).subscribe({
+            next: () => {
+              this.closeLogoModal();
+              this.store.dispatch(PlayoffsActions.loadPlayoffBrackets({}));
+            },
+            error: (err) => {
+              this.logoModalUploading = false;
+              alert('Failed to save logo. ' + (err?.error?.message || err?.message || 'Please try again.'));
+            }
+          });
+        },
+        error: (err) => {
+          this.logoModalUploading = false;
+          alert('Upload failed. ' + (err?.error?.message || err?.message || 'Please try again.'));
+        }
+      });
+    } else {
+      // Remove logo
+      this.logoModalUploading = true;
+      this.api.updatePlayoffBracket(bracket._id, { logoUrl: '' }).subscribe({
+        next: () => {
+          this.closeLogoModal();
+          this.store.dispatch(PlayoffsActions.loadPlayoffBrackets({}));
+        },
+        error: (err) => {
+          this.logoModalUploading = false;
+          alert('Failed to remove logo. ' + (err?.error?.message || err?.message || 'Please try again.'));
+        }
+      });
+    }
+  }
+
   viewBracket(bracketId: string) {
     this.router.navigate(['/playoffs', bracketId]);
   }
@@ -623,6 +711,58 @@ export class PlayoffSetupComponent implements OnInit {
       case 'setup': return 'bg-yellow-600';
       default: return 'bg-gray-600';
     }
+  }
+
+  getBracketSeasonKey(bracket: any): string {
+    if (!bracket?.seasonId) return '';
+    const sid = bracket.seasonId;
+    const raw = (typeof sid === 'object' && sid !== null ? (sid as any)._id : sid) ?? '';
+    return raw ? String(raw) : '';
+  }
+
+  get sortedBrackets(): any[] {
+    return [...(this.brackets || [])].sort((a, b) => {
+      const seasonA = this.getBracketSeasonKey(a);
+      const seasonB = this.getBracketSeasonKey(b);
+      if (seasonA !== seasonB) return seasonA.localeCompare(seasonB);
+      const orderA = a.displayOrder ?? 0;
+      const orderB = b.displayOrder ?? 0;
+      if (orderA !== orderB) return orderA - orderB;
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+  }
+
+  getOrderValue(bracket: any, index: number): number {
+    const id = bracket._id;
+    if (this.orderEdits[id] != null) return this.orderEdits[id];
+    const saved = typeof bracket.displayOrder === 'number' ? bracket.displayOrder : undefined;
+    return saved && saved >= 1 ? saved : (index + 1);
+  }
+
+  setOrderEdit(bracketId: string, value: unknown): void {
+    const n = typeof value === 'number' ? value : parseInt(String(value), 10);
+    if (!isNaN(n) && n >= 1) this.orderEdits[bracketId] = n;
+  }
+
+  saveOrder(bracket: any, index: number): void {
+    const id = bracket._id;
+    const raw = this.orderEdits[id] ?? bracket.displayOrder ?? (index + 1);
+    const order = Math.max(1, parseInt(String(raw), 10) || 1);
+    if (this.orderSaving[id]) return;
+    this.orderSaving = { ...this.orderSaving, [id]: true };
+    this.api.updatePlayoffBracket(id, { displayOrder: order }).subscribe({
+      next: () => {
+        this.orderSaving = { ...this.orderSaving, [id]: false };
+        delete this.orderEdits[id];
+        this.store.dispatch(PlayoffsActions.loadPlayoffBrackets({}));
+      },
+      error: (err) => {
+        this.orderSaving = { ...this.orderSaving, [id]: false };
+        alert('Failed to save order. ' + (err?.error?.message || err?.message || 'Please try again.'));
+      }
+    });
   }
 
   // Matchup Editor Methods

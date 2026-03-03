@@ -18,6 +18,7 @@ export interface PlayoffBracket {
     clubId: string;
     seed: number;
   }>;
+  displayOrder?: number;
   series: Array<{
     _id?: string;
     roundId: string;
