@@ -188,6 +188,26 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     return (this.tournaments || []).filter(t => t.format === 'open-league');
   }
 
+  setTournamentAsOpenLeague() {
+    const tournamentId = this.bracketForm.get('tournamentId')?.value;
+    if (!tournamentId) {
+      alert('Please select a tournament first.');
+      return;
+    }
+    this.api.updateTournament(tournamentId, { format: 'open-league' }).subscribe({
+      next: () => {
+        this.viewMode = 'list';
+        this.loadAllData();
+        this.loadBrackets();
+        localStorage.setItem('admin-data-updated', Date.now().toString());
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message || err?.message || 'Failed to update tournament.';
+        alert(msg);
+      }
+    });
+  }
+
   openManageTeams(tournament: Tournament) {
     this.manageTeamsTournamentId = tournament._id;
     this.manageTeamsTournamentName = tournament.name;
@@ -249,26 +269,6 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
 
   navigateToStandings(tournamentId: string) {
     this.router.navigate(['/tournaments', tournamentId, 'standings']);
-  }
-
-  setTournamentAsOpenLeague() {
-    const tournamentId = this.bracketForm.get('tournamentId')?.value;
-    if (!tournamentId) {
-      alert('Please select a tournament first.');
-      return;
-    }
-    this.api.updateTournament(tournamentId, { format: 'open-league' }).subscribe({
-      next: () => {
-        this.viewMode = 'list';
-        this.loadAllData();
-        this.loadBrackets();
-        localStorage.setItem('admin-data-updated', Date.now().toString());
-      },
-      error: (err) => {
-        const msg = err?.error?.message || err?.message || 'Failed to update tournament.';
-        alert(msg);
-      }
-    });
   }
 
   onFormatChange() {

@@ -262,7 +262,7 @@ export class AddGamesComponent implements OnInit {
 
     // Reset form fields based on game type
     if (gameType === 'tournament') {
-      // Tournament mode - clear season/division, require tournament fields
+      // Tournament mode - clear season/division, require tournament only (bracket/series set in onTournamentChange when format known)
       this.gameForm.get('season')?.clearValidators();
       this.gameForm.get('division')?.clearValidators();
       this.gameForm.get('season')?.setValue('');
@@ -313,7 +313,7 @@ export class AddGamesComponent implements OnInit {
 
   onTournamentChange() {
     const tournamentId = this.gameForm.get('tournamentId')?.value;
-    const tournament = tournamentId ? this.tournaments.find(t => t._id === tournamentId) : null;
+    const tournament = tournamentId ? this.tournaments.find((t: Tournament) => t._id === tournamentId) : null;
     this.selectedTournamentFormat = tournament?.format || 'bracket';
 
     if (tournamentId) {
@@ -328,17 +328,14 @@ export class AddGamesComponent implements OnInit {
         this.tournamentBrackets = [];
         this.tournamentSeries = [];
         this.api.getClubsByTournament(tournamentId).subscribe({
-          next: (clubs) => {
-            this.filteredClubs = (clubs || []).sort((a: any, b: any) => a.name.localeCompare(b.name));
-          },
+          next: (clubs) => { this.filteredClubs = [...(clubs || [])].sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '')); },
           error: () => { this.filteredClubs = []; }
         });
       } else {
-        this.loadTournamentBrackets(tournamentId);
         this.gameForm.get('tournamentBracketId')?.setValidators(Validators.required);
         this.gameForm.get('tournamentSeriesId')?.setValidators(Validators.required);
+        this.loadTournamentBrackets(tournamentId);
         this.gameForm.get('tournamentBracketId')?.enable();
-        this.filteredClubs = [];
       }
     } else {
       this.tournamentBrackets = [];
@@ -350,6 +347,9 @@ export class AddGamesComponent implements OnInit {
     this.gameForm.get('tournamentBracketId')?.updateValueAndValidity();
     this.gameForm.get('tournamentSeriesId')?.updateValueAndValidity();
     this.gameForm.patchValue({ tournamentBracketId: '', tournamentSeriesId: '', tournamentRoundId: '' });
+    this.gameForm.get('tournamentBracketId')?.updateValueAndValidity();
+    this.gameForm.get('tournamentSeriesId')?.updateValueAndValidity();
+    // Clear matchups
     while (this.matchups.length > 0) {
       this.matchups.removeAt(0);
     }
@@ -615,7 +615,7 @@ export class AddGamesComponent implements OnInit {
       }
       if (this.selectedTournamentFormat !== 'open-league') {
         if (!this.gameForm.get('tournamentBracketId')?.value || !this.gameForm.get('tournamentSeriesId')?.value) {
-          alert('Please select Bracket and Series for bracket-format tournaments.');
+          alert('Please fill in all required fields (Tournament, Bracket, Series, Date, Time).');
           return;
         }
       }
@@ -706,13 +706,12 @@ export class AddGamesComponent implements OnInit {
             gameData.playoffRoundId = formData.playoffRoundId;
             }
           } else {
-            // Tournament game
             gameData.seasonId = 'tournament';
             gameData.divisionId = 'tournament';
             gameData.isTournament = true;
             gameData.tournamentId = formData.tournamentId;
             if (this.selectedTournamentFormat === 'open-league') {
-              // Open-league: no bracket/series
+              // Open league: no bracket/series
             } else {
               gameData.tournamentBracketId = formData.tournamentBracketId;
               gameData.tournamentSeriesId = formData.tournamentSeriesId;
@@ -746,7 +745,7 @@ export class AddGamesComponent implements OnInit {
             // All games created successfully
             if (this.gameType === 'tournament' && this.selectedTournamentFormat === 'open-league') {
               alert(`Successfully created ${successCount} open-league game(s)!`);
-              this.router.navigate(['/tournaments']).catch(() => {});
+              this.router.navigate(['/admin/tournament-setup']);
             } else if (this.gameType === 'tournament' && formData.tournamentBracketId && formData.tournamentSeriesId) {
               alert(`Successfully created ${successCount} tournament game(s)!`);
               const seriesId = String(formData.tournamentSeriesId).trim();
@@ -795,7 +794,7 @@ export class AddGamesComponent implements OnInit {
             // Still navigate on partial success
             if (successCount > 0) {
               if (this.gameType === 'tournament' && this.selectedTournamentFormat === 'open-league') {
-                this.router.navigate(['/tournaments']).catch(() => {});
+                this.router.navigate(['/admin/tournament-setup']);
               } else if (this.gameType === 'tournament' && formData.tournamentBracketId && formData.tournamentSeriesId) {
                 const seriesId = String(formData.tournamentSeriesId).trim();
                 const bracketId = String(formData.tournamentBracketId).trim();

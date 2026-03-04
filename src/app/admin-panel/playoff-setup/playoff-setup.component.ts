@@ -4,8 +4,8 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '../../store';
-import { forkJoin } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { map, take, catchError } from 'rxjs/operators';
 import { ApiService } from '../../store/services/api.service';
 import { ImageUrlService } from '../../shared/services/image-url.service';
 import * as PlayoffsActions from '../../store/playoffs/playoffs.actions';
@@ -65,8 +65,8 @@ export class PlayoffSetupComponent implements OnInit {
   viewMode: 'list' | 'create' | 'edit' = 'list';
   brackets: any[] = [];
   bracketsLoading = false;
-  orderSaving: Record<string, boolean> = {};
-  orderEdits: Record<string, number> = {};
+  orderSaving: Record<string, boolean> = {}; // bracketId -> saving
+  orderEdits: Record<string, number> = {};   // bracketId -> typed order value
   
   // Matchup editor
   editingBracket: any = null;
@@ -713,6 +713,7 @@ export class PlayoffSetupComponent implements OnInit {
     }
   }
 
+  /** Season key for grouping (same as public playoff component) */
   getBracketSeasonKey(bracket: any): string {
     if (!bracket?.seasonId) return '';
     const sid = bracket.seasonId;
@@ -720,6 +721,7 @@ export class PlayoffSetupComponent implements OnInit {
     return raw ? String(raw) : '';
   }
 
+  /** Brackets sorted by season then displayOrder then createdAt. Order is per-season. */
   get sortedBrackets(): any[] {
     return [...(this.brackets || [])].sort((a, b) => {
       const seasonA = this.getBracketSeasonKey(a);
@@ -734,6 +736,7 @@ export class PlayoffSetupComponent implements OnInit {
     });
   }
 
+  /** Current order value shown in the input (edits or saved value) */
   getOrderValue(bracket: any, index: number): number {
     const id = bracket._id;
     if (this.orderEdits[id] != null) return this.orderEdits[id];
