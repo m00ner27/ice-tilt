@@ -66,7 +66,7 @@ export class PlayoffSetupComponent implements OnInit {
   brackets: any[] = [];
   bracketsLoading = false;
   orderSaving: Record<string, boolean> = {}; // bracketId -> saving
-  orderEdits: Record<string, number> = {};   // bracketId -> typed order value // prevent double-clicks while saving order
+  orderEdits: Record<string, number> = {};   // bracketId -> typed order value
   
   // Matchup editor
   editingBracket: any = null;
@@ -601,6 +601,7 @@ export class PlayoffSetupComponent implements OnInit {
         }
       });
     } else {
+      // Remove logo
       this.logoModalUploading = true;
       this.api.updatePlayoffBracket(bracket._id, { logoUrl: '' }).subscribe({
         next: () => {

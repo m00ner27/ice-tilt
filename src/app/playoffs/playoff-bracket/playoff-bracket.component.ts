@@ -120,7 +120,7 @@ export class PlayoffBracketComponent implements OnInit, OnDestroy {
     this.route.params.subscribe(params => {
       this.bracketId = params['id'] || null;
       if (this.bracketId) {
-        // Load specific bracket from route
+        // Load specific bracket from route; season/division keys will sync when bracket$ emits
         this.selectedBracketId = this.bracketId;
         this.store.dispatch(PlayoffsActions.loadPlayoffBracket({ bracketId: this.bracketId }));
       } else {
