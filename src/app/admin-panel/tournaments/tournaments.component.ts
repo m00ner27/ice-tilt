@@ -11,6 +11,7 @@ interface Tournament {
   endDate: Date;
   isActive: boolean;
   logoUrl?: string;
+  format?: 'bracket' | 'open-league';
   createdAt?: string;
   updatedAt?: string;
 }
@@ -41,7 +42,8 @@ export class TournamentsComponent implements OnInit {
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
       isActive: [true],
-      logoUrl: ['']
+      logoUrl: [''],
+      format: ['bracket', Validators.required]
     });
   }
 
@@ -116,7 +118,8 @@ export class TournamentsComponent implements OnInit {
       startDate: tournament.startDate ? new Date(tournament.startDate).toISOString().split('T')[0] : '',
       endDate: tournament.endDate ? new Date(tournament.endDate).toISOString().split('T')[0] : '',
       isActive: tournament.isActive !== undefined ? tournament.isActive : true,
-      logoUrl: tournament.logoUrl || ''
+      logoUrl: tournament.logoUrl || '',
+      format: tournament.format || 'bracket'
     });
     this.tournamentLogoPreview = tournament.logoUrl || null;
     this.isAddingTournament = true;
@@ -160,7 +163,7 @@ export class TournamentsComponent implements OnInit {
   cancelTournamentForm() {
     this.isAddingTournament = false;
     this.editingTournament = null;
-    this.tournamentForm.reset({ isActive: true });
+    this.tournamentForm.reset({ isActive: true, format: 'bracket' });
     this.tournamentLogoPreview = null;
   }
 

@@ -7,6 +7,7 @@ export interface Tournament {
   endDate: Date;
   isActive: boolean;
   logoUrl?: string;
+  format?: 'bracket' | 'open-league';
   createdAt?: string;
   updatedAt?: string;
 }

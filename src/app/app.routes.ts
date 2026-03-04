@@ -89,6 +89,10 @@ export const routes: Routes = [
     loadComponent: () => import('./tournaments/tournament-series/tournament-series.component').then(m => m.TournamentSeriesComponent)
   },
   { 
+    path: 'tournaments/:id/standings', 
+    loadComponent: () => import('./tournaments/tournament-standings/tournament-standings.component').then(m => m.TournamentStandingsComponent)
+  },
+  { 
     path: 'tournaments/:id', 
     loadComponent: () => import('./tournaments/tournament-bracket/tournament-bracket.component').then(m => m.TournamentBracketComponent)
   },

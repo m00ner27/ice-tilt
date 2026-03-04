@@ -31,6 +31,7 @@
               {{ tournament.startDate | date:'MMM d, y' }} - {{ tournament.endDate | date:'MMM d, y' }}
               <span *ngIf="tournament.isActive" class="ml-2 text-green-400">● Active</span>
               <span *ngIf="!tournament.isActive" class="ml-2 text-gray-400">● Inactive</span>
+              <span *ngIf="tournament.format === 'open-league'" class="ml-2 text-blue-400">● Open league</span>
             </p>
           </div>
         </div>
@@ -58,6 +59,13 @@
           <div>
             <label class="block text-admin-text mb-2 font-medium">Tournament Name</label>
             <input formControlName="name" type="text" placeholder="Enter tournament name" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+          </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Format</label>
+            <select formControlName="format" class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <option value="bracket">Bracket (fixed matchups, series)</option>
+              <option value="open-league">Open league (free scheduling, standings)</option>
+            </select>
           </div>
           <div>
             <label class="block text-admin-text mb-2 font-medium">Start Date</label>

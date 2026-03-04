@@ -1222,6 +1222,16 @@ export class ApiService {
     return this.http.get<any>(`${this.apiUrl}/api/tournaments/${tournamentId}`);
   }
 
+  getTournamentStandings(tournamentId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/tournaments/${tournamentId}/standings`);
+  }
+
+  getGamesByTournament(tournamentId: string, limit?: number): Observable<any[]> {
+    let url = `${this.apiUrl}/api/tournaments/${tournamentId}/games`;
+    if (limit != null) url += `?limit=${limit}`;
+    return this.http.get<any[]>(url);
+  }
+
   createTournament(tournamentData: any): Observable<any> {
     return this.auth.getAccessTokenSilently({
       authorizationParams: { audience: environment.apiAudience }

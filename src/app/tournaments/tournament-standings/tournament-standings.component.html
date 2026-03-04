@@ -1,0 +1,80 @@
+<div class="p-3 sm:p-5 max-w-full mx-auto text-white">
+  <div class="flex items-center gap-4 mb-6">
+    <button (click)="backToTournaments()" class="text-admin-primary hover:text-white transition-colors">
+      <i class="fas fa-arrow-left mr-2"></i>Tournaments
+    </button>
+  </div>
+
+  <h1 class="text-center mb-5 text-2xl sm:text-4xl font-bold">{{ tournamentName }} – Standings</h1>
+
+  <div *ngIf="loading" class="text-center text-white py-10 text-xl">Loading standings...</div>
+  <div *ngIf="error" class="text-center text-red-400 py-8">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="mb-4 flex gap-2 border-b border-admin-accent">
+    <button (click)="activeTab = 'standings'" [class.bg-admin-secondary]="activeTab === 'standings'" [class.bg-admin-hover]="activeTab !== 'standings'" class="px-4 py-2 rounded-t transition-colors">Standings</button>
+    <button (click)="activeTab = 'games'; loadGames()" [class.bg-admin-secondary]="activeTab === 'games'" [class.bg-admin-hover]="activeTab !== 'games'" class="px-4 py-2 rounded-t transition-colors">Games</button>
+  </div>
+
+  <!-- Standings tab -->
+  <div *ngIf="!loading && !error && activeTab === 'standings'" class="mb-8">
+    <div *ngIf="standings.length === 0" class="text-center text-admin-text py-8">No standings yet. Schedule and complete games to see rankings.</div>
+    <div *ngIf="standings.length > 0" class="w-full overflow-x-auto">
+      <table class="w-full bg-admin-card text-white border-collapse text-sm sm:text-base">
+        <thead class="bg-admin-accent">
+          <tr>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">RANK</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-left whitespace-nowrap text-xs sm:text-sm w-24 sm:w-32">CLUB</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">GP</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">W</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">L</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">OTL</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">PTS</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">GF</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">GA</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">DIFF</th>
+            <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">WIN%</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let team of standings; let i = index" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+            <td class="text-center p-2 sm:p-3 font-bold text-sm sm:text-lg">{{ i + 1 }}</td>
+            <td class="text-left p-2 sm:p-3 w-24 sm:w-32">
+              <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <img class="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded flex-shrink-0" [src]="getImageUrl(team.logo)" [alt]="team.teamName + ' logo'" (error)="onImageError($event)" />
+                <a [routerLink]="['/clubs', team.teamId]" class="font-medium text-xs sm:text-sm truncate text-white hover:text-admin-primary">{{ team.teamName }}</a>
+              </div>
+            </td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.gamesPlayed }}</td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.wins }}</td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.losses }}</td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.otLosses }}</td>
+            <td class="text-center p-2 sm:p-3 font-semibold text-xs sm:text-sm">{{ team.points }}</td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.goalsFor }}</td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.goalsAgainst }}</td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm" [ngClass]="{'text-green-500': team.goalDifferential > 0, 'text-red-500': team.goalDifferential < 0}">
+              {{ team.goalDifferential > 0 ? '+' + team.goalDifferential : team.goalDifferential }}
+            </td>
+            <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.winPercentage | percent:'1.0-3' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Games tab -->
+  <div *ngIf="!loading && activeTab === 'games'" class="mb-8">
+    <div *ngIf="games.length === 0" class="text-center text-admin-text py-8">No games yet.</div>
+    <ul *ngIf="games.length > 0" class="space-y-2">
+      <li *ngFor="let game of games" class="bg-admin-hover rounded-lg p-3 flex items-center justify-between flex-wrap gap-2">
+        <span class="text-white">
+          {{ game.homeClubId?.name || 'TBD' }} vs {{ game.awayClubId?.name || 'TBD' }}
+        </span>
+        <span class="text-admin-text text-sm">{{ game.date | date:'mediumDate' }}</span>
+        <span *ngIf="game.status === 'completed'" class="font-semibold">
+          {{ game.homeTeamScore ?? game.score?.home ?? 0 }} – {{ game.awayTeamScore ?? game.score?.away ?? 0 }}
+        </span>
+        <a *ngIf="game._id" [routerLink]="['/match', game._id]" class="text-admin-primary hover:text-white text-sm">View</a>
+      </li>
+    </ul>
+  </div>
+</div>

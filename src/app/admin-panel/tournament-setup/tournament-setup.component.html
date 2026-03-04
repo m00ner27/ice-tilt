@@ -3,6 +3,32 @@
   
   <!-- Bracket List View -->
   <div *ngIf="viewMode === 'list'" class="space-y-4">
+    <!-- Open league tournaments (no brackets) -->
+    <div *ngIf="openLeagueTournaments.length > 0" class="mb-8 bg-admin-hover rounded-xl p-6">
+      <h3 class="text-xl font-bold text-admin-primary mb-4">Open League Tournaments</h3>
+      <p class="text-admin-text text-sm mb-4">These tournaments use free scheduling and standings (no brackets).</p>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div *ngFor="let tournament of openLeagueTournaments" 
+             class="bg-admin-card rounded-lg p-4 border border-admin-accent flex flex-col gap-3">
+          <div class="font-medium text-white">{{ tournament.name }}</div>
+          <div class="flex flex-wrap gap-2">
+            <button (click)="openManageTeams(tournament)" 
+              class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors">
+              Manage teams
+            </button>
+            <button (click)="navigateToAddGames(tournament._id)" 
+              class="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700 transition-colors">
+              Add games
+            </button>
+            <button (click)="navigateToStandings(tournament._id)" 
+              class="bg-purple-600 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-700 transition-colors">
+              Standings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-xl font-bold text-admin-primary">All Tournament Brackets</h3>
       <button (click)="switchToCreateMode()" 
@@ -323,6 +349,47 @@
       </div>
     </div>
   </div>
+
+  <!-- Manage teams modal (open league) -->
+  <div *ngIf="manageTeamsTournamentId" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-admin-card rounded-xl p-6 shadow-lg max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-admin-primary">Manage teams – {{ manageTeamsTournamentName }}</h3>
+        <button (click)="closeManageTeams()" class="text-admin-text hover:text-white text-2xl">&times;</button>
+      </div>
+      <div *ngIf="loadingManageClubs" class="text-admin-text py-4">Loading...</div>
+      <div *ngIf="!loadingManageClubs" class="space-y-4">
+        <div class="text-admin-text text-sm">Clubs in this tournament:</div>
+        <ul class="space-y-2 max-h-60 overflow-y-auto">
+          <li *ngFor="let club of clubsInManageTournament" 
+              class="flex justify-between items-center bg-admin-hover rounded px-3 py-2">
+            <span class="text-white">{{ club.name }}</span>
+            <button (click)="removeClubFromOpenLeague(club._id)" 
+              class="text-red-400 hover:text-red-300 text-sm">Remove</button>
+          </li>
+          <li *ngIf="clubsInManageTournament.length === 0" class="text-admin-text text-sm">No clubs yet.</li>
+        </ul>
+        <div class="pt-2 border-t border-admin-accent">
+          <label class="block text-admin-text text-sm mb-2">Add club</label>
+          <div class="flex gap-2">
+            <select [(ngModel)]="addingClubId" 
+              class="flex-1 bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white">
+              <option value="">Select club</option>
+              <option *ngFor="let club of clubs" [value]="club._id" 
+                [disabled]="isClubInManageTournament(club._id)">
+                {{ club.name }}
+              </option>
+            </select>
+            <button (click)="addClubToOpenLeague(addingClubId)" 
+              [disabled]="!addingClubId || addingClubInProgress"
+              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50">
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- Create/Edit Form View -->
   <div *ngIf="viewMode === 'create' || viewMode === 'edit'">
@@ -391,6 +458,7 @@
           <option value="single-elimination">Single Elimination</option>
           <option value="placement-bracket">Placement Bracket (4 or 8 teams)</option>
           <option value="custom-bracket">Custom Bracket (Any even number of teams, custom rounds)</option>
+          <option value="open-league">Open League (no bracket – free scheduling &amp; standings)</option>
           <option value="double-elimination">Double Elimination (Coming Soon)</option>
           <option value="round-robin">Round Robin (Coming Soon)</option>
         </select>
@@ -409,10 +477,23 @@
           <span *ngIf="bracketForm.get('format')?.value === 'single-elimination'">
             Standard bracket format. Teams are eliminated after one loss.
           </span>
+          <span *ngIf="bracketForm.get('format')?.value === 'open-league'">
+            No bracket. Add any number of teams, schedule any team vs any team anytime, and track standings. Use the Open league section on the list view to manage teams, add games, and view standings.
+          </span>
         </p>
       </div>
 
-      <div>
+      <!-- Open league: set tournament format and return to list -->
+      <div *ngIf="bracketForm.get('format')?.value === 'open-league'" class="bg-blue-900/30 border border-blue-600 rounded-lg p-4">
+        <p class="text-admin-text text-sm mb-3">Select a tournament above, then set it as Open league. You won't create a bracket here—use the <strong>Open league tournaments</strong> section on the list view to manage teams, add games, and view standings.</p>
+        <button type="button" (click)="setTournamentAsOpenLeague()"
+          [disabled]="!bracketForm.get('tournamentId')?.value"
+          class="bg-admin-secondary text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          Set selected tournament as Open league
+        </button>
+      </div>
+
+      <div *ngIf="bracketForm.get('format')?.value !== 'open-league'">
         <label class="block text-admin-text mb-2 font-medium">Display Order *</label>
         <input type="number" formControlName="order" 
           min="0"
@@ -423,7 +504,7 @@
         </p>
       </div>
 
-      <div>
+      <div *ngIf="bracketForm.get('format')?.value !== 'open-league'">
         <label class="block text-admin-text mb-2 font-medium">Number of Teams *</label>
         <input type="number" formControlName="numTeams" (change)="onNumTeamsChange()" 
           [min]="bracketForm.get('format')?.value === 'placement-bracket' ? 4 : 2"
@@ -453,7 +534,7 @@
         </p>
       </div>
 
-      <div *ngIf="bracketForm.get('format')?.value !== 'custom-bracket'">
+      <div *ngIf="bracketForm.get('format')?.value !== 'custom-bracket' && bracketForm.get('format')?.value !== 'open-league'">
         <label class="flex items-center gap-2 mb-2">
           <input type="checkbox" formControlName="manualMatchups" class="w-4 h-4">
           <span class="text-admin-text font-medium">Allow Manual Matchup Selection</span>
@@ -474,7 +555,7 @@
         </p>
       </div>
 
-      <div>
+      <div *ngIf="bracketForm.get('format')?.value !== 'open-league'">
         <label class="block text-admin-text mb-2 font-medium">Bracket Logo (Optional)</label>
         <div class="space-y-2">
           <input type="file" accept="image/*" (change)="onLogoFileChange($event)" 

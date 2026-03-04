@@ -14,6 +14,7 @@ import * as TournamentsSelectors from '../../store/tournaments/tournaments.selec
 interface Tournament {
   _id: string;
   name: string;
+  format?: 'bracket' | 'open-league';
 }
 
 interface Club {
@@ -75,6 +76,14 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   
   // Event listener for admin updates
   private adminUpdateListener?: () => void;
+
+  // Open league: manage teams modal
+  manageTeamsTournamentId: string | null = null;
+  manageTeamsTournamentName = '';
+  clubsInManageTournament: any[] = [];
+  loadingManageClubs = false;
+  addingClubId = '';
+  addingClubInProgress = false;
 
   constructor(
     private fb: FormBuilder,
@@ -175,8 +184,99 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     }).sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  get openLeagueTournaments(): Tournament[] {
+    return (this.tournaments || []).filter(t => t.format === 'open-league');
+  }
+
+  openManageTeams(tournament: Tournament) {
+    this.manageTeamsTournamentId = tournament._id;
+    this.manageTeamsTournamentName = tournament.name;
+    this.clubsInManageTournament = [];
+    this.loadClubsForManageTeams();
+  }
+
+  closeManageTeams() {
+    this.manageTeamsTournamentId = null;
+    this.manageTeamsTournamentName = '';
+    this.clubsInManageTournament = [];
+  }
+
+  loadClubsForManageTeams() {
+    if (!this.manageTeamsTournamentId) return;
+    this.loadingManageClubs = true;
+    this.api.getClubsByTournament(this.manageTeamsTournamentId).subscribe({
+      next: (clubs) => {
+        this.clubsInManageTournament = (clubs || []).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        this.loadingManageClubs = false;
+      },
+      error: () => {
+        this.loadingManageClubs = false;
+        this.clubsInManageTournament = [];
+      }
+    });
+  }
+
+  addClubToOpenLeague(clubId: string) {
+    if (!this.manageTeamsTournamentId || !clubId) return;
+    this.addingClubInProgress = true;
+    this.api.assignClubToTournament(clubId, this.manageTeamsTournamentId).subscribe({
+      next: () => {
+        this.loadClubsForManageTeams();
+        this.addingClubId = '';
+        this.addingClubInProgress = false;
+      },
+      error: () => {
+        this.addingClubInProgress = false;
+      }
+    });
+  }
+
+  removeClubFromOpenLeague(clubId: string) {
+    if (!this.manageTeamsTournamentId || !confirm('Remove this club from the tournament?')) return;
+    this.api.removeClubFromTournament(clubId, this.manageTeamsTournamentId).subscribe({
+      next: () => this.loadClubsForManageTeams(),
+      error: () => {}
+    });
+  }
+
+  isClubInManageTournament(clubId: string): boolean {
+    return this.clubsInManageTournament.some(c => c._id === clubId);
+  }
+
+  navigateToAddGames(tournamentId: string) {
+    this.router.navigate(['/admin/add-games'], { queryParams: { tournamentId } });
+  }
+
+  navigateToStandings(tournamentId: string) {
+    this.router.navigate(['/tournaments', tournamentId, 'standings']);
+  }
+
+  setTournamentAsOpenLeague() {
+    const tournamentId = this.bracketForm.get('tournamentId')?.value;
+    if (!tournamentId) {
+      alert('Please select a tournament first.');
+      return;
+    }
+    this.api.updateTournament(tournamentId, { format: 'open-league' }).subscribe({
+      next: () => {
+        this.viewMode = 'list';
+        this.loadAllData();
+        this.loadBrackets();
+        localStorage.setItem('admin-data-updated', Date.now().toString());
+      },
+      error: (err) => {
+        const msg = err?.error?.message || err?.message || 'Failed to update tournament.';
+        alert(msg);
+      }
+    });
+  }
+
   onFormatChange() {
     const format = this.bracketForm.get('format')?.value;
+    if (format === 'open-league') {
+      // No bracket fields to adjust
+      return;
+    }
     if (format === 'placement-bracket') {
       // Placement bracket supports 4 or 8 teams (or other even numbers)
       const currentNumTeams = this.bracketForm.get('numTeams')?.value || 4;
