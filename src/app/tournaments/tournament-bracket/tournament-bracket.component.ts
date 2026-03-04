@@ -9,6 +9,7 @@ import { map, take, filter, switchMap } from 'rxjs/operators';
 import * as TournamentsActions from '../../store/tournaments/tournaments.actions';
 import * as TournamentsSelectors from '../../store/tournaments/tournaments.selectors';
 import { ImageUrlService } from '../../shared/services/image-url.service';
+import { ApiService } from '../../store/services/api.service';
 import { AdSenseComponent, AdSenseConfig } from '../../components/adsense/adsense.component';
 
 @Component({
@@ -33,7 +34,11 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
   selectedTournamentId: string | null = null;
   private selectedTournamentId$ = new BehaviorSubject<string | null>(null);
   allBracketsForTournament: any[] = [];
-  
+  selectedTournament$: Observable<TournamentsActions.Tournament | null>;
+  showBracketLoading$: Observable<boolean>;
+  openLeagueStandings: any[] = [];
+  openLeagueStandingsLoading = false;
+
   playerStats: any[] = [];
   goalieStats: any[] = [];
   sortedPlayerStats: any[] = [];
@@ -57,7 +62,8 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
     private store: Store<AppState>,
     private route: ActivatedRoute,
     private router: Router,
-    private imageUrlService: ImageUrlService
+    private imageUrlService: ImageUrlService,
+    private api: ApiService
   ) {
     this.bracket$ = this.store.select(TournamentsSelectors.selectCurrentTournamentBracket);
     this.allBrackets$ = this.store.select(TournamentsSelectors.selectAllTournamentBrackets);
@@ -94,6 +100,20 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
           return bracketTournamentId === tournamentId;
         });
       })
+    );
+    // Selected tournament object (for open-league check)
+    this.selectedTournament$ = combineLatest([
+      this.tournaments$,
+      this.selectedTournamentId$
+    ]).pipe(
+      map(([tournaments, id]) => {
+        if (!id || !tournaments || tournaments.length === 0) return null;
+        return tournaments.find((t: any) => t._id === id) || null;
+      })
+    );
+    // Show "Loading brackets..." only when loading and selected tournament is not open-league (single async in template)
+    this.showBracketLoading$ = combineLatest([this.loading$, this.selectedTournament$]).pipe(
+      map(([loading, tournament]) => !!loading && tournament?.format !== 'open-league')
     );
   }
 
@@ -162,6 +182,31 @@ export class TournamentBracketComponent implements OnInit, OnDestroy {
       this.goalieStats$.subscribe(stats => {
         this.goalieStats = stats || [];
         this.sortGoalieStats();
+      })
+    );
+
+    // Load open-league standings and stats when an open-league tournament is selected
+    this.subscriptions.add(
+      this.selectedTournament$.subscribe(tournament => {
+        if (tournament?.format === 'open-league' && tournament._id) {
+          this.openLeagueStandingsLoading = true;
+          this.openLeagueStandings = [];
+          this.api.getTournamentStandings(tournament._id).subscribe({
+            next: (standings) => {
+              this.openLeagueStandings = standings || [];
+              this.openLeagueStandingsLoading = false;
+            },
+            error: () => {
+              this.openLeagueStandings = [];
+              this.openLeagueStandingsLoading = false;
+            }
+          });
+          // Load player and goalie stats for open-league (no brackets, so not triggered by filteredBrackets$)
+          this.loadStatsForTournament(tournament._id);
+        } else {
+          this.openLeagueStandings = [];
+          this.openLeagueStandingsLoading = false;
+        }
       })
     );
     

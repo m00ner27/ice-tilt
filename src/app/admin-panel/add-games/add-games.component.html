@@ -66,50 +66,54 @@
             class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
             [class.border-red-500]="gameForm.get('tournamentId')?.invalid && gameForm.get('tournamentId')?.touched">
             <option value="" disabled selected>Select Tournament</option>
-            <option *ngFor="let tournament of tournaments" [value]="tournament._id">{{ tournament.name }}</option>
+            <option *ngFor="let tournament of tournaments" [value]="tournament._id">{{ tournament.name }}{{ tournament.format === 'open-league' ? ' (Open league)' : '' }}</option>
           </select>
           <div *ngIf="gameForm.get('tournamentId')?.invalid && gameForm.get('tournamentId')?.touched" class="text-red-400 text-xs mt-1">
             Tournament is required
           </div>
+          <p *ngIf="selectedTournamentFormat === 'open-league'" class="text-xs text-blue-300 mt-1">Schedule any team vs any team. Standings update from all games.</p>
         </div>
 
-        <div>
-          <label class="block text-admin-text mb-2 font-medium">Bracket *</label>
-          <select formControlName="tournamentBracketId" (change)="onTournamentBracketChange()" 
-            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
-            [class.border-red-500]="gameForm.get('tournamentBracketId')?.invalid && gameForm.get('tournamentBracketId')?.touched">
-            <option value="" disabled selected>Select Bracket</option>
-            <option *ngFor="let bracket of tournamentBrackets" [value]="bracket._id">{{ bracket.name }}</option>
-          </select>
-          <div *ngIf="gameForm.get('tournamentBracketId')?.invalid && gameForm.get('tournamentBracketId')?.touched" class="text-red-400 text-xs mt-1">
-            Bracket is required
+        <!-- Bracket/Series (only for bracket-format tournaments) -->
+        <ng-container *ngIf="selectedTournamentFormat !== 'open-league'">
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Bracket *</label>
+            <select formControlName="tournamentBracketId" (change)="onTournamentBracketChange()" 
+              class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+              [class.border-red-500]="gameForm.get('tournamentBracketId')?.invalid && gameForm.get('tournamentBracketId')?.touched">
+              <option value="" disabled selected>Select Bracket</option>
+              <option *ngFor="let bracket of tournamentBrackets" [value]="bracket._id">{{ bracket.name }}</option>
+            </select>
+            <div *ngIf="gameForm.get('tournamentBracketId')?.invalid && gameForm.get('tournamentBracketId')?.touched" class="text-red-400 text-xs mt-1">
+              Bracket is required
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label class="block text-admin-text mb-2 font-medium">Series *</label>
-          <select formControlName="tournamentSeriesId" (change)="onTournamentSeriesChange()" 
-            class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
-            [class.border-red-500]="gameForm.get('tournamentSeriesId')?.invalid && gameForm.get('tournamentSeriesId')?.touched">
-            <option value="" disabled selected>Select Series</option>
-            <option *ngFor="let series of tournamentSeries" [value]="series._id">
-              {{ series.homeClub?.name || series.homeClubId?.name || 'TBD' }} vs 
-              {{ series.awayClub?.name || series.awayClubId?.name || 'TBD' }}
-              (Round {{ series.roundOrder }})
-            </option>
-          </select>
-          <div *ngIf="gameForm.get('tournamentSeriesId')?.invalid && gameForm.get('tournamentSeriesId')?.touched" class="text-red-400 text-xs mt-1">
-            Series is required
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Series *</label>
+            <select formControlName="tournamentSeriesId" (change)="onTournamentSeriesChange()" 
+              class="w-full bg-admin-hover border border-admin-accent rounded px-3 py-2 text-white"
+              [class.border-red-500]="gameForm.get('tournamentSeriesId')?.invalid && gameForm.get('tournamentSeriesId')?.touched">
+              <option value="" disabled selected>Select Series</option>
+              <option *ngFor="let series of tournamentSeries" [value]="series._id">
+                {{ series.homeClub?.name || series.homeClubId?.name || 'TBD' }} vs 
+                {{ series.awayClub?.name || series.awayClubId?.name || 'TBD' }}
+                (Round {{ series.roundOrder }})
+              </option>
+            </select>
+            <div *ngIf="gameForm.get('tournamentSeriesId')?.invalid && gameForm.get('tournamentSeriesId')?.touched" class="text-red-400 text-xs mt-1">
+              Series is required
+            </div>
+            <p class="text-xs text-admin-text mt-1">Select the series these games belong to. Home/Away teams should match the series teams.</p>
           </div>
-          <p class="text-xs text-admin-text mt-1">Select the series these games belong to. Home/Away teams should match the series teams.</p>
-        </div>
 
-        <div>
-          <label class="block text-admin-text mb-2 font-medium">Round ID</label>
-          <input type="text" formControlName="tournamentRoundId" readonly
-            class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-gray-400">
-          <p class="text-xs text-admin-text mt-1">Auto-filled from series selection</p>
-        </div>
+          <div>
+            <label class="block text-admin-text mb-2 font-medium">Round ID</label>
+            <input type="text" formControlName="tournamentRoundId" readonly
+              class="w-full bg-gray-700 border border-admin-accent rounded px-3 py-2 text-gray-400">
+            <p class="text-xs text-admin-text mt-1">Auto-filled from series selection</p>
+          </div>
+        </ng-container>
       </div>
 
       <!-- Date and Time (shared for both game types) -->

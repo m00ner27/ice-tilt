@@ -11,13 +11,13 @@
         class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
         <option [value]="null" disabled>Choose a tournament...</option>
         <option *ngFor="let tournament of tournaments" [value]="tournament._id">
-          {{ tournament.name }}
+          {{ tournament.name }}{{ tournament.format === 'open-league' ? ' (Open league)' : '' }}
         </option>
       </select>
     </div>
   </div>
 
-  <div *ngIf="loading$ | async" class="text-center py-8">
+  <div *ngIf="showBracketLoading$ | async" class="text-center py-8">
     <div class="text-gray-400">Loading brackets...</div>
   </div>
 
@@ -25,7 +25,60 @@
     <div class="text-red-400">Error loading brackets: {{ error$ | async }}</div>
   </div>
 
-  <!-- Show all brackets for selected tournament -->
+  <!-- Open League: Standings table (no bracket) - matches tournament-standings / standings component -->
+  <ng-container *ngIf="(selectedTournament$ | async)?.format === 'open-league'">
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-white mb-4">Standings</h2>
+      <div *ngIf="openLeagueStandingsLoading" class="text-center py-8 text-admin-text">Loading standings...</div>
+      <div *ngIf="!openLeagueStandingsLoading && openLeagueStandings.length === 0" class="text-center py-8 text-admin-text">
+        No standings yet. Schedule and complete games to see rankings.
+      </div>
+      <div *ngIf="!openLeagueStandingsLoading && openLeagueStandings.length > 0" class="w-full overflow-x-auto">
+        <table class="w-full bg-admin-card text-white border-collapse text-sm sm:text-base">
+          <thead class="bg-admin-accent">
+            <tr>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">RANK</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-left whitespace-nowrap text-xs sm:text-sm w-24 sm:w-32">CLUB</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">GP</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">W</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">L</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">OTL</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">PTS</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">GF</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">GA</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">DIFF</th>
+              <th class="px-2 sm:px-4 py-2 sm:py-3 font-bold text-center whitespace-nowrap text-xs sm:text-sm">WIN%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let team of openLeagueStandings; let i = index" class="border-t border-admin-accent hover:bg-admin-hover transition-colors">
+              <td class="text-center p-2 sm:p-3 font-bold text-sm sm:text-lg">{{ i + 1 }}</td>
+              <td class="text-left p-2 sm:p-3 w-24 sm:w-32">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <img class="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded flex-shrink-0" [src]="getImageUrl(team.logo)" [alt]="team.teamName + ' logo'" />
+                  <a [routerLink]="['/clubs', team.teamId]" class="font-medium text-xs sm:text-sm truncate text-white hover:text-admin-primary">{{ team.teamName }}</a>
+                </div>
+              </td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.gamesPlayed }}</td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.wins }}</td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.losses }}</td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.otLosses }}</td>
+              <td class="text-center p-2 sm:p-3 font-semibold text-xs sm:text-sm">{{ team.points }}</td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.goalsFor }}</td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.goalsAgainst }}</td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm" [ngClass]="{'text-green-500': team.goalDifferential > 0, 'text-red-500': team.goalDifferential < 0}">
+                {{ team.goalDifferential > 0 ? '+' + team.goalDifferential : team.goalDifferential }}
+              </td>
+              <td class="text-center p-2 sm:p-3 text-xs sm:text-sm">{{ team.winPercentage | percent:'1.0-3' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Show all brackets for selected tournament (non-open-league only) -->
+  <ng-container *ngIf="(selectedTournament$ | async)?.format !== 'open-league'">
   <ng-container *ngIf="filteredBrackets$ | async as filteredBrackets">
     <div *ngIf="filteredBrackets.length === 0 && !(loading$ | async)" class="text-center py-8">
       <p class="text-gray-400">No brackets found for this tournament. Please create a bracket in the admin panel.</p>
@@ -311,6 +364,7 @@
         </div>
       </div>
     </div>
+  </ng-container>
   </ng-container>
     
     <!-- AdSense Banner Ad -->
