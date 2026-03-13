@@ -124,7 +124,8 @@ export class PlayoffBracketComponent implements OnInit, OnDestroy {
         this.selectedBracketId = this.bracketId;
         this.store.dispatch(PlayoffsActions.loadPlayoffBracket({ bracketId: this.bracketId }));
       } else {
-        // Wait for brackets to load, then select the first one (prefer active, newest first)
+        // Wait for brackets to load, then select the "top" division of the newest season,
+        // matching the same ordering used by the dropdowns.
         this.store.select(PlayoffsSelectors.selectPlayoffsLoading).pipe(
           filter(loading => !loading),
           take(1)
@@ -133,16 +134,21 @@ export class PlayoffBracketComponent implements OnInit, OnDestroy {
             take(1)
           ).subscribe(brackets => {
             if (brackets && brackets.length > 0) {
-              // Sort brackets: active first, then by creation date (newest first)
-              const sortedBrackets = this.getSortedBrackets(brackets);
-              const bracketToLoad = sortedBrackets[0];
-              
-              if (bracketToLoad && bracketToLoad._id) {
+              const seasons = this.getUniqueSeasons(brackets);
+              const firstSeason = seasons[0];
+              if (!firstSeason) {
+                return;
+              }
+              const seasonKey = firstSeason.key;
+              const divisions = this.getDivisionsForSeason(brackets, seasonKey);
+              const topDivision = divisions[0];
+              if (topDivision && topDivision.bracket && topDivision.bracket._id) {
+                const bracketToLoad = topDivision.bracket;
                 this.bracketId = bracketToLoad._id;
                 this.selectedBracketId = bracketToLoad._id;
-                this.selectedSeasonKey = this.getSeasonKey(bracketToLoad);
-                this.selectedDivisionKey = this.getDivisionKey(bracketToLoad);
-                this.divisionsForSeason = this.getDivisionsForSeason(brackets, this.selectedSeasonKey || '');
+                this.selectedSeasonKey = seasonKey;
+                this.selectedDivisionKey = topDivision.key;
+                this.divisionsForSeason = divisions;
                 this.store.dispatch(PlayoffsActions.loadPlayoffBracket({ bracketId: bracketToLoad._id }));
               }
             }
@@ -370,12 +376,24 @@ export class PlayoffBracketComponent implements OnInit, OnDestroy {
   getDivisionsForSeason(brackets: any[], seasonKey: string): { key: string; name: string; bracket: any }[] {
     if (!brackets?.length || !seasonKey) return [];
     const seasonBrackets = brackets.filter(b => this.getSeasonKey(b) === seasonKey);
-    // Sort by admin displayOrder (same as API), then by division name
+    // Sort so division-specific brackets are listed first for the season,
+    // followed by any "All Divisions" / non-division brackets. Within each
+    // group, respect admin displayOrder, then fall back to division name.
     seasonBrackets.sort((a, b) => {
+      const nameA = this.getDivisionName(a.divisionId) || '';
+      const nameB = this.getDivisionName(b.divisionId) || '';
+      const isAllA = !a.divisionId || nameA === 'All Divisions';
+      const isAllB = !b.divisionId || nameB === 'All Divisions';
+
+      // Division brackets before "All Divisions"
+      if (isAllA !== isAllB) {
+        return isAllA ? 1 : -1;
+      }
+
       const orderA = typeof a.displayOrder === 'number' ? a.displayOrder : 999;
       const orderB = typeof b.displayOrder === 'number' ? b.displayOrder : 999;
       if (orderA !== orderB) return orderA - orderB;
-      return (this.getDivisionName(a.divisionId) || '').localeCompare(this.getDivisionName(b.divisionId) || '');
+      return nameA.localeCompare(nameB);
     });
     const map = new Map<string, { key: string; name: string; bracket: any }>();
     for (const b of seasonBrackets) {

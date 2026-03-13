@@ -127,7 +127,8 @@ export class TournamentsComponent implements OnInit {
 
   updateTournament() {
     if (this.tournamentForm.valid && this.editingTournament) {
-      const tournamentData = { ...this.tournamentForm.value, _id: this.editingTournament._id };
+      const { format, ...rest } = this.tournamentForm.value;
+      const tournamentData = { ...rest, _id: this.editingTournament._id };
       this.apiService.updateTournament(this.editingTournament._id!, tournamentData).subscribe({
         next: (updatedTournament) => {
           const index = this.tournaments.findIndex(t => t._id === updatedTournament._id);
