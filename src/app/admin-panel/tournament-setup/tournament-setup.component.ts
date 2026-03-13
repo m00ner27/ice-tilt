@@ -100,7 +100,7 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       manualMatchups: [false],
       numTeams: [4, [Validators.required, Validators.min(2)]],
       numRounds: [2, [Validators.required, Validators.min(1), Validators.max(10)]], // For custom-bracket format
-      order: [0, [Validators.required, Validators.min(0)]],
+      order: [0, [Validators.min(0)]], // optional: null/empty coerced to 0 when saving (field only visible on step 1)
       seedings: this.fb.array([]),
       rounds: this.fb.array([])
     });
@@ -405,6 +405,21 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
     this.initializeRounds();
   }
 
+  /** Log any invalid control paths (for debugging validation failures). */
+  private logInvalidControls(group: FormGroup | FormArray, path: string): void {
+    const entries: { key: string; control: any }[] = group instanceof FormArray
+      ? group.controls.map((c, i) => ({ key: String(i), control: c }))
+      : Object.keys(group.controls).map(k => ({ key: k, control: group.get(k) }));
+    entries.forEach(({ key, control }) => {
+      const p = group instanceof FormArray ? `${path}[${key}]` : `${path}.${key}`;
+      if (control && (control instanceof FormGroup || control instanceof FormArray)) {
+        this.logInvalidControls(control as FormGroup | FormArray, p);
+      } else if (control && !control.valid && control.enabled) {
+        console.warn('Invalid control:', p, 'value:', control.value, 'errors:', control.errors);
+      }
+    });
+  }
+
   // Helper function to parse order value from form
   private parseOrderValue(): number {
     const orderControl = this.bracketForm.get('order');
@@ -595,6 +610,27 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   }
 
   saveBracket() {
+    // Ensure Display Order has a value (it's only visible on step 1; when empty it can be null and fail validation)
+    const orderControl = this.bracketForm.get('order');
+    const orderVal = orderControl?.value;
+    if (orderVal === null || orderVal === undefined || orderVal === '') {
+      orderControl?.patchValue(0, { emitEvent: false });
+    }
+
+    // numRounds is only shown for custom-bracket; for placement-bracket/single-elimination set from numTeams when null
+    const bracketFormat = this.bracketForm.get('format')?.value;
+    const numTeams = this.bracketForm.get('numTeams')?.value ?? 4;
+    const numRoundsControl = this.bracketForm.get('numRounds');
+    const numRoundsVal = numRoundsControl?.value;
+    if ((numRoundsVal === null || numRoundsVal === undefined || numRoundsVal === '') && numRoundsControl) {
+      const computed = bracketFormat === 'placement-bracket'
+        ? (numTeams === 4 ? 2 : 3)
+        : bracketFormat === 'single-elimination'
+        ? Math.ceil(Math.log2(numTeams))
+        : 2;
+      numRoundsControl.patchValue(computed, { emitEvent: false });
+    }
+
     // Check form validity and provide specific error messages
     if (!this.bracketForm.valid) {
       // Check which fields are invalid
@@ -603,6 +639,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       if (!this.bracketForm.get('tournamentId')?.valid) invalidFields.push('Tournament');
       if (!this.bracketForm.get('format')?.valid) invalidFields.push('Format');
       if (!this.bracketForm.get('numTeams')?.valid) invalidFields.push('Number of Teams');
+      if (this.bracketForm.get('format')?.value === 'custom-bracket' && !this.bracketForm.get('numRounds')?.valid) invalidFields.push('Number of Rounds');
+      if (!this.bracketForm.get('order')?.valid) invalidFields.push('Display Order');
       
       // Check seedings
       const seedingsArray = this.seedingsArray;
@@ -703,6 +741,27 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
   }
 
   saveAndGenerateMatchups() {
+    // Ensure Display Order has a value (it's only visible on step 1; when empty it can be null and fail validation)
+    const orderControl = this.bracketForm.get('order');
+    const orderVal = orderControl?.value;
+    if (orderVal === null || orderVal === undefined || orderVal === '') {
+      orderControl?.patchValue(0, { emitEvent: false });
+    }
+
+    // numRounds is only shown for custom-bracket; for placement-bracket/single-elimination it can be null — set from numTeams
+    const bracketFormat = this.bracketForm.get('format')?.value;
+    const numTeams = this.bracketForm.get('numTeams')?.value ?? 4;
+    const numRoundsControl = this.bracketForm.get('numRounds');
+    const numRoundsVal = numRoundsControl?.value;
+    if ((numRoundsVal === null || numRoundsVal === undefined || numRoundsVal === '') && numRoundsControl) {
+      const computed = bracketFormat === 'placement-bracket'
+        ? (numTeams === 4 ? 2 : 3)
+        : bracketFormat === 'single-elimination'
+        ? Math.ceil(Math.log2(numTeams))
+        : 2;
+      numRoundsControl.patchValue(computed, { emitEvent: false });
+    }
+
     // Check form validity and provide specific error messages
     if (!this.bracketForm.valid) {
       // Check which fields are invalid
@@ -711,6 +770,8 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       if (!this.bracketForm.get('tournamentId')?.valid) invalidFields.push('Tournament');
       if (!this.bracketForm.get('format')?.valid) invalidFields.push('Format');
       if (!this.bracketForm.get('numTeams')?.valid) invalidFields.push('Number of Teams');
+      if (this.bracketForm.get('format')?.value === 'custom-bracket' && !this.bracketForm.get('numRounds')?.valid) invalidFields.push('Number of Rounds');
+      if (!this.bracketForm.get('order')?.valid) invalidFields.push('Display Order');
       
       // Check seedings
       const seedingsArray = this.seedingsArray;
@@ -742,6 +803,10 @@ export class TournamentSetupComponent implements OnInit, OnDestroy {
       }
       if (invalidRounds.length > 0) {
         errorMsg += `- Invalid round configurations: ${invalidRounds.join(', ')}\n`;
+      }
+      if (invalidFields.length === 0 && invalidSeedings.length === 0 && invalidRounds.length === 0) {
+        this.logInvalidControls(this.bracketForm, 'bracketForm');
+        errorMsg += '- One or more fields are invalid. Check the browser console (F12) for which control failed.\n';
       }
       
       alert(errorMsg.trim());
